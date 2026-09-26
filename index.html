@@ -217,6 +217,10 @@ async function submitAuthModal(){
   const r=signup?await cloud.auth.signUp({email,password,options:{data:{full_name:name,phone:phone}}}):await cloud.auth.signInWithPassword({email,password});
   if(r.error){
    const msg=String(r.error.message||'');
+   if(/email.rate.limit.exceeded|over.email.rate.limit|email.*rate.*limit/i.test(msg)||r.error.status===429){
+    if(feedback){feedback.className='auth-verify-warning';feedback.innerHTML='<strong>✉ Limite temporário de envio de e-mails</strong><span>O serviço de confirmação de e-mail atingiu seu limite de envios. Sua solicitação não foi concluída nesta tentativa. Aguarde a liberação do limite ou peça ao administrador para configurar um servidor SMTP próprio no Supabase. Não é necessário repetir o cadastro várias vezes.</span>'}
+    return;
+   }
    if(!signup&&(/email.not.confirmed|email.not.verified|confirm.*email|email.*confirm/i.test(msg)||r.error.code==='email_not_confirmed')){
     if(feedback){feedback.className='auth-verify-warning';feedback.innerHTML='<strong>✉ Confirme seu e-mail primeiro.</strong><span>Abra sua caixa de entrada e clique no link de confirmação. Verifique também o spam antes de tentar entrar novamente.</span>'}
     return;
