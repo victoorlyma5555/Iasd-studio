@@ -628,6 +628,30 @@ html[data-theme="light"] .premium-wordmark .wordmark-eyebrow,html[data-theme="li
 #auth-modal-root #auth-feedback{color:#ffd0c9!important}
 #auth-modal-root .auth-success{color:#e9f7ed!important}
 @media(max-width:480px){#auth-modal-root .auth-dialog{padding:23px!important;width:calc(100vw - 24px)!important}#auth-modal-root .auth-hero{margin:22px 0 18px}}
+
+/* Unified overlay and schedule contrast across all fifty layout presets. */
+#account-popover-root .account-popover{background:#182e46!important;color:#f3f8ff!important;border:1px solid #4b6885!important;box-shadow:0 20px 65px #0008!important}
+#account-popover-root .account-popover-head{border-color:#46617c!important}
+#account-popover-root .account-popover-head strong{color:#fff!important}
+#account-popover-root .account-popover-head small{color:#bfd0e2!important}
+#account-popover-root .account-popover button:not(.account-signin){color:#eaf3ff!important;background:transparent!important}
+#account-popover-root .account-popover button:not(.account-signin):hover{background:#2d4b69!important}
+#account-popover-root .account-popover .account-signin{background:#edc47d!important;color:#192b40!important}
+#account-popover-root .account-popover .account-logout{color:#ffb6b6!important}
+#content .schedule-group{background:#243c56!important;color:#f2f7ff!important;border:1px solid #6884a1!important}
+#content .schedule-group strong{color:#f2f7ff!important}
+#content .schedule-group small{color:#c1d2e5!important}
+#content .schedule-group.selected{background:#354a60!important;border:2px solid #f1c981!important;box-shadow:inset 0 0 0 1px #f1c98133!important}
+#content .schedule-group.selected strong{color:#fff!important}
+#content .schedule-group.selected small{color:#f3d7a8!important}
+#content .schedules-panel .scroll-arrow{background:#29435e!important;color:#f3f8ff!important;border:1px solid #5b7895!important}
+html[data-theme="light"] #content .schedule-group{background:#f1f5fb!important;color:#19345a!important;border-color:#c6d4e5!important}
+html[data-theme="light"] #content .schedule-group strong{color:#19345a!important}
+html[data-theme="light"] #content .schedule-group small{color:#49617c!important}
+html[data-theme="light"] #content .schedule-group.selected{background:#fff6e4!important;border-color:#bb8a38!important}
+html[data-theme="light"] #content .schedule-group.selected strong{color:#26364a!important}
+html[data-theme="light"] #content .schedule-group.selected small{color:#73521f!important}
+@media(max-width:480px){#account-popover-root .account-popover{right:12px!important;max-width:calc(100vw - 24px)!important}}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-layout-btn" class="preview-launch" onclick="openLayoutStudio()" style="display:none">◈ Layouts</button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
