@@ -109,6 +109,42 @@ main{max-width:1200px;padding:0 22px 105px}
 @media(min-width:900px){main{padding-bottom:40px}.bottomnav{position:relative;bottom:auto;left:auto;right:auto;transform:none;max-width:1156px;margin:0 auto 20px;padding:6px;justify-content:flex-start;gap:5px;border-radius:12px}.bottomnav button{flex-direction:row;gap:9px;font-size:13px;font-weight:650;padding:10px 15px;border-radius:8px}.bottomnav button span{font-size:18px}.bottomnav button.active{background:#edf2f8;color:#214b7c}.bottomnav .projectnav{transform:none}.bottomnav .projectnav span{width:auto;height:auto;border:0;background:transparent;box-shadow:none;color:inherit}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:599px){header{padding:16px 13px}main{padding:0 12px 105px}.hero{min-height:190px;padding:22px;border-radius:14px}.grid{gap:9px}.tile,.tile.feature{min-height:142px;padding:13px}.tile strong{font-size:14px}.tile small{font-size:11px}.preview-launch{font-size:10px;padding:10px}}
 .preview-open{overflow:hidden}.device-preview-backdrop{position:fixed;inset:0;background:#0e192bcb;z-index:1000}.device-preview-dialog{position:fixed;inset:15px;z-index:1001;display:flex;flex-direction:column;background:#f0f3f7;border-radius:15px;overflow:hidden;box-shadow:0 30px 90px #0006}.device-preview-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:13px 19px;background:#fff;border-bottom:1px solid #e4e9f0}.preview-heading{display:flex;flex-direction:column;gap:3px}.preview-heading strong{font-size:15px}.preview-heading small{font-size:11px;color:#748398}.device-switch{display:flex;gap:3px;padding:4px;background:#eef2f7;border-radius:10px}.device-switch button,.preview-controls button{background:transparent;color:#4b5e75;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:700}.device-switch button.selected{background:#fff;color:#1d4a7b;box-shadow:0 1px 5px #1c304b18}.preview-controls{display:flex;gap:4px}.preview-controls button{background:#edf1f6}.preview-controls button:disabled{opacity:.3}.preview-viewport{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;padding:14px}.preview-frame-shell{flex:none;background:#fff;border:1px solid #c9d2df;border-radius:7px;overflow:hidden;box-shadow:0 8px 40px #10223c28}.preview-frame-shell iframe{display:block;border:0;background:#fff}.preview-footnote{text-align:center;padding:9px;color:#718197;font-size:11px;background:#fff;border-top:1px solid #e6eaf0}@media(max-width:700px){.device-preview-dialog{inset:5px}.device-preview-toolbar{padding:9px}.preview-heading{width:100%}.device-switch button,.preview-controls button{font-size:10px;padding:7px}}
+
+/* Tema grafite azulado: menos branco, contraste confortável */
+:root{color-scheme:dark;--ink:#edf2f8;--gold:#e0b76b;--line:#35465a;--canvas:#172330}
+body{background:radial-gradient(ellipse at 75% -15%,#31465d 0%,transparent 48%),linear-gradient(160deg,#1b2938,#121d2a)!important;color:#eaf0f7!important}
+header h1{color:#f2f5fa}header h1 span{color:#e2b86b}header small{color:#aab8c9}.brandmark{color:#e2b86b}
+.iconbtn{background:#27384b;border-color:#3c4c60;color:#e6edf5}
+.preview-launch{background:#334960;border-color:#536982;color:#f3f6fa}
+.hero{background:linear-gradient(110deg,#101b2a,#203a56)!important;border:1px solid #415a74;box-shadow:0 12px 35px #0002}
+.tile,.tile.feature,.panel{background:linear-gradient(150deg,#28394b,#223244);border:1px solid #3b4c60;color:#f0f4fa;box-shadow:0 5px 20px #00000012}
+.tile strong,.panel h2,.panel h3,.sectionhead h2{color:#f0f4fa}
+.tile small,.panel p,.muted{color:#b7c4d3}
+.tile .glyph,.tile:nth-child(odd) .glyph,.tile.feature .glyph{background:#354b62;color:#c5dcf6!important}
+.tile:nth-child(odd) .glyph,.tile.feature .glyph{background:#534630;color:#f2cc89!important}
+.tile .tile-arrow{color:#aabbd0}
+.tile:hover{border-color:#7896b8;background:#2d4157;box-shadow:0 10px 25px #0002}
+.panel input,.panel textarea,.panel select{background:#1b2b3b!important;color:#f1f5fa!important;border-color:#50637a!important}
+.panel input::placeholder,.panel textarea::placeholder{color:#a5b4c5}
+.panel button,.action{background:#3b526b;color:#eef3f9}
+.panel button.primary,.action.primary{background:#d8ad62;color:#1b2430}
+li{border-color:#43566b}
+.schedule .event{border-left-color:#52647b}.schedule .event strong{color:#f0f4fa}.schedule .event small{color:#b6c4d5}.schedule .event:before{box-shadow:0 0 0 4px #28394b}
+.schedule .event .itemactions button{background:#3b526b;color:#edf3fa}
+.bottomnav{background:#233346;border-color:#405268;box-shadow:0 4px 20px #0003}
+.bottomnav button{color:#b7c5d6}.bottomnav button.active{color:#f1c97e}
+.bottomnav .projectnav span{background:#d2a65b;color:#1d2836}
+.verse-card{background:linear-gradient(120deg,#293b4d,#4d483b);border-color:#536071;box-shadow:none;color:#f3f1e9}
+.verse-card blockquote{color:#f2f0e9}.verse-card small{color:#e8c27b}
+.image-card{background:#26394e;border-color:#42576e;color:#edf3fa}
+.image-card-actions select{background:#1c2d40;color:#f0f4f9;border:1px solid #52677e}
+.media-filename{color:#c5d1de}
+.asset-slot{border-color:#4b5e73}
+.device-preview-dialog{background:#1b2a3a}
+.device-preview-toolbar,.preview-footnote{background:#25374a;border-color:#43566c;color:#eaf0f7}
+.preview-heading strong{color:#edf3fa}.preview-heading small,.preview-footnote{color:#b7c6d6}
+.device-switch{background:#18283a}.device-switch button,.preview-controls button{color:#c7d5e6}.device-switch button.selected{background:#3c5570;color:#fff}.preview-controls button{background:#354b63}
+@media(min-width:900px){.bottomnav button.active{background:#39516a;color:#f1d49c}}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button class="iconbtn" onclick="go('Mais')" aria-label="Configurações">⚙</button></div></header><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
