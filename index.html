@@ -807,7 +807,7 @@ function project(t){
   if(!openProjection())return;
  }
  sendProjection(String(t??''));
- projectionFeedback('Enviado para a segunda tela. Se necessário, mova a janela para o segundo monitor e pressione F11.');
+ projectionFeedback('Conteúdo enviado. Se a janela não aparecer no celular, verifique a mensagem de configuração do monitor.');
 }
 function stopProjection(){
  sendProjection('');
@@ -834,32 +834,51 @@ function savedProjectionPlacement(){
  try{const p=JSON.parse(localStorage.getItem('iasd-projection-placement')||'null');return p&&[p.left,p.top,p.width,p.height].every(Number.isFinite)?p:null}catch(e){return null}
 }
 async function positionProjectionOnSecondScreen(w){
- if(!canReachProjection())return;
- if(!preferredProjectionScreen&&typeof window.getScreenDetails!=='function'){projectionFeedback('Posicionamento automático indisponível neste navegador. Use Chrome e Configurar monitor.',true);return}
+ if(!canReachProjection())return false;
  try{
-  const details=preferredProjectionScreen?null:await window.getScreenDetails();
-  const screens=details?Array.from(details.screens||[]):[];
-  const other=preferredProjectionScreen||screens.find(screen=>!screen.isPrimary)||screens.find(screen=>screen!==details.currentScreen);
-  if(!other){projectionFeedback('Segundo monitor não detectado.',true);return}
+  if(typeof window.getScreenDetails!=='function'){
+   projectionFeedback('Seu navegador não disponibiliza a seleção automática de monitores. Para abrir diretamente no celular, use Chrome e autorize Gerenciamento de janelas.',true);
+   return false;
+  }
+  const details=await window.getScreenDetails();
+  const screens=Array.from(details.screens||[]);
+  const other=screens.find(screen=>!screen.isPrimary)||screens.find(screen=>screen!==details.currentScreen);
+  if(!other){projectionFeedback('O Windows não informou um segundo monitor. Confira o Spacedesk e o modo Estender.',true);return false}
   preferredProjectionScreen=other;
   const p={left:other.availLeft??other.left,top:other.availTop??other.top,width:other.availWidth??other.width,height:other.availHeight??other.height};
   localStorage.setItem('iasd-projection-placement',JSON.stringify(p));
-  if(!canReachProjection())return;
-  w.moveTo(p.left,p.top);w.resizeTo(p.width,p.height);
-  projectionFeedback('Projeção enviada ao segundo monitor.');
- }catch(e){console.warn('Posicionamento',e);projectionFeedback('Navegador bloqueou a seleção automática. Autorize gerenciar janelas no Chrome.',true)}
+  if(!canReachProjection())return false;
+  w.moveTo(p.left,p.top);
+  w.resizeTo(p.width,p.height);
+  const actualX=w.screenX,actualY=w.screenY;
+  const placed=Math.abs(actualX-p.left)<120&&Math.abs(actualY-p.top)<120;
+  if(!placed){
+   projectionFeedback('O navegador bloqueou a movimentação para o monitor 2. No Chrome, permita Gerenciamento de janelas para este site.',true);
+   return false;
+  }
+  projectionFeedback('Projetor posicionado automaticamente no segundo monitor.');
+  return true;
+ }catch(e){
+  console.warn('Seleção do segundo monitor',e);
+  projectionFeedback('Não foi possível acessar os monitores. Autorize Gerenciamento de janelas no Chrome e tente novamente.',true);
+  return false;
+ }
 }
 function openProjection(){
  if(!canUseSound()){go('Sonoplastia');return false}
  if(canReachProjection()){sendProjection(data.stage||'');return true}
- const url=new URL('projection.html',location.href).href,screen=preferredProjectionScreen;
- const saved=screen?{left:screen.availLeft??screen.left,top:screen.availTop??screen.top,width:screen.availWidth??screen.width,height:screen.availHeight??screen.height}:savedProjectionPlacement();
+ const url=new URL('projection.html',location.href).href;
+ const saved=savedProjectionPlacement();
  const features=saved?'popup,left='+Math.round(saved.left)+',top='+Math.round(saved.top)+',width='+Math.round(saved.width)+',height='+Math.round(saved.height):'popup,width=1100,height=700';
- const w=window.open(url,'iasd-projection',features);
- if(!w){projectionFeedback('Permita pop-ups para o IASD APP.',true);return false}
+ // Open synchronously from the click, then position before loading the projector page.
+ const w=window.open('about:blank','iasd-projection',features);
+ if(!w){projectionFeedback('O navegador bloqueou a janela. Permita pop-ups para o IASD APP.',true);return false}
  projectionWindow=w;
- if(saved)try{w.moveTo(saved.left,saved.top);w.resizeTo(saved.width,saved.height)}catch(e){console.warn('Posicionamento',e)}
- void positionProjectionOnSecondScreen(w);
+ try{w.document.title='IASD APP · Preparando projetor';w.document.body.style='margin:0;background:black;color:white;font:20px system-ui;display:grid;place-items:center;height:100vh';w.document.body.textContent='Preparando a segunda tela…'}catch(e){}
+ projectionFeedback('Localizando o segundo monitor…');
+ void positionProjectionOnSecondScreen(w).then(()=>{
+  if(canReachProjection())w.location.replace(url);
+ });
  return true;
 }
 window.addEventListener('message',e=>{
