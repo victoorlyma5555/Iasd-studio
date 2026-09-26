@@ -420,6 +420,40 @@ html[data-layout-variant="5"] .quick-card{border-radius:18px!important}
 .quick-link::after{inset:45% 0 0!important;background:linear-gradient(to bottom,transparent,rgba(8,24,43,.84))!important}
 .quick-edit{min-height:27px!important;padding:5px 7px!important;font-size:10px!important}
 @media(max-width:700px){.quick-card{flex-basis:124px!important}.quick-link{height:182px!important}.quick-link strong{font-size:13px!important}.quick-track{gap:9px!important}}
+
+/* IASD APP — início editorial compacto, hierarquia e navegação por setas. */
+#content:has(.quick-section){--home-radius:16px}
+#content:has(.quick-section) .hero{min-height:190px!important;max-height:230px!important;padding:23px 28px!important;margin:0 0 10px!important;border-radius:var(--home-radius)!important;overflow:hidden}
+#content:has(.quick-section) .hero h2{font-size:clamp(24px,2.25vw,34px)!important;line-height:1.14!important;max-width:360px}
+#content:has(.quick-section) .hero p{font-size:12px!important;max-width:310px!important;line-height:1.45!important}
+#content:has(.quick-section) .hero .eyebrow{font-size:10px!important}
+#content:has(.quick-section) .home-banner-edit{margin-top:4px!important;padding:7px 11px!important;font-size:12px!important}
+#content:has(.quick-section) .quick-section{margin:15px 0 14px!important}
+#content:has(.quick-section) .quick-section .sectionhead{margin:0 0 9px!important;align-items:center!important}
+#content:has(.quick-section) .quick-section h2{font-size:16px!important}
+#content:has(.quick-section) .quick-add{padding:7px 10px!important;font-size:12px!important}
+.quick-carousel{position:relative;min-width:0}
+#content .quick-carousel .quick-track{gap:12px!important;padding:2px 1px 8px!important;scrollbar-width:none!important;scroll-snap-type:x proximity!important}
+#content .quick-carousel .quick-track::-webkit-scrollbar{display:none}
+#content .quick-carousel .quick-card{flex:0 0 clamp(136px,11.5vw,166px)!important;border-radius:13px!important}
+#content .quick-carousel .quick-link{height:190px!important}
+#content .quick-carousel .quick-link strong{font-size:14px!important;left:11px!important;bottom:13px!important}
+#content .quick-carousel .quick-edit{min-height:25px!important;padding:5px!important;font-size:10px!important}
+.quick-arrow{position:absolute;top:42%;z-index:5;display:grid;place-items:center;width:35px;height:45px;border-radius:12px;background:rgba(12,30,49,.88)!important;border:1px solid #8eabc46b!important;color:#fff!important;font-size:30px!important;line-height:1;box-shadow:0 4px 18px #0005;backdrop-filter:blur(8px)}
+.quick-arrow-prev{left:4px}.quick-arrow-next{right:4px}
+.quick-arrow:hover{background:#316a9c!important}
+#content:has(.quick-section) .verse-card{margin:8px 0 14px!important;min-height:0!important;padding:14px 20px!important;border-radius:14px!important}
+#content:has(.quick-section) .verse-card blockquote{font-size:clamp(13px,1.1vw,16px)!important;margin:0 0 7px!important}
+#content:has(.quick-section) .home-schedule{border-radius:16px!important;padding:18px 22px!important}
+#content:has(.quick-section) .home-schedule .sectionhead{margin-bottom:10px!important}
+@media(max-width:700px){
+#content:has(.quick-section) .hero{min-height:185px!important;max-height:none!important;padding:20px!important}
+#content .quick-carousel .quick-card{flex-basis:130px!important}
+#content .quick-carousel .quick-link{height:178px!important}
+.quick-arrow{width:28px;height:39px;font-size:24px!important}
+#content:has(.quick-section) .home-schedule{padding:14px!important}
+}
+@media(prefers-reduced-motion:reduce){#content .quick-carousel .quick-track{scroll-behavior:auto!important}}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
@@ -640,7 +674,8 @@ const allQuick=()=>[...QUICK,...customTabs.map(t=>['custom:'+t.id,t.icon,'custom
 const tabName=t=>t.startsWith('custom:')?(customTabs.find(x=>x.id===t.slice(7))?.title||'Aba'):t;
 const tabDesc=t=>customTabs.find(x=>'custom:'+x.id===t)?.description||({Projeção:'Controle a segunda tela',Cronograma:'Horários e responsáveis',Bíblia:'Versículos e projeção',Escalas:'Equipe e escalas',Mídia:'Hinos e apresentações',Sorteadores:'Sorteio de pessoas e números','Datas especiais':'Datas da igreja',Mais:'Outras ferramentas'})[t]||'';
 function quickCard([t,icon,slot]){const p=siteAssets[slot],f=assetFrames[slot]||{},media=p?(/\.(mp4|webm|mov)$/i.test(p)?'<video autoplay muted loop playsinline src="'+esc(imageUrl(p))+'"></video>':'<img class="quick-backdrop" src="'+esc(imageUrl(p))+'" alt="" aria-hidden="true"><img class="quick-foreground" src="'+esc(imageUrl(p))+'" style="object-position:'+Number(f.position_x??50)+'% '+Number(f.position_y??50)+'%;transform:translate('+((50-Number(f.position_x??50))*.45)+'%,'+((50-Number(f.position_y??50))*.45)+'%) scale('+Math.max(1,Number(f.zoom??1))+')" alt="">'):'<span>'+esc(icon)+'</span>';return '<article class="quick-card"><button class="quick-link" onclick="go('+JSON.stringify(t).replace(/"/g,'&quot;')+')"><div class="quick-cover">'+media+'</div><strong>'+esc(tabName(t))+'</strong><small>'+esc(tabDesc(t))+'</small><b>ABRIR ↗</b></button>'+(canManageSite()?'<button class="quick-edit" onclick="editCover('+JSON.stringify(slot).replace(/"/g,'&quot;')+')">✎ Editar capa</button>':'')+'</article>'}
-function quickHome(){let a=allQuick();if(cloudRole==='founder')a.push(['Fundador','♛','home_icon_founder']);if(canManageSite())a.push(['Acervo','▧','home_icon_gallery']);return '<section class="quick-section"><div class="sectionhead"><h2>Acesso rápido</h2>'+(canManageSite()?'<button class="quick-add" onclick="newTab()">＋ Criar aba</button>':'')+'</div><div class="quick-track">'+a.map(quickCard).join('')+'</div></section>'}
+function scrollQuick(direction){const el=document.getElementById('home-quick-track');if(el)el.scrollBy({left:direction*Math.max(300,el.clientWidth*.72),behavior:'smooth'})}
+function quickHome(){let a=allQuick();if(cloudRole==='founder')a.push(['Fundador','♛','home_icon_founder']);if(canManageSite())a.push(['Acervo','▧','home_icon_gallery']);return '<section class="quick-section"><div class="sectionhead"><h2>Acesso rápido</h2>'+(canManageSite()?'<button class="quick-add" onclick="newTab()">＋ Criar aba</button>':'')+'</div><div class="quick-carousel"><button class="quick-arrow quick-arrow-prev" onclick="scrollQuick(-1)" aria-label="Ver acessos anteriores">‹</button><div class="quick-track" id="home-quick-track">'+a.map(quickCard).join('')+'</div><button class="quick-arrow quick-arrow-next" onclick="scrollQuick(1)" aria-label="Ver mais acessos">›</button></div></section>'}
 async function loadCustomTabs(){if(!cloud)return;const r=await cloud.from('iasd_custom_tabs').select('*').order('sort_order');if(!r.error){customTabs=r.data||[];render()}}
 async function loadAssetFrames(){if(!cloud)return;const r=await cloud.from('iasd_asset_framing').select('*');if(!r.error){assetFrames=Object.fromEntries((r.data||[]).map(x=>[x.slot,x]));render()}}
 function newTab(){if(!canManageSite())return;const root=$('inline-editor-root');root.innerHTML='<div class="iasd-edit-backdrop" onclick="closeInlineTextEditor()"></div><section class="iasd-edit-dialog" role="dialog" aria-modal="true"><div class="iasd-edit-head"><strong>Criar aba</strong><button onclick="closeInlineTextEditor()">✕</button></div><p>A nova aba aparecerá no menu e no acesso rápido.</p><label>Nome</label><input id="new-tab-name" maxlength="70" placeholder="Ex.: Louvor"><label>Descrição</label><input id="new-tab-desc" maxlength="180"><label>Ícone</label><input id="new-tab-icon" maxlength="3" value="✦"><p id="new-tab-status"></p><button class="primary" onclick="createTab()">Criar aba</button></section>'}
