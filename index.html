@@ -298,6 +298,20 @@ html[data-theme="dark"] .theme-toggle,html[data-theme="dark"] .theme-toggle:hove
 .theme-toggle #theme-icon{font-size:25px;line-height:1}
 .theme-toggle .theme-label{display:none!important}
 @media(max-width:899px){.theme-toggle,html[data-theme="dark"] .theme-toggle{right:16px!important;bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important}}
+
+/* Desktop: usa toda a largura disponível sem distorcer as capas. */
+@media(min-width:900px){
+ body{min-width:0}
+ body>main{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding-left:clamp(18px,2.4vw,48px)!important;padding-right:clamp(18px,2.4vw,48px)!important;box-sizing:border-box}
+ body>header{width:100%;max-width:none!important;box-sizing:border-box;padding-left:clamp(18px,2.4vw,48px)!important;padding-right:clamp(18px,2.4vw,48px)!important}
+ #content,.quick-section{width:100%;max-width:none;min-width:0}
+ .quick-section{container-type:inline-size}
+ .quick-track{width:100%;min-width:0;max-width:100%;box-sizing:border-box;gap:14px}
+ .quick-card{flex:0 0 calc((100% - 56px)/5);min-width:0;max-width:none}
+}
+@container (min-width:1200px){.quick-card{flex-basis:calc((100% - 70px)/6)}}
+@container (min-width:1560px){.quick-card{flex-basis:calc((100% - 84px)/7)}}
+@media(min-width:900px) and (max-width:1150px){.quick-card{flex-basis:calc((100% - 42px)/4)}}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
