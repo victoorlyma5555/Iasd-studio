@@ -488,7 +488,78 @@ html[data-layout-variant="5"] .quick-card{border-radius:18px!important}
 .home-wireframe-aside .schedule small{color:#c7daeb!important;font-size:11px}
 @media(max-width:1000px){.home-wireframe{grid-template-columns:minmax(0,1fr)}.home-wireframe-aside{margin-top:0;min-height:0}}
 @media(max-width:700px){.home-wireframe{gap:12px}.home-wireframe-tools{padding:0 14px 14px}#content .home-wireframe-welcome .hero{padding:17px 15px 11px!important}}
-</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+
+/* IASD APP 2.0 — isolated dashboard design system */
+#content:has(.app-dashboard){width:100%;min-width:0}
+.app-dashboard{--dash-bg:#12263b;--dash-panel:#1c3955;--dash-border:rgba(176,209,238,.18);--dash-text:#f6f9ff;--dash-muted:#b5c9dd;--dash-gold:#f2c67d;max-width:1680px;margin:0 auto;padding:5px 0 42px;color:var(--dash-text)}
+.dashboard-identity{display:flex;align-items:center;justify-content:center;gap:13px;text-align:left;margin:4px 0 22px}
+.identity-mark{display:grid;place-items:center;width:46px;height:46px;border:1px solid #a8d0f04d;border-radius:15px;background:linear-gradient(145deg,#315d83,#183652);box-shadow:0 8px 26px #07152245;font-size:24px;color:#f1c47e}
+.dashboard-identity h1{font-size:clamp(25px,2.1vw,35px);font-weight:850;letter-spacing:-.055em;margin:0;line-height:1.1;color:#f7fbff}
+.dashboard-identity h1 em{font-style:normal;color:#f2c67d}
+.dashboard-identity p{font-size:10px;letter-spacing:.22em;margin:5px 0 0;color:#b3cbe0;font-weight:700}
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(285px,30%);gap:20px;align-items:stretch}
+.dashboard-primary{min-width:0;display:flex;flex-direction:column;gap:18px}
+.dashboard-welcome{min-width:0;background:linear-gradient(145deg,#1e405e,#193550);border:1px solid var(--dash-border);border-radius:20px;overflow:hidden;box-shadow:0 15px 40px #06152430}
+.dashboard-hero{min-height:220px;position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;padding:27px clamp(20px,3vw,42px);background:linear-gradient(115deg,#153c63,#265c87)}
+.dashboard-hero:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(9,25,45,.89) 0%,rgba(9,25,45,.73) 42%,rgba(9,25,45,.08) 100%);pointer-events:none}
+.dashboard-hero .hero-custom-image{position:absolute;z-index:-2;inset:0;min-width:100%;min-height:100%;object-fit:cover}
+.dashboard-hero-content{position:relative;z-index:1;max-width:460px}
+.dashboard-kicker{display:inline-block;color:#f5d9a4;font-size:10px;letter-spacing:.2em;font-weight:800;margin-bottom:14px}
+.dashboard-hero h2{font-size:clamp(27px,2.9vw,43px);line-height:1.1;letter-spacing:-.045em;margin:0 0 12px;color:white;font-weight:850}
+.dashboard-hero h2 em{font-style:normal;color:#f3c47b}
+.dashboard-hero p{font-size:13px;line-height:1.65;max-width:330px;color:#e2edf7;margin:0}
+.dashboard-edit{position:absolute;right:15px;top:15px;z-index:2;background:#102b48d9;color:#fff;border:1px solid #c3dcf65e;border-radius:9px;padding:8px 11px;font-size:11px}
+.dashboard-tools{padding:18px clamp(17px,2.4vw,31px) 20px;display:grid;gap:10px}
+.dashboard-tools>label{font-size:10px;letter-spacing:.16em;font-weight:800;color:#e2ecf6}
+.dashboard-search{display:flex;align-items:center;gap:12px;background:#f6faff;border:1px solid #b5cbe0;border-radius:12px;padding:0 14px;color:#345777;min-width:0}
+.dashboard-search span{font-size:26px}
+.dashboard-search input{height:44px;flex:1;min-width:0;background:transparent!important;border:0!important;outline:0!important;color:#183957!important;font-size:13px!important;box-shadow:none!important}
+.dashboard-verse{display:flex;align-items:center;gap:13px;margin-top:3px;border:1px solid #e4c28750;background:linear-gradient(110deg,#e5f1ff0e,#f3c67d0e);padding:12px 14px;border-radius:11px}
+.verse-symbol{font-size:23px;color:#f2c67d}
+.dashboard-verse blockquote{font-size:12px;line-height:1.5;color:#eef6ff;margin:0 0 5px;font-style:italic}
+.dashboard-verse small{color:#f0c980;font-size:9px;letter-spacing:.16em;font-weight:800}
+.app-dashboard .quick-section{margin:0!important;min-width:0}
+.app-dashboard .quick-section .sectionhead{margin:0 0 12px!important}
+.app-dashboard .quick-section .sectionhead h2{font-size:17px!important;color:#f7faff!important;letter-spacing:-.02em}
+.app-dashboard .quick-carousel{min-width:0;position:relative}
+.app-dashboard .quick-track{display:flex!important;gap:12px!important;overflow-x:auto!important;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#6584a2 transparent;padding-bottom:10px}
+.app-dashboard .quick-card{flex:0 0 clamp(126px,15vw,175px)!important;min-width:0;scroll-snap-align:start;border:1px solid #89b2d34d!important;border-radius:13px!important;overflow:hidden!important;background:#173b5b!important}
+.app-dashboard .quick-link{height:205px!important;position:relative!important;overflow:hidden!important}
+.app-dashboard .quick-cover{height:100%!important;position:absolute!important;inset:0!important;background:linear-gradient(145deg,#1c527b,#102b45)!important}
+.app-dashboard .quick-cover img.quick-foreground{max-width:none}
+.app-dashboard .quick-link:after{content:"";position:absolute;inset:36% 0 0;background:linear-gradient(0deg,rgba(5,19,34,.96),rgba(5,19,34,0));pointer-events:none}
+.app-dashboard .quick-link strong{position:absolute!important;z-index:2;bottom:22px;left:11px;right:9px;color:#fff!important;font-size:13px!important;text-shadow:0 1px 8px #0008}
+.app-dashboard .quick-link small{display:none!important}
+.app-dashboard .quick-link b{position:absolute!important;z-index:2;bottom:8px;left:11px;color:#f2c67d!important;font-size:9px!important}
+.app-dashboard .quick-edit{background:#1b4469!important;color:#e9f3fc!important;font-size:10px!important}
+.dashboard-agenda{min-width:0;display:flex;flex-direction:column;align-self:stretch;background:linear-gradient(155deg,#234b70,#17334f 70%);border:1px solid #8fb9db52;border-radius:20px;padding:23px 20px;box-shadow:0 15px 40px #06152430;min-height:465px;max-height:850px}
+.agenda-heading{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #a3c2da39;padding-bottom:18px}
+.agenda-eyebrow{font-size:10px;letter-spacing:.18em;font-weight:800;color:#f1c77f}
+.agenda-heading h2{font-size:clamp(19px,1.8vw,26px);letter-spacing:-.035em;line-height:1.15;margin:10px 0 9px;color:#fff}
+.agenda-heading p{margin:0;font-size:12px;color:#bed2e5;text-transform:capitalize}
+.agenda-heading-icon{display:grid;place-items:center;width:39px;height:39px;flex-shrink:0;border-radius:12px;background:#ffffff14;color:#f1cc90;font-size:22px}
+.agenda-program{display:flex;flex-direction:column;gap:5px;margin:18px 0 7px}
+.agenda-program strong{color:#fff;font-size:14px}
+.agenda-program span{font-size:11px;color:#b8cee2}
+.agenda-events{min-height:0;overflow-y:auto;flex:1;padding-right:4px;scrollbar-width:thin}
+.dashboard-agenda .schedule{background:transparent!important;border-bottom:1px solid #a5c4df27!important;padding:15px 0!important}
+.dashboard-agenda .schedule .time{font-size:11px!important;color:#f1c67e!important}
+.dashboard-agenda .schedule strong{font-size:12px!important;color:#f7faff!important}
+.dashboard-agenda .schedule small{font-size:11px!important;color:#c3d5e7!important}
+.agenda-empty{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:35px 8px;color:#d7e7f6}
+.agenda-empty>span{font-size:37px;color:#f1c67e}
+.agenda-empty strong{font-size:14px}
+.agenda-empty p{font-size:12px;line-height:1.6;color:#bad0e2;max-width:220px}
+.agenda-view{margin-top:17px;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:12px 14px;border-radius:11px;background:#f1c77f;color:#18334e;font-size:12px;font-weight:800}
+.agenda-view:hover{background:#ffdb9b}
+html[data-theme="light"] .app-dashboard{--dash-text:#17344e}
+html[data-theme="light"] .dashboard-identity h1{color:#1c3957}
+html[data-theme="light"] .dashboard-identity p{color:#58728a}
+html[data-theme="light"] .app-dashboard .quick-section .sectionhead h2{color:#193b59!important}
+@media(max-width:1180px){.dashboard-grid{grid-template-columns:minmax(0,1fr) minmax(265px,32%);gap:14px}.dashboard-agenda{padding:18px 15px}.dashboard-hero{min-height:205px}}
+@media(max-width:900px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}.dashboard-agenda{max-height:none;min-height:270px}.agenda-events{max-height:480px}.app-dashboard{padding-bottom:30px}}
+@media(max-width:600px){.dashboard-identity{margin:3px 0 17px}.dashboard-identity h1{font-size:25px}.dashboard-grid{gap:16px}.dashboard-primary{gap:16px}.dashboard-hero{min-height:200px;padding:20px 17px}.dashboard-hero h2{font-size:29px}.dashboard-hero p{font-size:12px}.dashboard-edit{top:8px;right:8px;padding:6px;font-size:10px}.dashboard-tools{padding:14px}.app-dashboard .quick-card{flex-basis:135px!important}.app-dashboard .quick-link{height:185px!important}.dashboard-agenda{padding:19px 16px}.dashboard-search input{font-size:16px!important}}
+</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-layout-btn" class="preview-launch" onclick="openLayoutStudio()" style="display:none">◈ Layouts</button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
 async function initCloud(){if(!cloud){cloudMessage='Não foi possível carregar a conexão. Verifique sua internet.';render();return}const {data:{session}}=await cloud.auth.getSession();cloudUser=session?.user||null;await Promise.all([loadCloud(),loadActiveTheme(),loadSiteText()]);cloud.auth.onAuthStateChange((_event,session)=>{if(session?.user?.id!==cloudUser?.id){cloudUser=session?.user||null;setTimeout(loadCloud,0)}})}
@@ -819,13 +890,20 @@ function drawLayoutStudio(){if(cloudRole!=='founder')return;document.body.classL
 
 function render(){
 syncAccountUI();
+const layoutBtn=document.getElementById('founder-layout-btn');if(layoutBtn)layoutBtn.style.display=cloudRole==='founder'&&!new URLSearchParams(location.search).has('preview')?'inline-flex':'none';
 const previewBtn=document.getElementById('founder-preview-btn');if(previewBtn)previewBtn.style.display=cloudRole==='founder'&&!new URLSearchParams(location.search).has('preview')?'inline-flex':'none';
 const nav=[['Painel','⌂','Início'],['Cronograma','▦','Agenda'],['Mídia','▱','Biblioteca'],['Projeção','▶','Projetor'],['Bíblia','▤','Bíblia'],['Mais','☰','Mais']];
 $('desktop-sidebar').innerHTML='<div class="sidebar-heading">NAVEGAÇÃO</div>'+[['Painel','⌂','Início'],['Cronograma','▦','Cronogramas'],['Escalas','♟','Escalas'],['Mídia','▱','Biblioteca'],['Projeção','▶','Projetor'],['Bíblia','▤','Bíblia'],['Sorteadores','⤨','Sorteadores'],['Datas especiais','✧','Datas especiais'],['Mais','☰','Mais ferramentas']].map(([t,i,n])=>'<button class="sidebar-link '+(current===t?'active':'')+'" onclick="go(\''+t+'\')"><span>'+i+'</span>'+n+'</button>').join('')+(canManageSite()?'<div class="sidebar-heading sidebar-heading-later">ADMINISTRAÇÃO</div>'+(cloudRole==='founder'?'<button class="sidebar-link '+(current==='Fundador'?'active':'')+'" onclick="go(\'Fundador\')"><span>♛</span>Painel do fundador</button>':'')+'<button class="sidebar-link '+(current==='Acervo'?'active':'')+'" onclick="go(\'Acervo\')"><span>▧</span>Acervo do site</button>':'');
 $('desktop-sidebar').innerHTML+=customTabs.map(t=>'<button class="sidebar-link '+(current==='custom:'+t.id?'active':'')+'" onclick="go(\'custom:'+t.id+'\')"><span>'+esc(t.icon)+'</span>'+esc(t.title)+'</button>').join('')+(canManageSite()?'<button class="sidebar-link" onclick="newTab()"><span>＋</span>Criar aba</button>':'');
 $('tabs').innerHTML=nav.map(([t,i,n])=>'<button class="'+(current===t?'active ':'')+(t==='Projeção'?'projectnav':'')+'" onclick="go(\''+t+'\')"><span>'+i+'</span>'+n+'</button>').join('');
 let out='';
-if(current==='Painel'){ensureSchedules()}if(current==='Painel')out='<div class="home-wireframe"><div class="home-wireframe-main"><div class="home-wireframe-brand"><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div><section class="home-wireframe-welcome">'+(siteAssets.home_banner&&/\\.(mp4|webm|mov)$/i.test(siteAssets.home_banner)?'<div class="site-video-banner"><video autoplay muted loop playsinline src="'+esc(imageUrl(siteAssets.home_banner))+'"></video></div>':'')+'<div class="hero'+(siteAssets.home_banner?' has-custom-banner':'')+'">'+(siteAssets.home_banner&&!/\\.(mp4|webm|mov)$/i.test(siteAssets.home_banner)?'<img class="hero-custom-image" src="'+esc(imageUrl(siteAssets.home_banner))+'" style="'+coverImageStyle(Number(assetFrames.home_banner?.position_x??50),Number(assetFrames.home_banner?.position_y??50),Number(assetFrames.home_banner?.zoom??1))+'" alt="">':'')+'<span class="eyebrow">BEM-VINDO</span><h2>Organize, projete<br>e <em>edifique.</em></h2><span class="goldline"></span><p>Ferramentas para tornar seu culto mais eficiente e abençoado.</p><span class="hero-watermark">✦</span></div>'+(canManageSite()?'<button class="home-banner-edit" onclick="editCover(\'home_banner\')">✎ Editar banner</button>':'')+quickHome()+'<div class="verse-card"><span class="stripe"></span><div><blockquote>“Tudo o que fizerem, façam de todo o coração, como para o Senhor.”</blockquote><small>COLOSSENSES 3:23</small></div></div></section></div><aside class="home-wireframe-aside"><div class="home-today-head"><small>AGENDA DA IGREJA</small><h2>Cronograma de hoje</h2></div>'+(cloudSchedules.length?'<div class="panel home-schedule"><div class="sectionhead"><h2>'+esc(cloudSchedules.find(g=>g.id===selectedSchedule)?.name||cloudSchedules[0].name)+'</h2><button onclick="go(\'Cronograma\')">Ver completo ›</button></div>'+scheduleList((cloudSchedules.find(g=>g.id===selectedSchedule)||cloudSchedules[0]).items)+'</div>':'')+'</aside></div>';
+if(current==='Painel'){ensureSchedules()}if(current==='Painel'){
+ const today=new Date().toLocaleDateString('en-CA');
+ const todays=cloudSchedules.filter(g=>g.date===today);
+ const featured=todays[0]||null;
+ const dateLabel=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+ out='<div class="app-dashboard"><div class="dashboard-identity"><span class="identity-mark" aria-hidden="true">✦</span><div><h1>IASD <em>APP</em></h1><p>SONOPLASTIA & PROJEÇÃO</p></div></div><div class="dashboard-grid"><div class="dashboard-primary"><section class="dashboard-welcome"><div class="dashboard-hero '+(siteAssets.home_banner?'has-custom-banner':'')+'">'+(siteAssets.home_banner&&/\\.(mp4|webm|mov)$/i.test(siteAssets.home_banner)?'<video class="hero-custom-image" autoplay muted loop playsinline src="'+esc(imageUrl(siteAssets.home_banner))+'"></video>':siteAssets.home_banner?'<img class="hero-custom-image" src="'+esc(imageUrl(siteAssets.home_banner))+'" style="'+coverImageStyle(Number(assetFrames.home_banner?.position_x??50),Number(assetFrames.home_banner?.position_y??50),Number(assetFrames.home_banner?.zoom??1))+'" alt="">':'')+'<div class="dashboard-hero-content"><span class="dashboard-kicker">BEM-VINDO AO IASD APP</span><h2>Organize, projete<br>e <em>edifique.</em></h2><p>Tudo para tornar seu culto mais organizado, eficiente e inspirador.</p></div>'+(canManageSite()?'<button class="dashboard-edit" onclick="editCover(\'home_banner\')">✎ Editar banner</button>':'')+'</div><div class="dashboard-tools"><label for="dashboard-search">ENCONTRE SUA FERRAMENTA</label><div class="dashboard-search"><span aria-hidden="true">⌕</span><input id="dashboard-search" type="search" placeholder="Pesquisar acessos rápidos..." oninput="filterHomeQuick(this.value)" autocomplete="off"></div><div class="dashboard-verse"><span class="verse-symbol">✧</span><div><blockquote>“Tudo o que fizerem, façam de todo o coração, como para o Senhor.”</blockquote><small>COLOSSENSES 3:23</small></div></div></div></section>'+quickHome()+'</div><aside class="dashboard-agenda"><div class="agenda-heading"><div><span class="agenda-eyebrow">AGENDA DA IGREJA</span><h2>Cronograma de hoje</h2><p>'+esc(dateLabel)+'</p></div><span class="agenda-heading-icon" aria-hidden="true">▦</span></div>'+(featured?'<div class="agenda-program"><strong>'+esc(featured.name)+'</strong><span>'+esc(featured.items.length)+' atividades</span></div><div class="agenda-events">'+scheduleList(featured.items)+'</div>':'<div class="agenda-empty"><span aria-hidden="true">✧</span><strong>Nenhum cronograma para hoje</strong><p>As próximas programações aparecerão aqui quando forem cadastradas.</p></div>')+'<button class="agenda-view" onclick="go(\'Cronograma\')">Ver cronogramas <span>↗</span></button></aside></div></div>';
+}
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
 if(current==='Projeção')out='<div class="sectionhead"><h2>Controle de projeção</h2></div><div class="panel"><h2>Prévia da tela</h2><div id="stage">'+esc(data.stage)+'</div><textarea id="custom" rows="4" placeholder="Digite o texto para projetar"></textarea><div class="actions"><button class="primary" onclick="project($(\'custom\').value)">▶ Projetar</button><button onclick="project(\'\')">Tela preta</button><button onclick="openProjection()">▣ Segunda tela</button><button style="background:#69333a" onclick="stopProjection()">■ Parar projeção</button></div><p class="muted">A segunda tela funciona no mesmo navegador. O controle entre dispositivos será adicionado em outra etapa.</p></div>';
 if(current==='Cronograma')out=schedulePage();
