@@ -251,7 +251,40 @@ body .panel.home-schedule button{background:#e8f1fb!important;color:#1c476f!impo
 .cover-preview.portrait{position:relative!important;width:180px!important;height:282px!important;margin:0 auto;display:block!important;overflow:hidden!important}
 .cover-preview.portrait img.quick-backdrop{position:absolute!important;inset:-12%!important;width:124%!important;height:124%!important;max-width:none!important;object-fit:cover!important;filter:blur(16px) brightness(.65);transform:none!important}
 .cover-preview.portrait img.quick-foreground{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:contain!important;pointer-events:none!important}
-</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+
+/* Tema escuro IASD APP: padrão claro preservado. */
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"] body{background:radial-gradient(ellipse at 78% 4%,#203f60 0%,transparent 46%),#0c1725!important;color:#eaf2fc!important}
+html[data-theme="dark"] header{background:#101f31!important;border-color:#29435f!important;color:#eaf2fc!important}
+html[data-theme="dark"] header h1,html[data-theme="dark"] header small{color:#f3f7fd!important}
+html[data-theme="dark"] .desktop-sidebar{background:#0b1b2c!important;border-color:#29435f!important}
+html[data-theme="dark"] .desktop-sidebar button{color:#dceafa!important}
+html[data-theme="dark"] .desktop-sidebar button:hover,html[data-theme="dark"] .desktop-sidebar button.active{background:#1d4164!important;color:#fff!important}
+html[data-theme="dark"] main,html[data-theme="dark"] #content{color:#eaf2fc}
+html[data-theme="dark"] .panel,html[data-theme="dark"] .tile,html[data-theme="dark"] .card,html[data-theme="dark"] .schedule-card,html[data-theme="dark"] .section-card{background:#15283e!important;color:#eaf2fc!important;border-color:#294866!important;box-shadow:0 8px 28px #030b1638!important}
+html[data-theme="dark"] .panel h2,html[data-theme="dark"] .panel h3,html[data-theme="dark"] .tile strong,html[data-theme="dark"] .sectionhead h2,html[data-theme="dark"] .event strong{color:#f1f6ff!important}
+html[data-theme="dark"] .muted,html[data-theme="dark"] .panel p,html[data-theme="dark"] .tile small,html[data-theme="dark"] .event small{color:#aec4dc!important}
+html[data-theme="dark"] input:not([type="range"]):not([type="file"]),html[data-theme="dark"] textarea,html[data-theme="dark"] select{background:#102136!important;color:#edf5ff!important;border-color:#395575!important}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#91a8c0!important}
+html[data-theme="dark"] .bottomnav{background:#10253b!important;border-color:#294866!important}
+html[data-theme="dark"] .bottomnav button{color:#dceafa!important}
+html[data-theme="dark"] .bottomnav button.active{color:#f7d69c!important}
+html[data-theme="dark"] .account-trigger,html[data-theme="dark"] .preview-launch,html[data-theme="dark"] .quick-add{background:#203b58!important;color:#f1f7ff!important;border-color:#365b80!important}
+html[data-theme="dark"] .quick-section h2{color:#f1f7ff!important}
+html[data-theme="dark"] .quick-card{border-color:#3a6185!important}
+html[data-theme="dark"] .cover-dialog{background:#14283f!important;color:#f1f7ff!important}
+html[data-theme="dark"] .cover-body{background:#14283f!important}
+html[data-theme="dark"] .cover-body p{color:#b3cbe4!important}
+html[data-theme="dark"] .cover-footer{background:#1b3552!important;color:#edf5ff!important}
+html[data-theme="dark"] .cover-footer button{background:#2d5073;color:#fff}
+html[data-theme="dark"] .cover-footer .primary{background:#3979b5}
+html[data-theme="dark"] .cover-gallery button{background:#244463}
+html[data-theme="dark"] .hero,html[data-theme="dark"] .home-schedule{color:#fff!important}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;padding:9px 13px;border-radius:11px;background:#fff;color:#234766;border:1px solid #d5e2f0;font-size:12px;font-weight:750;white-space:nowrap}
+.theme-toggle:hover{border-color:#7ca7d2}
+html[data-theme="dark"] .theme-toggle{background:#263f5c;color:#f8e2b3;border-color:#466585}
+@media(max-width:620px){.theme-toggle{padding:9px;min-width:40px}.theme-toggle .theme-label{display:none}}
+</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo escuro" title="Alternar tema"><span id="theme-icon">☾</span><span class="theme-label" id="theme-label">Escuro</span></button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
 async function initCloud(){if(!cloud){cloudMessage='Não foi possível carregar a conexão. Verifique sua internet.';render();return}const {data:{session}}=await cloud.auth.getSession();cloudUser=session?.user||null;await Promise.all([loadCloud(),loadActiveTheme(),loadSiteText()]);cloud.auth.onAuthStateChange((_event,session)=>{if(session?.user?.id!==cloudUser?.id){cloudUser=session?.user||null;setTimeout(loadCloud,0)}})}
@@ -542,6 +575,25 @@ function openInlineTextEditor(key,label,original,value){if(!contentEditAllowed()
 function closeInlineTextEditor(){$('inline-editor-root').innerHTML=''}
 async function saveInlineText(key){if(!contentEditAllowed()||siteTextBusy)return;const value=$('iasd-edit-value').value.trim();if(!value){$('iasd-edit-feedback').textContent='O campo não pode ficar vazio.';return}siteTextBusy=true;$('iasd-edit-save').disabled=true;const r=await cloud.from('iasd_site_content').upsert({content_key:key,content_value:value,updated_by:cloudUser.id,updated_at:new Date().toISOString()});siteTextBusy=false;if(r.error){$('iasd-edit-feedback').textContent='Falha ao salvar: '+r.error.message;$('iasd-edit-save').disabled=false;return}siteTextOverrides[key]=value;closeInlineTextEditor();render()}
 async function resetInlineText(key){if(!contentEditAllowed()||siteTextBusy)return;siteTextBusy=true;const r=await cloud.from('iasd_site_content').delete().eq('content_key',key);siteTextBusy=false;if(r.error){$('iasd-edit-feedback').textContent=r.error.message;return}delete siteTextOverrides[key];closeInlineTextEditor();render()}
+
+
+// Preferência visual individual, independente do login.
+function applyTheme(mode){
+ const dark=mode==='dark';
+ document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+ const btn=document.getElementById('theme-toggle');
+ const icon=document.getElementById('theme-icon');
+ const label=document.getElementById('theme-label');
+ if(icon)icon.textContent=dark?'☀':'☾';
+ if(label)label.textContent=dark?'Claro':'Escuro';
+ if(btn){btn.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');btn.title=dark?'Ativar modo claro':'Ativar modo escuro';btn.setAttribute('aria-pressed',String(dark))}
+}
+function toggleTheme(){
+ const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+ try{localStorage.setItem('iasd-app-theme',next)}catch(e){}
+ applyTheme(next);
+}
+try{applyTheme(localStorage.getItem('iasd-app-theme')==='dark'?'dark':'light')}catch(e){applyTheme('light')}
 
 function render(){
 syncAccountUI();
