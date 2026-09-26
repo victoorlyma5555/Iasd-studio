@@ -233,6 +233,17 @@ body .panel.home-schedule button{background:#e8f1fb!important;color:#1c476f!impo
 .cover-preview.portrait{width:min(100%,200px);height:280px;margin:0 auto;display:block;position:relative}
 .cover-preview.logo{width:min(100%,240px);height:240px;margin:0 auto}
 @media(max-width:720px){.cover-preview.portrait{width:min(100%,185px);height:260px}.cover-preview.logo{height:205px}}
+
+/* Capas dos acessos rápidos: imagem inteira, título flutuante e degradê discreto. */
+.quick-card{background:#214b76!important}
+.quick-link{position:relative!important;isolation:isolate;height:282px!important;display:block!important;overflow:hidden!important}
+.quick-cover{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;overflow:hidden!important}
+.quick-cover img,.quick-cover video{display:block;width:100%!important;height:100%!important;object-fit:cover}
+.quick-cover span{display:grid;place-items:center;width:100%;height:100%}
+.quick-link::after{content:"";position:absolute;z-index:1;pointer-events:none;inset:35% 0 0;background:linear-gradient(to bottom,transparent 0%,rgba(8,24,43,.25) 42%,rgba(8,24,43,.86) 100%)}
+.quick-link strong{position:absolute!important;z-index:2;left:14px;right:12px;bottom:28px;padding:0!important;margin:0!important;color:#fff!important;font-size:17px!important;line-height:1.25;text-shadow:0 2px 7px #07182b99}
+.quick-link small{display:none!important}
+.quick-link b{position:absolute!important;z-index:2;left:14px;bottom:11px;margin:0!important;font-size:10px!important;color:#ffdfa1!important}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
