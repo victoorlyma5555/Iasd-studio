@@ -284,7 +284,21 @@ html[data-theme="dark"] .hero,html[data-theme="dark"] .home-schedule{color:#fff!
 .theme-toggle:hover{border-color:#7ca7d2}
 html[data-theme="dark"] .theme-toggle{background:#263f5c;color:#f8e2b3;border-color:#466585}
 @media(max-width:620px){.theme-toggle{padding:9px;min-width:40px}.theme-toggle .theme-label{display:none}}
-</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo escuro" title="Alternar tema"><span id="theme-icon">☾</span><span class="theme-label" id="theme-label">Escuro</span></button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+
+/* O tema escuro é padrão; o controle é flutuante, público e circular. */
+.theme-toggle,.theme-toggle:hover,html[data-theme="dark"] .theme-toggle{
+ position:fixed!important;right:22px!important;bottom:24px!important;top:auto!important;left:auto!important;
+ width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important;
+ border-radius:50%!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ z-index:1200!important;background:#fff!important;color:#1d466d!important;border:1px solid #bed0e2!important;
+ box-shadow:0 8px 28px #0005!important;cursor:pointer!important;transition:transform .2s,background .2s!important
+}
+.theme-toggle:hover{transform:translateY(-3px)!important}
+html[data-theme="dark"] .theme-toggle,html[data-theme="dark"] .theme-toggle:hover{background:#25486b!important;color:#ffdf9d!important;border-color:#6485a4!important}
+.theme-toggle #theme-icon{font-size:25px;line-height:1}
+.theme-toggle .theme-label{display:none!important}
+@media(max-width:899px){.theme-toggle,html[data-theme="dark"] .theme-toggle{right:16px!important;bottom:calc(88px + env(safe-area-inset-bottom,0px))!important;width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important}}
+</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>STUDIO</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
 async function initCloud(){if(!cloud){cloudMessage='Não foi possível carregar a conexão. Verifique sua internet.';render();return}const {data:{session}}=await cloud.auth.getSession();cloudUser=session?.user||null;await Promise.all([loadCloud(),loadActiveTheme(),loadSiteText()]);cloud.auth.onAuthStateChange((_event,session)=>{if(session?.user?.id!==cloudUser?.id){cloudUser=session?.user||null;setTimeout(loadCloud,0)}})}
@@ -593,7 +607,7 @@ function toggleTheme(){
  try{localStorage.setItem('iasd-app-theme',next)}catch(e){}
  applyTheme(next);
 }
-try{applyTheme(localStorage.getItem('iasd-app-theme')==='dark'?'dark':'light')}catch(e){applyTheme('light')}
+try{applyTheme(localStorage.getItem('iasd-app-theme')==='light'?'light':'dark')}catch(e){applyTheme('dark')}
 
 function render(){
 syncAccountUI();
