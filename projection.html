@@ -5,10 +5,11 @@
 body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-serif}
 #out{width:100%;height:100%;display:grid;place-items:center;padding:4vw;text-align:center;font-size:clamp(28px,4.8vw,88px);line-height:1.25;white-space:pre-wrap;overflow-wrap:anywhere}
 #out img,#out video{display:block;max-width:100%;max-height:100%;object-fit:contain}
-#status{position:fixed;bottom:14px;right:15px;padding:6px 10px;background:#17283dba;border-radius:8px;font-size:11px;color:#b8d1e7;opacity:0;transition:opacity .3s}body:hover #status{opacity:1}
-</style></head><body><main id="out" aria-live="polite"></main><div id="status">IASD APP · Projeção conectada · F11 para tela cheia</div>
+#remember{position:fixed;bottom:18px;left:18px;border:1px solid #537c99;background:#193952;color:white;border-radius:10px;padding:11px 15px;cursor:pointer;font:600 13px system-ui;opacity:.3}body:hover #remember,#remember:focus{opacity:1}#status{position:fixed;bottom:14px;right:15px;padding:6px 10px;background:#17283dba;border-radius:8px;font-size:11px;color:#b8d1e7;opacity:0;transition:opacity .3s}body:hover #status{opacity:1}
+</style></head><body><main id="out" aria-live="polite"></main><button id="remember" type="button" title="Depois de mover a janela para a segunda tela, clique aqui">📌 Memorizar esta tela</button><div id="status">IASD APP · Projeção conectada · F11 para tela cheia</div>
 <script>
 const out=document.getElementById('out');
+document.getElementById('remember').addEventListener('click',()=>{const placement={left:window.screenX,top:window.screenY,width:window.outerWidth,height:window.outerHeight};localStorage.setItem('iasd-projection-placement',JSON.stringify(placement));document.getElementById('remember').textContent='✓ Tela memorizada';if(window.opener)try{window.opener.postMessage({type:'projection-placement-saved'},location.origin)}catch(e){}});
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
