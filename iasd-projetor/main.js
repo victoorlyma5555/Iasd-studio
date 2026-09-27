@@ -4,6 +4,30 @@ const http=require('node:http');
 const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
+const zlib=require('node:zlib');
+// Ícone PNG desenhado localmente, sem depender de arquivos externos.
+function createTrayIcon(){
+ const n=32,pixels=Buffer.alloc(n*(1+n*4));
+ function dot(x,y,r,g,b,a=255){if(x<0||y<0||x>=n||y>=n)return;const i=y*(1+n*4)+1+x*4;pixels[i]=r;pixels[i+1]=g;pixels[i+2]=b;pixels[i+3]=a;}
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+  // Fundo azul com cantos arredondados.
+  const dx=Math.max(5-x,0,x-26),dy=Math.max(5-y,0,y-26);
+  if(dx*dx+dy*dy<=25)dot(x,y,12,42,82);
+  // Tela branca com interior azul-escuro.
+  if(x>=5&&x<=26&&y>=7&&y<=22)dot(x,y,236,246,255);
+  if(x>=7&&x<=24&&y>=9&&y<=20)dot(x,y,21,80,126);
+  // Feixe de projeção amarelo.
+  if(x>=12&&x<=19&&y>=12&&y<=17&&Math.abs(y-14.5)<=Math.floor((x-11)/2)+1)dot(x,y,255,204,65);
+  if(y>=23&&y<=25&&x>=14&&x<=17)dot(x,y,236,246,255);
+  if(y===26&&x>=10&&x<=21)dot(x,y,236,246,255);
+ }
+ const crcTable=Array.from({length:256},(_,i)=>{let c=i;for(let j=0;j<8;j++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0});
+ function chunk(type,data){const name=Buffer.from(type),len=Buffer.alloc(4),crc=Buffer.alloc(4);len.writeUInt32BE(data.length);let c=0xffffffff;for(const b of Buffer.concat([name,data]))c=crcTable[(c^b)&255]^(c>>>8);crc.writeUInt32BE((c^0xffffffff)>>>0);return Buffer.concat([len,name,data,crc]);}
+ const header=Buffer.alloc(13);header.writeUInt32BE(n,0);header.writeUInt32BE(n,4);header[8]=8;header[9]=6;
+ const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',header),chunk('IDAT',zlib.deflateSync(pixels)),chunk('IEND',Buffer.alloc(0))]);
+ return nativeImage.createFromBuffer(png);
+}
+
 // Apenas uma instância pode usar a porta local de projeção.
 const primaryInstance=app.requestSingleInstanceLock();
 if(!primaryInstance){app.quit();}
@@ -64,7 +88,7 @@ async function handler(req,res){
 }
 if(primaryInstance)app.whenReady().then(()=>{
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?[]:['.']});
- tray=new Tray(nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jB9sAAAAASUVORK5CYII='));
+ tray=new Tray(createTrayIcon());
  tray.setToolTip('IASD Projetor');
  tray.setContextMenu(Menu.buildFromTemplate([
   {label:'Mostrar código de pareamento',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'Código de pareamento: '+pairingCode,detail:'Digite este código no painel do sonoplasta. Compartilhe apenas com operadores autorizados.'})},
