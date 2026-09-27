@@ -44,6 +44,7 @@ function feedback(s){$('feedback').textContent=s}
 function toggleTestimonyDrawer(mode){const d=$('testimonyDrawer');const open=mode&&(!d.classList.contains('open')||d.dataset.mode!==mode);d.classList.toggle('open',!!open);d.dataset.mode=open?mode:'';$('testimonyManage').classList.toggle('hide',mode!=='manage'||!open);$('testimonyImport').classList.toggle('hide',mode!=='import'||!open);$('testimonyDrawerTitle').textContent=mode==='import'?'Importar vídeo do computador':'Gerenciar vídeos adicionais';requestStudioHeight()}
 function closeTestimonyProjection(){const player=$('testimonyPlayer');if(player)player.pause();project('');$('testimonyEmbed').replaceChildren();selectedYouTube.testimony=null;$('testimonyChosen').textContent='Vídeo fechado. Escolha outro quando desejar.';feedback('Vídeo encerrado no telão.')}
 
+window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='iasd-studio-error')feedback(e.data.message)});
 function closeScreen(){call('stopProjection');mirrorProjection('');feedback('Comando para fechar o telão enviado.')}
 function blackScreen(){project('');feedback('Tela preta enviada.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
