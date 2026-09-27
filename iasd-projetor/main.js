@@ -1,5 +1,5 @@
 'use strict';
-const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage}=require('electron');
+const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell}=require('electron');
 const http=require('node:http');
 const crypto=require('node:crypto');
 const fs=require('node:fs');
@@ -32,12 +32,11 @@ function createTrayIcon(){
 const primaryInstance=app.requestSingleInstanceLock();
 if(!primaryInstance){app.quit();}
 else app.on('second-instance',()=>{
- if(windowRef&&!windowRef.isDestroyed())windowRef.focus();
- else if(tray)tray.displayBalloon?.({title:'IASD Projetor',content:'O aplicativo já está aberto na bandeja do Windows.'});
+ showDashboard();
 });
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
-let tray,windowRef,server;
+let tray,windowRef,dashboardRef,server;
 let pairingCode=String(crypto.randomInt(100000,999999));
 let authToken=null;
 const tokenFile=path.join(app.getPath('userData'),'pairing.json');
@@ -71,6 +70,18 @@ function showProjector(){
  }
  return display;
 }
+function showDashboard(){
+ if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
+ dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
+ dashboardRef.setMenuBarVisibility(false);
+ dashboardRef.loadFile(path.join(__dirname,'dashboard.html'));
+ dashboardRef.on('closed',()=>{dashboardRef=null});
+}
+function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
+ipcMain.handle('iasd:status',()=>({paired:!!authToken,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
+ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
+ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
+ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
 function reply(res,code,data){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){
  if(req.headers.origin!==SITE){res.writeHead(403);res.end();return}
@@ -80,7 +91,10 @@ async function handler(req,res){
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
   if(data.code!==pairingCode){reply(res,403,{error:'Código incorreto'});return}
-  authToken=crypto.randomBytes(32).toString('hex');pairingCode=String(crypto.randomInt(100000,999999));
+  authToken=crypto.randomBytes(32).toString('hex');
+  try{savePairing()}catch(e){authToken=null;reply(res,500,{error:'Falha ao salvar o pareamento'});return}
+  pairingCode=String(crypto.randomInt(100000,999999));
+  if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.reload();
   reply(res,200,{token:authToken});return;
  }
  if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
@@ -102,14 +116,20 @@ async function handler(req,res){
 }
 if(primaryInstance)app.whenReady().then(()=>{
  loadPairing();
- app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?[]:['.']});
+ app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?['--autostart']:['.','--autostart']});
  tray=new Tray(createTrayIcon());
- tray.setToolTip('IASD Projetor');
+ tray.setToolTip('IASD Projetor — aplicativo em execução');
+ tray.on('double-click',showDashboard);
  tray.setContextMenu(Menu.buildFromTemplate([
+  {label:'Abrir IASD Projetor',click:showDashboard},
+  {label:'Abrir IASD APP (site)',click:()=>shell.openExternal(SITE)},
+  {type:'separator'},
   {label:'Mostrar código de pareamento',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'Código de pareamento: '+pairingCode,detail:'Digite este código no painel do sonoplasta. Compartilhe apenas com operadores autorizados.'})},
   {label:'Abrir projeção',click:()=>{try{showProjector()}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
   {label:'Encerrar projeção',click:()=>{if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}},
-  {type:'separator'},{label:'Sair do IASD Projetor',click:()=>app.quit()}
+  {type:'separator'},
+  {label:'Sobre o IASD Projetor',click:()=>dialog.showMessageBox({type:'info',title:'Sobre o IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nProjeto: IASD APP\\nSite: '+SITE})},
+  {label:'Sair do IASD Projetor',click:()=>app.quit()}
  ]));
  server=http.createServer((req,res)=>{void handler(req,res).catch(()=>reply(res,500,{error:'Erro interno'}))});
  server.on('error',error=>{
@@ -120,7 +140,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1');
+ server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard()});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',()=>server?.close());
