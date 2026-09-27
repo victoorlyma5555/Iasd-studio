@@ -17,9 +17,10 @@ body{background:radial-gradient(ellipse at 50% 35%,#13263a 0%,#080e19 56%,#02050
 .bible-slide .bible-reference{color:#e9c990;font-size:clamp(18px,1.8vw,32px);font-weight:700;letter-spacing:.065em;line-height:1.25}
 .bible-slide .bible-version{color:#8c9cae;font-size:clamp(11px,.95vw,17px);font-weight:600;letter-spacing:.18em;text-transform:uppercase}
 @media(max-width:700px){.bible-slide .bible-text{font-size:clamp(25px,4.5vw,48px)}#out.bible-mode{padding:5vh 5vw}}
-</style></head><body><main id="out" aria-live="polite"></main>
+#out.draw-mode{display:flex;flex-direction:column;gap:5vh;justify-content:center}.draw-label{font-size:clamp(24px,3vw,55px);color:#f2d7a3;font-weight:800;letter-spacing:.1em}.draw-number{font-size:clamp(110px,22vw,330px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1;color:#fff;text-shadow:0 0 65px #5279a8}.draw-winner{color:#f4cc75;animation:drawPop .6s ease-out}@keyframes drawPop{0%{transform:scale(.75)}65%{transform:scale(1.15)}100%{transform:scale(1)}}</style></head><body><main id="out" aria-live="polite"></main>
 <script>
 const out=document.getElementById('out');
+let drawSerial=0;
 // Keep the audience display free of on-screen controls.
 // Fullscreen may be denied without a user gesture; never display a fallback button.
 window.addEventListener('load',()=>{
@@ -30,7 +31,7 @@ window.addEventListener('load',()=>{
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
- out.replaceChildren();
+ ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode');
  out.classList.remove('bible-mode');
  if(t.startsWith('IASD_BIBLE:')){
   try{
@@ -45,13 +46,25 @@ function show(value){
    const fit=()=>{let size=parseFloat(getComputedStyle(quote).fontSize);while(slide.scrollHeight>out.clientHeight-30&&size>19){size-=2;quote.style.fontSize=size+'px'}};
    requestAnimationFrame(fit);
   }catch(e){out.textContent='Não foi possível exibir a passagem.'}
+ }else if(t.startsWith('IASD_DRAW_ANIM:')){
+  try{
+   const d=JSON.parse(t.slice('IASD_DRAW_ANIM:'.length));
+   if(!Number.isSafeInteger(d.min)||!Number.isSafeInteger(d.max)||d.max<d.min||d.max-d.min>1000000||!Number.isSafeInteger(d.target)||d.target<d.min||d.target>d.max||d.duration<1000||d.duration>15000)throw Error('Invalid draw');
+   const serial=++drawSerial,start=performance.now();
+   out.classList.add('draw-mode');
+   const label=document.createElement('div');label.className='draw-label';label.textContent='SORTEANDO…';
+   const num=document.createElement('div');num.className='draw-number';num.textContent=String(d.min);
+   out.append(label,num);
+   function roll(now){if(serial!==drawSerial)return;const elapsed=now-start;num.textContent=String(elapsed>=d.duration?d.target:d.min+Math.floor(Math.random()*(d.max-d.min+1)));if(elapsed<d.duration){setTimeout(()=>requestAnimationFrame(roll),45+Math.pow(elapsed/d.duration,3)*300)}else{label.textContent='NÚMERO SORTEADO';num.classList.add('draw-winner')}}
+   requestAnimationFrame(roll);
+  }catch(e){out.textContent='Não foi possível iniciar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW:')){
   const value=t.slice('IASD_DRAW:'.length);out.textContent='NÚMERO SORTEADO\\n'+value;
  }else if(t.startsWith('IASD_LOCAL_MEDIA:')){
   try{
    const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
    if(!['audio','video'].includes(media.kind)||typeof media.url!=='string'||!media.url.startsWith('blob:'+location.origin+'/'))throw Error('Arquivo inválido');
-   const el=document.createElement(media.kind);el.src=media.url;el.controls=true;el.autoplay=true;el.style.maxWidth='100%';el.style.maxHeight='85vh';out.append(el);
+   const el=document.createElement(media.kind);el.src=media.url;el.controls=true;el.autoplay=true;el.volume=Math.max(0,Math.min(1,Number(media.volume??.75)));el.style.maxWidth='100%';el.style.maxHeight='85vh';out.append(el);
    el.play().catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
   }catch(e){out.textContent='Não foi possível carregar esta mídia. Abra o telão neste navegador e tente novamente.'}
  }else if(t.startsWith('IASD_IMAGE:')){
