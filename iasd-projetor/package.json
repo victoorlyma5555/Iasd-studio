@@ -26,7 +26,18 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "victoorlyma5555",
+        "repo": "Iasd-studio"
+      }
+    ]
   },
-  "author": "IASD APP"
+  "author": "IASD APP",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/victoorlyma5555/Iasd-studio.git"
+  }
 }
