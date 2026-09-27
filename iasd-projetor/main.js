@@ -57,16 +57,51 @@ function chooseDisplay(){
  const displays=screen.getAllDisplays();
  return displays.find(d=>d.id!==screen.getPrimaryDisplay().id)||null;
 }
+// Exibe o telão no monitor secundário e solicita foco após a janela estar pronta.
+// O Windows pode limitar a ativação de aplicativos em segundo plano.
+function activateProjector(win,display){
+ if(!win||win.isDestroyed())return;
+ win.setBounds(display.bounds);
+ win.show();
+ win.setFullScreen(true);
+ win.setAlwaysOnTop(true,'screen-saver');
+ win.moveTop();
+ win.focus();
+ // A prioridade elevada é temporária: não prender o telão acima de outras janelas.
+ setTimeout(()=>{
+  if(!win.isDestroyed()){
+   win.setAlwaysOnTop(false);
+   win.moveTop();
+   win.focus();
+  }
+ },900);
+}
 function showProjector(){
  const display=chooseDisplay();
  if(!display)throw Error('Conecte um segundo monitor e use o modo Estender do Windows.');
  if(!windowRef||windowRef.isDestroyed()){
-  windowRef=new BrowserWindow({x:display.bounds.x,y:display.bounds.y,width:display.bounds.width,height:display.bounds.height,frame:false,fullscreen:true,autoHideMenuBar:true,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
-  windowRef.loadURL(SITE+'/projection.html');
+  const win=new BrowserWindow({
+   x:display.bounds.x,y:display.bounds.y,
+   width:display.bounds.width,height:display.bounds.height,
+   show:false,frame:false,fullscreen:false,autoHideMenuBar:true,
+   backgroundColor:'#000',
+   webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}
+  });
+  windowRef=win;
+  let activated=false;
+  const activateOnce=()=>{
+   if(activated||win.isDestroyed())return;
+   activated=true;
+   activateProjector(win,display);
+  };
+  win.once('ready-to-show',activateOnce);
+  win.webContents.once('did-finish-load',activateOnce);
+  win.loadURL(SITE+'/projection.html').catch(e=>console.error('Falha ao carregar o telão:',e.message));
+  // Não deixe a projeção invisível caso o carregamento demore.
+  setTimeout(activateOnce,1200);
+  win.on('closed',()=>{if(windowRef===win)windowRef=null});
  }else{
-  windowRef.setBounds(display.bounds);
-  windowRef.setFullScreen(true);
-  windowRef.show();
+  activateProjector(windowRef,display);
  }
  return display;
 }
