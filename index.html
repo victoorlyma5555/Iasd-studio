@@ -840,7 +840,7 @@ async function configureProjectionScreen(){
   preferredProjectionScreen=secondary;
   const p={left:secondary.availLeft??secondary.left,top:secondary.availTop??secondary.top,width:secondary.availWidth??secondary.width,height:secondary.availHeight??secondary.height};
   localStorage.setItem('iasd-projection-placement',JSON.stringify(p));
-  projectionFeedback('Segundo monitor configurado! Projetar abrirá diretamente nessa tela.');
+  projectionFeedback('Monitor 2 configurado! Feche o projetor atual e clique em Projetar para tentar abrir diretamente em tela cheia.');
   return true;
  }catch(e){console.warn('Monitores',e);projectionFeedback('Permita gerenciar janelas no navegador. Se não funcionar, use Chrome.',true);return false}
 }
@@ -891,16 +891,16 @@ function openProjection(){
  if(canReachProjection()){sendProjection(data.stage||'');return true}
  const url=new URL('projection.html',location.href).href;
  const saved=savedProjectionPlacement();
- const features=saved?'popup,left='+Math.round(saved.left)+',top='+Math.round(saved.top)+',width='+Math.round(saved.width)+',height='+Math.round(saved.height):'popup,width=1100,height=700';
- // Open synchronously from the click, then position before loading the projector page.
- const w=window.open('about:blank','iasd-projection',features);
+ // Request fullscreen during the original click; delayed requests lose user activation.
+ const bounds=saved?',left='+Math.round(saved.left)+',top='+Math.round(saved.top)+',width='+Math.round(saved.width)+',height='+Math.round(saved.height):',width=1100,height=700';
+ const w=window.open(url,'iasd-projection','popup,fullscreen'+bounds);
  if(!w){projectionFeedback('O navegador bloqueou a janela. Permita pop-ups para o IASD APP.',true);return false}
  projectionWindow=w;
- try{w.document.title='IASD APP · Preparando projetor';w.document.body.style='margin:0;background:black;color:white;font:20px system-ui;display:grid;place-items:center;height:100vh';w.document.body.textContent='Preparando a segunda tela…'}catch(e){}
- projectionFeedback('Localizando o segundo monitor…');
- void positionProjectionOnSecondScreen(w).then(()=>{
-  if(canReachProjection())w.location.replace(url);
- });
+ if(saved)projectionFeedback('Projetor aberto no monitor configurado. Solicitando tela cheia ao Chrome…');
+ else{
+  projectionFeedback('Para abrir diretamente em tela cheia no monitor 2, configure o monitor antes de projetar.');
+  void positionProjectionOnSecondScreen(w);
+ }
  return true;
 }
 window.addEventListener('message',e=>{
