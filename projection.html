@@ -47,6 +47,16 @@ function show(value){
    const fit=()=>{let size=parseFloat(getComputedStyle(quote).fontSize);while(slide.scrollHeight>out.clientHeight-30&&size>19){size-=2;quote.style.fontSize=size+'px'}};
    requestAnimationFrame(fit);
   }catch(e){out.textContent='Não foi possível exibir a passagem.'}
+ }else if(t.startsWith('IASD_DRAW_READY:')){
+  try{
+   const d=JSON.parse(t.slice('IASD_DRAW_READY:'.length));
+   if(!Number.isSafeInteger(d.min)||!Number.isSafeInteger(d.max)||d.max<d.min||d.max-d.min>1000000)throw Error('Invalid range');
+   out.classList.add('draw-mode');
+   const label=document.createElement('div');label.className='draw-label';label.textContent='SORTEIO DE NÚMEROS';
+   const range=document.createElement('div');range.className='draw-number';range.style.fontSize='clamp(54px,11vw,160px)';range.style.color='#f4cc75';range.textContent=d.min+' – '+d.max;
+   const hint=document.createElement('div');hint.style.fontSize='clamp(20px,2vw,34px)';hint.style.color='#d4dce9';hint.textContent='Aguardando início do sorteio';
+   out.append(label,range,hint);
+  }catch(e){out.textContent='Não foi possível preparar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW_ANIM:')){
   try{
    const d=JSON.parse(t.slice('IASD_DRAW_ANIM:'.length));
