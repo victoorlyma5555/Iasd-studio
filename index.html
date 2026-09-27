@@ -1286,7 +1286,19 @@ async function fetchBibleChapter(book,chapter){
   if(!Array.isArray(result.verses)||!result.verses.length)throw Error('Capítulo não encontrado');
   const verses=result.verses.filter(v=>Number(v.chapter)===Number(chapter)&&Number.isInteger(Number(v.verse))&&typeof v.text==='string').sort((a,b)=>a.verse-b.verse);
   if(!verses.length)throw Error('Capítulo não encontrado na tradução');
-  return verses;
+  // A consulta de versículos individuais permite recuperar eventuais lacunas da resposta do capítulo.
+  const byNumber=new Map(verses.map(v=>[Number(v.verse),v]));
+  const highest=Math.max(...byNumber.keys()),missing=Array.from({length:highest},(_,i)=>i+1).filter(n=>!byNumber.has(n));
+  if(missing.length&&missing.length<=15){
+   await Promise.all(missing.map(async n=>{
+    try{const url='https://bible-api.com/'+encodeURIComponent(book+' '+chapter+':'+n)+'?translation=almeida';
+     const response=await fetch(url);if(!response.ok)return;
+     const item=await response.json();const verse=item.verses?.find(v=>Number(v.chapter)===chapter&&Number(v.verse)===n&&typeof v.text==='string');
+     if(verse)byNumber.set(n,verse);
+    }catch(e){}
+   }));
+  }
+  return [...byNumber.values()].sort((a,b)=>a.verse-b.verse);
  })();
  bibleChapterCache.set(key,promise);
  try{return await promise}catch(e){bibleChapterCache.delete(key);throw e}
