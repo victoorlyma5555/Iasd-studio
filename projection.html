@@ -88,6 +88,18 @@ function show(value){
   }catch(e){out.textContent='Não foi possível iniciar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW:')){
   const value=t.slice('IASD_DRAW:'.length);out.classList.add('draw-mode');const label=document.createElement('div');label.className='draw-label';label.textContent='NÚMERO SORTEADO';const num=document.createElement('div');num.className='draw-number draw-winner';num.textContent=value;out.append(label,num);celebrateDraw(drawSerial);
+ }else if(t.startsWith('IASD_YOUTUBE:')){
+  try{
+   const media=JSON.parse(t.slice('IASD_YOUTUBE:'.length));
+   if(typeof media.id!=='string'||!/^[a-zA-Z0-9_-]{11}$/.test(media.id))throw Error('ID inválido');
+   const wrap=document.createElement('div');wrap.style.cssText='width:100%;height:100%;display:grid;place-items:center';
+   const frame=document.createElement('iframe');
+   frame.src='https://www.youtube-nocookie.com/embed/'+media.id+'?autoplay='+(isPreview?'0':'1')+'&rel=0&playsinline=1';
+   frame.title='Vídeo do YouTube';frame.allow='autoplay;encrypted-media;picture-in-picture;fullscreen';
+   frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';
+   frame.style.cssText='width:100%;height:100%;border:0;aspect-ratio:16/9;max-height:100vh';
+   wrap.append(frame);out.append(wrap);
+  }catch(e){out.textContent='Não foi possível preparar o vídeo do YouTube.'}
  }else if(t.startsWith('IASD_LOCAL_MEDIA:')){
   try{
    const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
