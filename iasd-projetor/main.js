@@ -40,6 +40,20 @@ const PORT=38741;
 let tray,windowRef,server;
 let pairingCode=String(crypto.randomInt(100000,999999));
 let authToken=null;
+const tokenFile=path.join(app.getPath('userData'),'pairing.json');
+function loadPairing(){
+ try{
+  const saved=JSON.parse(fs.readFileSync(tokenFile,'utf8'));
+  if(typeof saved.token==='string'&&/^[a-f0-9]{64}$/.test(saved.token))authToken=saved.token;
+ }catch(e){if(e.code!=='ENOENT')console.warn('Não foi possível recuperar o pareamento:',e.message)}
+}
+function savePairing(){
+ fs.mkdirSync(path.dirname(tokenFile),{recursive:true});
+ const temp=tokenFile+'.tmp';
+ fs.writeFileSync(temp,JSON.stringify({token:authToken}),{encoding:'utf8',mode:0o600});
+ fs.renameSync(temp,tokenFile);
+}
+
 function chooseDisplay(){
  const displays=screen.getAllDisplays();
  return displays.find(d=>d.id!==screen.getPrimaryDisplay().id)||null;
@@ -87,6 +101,7 @@ async function handler(req,res){
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
+ loadPairing();
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?[]:['.']});
  tray=new Tray(createTrayIcon());
  tray.setToolTip('IASD Projetor');
