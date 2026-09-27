@@ -54,7 +54,20 @@ function show(value){
 const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('iasd-stage'):null;
 if(channel){channel.onmessage=e=>show(e.data);channel.postMessage({type:'projection-ready'})}
 window.addEventListener('storage',e=>{if(e.key==='iasd-stage')show(e.newValue)});
-window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.type==='iasd-project')show(e.data.content)});
+async function setProjectionFullscreen(enable){
+ try{
+  if(enable&&!document.fullscreenElement)await document.documentElement.requestFullscreen({navigationUI:'hide'});
+  if(!enable&&document.fullscreenElement)await document.exitFullscreen();
+  window.opener?.postMessage({type:'projection-fullscreen-result',active:!!document.fullscreenElement},location.origin);
+ }catch(e){
+  window.opener?.postMessage({type:'projection-fullscreen-result',active:!!document.fullscreenElement,blocked:true},location.origin);
+ }
+}
+window.addEventListener('message',e=>{
+ if(e.origin!==location.origin||!e.data)return;
+ if(e.data.type==='iasd-project')show(e.data.content);
+ if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
+});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
 </script></body></html>
