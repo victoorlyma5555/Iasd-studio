@@ -36,6 +36,8 @@ const PROVAI_E_VEDE_LIBRARY=[
  {id:'v1JPsp-laDI',title:'Construindo com fé',year:2025},
  {id:'bB1yXGDvW7A',title:'Fiel em meio ao caos',year:2025},
  {id:'TjLbQ0FE8S0',title:'Cuidando do templo',year:2025},
+ {id:'0Ik4D-NAyog',title:'O Deus que sabe dos detalhes',year:2025},
+ {id:'LXT1wTPu4ac',title:'O Relógio de Deus',year:2025},
  {id:'WuhE6_vCcRY',title:'Cada ato, um testemunho (Libras)',year:2025}
 ];
 function youtubeId(url){try{const u=new URL(url.trim());const h=u.hostname.toLowerCase();let id='';if(h==='youtu.be'||h==='www.youtu.be')id=u.pathname.slice(1).split('/')[0];else if(['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(h)){id=u.searchParams.get('v')||u.pathname.split('/')[2]||''}return /^[a-zA-Z0-9_-]{11}$/.test(id)?id:null}catch{return null}}
