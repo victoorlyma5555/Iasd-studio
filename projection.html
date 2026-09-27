@@ -52,7 +52,7 @@ function celebrateDraw(serial){
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
- ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode');
+ ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode');
  out.classList.remove('bible-mode');
  if(t.startsWith('IASD_BIBLE:')){
   try{
