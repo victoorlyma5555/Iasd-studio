@@ -45,6 +45,15 @@ function show(value){
    const fit=()=>{let size=parseFloat(getComputedStyle(quote).fontSize);while(slide.scrollHeight>out.clientHeight-30&&size>19){size-=2;quote.style.fontSize=size+'px'}};
    requestAnimationFrame(fit);
   }catch(e){out.textContent='Não foi possível exibir a passagem.'}
+ }else if(t.startsWith('IASD_DRAW:')){
+  const value=t.slice('IASD_DRAW:'.length);out.textContent='NÚMERO SORTEADO\\n'+value;
+ }else if(t.startsWith('IASD_LOCAL_MEDIA:')){
+  try{
+   const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
+   if(!['audio','video'].includes(media.kind)||typeof media.url!=='string'||!media.url.startsWith('blob:'+location.origin+'/'))throw Error('Arquivo inválido');
+   const el=document.createElement(media.kind);el.src=media.url;el.controls=true;el.autoplay=true;el.style.maxWidth='100%';el.style.maxHeight='85vh';out.append(el);
+   el.play().catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
+  }catch(e){out.textContent='Não foi possível carregar esta mídia. Abra o telão neste navegador e tente novamente.'}
  }else if(t.startsWith('IASD_IMAGE:')){
   const url=t.slice(11);
   if(url.startsWith(allowed)){const img=document.createElement('img');img.src=url;img.alt='Imagem projetada';out.append(img)}
@@ -67,6 +76,7 @@ window.addEventListener('message',e=>{
  if(e.origin!==location.origin||!e.data)return;
  if(e.data.type==='iasd-project')show(e.data.content);
  if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
+ if(e.data.type==='iasd-studio-volume'){const v=Math.max(0,Math.min(1,Number(e.data.value)||0));out.querySelectorAll('audio,video').forEach(el=>el.volume=v)}
 });
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
