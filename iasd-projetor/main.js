@@ -121,7 +121,7 @@ ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){ret
 ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
 function reply(res,code,data){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){
- if(req.headers.origin!==SITE){res.writeHead(403);res.end();return}
+ if(req.headers.origin!==SITE&&!(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')&&!req.headers.origin)){res.writeHead(403);res.end();return}
  if(req.method==='OPTIONS'){reply(res,204,{});return}
  if(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')){
   const id=req.url.slice(7),item=mediaFiles.get(id);if(!item){reply(res,404,{error:'Mídia não encontrada'});return}
