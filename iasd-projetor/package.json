@@ -8,11 +8,10 @@
     "start": "electron .",
     "dist": "electron-builder --win nsis"
   },
-  "dependencies": {
-    "electron": "^35.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "electron": "^35.0.0"
   },
   "build": {
     "appId": "br.iasd.projetor",
@@ -28,5 +27,6 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
     }
-  }
+  },
+  "author": "IASD APP"
 }
