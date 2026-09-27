@@ -560,12 +560,13 @@ html[data-theme="light"] .app-dashboard .quick-section .sectionhead h2{color:#19
 @media(max-width:900px){.dashboard-grid{grid-template-columns:minmax(0,1fr)}.dashboard-agenda{max-height:none;min-height:270px}.agenda-events{max-height:480px}.app-dashboard{padding-bottom:30px}}
 @media(max-width:600px){.dashboard-identity{margin:3px 0 17px}.dashboard-identity h1{font-size:25px}.dashboard-grid{gap:16px}.dashboard-primary{gap:16px}.dashboard-hero{min-height:200px;padding:20px 17px}.dashboard-hero h2{font-size:29px}.dashboard-hero p{font-size:12px}.dashboard-edit{top:8px;right:8px;padding:6px;font-size:10px}.dashboard-tools{padding:14px}.app-dashboard .quick-card{flex-basis:135px!important}.app-dashboard .quick-link{height:185px!important}.dashboard-agenda{padding:19px 16px}.dashboard-search input{font-size:16px!important}}
 
-/* Dashboard alignment: the right schedule ends with the quick-access cards on desktop. */
+/* Dashboard: avoid circular grid sizing between the agenda's percentage height
+   and the auto-sized grid row, which can grow the page indefinitely. */
 @media(min-width:901px){
- .app-dashboard .dashboard-grid{align-items:stretch}
+ .app-dashboard .dashboard-grid{align-items:start}
  .app-dashboard .dashboard-primary{min-height:0}
- .app-dashboard .dashboard-agenda{height:100%;min-height:0;max-height:none;overflow:hidden}
- .app-dashboard .agenda-events{min-height:0;flex:1 1 0;overflow-y:auto;overscroll-behavior:contain}
+ .app-dashboard .dashboard-agenda{align-self:start;height:auto;min-height:0;max-height:850px;overflow:hidden}
+ .app-dashboard .agenda-events{min-height:0;flex:0 1 auto;max-height:480px;overflow-y:auto;overscroll-behavior:contain}
  .app-dashboard .quick-link{height:248px!important}
  .app-dashboard .quick-card{flex-basis:clamp(145px,15.5vw,185px)!important}
 }
@@ -734,6 +735,12 @@ html[data-theme="light"] #content .schedule-group.selected small{color:#73521f!i
 /* Fix: o menu deve permanecer fixo, fora do fluxo do documento. */
 @media(min-width:900px){#desktop-sidebar{position:fixed!important;top:0!important;bottom:0!important;left:0!important;overflow-y:auto!important;height:auto!important}}
 @media(max-width:899px){#desktop-sidebar{display:none!important}}
+
+/* Layout containment: hidden overlays and previews must not enlarge the page. */
+html,body{max-width:100%;overflow-x:clip}
+body>main,#content{min-width:0}
+#content iframe{max-width:100%}
+@media(max-width:900px){.app-dashboard .dashboard-agenda{height:auto;max-height:none}.app-dashboard .agenda-events{max-height:480px;overflow-y:auto}}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-layout-btn" class="preview-launch" onclick="openLayoutStudio()" style="display:none">◈ Layouts</button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
