@@ -92,6 +92,13 @@ const PROVAI_E_VEDE_LIBRARY=[
  {id:'443pA4EvfXY',title:'Um século de doação (2024)',year:2024},
  {id:'apyVsEe-Yrs',title:'Cara ou coroa',year:2026},
  {id:'4OnWrmTJbAo',title:'Mission Refocus',year:2026},
+ {id:'7KQNyUKPot0',title:'Nadando por uma coroa',year:2024},
+ {id:'KGR48Jkxc3o',title:'Medicina para o reino',year:2024},
+ {id:'4i8WTTZqQAg',title:'Colocado à prova',year:2024},
+ {id:'sTDulIHyPn4',title:'Um cuidado maior que a cura',year:2024},
+ {id:'gIRUfuzXxhg',title:'Missão longe da zona de conforto (Libras)',year:2024},
+ {id:'hmBQnKBF5Sk',title:'Alimentando universitários',year:2024},
+ {id:'RC6sy_2XnSw',title:'Alimentando universitários (Libras)',year:2024},
  {id:'bLG9zmRaGOs',title:'Visão espiritual',year:2024}
 ];
 function youtubeId(url){try{const u=new URL(url.trim());const h=u.hostname.toLowerCase();let id='';if(h==='youtu.be'||h==='www.youtu.be')id=u.pathname.slice(1).split('/')[0];else if(['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(h)){id=u.searchParams.get('v')||u.pathname.split('/')[2]||''}return /^[a-zA-Z0-9_-]{11}$/.test(id)?id:null}catch{return null}}
