@@ -836,11 +836,21 @@ function projectionFeedback(message,failed=false){
  if(el){el.textContent=message;el.style.color=failed?'#ffb2a9':'#9ce3ba'}
 }
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-volume')return;if(canReachProjection())projectionWindow.postMessage({type:'iasd-studio-volume',value:e.data.value},location.origin)});
+function projectionPreviewLabel(t){
+ if(!t)return 'Tela preta';
+ if(t.startsWith('IASD_DRAW_ANIM:')){
+  try{const d=JSON.parse(t.slice('IASD_DRAW_ANIM:'.length));return 'Sorteio em andamento · '+d.min+' a '+d.max}catch{return 'Sorteio em andamento…'}
+ }
+ if(t.startsWith('IASD_DRAW:'))return 'Número sorteado: '+t.slice('IASD_DRAW:'.length);
+ if(t.startsWith('IASD_BIBLE:')){try{const d=JSON.parse(t.slice('IASD_BIBLE:'.length));return d.reference||d.ref||'Passagem bíblica'}catch{return 'Passagem bíblica'}}
+ if(t.startsWith('IASD_LOCAL_MEDIA:'))return 'Mídia em projeção';
+ return t;
+}
 function sendProjection(t){
  data.stage=t;
  localStorage.setItem('iasd-studio',JSON.stringify(data));
  localStorage.setItem('iasd-stage',t);
- if($('stage'))$('stage').textContent=t||'Tela preta';
+ if($('stage'))$('stage').textContent=projectionPreviewLabel(t);
  if(channel)try{channel.postMessage(t)}catch(e){console.warn('Canal de projeção',e)}
  if(canReachProjection())try{projectionWindow.postMessage({type:'iasd-project',content:t},location.origin)}catch(e){console.warn('Janela de projeção',e)}
  if(companionToken&&!t.startsWith('IASD_LOCAL_MEDIA:'))void companionRequest('/project',{content:t.startsWith('IASD_DRAW:')?t.slice('IASD_DRAW:'.length):t}).catch(e=>projectionFeedback('IASD Projetor: '+e.message,true));
