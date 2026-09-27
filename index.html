@@ -803,7 +803,7 @@ function siteMediaPage(){if(!canManageSite())return '';const files=imageLibrary.
 const tabs=['Painel','Cronograma','Escalas','Sorteadores','Mídia','Bíblia','Datas especiais'];let current='Painel';const initial={cronograma:[],escalas:[],datas:[],sorteados:[],stage:'IASD STUDIO',media:[]};let data;try{data={...initial,...JSON.parse(localStorage.getItem('iasd-studio')||'{}')}}catch{data={...initial}}const save=()=>{localStorage.setItem('iasd-studio',JSON.stringify(data));render()};const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const $=id=>document.getElementById(id);const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('iasd-stage'):null;
 let projectionWindow=null;
 const companionURL='http://127.0.0.1:38741';
-let companionToken=sessionStorage.getItem('iasd-projetor-token')||'';
+let companionToken=localStorage.getItem('iasd-projetor-token')||'';
 async function companionRequest(route,payload,token=companionToken){
  const res=await fetch(companionURL+route,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:JSON.stringify(payload||{})});
  const body=await res.json();
@@ -816,7 +816,7 @@ async function pairCompanion(){
  if(!code)return;
  try{
   const data=await companionRequest('/pair',{code:code.trim()},'');
-  companionToken=data.token;sessionStorage.setItem('iasd-projetor-token',companionToken);
+  companionToken=data.token;localStorage.setItem('iasd-projetor-token',companionToken);
   projectionFeedback('IASD Projetor conectado! Agora o botão Projetar abre em tela cheia no segundo monitor.');
  }catch(e){projectionFeedback(e.message,true)}
 }
