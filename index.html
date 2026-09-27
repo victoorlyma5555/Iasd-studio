@@ -834,6 +834,7 @@ function projectionFeedback(message,failed=false){
  const el=$('projection-feedback');
  if(el){el.textContent=message;el.style.color=failed?'#ffb2a9':'#9ce3ba'}
 }
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-volume')return;if(canReachProjection())projectionWindow.postMessage({type:'iasd-studio-volume',value:e.data.value},location.origin)});
 function sendProjection(t){
  data.stage=t;
  localStorage.setItem('iasd-studio',JSON.stringify(data));
