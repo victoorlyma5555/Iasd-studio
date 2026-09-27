@@ -26,7 +26,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "shortcutName": "IASD Projetor"
     },
     "publish": [
       {
@@ -34,9 +35,10 @@
         "owner": "victoorlyma5555",
         "repo": "Iasd-studio"
       }
-    ]
+    ],
+    "copyright": "Copyright © 2026 Victor Lima · IASD APP"
   },
-  "author": "IASD APP",
+  "author": "Victor Lima",
   "repository": {
     "type": "git",
     "url": "https://github.com/victoorlyma5555/Iasd-studio.git"
