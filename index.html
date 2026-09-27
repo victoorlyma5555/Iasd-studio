@@ -875,7 +875,7 @@ async function pairCompanion(){
 }
 async function openCompanionProjection(){
  if(!companionToken){projectionFeedback('Conecte o IASD Projetor primeiro.',true);return}
- try{await companionRequest('/open');projectionFeedback('IASD Projetor aberto em tela cheia no segundo monitor.')}
+ try{await guardedProjection(async()=>{try{await companionRequest('/open');projectionFeedback('IASD Projetor aberto no segundo monitor.')}catch(e){projectionFeedback(e.message,true)}})}
  catch(e){projectionFeedback(e.message,true)}
 }
 
@@ -905,6 +905,32 @@ function sendProjection(t){
  if(canReachProjection())try{projectionWindow.postMessage({type:'iasd-project',content:t},location.origin)}catch(e){console.warn('Janela de projeção',e)}
  if(companionToken&&(!t.startsWith('IASD_LOCAL_MEDIA:')||t.includes('http://127.0.0.1:38741/media/')||t.includes('https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-offering-videos/'))){void (async()=>{try{if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))await companionRequest('/open');await companionRequest('/project',{content:t.startsWith('IASD_DRAW:')?t.slice('IASD_DRAW:'.length):t});if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))projectionFeedback('Mídia enviada ao aplicativo. Se não aparecer, verifique se esta versão do IASD Projetor suporta vídeo do YouTube ou arquivos locais.')}catch(e){projectionFeedback('IASD Projetor: '+e.message,true);const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-studio-error',message:'Falha no aplicativo de projeção: '+e.message},location.origin)}})()}
 }
+
+function projectionMonitorPopup(message,allowProceed=false){
+ let overlay=document.getElementById('iasd-monitor-alert');
+ if(!overlay){overlay=document.createElement('div');overlay.id='iasd-monitor-alert';overlay.setAttribute('role','alertdialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','iasd-monitor-alert-title');overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(2,8,20,.84);display:grid;place-items:center;padding:18px';overlay.innerHTML='<div style="width:min(480px,100%);background:#14283e;color:#f5f7fc;border:1px solid #d3a653;border-radius:18px;padding:25px;box-shadow:0 25px 80px #0009"><div style="font-size:32px;margin-bottom:9px">⚠️</div><h2 id="iasd-monitor-alert-title" style="margin:0 0 12px">Telão não identificado</h2><p id="iasd-monitor-alert-message" style="line-height:1.6"></p><div style="background:#0d1c2e;border-radius:12px;padding:14px;margin:16px 0;line-height:1.65"><strong>Como configurar no Windows:</strong><br>1. Conecte o projetor ou segundo monitor.<br>2. Pressione <strong>Windows + P</strong>.<br>3. Escolha <strong>Estender</strong> (não Duplicar).<br>4. Volte ao IASD Studio e tente novamente.</div><div id="iasd-monitor-alert-actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end"></div></div>';document.body.append(overlay)}
+ overlay.querySelector('#iasd-monitor-alert-message').textContent=message;const actions=overlay.querySelector('#iasd-monitor-alert-actions');actions.replaceChildren();const close=document.createElement('button');close.textContent='Entendi';close.style.cssText='padding:12px 20px;border-radius:9px;background:#c39b51;color:#142030;font-weight:700';close.onclick=()=>overlay.remove();actions.append(close);
+ if(allowProceed){const proceed=document.createElement('button');proceed.textContent='Projetar mesmo assim';proceed.style.cssText='padding:12px 16px;border-radius:9px;background:#29445d;color:white';proceed.onclick=()=>{overlay.remove();if(typeof pendingUnverifiedProjection==='function'){const fn=pendingUnverifiedProjection;pendingUnverifiedProjection=null;fn()}};actions.prepend(proceed)}
+ close.focus();
+}
+let pendingUnverifiedProjection=null;
+async function checkProjectionMonitor(){
+ if(typeof window.getScreenDetails==='function'){
+  try{const details=await window.getScreenDetails(),screens=Array.from(details.screens||[]);const secondary=screens.some(x=>!x.isPrimary)||screens.length>1;
+   if(!secondary){projectionMonitorPopup('O navegador detectou apenas uma tela. O Windows pode estar em Somente tela do PC ou Duplicar, ou o telão pode estar desconectado.');return false}
+   return true;
+  }catch(e){console.warn('Verificação de telas indisponível',e)}
+ }
+ if(window.screen?.isExtended===false){projectionMonitorPopup('O navegador informa que a área de trabalho não está estendida. Confira a conexão do telão e selecione Estender no Windows.');return false}
+ return null;
+}
+async function guardedProjection(action){
+ const monitor=await checkProjectionMonitor();
+ if(monitor===false)return;
+ if(monitor===null){pendingUnverifiedProjection=action;projectionMonitorPopup('Não foi possível verificar os monitores automaticamente. Autorize o gerenciamento de janelas no Chrome para detectar o telão ou confira o modo Estender antes de continuar.',true);return}
+ action();
+}
+
 function project(t){
  if(!canUseSound()){go('Sonoplastia');return}
  // Nunca mantenha a janela do Chrome junto com a janela do aplicativo.
@@ -913,8 +939,7 @@ function project(t){
   projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração antes de projetar. O Chrome não abrirá janelas automaticamente.',true);
   return;
  }
- sendProjection(String(t??''));
- projectionFeedback('Conteúdo enviado. Se a janela não aparecer no celular, verifique a mensagem de configuração do monitor.');
+ void guardedProjection(()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao projetor.');});
 }
 function stopProjection(){
  sendProjection('');
