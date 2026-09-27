@@ -1284,7 +1284,7 @@ async function fetchBibleChapter(book,chapter){
   if(!response.ok)throw Error('Consulta indisponível ('+response.status+')');
   const result=await response.json();
   if(!Array.isArray(result.verses)||!result.verses.length)throw Error('Capítulo não encontrado');
-  const verses=result.verses.filter(v=>Number(v.chapter)===Number(chapter)&&typeof v.text==='string');
+  const verses=result.verses.filter(v=>Number(v.chapter)===Number(chapter)&&Number.isInteger(Number(v.verse))&&typeof v.text==='string').sort((a,b)=>a.verse-b.verse);
   if(!verses.length)throw Error('Capítulo não encontrado na tradução');
   return verses;
  })();
@@ -1318,7 +1318,7 @@ async function searchBible(){
  try{
   const verses=await fetchBibleChapter(book.value,chapter);
   const chosen=verses.filter(x=>x.verse>=start&&x.verse<=(end||start));
-  if(!chosen.length||chosen[0].verse!==start||(end!==undefined&&chosen[chosen.length-1].verse!==end))throw Error('Versículo não disponível nesta tradução');
+  if(chosen.length!==(end||start)-start+1||chosen.some((item,i)=>item.verse!==start+i))throw Error('Há versículos ausentes na resposta da fonte bíblica. Não serão exibidos textos incompletos. Tente novamente ou consulte outra edição licenciada.');
   const text=chosen.map(x=>x.text.trim()).join(' ').replace(/\s+/g,' ').trim();
   bibleResult={ref,text};
   out.innerHTML='<div class="bible-result"><span class="bible-result-eyebrow">PASSAGEM ENCONTRADA</span><h3>'+esc(ref)+'</h3><p>'+esc(text)+'</p><button class="primary" onclick="projectBible()" '+(canUseSound()?'':'disabled title="Exclusivo para sonoplastas"')+'>▶ Projetar na televisão</button></div>';
