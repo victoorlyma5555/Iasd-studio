@@ -1,0 +1,32 @@
+{
+  "name": "iasd-projetor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Companheiro Windows para projeção IASD APP",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "electron": "^35.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "br.iasd.projetor",
+    "productName": "IASD Projetor",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}
