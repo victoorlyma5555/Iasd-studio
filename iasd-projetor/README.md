@@ -1,10 +1,22 @@
-# IASD Projetor — protótipo inicial para Windows
+# IASD Projetor — aplicativo Windows
 
-Aplicativo Electron que fica na bandeja do Windows, inicia com o login e abre a apresentação do IASD APP em tela cheia no segundo monitor. O servidor local escuta **apenas 127.0.0.1:38741**, exige origem https://iasd-studio.vercel.app e pareamento com código de seis dígitos. O token vale enquanto o aplicativo estiver aberto; ao reiniciar, é necessário parear novamente.
+Aplicativo auxiliar do IASD APP para o painel de Sonoplastia. O programa mantém um serviço local em `127.0.0.1:38741`, mostra uma janela de controle quando aberto normalmente e permanece na bandeja do Windows ao fechar a janela.
 
-## Desenvolvimento
+## Janela de controle
 
-Instale Node.js LTS no computador de desenvolvimento e execute:
+- Mostra que o aplicativo está aberto, o status do pareamento e o código de seis dígitos apenas quando necessário.
+- Oferece botão para abrir o site IASD APP, verificar o segundo monitor e abrir/encerrar a projeção.
+- Exibe os créditos **Desenvolvido por Victor Lima** e a versão instalada.
+- Ao abrir o programa novamente enquanto ele já está rodando, a janela de controle reaparece, sem duplicar o serviço.
+- Quando iniciado automaticamente com o Windows, funciona discretamente em segundo plano; um duplo clique no ícone da bandeja abre a janela.
+
+## Pareamento
+
+Na primeira utilização, abra o IASD APP e vá a Sonoplastia → Conectar IASD Projetor. Digite o código exibido no aplicativo. O token é armazenado no perfil local do Windows para ser reutilizado nas próximas inicializações. Se os dados do aplicativo forem apagados ou o site perder seu token, será necessário parear novamente. Não compartilhe o código com pessoas não autorizadas.
+
+## Instalação e desenvolvimento
+
+No computador de desenvolvimento com Node.js LTS:
 
 ```powershell
 cd iasd-projetor
@@ -12,8 +24,14 @@ npm install
 npm start
 ```
 
-Clique com o botão direito no ícone na bandeja do Windows para ver o código de pareamento. Para compilar o instalador: `npm run dist`.
+Para gerar um instalador Windows NSIS: `npm run dist`. O instalador oferece a opção de executar o aplicativo após a instalação. O executável distribuído precisa ser recompilado para incluir as atualizações do código; instalações antigas não se atualizam automaticamente.
 
-**Estado:** primeira versão de código-fonte, ainda não compilada nem testada em um Windows real. O site precisa ser integrado às rotas locais antes do uso completo. O executável ainda não está disponível para download. A execução automática depende das permissões e das configurações de inicialização do Windows.
+**Estado:** código-fonte atualizado. A compilação do instalador e o teste em um Windows real devem ser confirmados antes da distribuição.
 
-**Segurança:** o servidor aceita requisições somente da origem oficial e exige um token aleatório. O pareamento exige acesso físico ao computador. Não exponha a porta na rede nem desative a validação de origem.
+## Segurança
+
+O servidor local só aceita requisições da origem oficial `https://iasd-studio.vercel.app` e exige autenticação para comandar a projeção. Não exponha a porta à rede nem desative a verificação de origem.
+
+## Créditos
+
+**Desenvolvido por Victor Lima · IASD APP**.
