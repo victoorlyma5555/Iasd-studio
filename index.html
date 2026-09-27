@@ -859,8 +859,9 @@ function project(t){
  if(!canUseSound()){go('Sonoplastia');return}
  // Nunca mantenha a janela do Chrome junto com a janela do aplicativo.
  if(companionToken&&canReachProjection()){projectionWindow.close();projectionWindow=null}
- if(!canReachProjection()&&!companionToken){
-  if(!openProjection())return;
+ if(!companionToken){
+  projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração antes de projetar. O Chrome não abrirá janelas automaticamente.',true);
+  return;
  }
  sendProjection(String(t??''));
  projectionFeedback('Conteúdo enviado. Se a janela não aparecer no celular, verifique a mensagem de configuração do monitor.');
@@ -931,12 +932,21 @@ function controlProjectionFullscreen(){
 }
 function openProjection(){
  if(!canUseSound()){go('Sonoplastia');return false}
- // Com o aplicativo pareado, somente ele controla a janela do telão.
- if(companionToken){
-  if(canReachProjection()){projectionWindow.close();projectionWindow=null}
-  void companionRequest('/open').then(()=>projectionFeedback('Telão aberto pelo IASD Projetor.')).catch(e=>projectionFeedback('IASD Projetor: '+e.message,true));
-  return true;
+ // O botão principal usa exclusivamente o aplicativo Windows; nunca abre pop-up do Chrome.
+ if(canReachProjection()){projectionWindow.close();projectionWindow=null}
+ if(!companionToken){
+  projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração. Nenhuma janela do Chrome será aberta.',true);
+  return false;
  }
+ void companionRequest('/open')
+  .then(()=>projectionFeedback('Telão aberto somente pelo IASD Projetor.'))
+  .catch(e=>projectionFeedback('Não foi possível abrir o aplicativo: '+e.message+'. Verifique se ele está em execução e pareado.',true));
+ return true;
+}
+// Alternativa explícita para quem não usa o aplicativo Windows.
+function openBrowserProjection(){
+ if(!canUseSound()){go('Sonoplastia');return false}
+ if(companionToken){projectionFeedback('O aplicativo está pareado. Para usar o navegador, desconecte o aplicativo primeiro.',true);return false}
  if(canReachProjection()){sendProjection(data.stage||'');return true}
  const url=new URL('projection.html',location.href).href;
  const saved=savedProjectionPlacement();
@@ -952,6 +962,7 @@ function openProjection(){
  }
  return true;
 }
+
 window.addEventListener('message',e=>{
  if(e.origin===location.origin&&e.data&&e.data.type==='projection-fullscreen-result'){
   projectionFeedback(e.data.active?'Projetor em tela cheia.':e.data.blocked?'O Chrome bloqueou a tela cheia remota. É necessário ativá-la na janela do projetor uma vez.':'O projetor não entrou em tela cheia.',!e.data.active);
