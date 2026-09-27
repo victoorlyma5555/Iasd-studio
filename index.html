@@ -820,6 +820,7 @@ async function pairCompanion(){
  try{
   const data=await companionRequest('/pair',{code:code.trim()},'');
   companionToken=data.token;localStorage.setItem('iasd-projetor-token',companionToken);
+  if(canReachProjection()){projectionWindow.close();projectionWindow=null}
   projectionFeedback('IASD Projetor conectado! Agora o botão Projetar abre em tela cheia no segundo monitor.');
  }catch(e){projectionFeedback(e.message,true)}
 }
@@ -846,6 +847,8 @@ function sendProjection(t){
 }
 function project(t){
  if(!canUseSound()){go('Sonoplastia');return}
+ // Nunca mantenha a janela do Chrome junto com a janela do aplicativo.
+ if(companionToken&&canReachProjection()){projectionWindow.close();projectionWindow=null}
  if(!canReachProjection()&&!companionToken){
   if(!openProjection())return;
  }
@@ -918,6 +921,12 @@ function controlProjectionFullscreen(){
 }
 function openProjection(){
  if(!canUseSound()){go('Sonoplastia');return false}
+ // Com o aplicativo pareado, somente ele controla a janela do telão.
+ if(companionToken){
+  if(canReachProjection()){projectionWindow.close();projectionWindow=null}
+  void companionRequest('/open').then(()=>projectionFeedback('Telão aberto pelo IASD Projetor.')).catch(e=>projectionFeedback('IASD Projetor: '+e.message,true));
+  return true;
+ }
  if(canReachProjection()){sendProjection(data.stage||'');return true}
  const url=new URL('projection.html',location.href).href;
  const saved=savedProjectionPlacement();
