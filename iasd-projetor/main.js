@@ -4,6 +4,13 @@ const http=require('node:http');
 const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
+// Apenas uma instância pode usar a porta local de projeção.
+const primaryInstance=app.requestSingleInstanceLock();
+if(!primaryInstance){app.quit();}
+else app.on('second-instance',()=>{
+ if(windowRef&&!windowRef.isDestroyed())windowRef.focus();
+ else if(tray)tray.displayBalloon?.({title:'IASD Projetor',content:'O aplicativo já está aberto na bandeja do Windows.'});
+});
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
 let tray,windowRef,server;
@@ -55,7 +62,7 @@ async function handler(req,res){
  if(req.url==='/close'&&req.method==='POST'){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
  reply(res,404,{error:'Rota desconhecida'});
 }
-app.whenReady().then(()=>{
+if(primaryInstance)app.whenReady().then(()=>{
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?[]:['.']});
  tray=new Tray(nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jB9sAAAAASUVORK5CYII='));
  tray.setToolTip('IASD Projetor');
@@ -66,6 +73,14 @@ app.whenReady().then(()=>{
   {type:'separator'},{label:'Sair do IASD Projetor',click:()=>app.quit()}
  ]));
  server=http.createServer((req,res)=>{void handler(req,res).catch(()=>reply(res,500,{error:'Erro interno'}))});
+ server.on('error',error=>{
+  if(error.code==='EADDRINUSE'){
+   dialog.showMessageBox({type:'warning',title:'IASD Projetor já está em execução',message:'A porta 38741 já está em uso.',detail:'Verifique o IASD Projetor perto do relógio do Windows. Se houver outra versão aberta, feche-a antes de iniciar esta.'}).finally(()=>app.quit());
+  }else{
+   dialog.showErrorBox('IASD Projetor — falha ao iniciar',error.message);
+   app.quit();
+  }
+ });
  server.listen(PORT,'127.0.0.1');
 });
 app.on('window-all-closed',()=>{});
