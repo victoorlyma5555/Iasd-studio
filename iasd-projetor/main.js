@@ -38,6 +38,8 @@ const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
 let tray,windowRef,dashboardRef,server;
 let pairingCode=String(crypto.randomInt(100000,999999));
+const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
+function clearMedia(){for(const item of mediaFiles.values())try{fs.unlinkSync(item.path)}catch{}mediaFiles.clear()}
 let authToken=null;
 const tokenFile=path.join(app.getPath('userData'),'pairing.json');
 function loadPairing(){
@@ -121,6 +123,19 @@ function reply(res,code,data){res.writeHead(code,{'Content-Type':'application/js
 async function handler(req,res){
  if(req.headers.origin!==SITE){res.writeHead(403);res.end();return}
  if(req.method==='OPTIONS'){reply(res,204,{});return}
+ if(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')){
+  const id=req.url.slice(7),item=mediaFiles.get(id);if(!item){reply(res,404,{error:'Mídia não encontrada'});return}
+  const size=fs.statSync(item.path).size,range=req.headers.range;let start=0,end=size-1,status=200;
+  if(range){const m=/^bytes=(\d*)-(\d*)$/.exec(range);if(!m){res.writeHead(416,{'Content-Range':'bytes */'+size});res.end();return}if(m[1])start=Number(m[1]);if(m[2])end=Number(m[2]);if(!m[1]&&m[2]){start=Math.max(0,size-Number(m[2]));end=size-1}if(start>=size||end>=size||start>end){res.writeHead(416,{'Content-Range':'bytes */'+size});res.end();return}status=206}
+  const headers={'Content-Type':item.type,'Content-Length':end-start+1,'Accept-Ranges':'bytes','Cache-Control':'no-store','Access-Control-Allow-Origin':SITE,'Cross-Origin-Resource-Policy':'cross-origin'};if(status===206)headers['Content-Range']='bytes '+start+'-'+end+'/'+size;res.writeHead(status,headers);fs.createReadStream(item.path,{start,end}).pipe(res);return
+ }
+ if(req.url==='/media/upload'&&req.method==='POST'){
+  if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareamento necessário'});return}
+  const type=String(req.headers['content-type']||'');if(!/^(video|audio)\/[a-z0-9.+-]+$/i.test(type)){reply(res,415,{error:'Formato de mídia inválido'});return}
+  const length=Number(req.headers['content-length']);if(!Number.isFinite(length)||length<=0||length>MEDIA_LIMIT){reply(res,413,{error:'Limite de 250 MB por arquivo'});return}
+  const id=crypto.randomBytes(16).toString('hex'),folder=path.join(app.getPath('temp'),'iasd-projetor-media');fs.mkdirSync(folder,{recursive:true});const dest=path.join(folder,id);let bytes=0;try{const writer=fs.createWriteStream(dest,{flags:'wx'});for await(const chunk of req){bytes+=chunk.length;if(bytes>MEDIA_LIMIT||bytes>length)throw Error('Arquivo excedeu o limite');if(!writer.write(chunk))await new Promise(resolve=>writer.once('drain',resolve))}await new Promise((resolve,reject)=>writer.end(err=>err?reject(err):resolve()));if(bytes!==length)throw Error('Upload incompleto');mediaFiles.set(id,{path:dest,type});reply(res,200,{url:'http://127.0.0.1:'+PORT+'/media/'+id});return}catch(e){try{fs.unlinkSync(dest)}catch{}reply(res,400,{error:e.message});return}
+ }
+
  if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:!!authToken,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed()});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
@@ -178,4 +193,4 @@ if(primaryInstance)app.whenReady().then(()=>{
  server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard()});
 });
 app.on('window-all-closed',()=>{});
-app.on('before-quit',()=>server?.close());
+app.on('before-quit',()=>{server?.close();clearMedia()});
