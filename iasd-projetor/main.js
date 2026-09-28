@@ -156,6 +156,7 @@ async function handler(req,res){
  }
  if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/close'&&req.method==='POST'){closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
