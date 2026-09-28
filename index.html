@@ -936,6 +936,7 @@ function project(t){
  // Nunca mantenha a janela do Chrome junto com a janela do aplicativo.
  if(companionToken&&canReachProjection()){projectionWindow.close();projectionWindow=null}
  if(!companionToken){
+  projectionMonitorPopup('O aplicativo IASD Projetor não está conectado. Abra o aplicativo no Windows, confira o pareamento e configure o segundo monitor no modo Estender.');
   projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração antes de projetar. O Chrome não abrirá janelas automaticamente.',true);
   return;
  }
@@ -1010,6 +1011,7 @@ function openProjection(){
  // O botão principal usa exclusivamente o aplicativo Windows; nunca abre pop-up do Chrome.
  if(canReachProjection()){projectionWindow.close();projectionWindow=null}
  if(!companionToken){
+  projectionMonitorPopup('O IASD Projetor não está conectado. Abra o aplicativo no Windows e configure o telão em Estender (Windows + P).');
   projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração. Nenhuma janela do Chrome será aberta.',true);
   return false;
  }
