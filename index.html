@@ -1088,10 +1088,16 @@ async function checkProjectionMonitor(){
  return null;
 }
 async function guardedProjection(action){
+ // Quando o IASD Projetor está pareado, é o aplicativo Windows que controla o monitor.
+ // O navegador não deve bloquear a projeção com base em getScreenDetails/screen.isExtended.
+ if(companionToken){
+  try{await companionRequest('/open');await action();return}
+  catch(e){projectionFeedback('IASD Projetor: '+e.message,true);projectionMonitorPopup('O IASD Projetor está pareado, mas o aplicativo não respondeu. Confirme que ele está aberto no Windows e tente novamente.');return}
+ }
  const monitor=await checkProjectionMonitor();
  if(monitor===false)return;
  if(monitor===null){pendingUnverifiedProjection=action;projectionMonitorPopup('Não foi possível verificar os monitores automaticamente. Autorize o gerenciamento de janelas no Chrome para detectar o telão ou confira o modo Estender antes de continuar.',true);return}
- action();
+ await action();
 }
 
 function project(t){
@@ -1103,7 +1109,7 @@ function project(t){
   projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração antes de projetar. O Chrome não abrirá janelas automaticamente.',true);
   return;
  }
- void guardedProjection(()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao projetor.');});
+ void guardedProjection(async()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao IASD Projetor.');});
 }
 function stopProjection(){
  sendProjection('');
