@@ -42,17 +42,21 @@ let pairingCode=String(crypto.randomInt(100000,999999));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
 function clearMedia(){for(const item of mediaFiles.values())try{fs.unlinkSync(item.path)}catch{}mediaFiles.clear()}
 let authToken=null;
+const pairedTokens=new Set();
+function authorized(req){const token=String(req.headers.authorization||'').replace(/^Bearer /,'');return !!token&&pairedTokens.has(token)}
 const tokenFile=path.join(app.getPath('userData'),'pairing.json');
 function loadPairing(){
  try{
   const saved=JSON.parse(fs.readFileSync(tokenFile,'utf8'));
-  if(typeof saved.token==='string'&&/^[a-f0-9]{64}$/.test(saved.token))authToken=saved.token;
+  if(typeof saved.token==='string'&&/^[a-f0-9]{64}$/.test(saved.token))pairedTokens.add(saved.token);
+  if(Array.isArray(saved.tokens))for(const token of saved.tokens)if(typeof token==='string'&&/^[a-f0-9]{64}$/.test(token))pairedTokens.add(token);
+  authToken=[...pairedTokens][0]||null;
  }catch(e){if(e.code!=='ENOENT')console.warn('Não foi possível recuperar o pareamento:',e.message)}
 }
 function savePairing(){
  fs.mkdirSync(path.dirname(tokenFile),{recursive:true});
  const temp=tokenFile+'.tmp';
- fs.writeFileSync(temp,JSON.stringify({token:authToken}),{encoding:'utf8',mode:0o600});
+ fs.writeFileSync(temp,JSON.stringify({tokens:[...pairedTokens]}),{encoding:'utf8',mode:0o600});
  fs.renameSync(temp,tokenFile);
 }
 
@@ -122,7 +126,7 @@ function showDashboard(){
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
-ipcMain.handle('iasd:status',()=>({paired:!!authToken,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
+ipcMain.handle('iasd:status',()=>({paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>latestWindowsRelease().catch(e=>({error:e.message,current:app.getVersion()})));
@@ -142,25 +146,26 @@ async function handler(req,res){
   const headers={'Content-Type':item.type,'Content-Length':end-start+1,'Accept-Ranges':'bytes','Cache-Control':'no-store','Access-Control-Allow-Origin':SITE,'Cross-Origin-Resource-Policy':'cross-origin'};if(status===206)headers['Content-Range']='bytes '+start+'-'+end+'/'+size;res.writeHead(status,headers);fs.createReadStream(item.path,{start,end}).pipe(res);return
  }
  if(req.url==='/media/upload'&&req.method==='POST'){
-  if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareamento necessário'});return}
+  if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
   const type=String(req.headers['content-type']||'');if(!/^(video|audio)\/[a-z0-9.+-]+$/i.test(type)){reply(res,415,{error:'Formato de mídia inválido'});return}
   const length=Number(req.headers['content-length']);if(!Number.isFinite(length)||length<=0||length>MEDIA_LIMIT){reply(res,413,{error:'Limite de 250 MB por arquivo'});return}
   const id=crypto.randomBytes(16).toString('hex'),folder=path.join(app.getPath('temp'),'iasd-projetor-media');fs.mkdirSync(folder,{recursive:true});const dest=path.join(folder,id);let bytes=0;try{const writer=fs.createWriteStream(dest,{flags:'wx'});for await(const chunk of req){bytes+=chunk.length;if(bytes>MEDIA_LIMIT||bytes>length)throw Error('Arquivo excedeu o limite');if(!writer.write(chunk))await new Promise(resolve=>writer.once('drain',resolve))}await new Promise((resolve,reject)=>writer.end(err=>err?reject(err):resolve()));if(bytes!==length)throw Error('Upload incompleto');mediaFiles.set(id,{path:dest,type});reply(res,200,{url:'http://127.0.0.1:'+PORT+'/media/'+id});return}catch(e){try{fs.unlinkSync(dest)}catch{}reply(res,400,{error:e.message});return}
  }
 
- if(req.url==='/youtube/frame'&&req.method==='GET'){if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:!!authToken,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed()});return}
+ if(req.url==='/youtube/frame'&&req.method==='GET'){if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed()});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
   if(data.code!==pairingCode){reply(res,403,{error:'Código incorreto'});return}
-  authToken=crypto.randomBytes(32).toString('hex');
-  try{savePairing()}catch(e){authToken=null;reply(res,500,{error:'Falha ao salvar o pareamento'});return}
+  const newToken=crypto.randomBytes(32).toString('hex');
+  pairedTokens.add(newToken);authToken=newToken;
+  try{savePairing()}catch(e){pairedTokens.delete(newToken);authToken=[...pairedTokens][0]||null;reply(res,500,{error:'Falha ao salvar o pareamento'});return}
   pairingCode=String(crypto.randomInt(100000,999999));
   if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.reload();
-  reply(res,200,{token:authToken});return;
+  reply(res,200,{token:newToken});return;
  }
- if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
+ if(!authorized(req)){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
