@@ -2,6 +2,11 @@ name: Compilar IASD Projetor (Windows)
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
+    paths:
+      - 'iasd-projetor/**'
+      - '.github/workflows/iasd-projetor-windows.yml'
     tags:
       - 'iasd-projetor-v*'
 permissions:
@@ -36,13 +41,17 @@ jobs:
           name: IASD-Projetor-Windows
           path: iasd-projetor/dist/*.exe
           if-no-files-found: error
-      - name: Publicar release quando houver tag
-        if: startsWith(github.ref, 'refs/tags/iasd-projetor-v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            iasd-projetor/dist/*.exe
-            iasd-projetor/dist/*.blockmap
-            iasd-projetor/dist/latest.yml
-          generate_release_notes: true
-          prerelease: false
+      - name: Publicar versão para atualizações automáticas
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "iasd-projetor-v$version"
+          gh release view $tag --repo "${{ github.repository }}" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "A versão $tag já foi publicada. Para lançar uma nova atualização, aumente a versão no package.json."
+            exit 0
+          }
+          gh release create $tag dist/*.exe dist/*.blockmap dist/latest.yml --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
+
