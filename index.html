@@ -831,7 +831,7 @@ html[data-layout-variant="5"] .panel,html[data-layout-variant="5"] .quick-card{b
 .theme-choice{position:relative;overflow:hidden;min-height:118px;transition:transform .18s,border-color .18s,box-shadow .18s}.theme-choice:hover{transform:translateY(-2px);box-shadow:0 10px 24px #0003}.theme-swatch{position:relative;height:48px!important;overflow:hidden}.theme-swatch:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 78% 25%,#fff4 0 3px,transparent 4px),linear-gradient(115deg,transparent 0 46%,#fff1 47% 49%,transparent 50%)}.theme-choice:nth-child(3n) .theme-swatch:before{background:repeating-linear-gradient(135deg,#fff0 0 8px,#fff2 9px 10px)}.theme-choice:nth-child(4n) .theme-swatch:before{background:radial-gradient(circle at 20% 70%,#fff3 0 2px,transparent 3px),radial-gradient(circle at 75% 25%,#fff3 0 3px,transparent 4px)}.layout-mini{position:relative;overflow:hidden}.layout-choice:nth-child(5n+1) .layout-mini{border-radius:5px}.layout-choice:nth-child(5n+2) .layout-mini{border-radius:14px}.layout-choice:nth-child(5n+3) .layout-mini{transform:perspective(220px) rotateX(2deg)}.layout-choice:nth-child(5n+4) .layout-mini i{border-radius:999px}.layout-choice:nth-child(5n) .layout-mini{background-image:linear-gradient(135deg,#ffffff0b 25%,transparent 25%,transparent 50%,#ffffff0b 50%,#ffffff0b 75%,transparent 75%);background-size:18px 18px}.layout-choice:nth-child(2n) .layout-mini i:nth-child(2){background:linear-gradient(90deg,var(--mini-accent),#fff8)}.layout-choice:nth-child(3n) .layout-mini i:nth-child(n+3){outline:1px solid #ffffff22}.layout-choice:nth-child(4n) .layout-mini i:first-child{height:7px;align-self:center}.layout-choice:nth-child(7n) .layout-mini:after{content:"✦";position:absolute;right:8px;top:8px;color:#fff9;font-size:13px}
 </style><style id="iasd-palavra-em-cena-css">
 .pec-wrap{max-width:1000px;margin:0 auto;padding:12px 0 55px}.pec-hero{padding:29px;border-radius:23px;background:linear-gradient(115deg,#142d4a,#24425e 65%,#54472f);border:1px solid #60738c;box-shadow:0 12px 38px #0002}.pec-kicker{color:#f3cc83;letter-spacing:.15em;font-size:11px;font-weight:800}.pec-hero h1{font-size:clamp(27px,4vw,42px);margin:9px 0;color:#fff}.pec-hero p{color:#c9d8e8;max-width:650px}.pec-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:20px}.pec-field{display:flex;flex-direction:column;gap:7px}.pec-field.wide{grid-column:1/-1}.pec-field label{font-weight:700;color:var(--ink,#eef4fc)}.pec-field input,.pec-field select,.pec-field textarea,.pec-result textarea{width:100%;box-sizing:border-box;min-height:45px;padding:11px 13px;border:1px solid #52667c;border-radius:11px;background:var(--surface,#1c3045);color:var(--ink,#eef4fc);font:inherit}.pec-field textarea{min-height:78px}.pec-card{padding:24px;border:1px solid var(--border,#4b6078);border-radius:19px;background:var(--surface,#1e3044);margin-top:20px}.pec-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:19px}.pec-actions button{padding:12px 17px;border-radius:10px}.pec-result textarea{min-height:460px;line-height:1.7;resize:vertical;white-space:pre-wrap}.pec-hint{font-size:12px;color:var(--muted,#b4c5d8);margin-top:12px}@media(max-width:640px){.pec-grid{grid-template-columns:1fr}.pec-card,.pec-hero{padding:18px}.pec-wrap{padding:0 0 60px}}
-</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="founder-layout-btn" class="preview-launch" onclick="openLayoutStudio()" style="display:none">◈ Layouts</button><button id="founder-preview-btn" class="preview-launch" onclick="openDevicePreview()" style="display:none">▣ Visualizar dispositivos</button><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><div id="mobile-page-actions" class="mobile-page-actions" aria-label="Navegação da página"><button type="button" class="mobile-back" onclick="mobileGoBack()" aria-label="Voltar">‹ <span>Voltar</span></button><button type="button" class="mobile-home" onclick="go('Painel')" aria-label="Ir para o início">⌂ <span>Início</span></button></div><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
+</style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><div id="mobile-page-actions" class="mobile-page-actions" aria-label="Navegação da página"><button type="button" class="mobile-back" onclick="mobileGoBack()" aria-label="Voltar">‹ <span>Voltar</span></button><button type="button" class="mobile-home" onclick="go('Painel')" aria-label="Ir para o início">⌂ <span>Início</span></button></div><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 function toggleDesktopSidebar(){document.body.classList.toggle('iasd-sidebar-collapsed');try{localStorage.setItem('iasd-sidebar-collapsed',document.body.classList.contains('iasd-sidebar-collapsed')?'1':'0')}catch{}}try{if(localStorage.getItem('iasd-sidebar-collapsed')==='1')document.body.classList.add('iasd-sidebar-collapsed')}catch{}
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY);window.iasdCloud=cloud;window.iasdCurrentUser=()=>cloudUser;let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
@@ -1280,53 +1280,19 @@ const SITE_THEMES=[
 let themeSearch='';let activeSiteTheme='grafite',selectedSiteTheme='grafite',previewDevice='desktop',previewLandscape=false,themeSaving=false;
 function themeById(id){return SITE_THEMES.find(t=>t.id===id)||SITE_THEMES[0]}
 function applySiteTheme(id){
- const t=themeById(id);activeSiteTheme=t.id;
- document.documentElement.setAttribute('data-site-theme',t.id);
- let el=$('iasd-theme-style');if(!el){el=document.createElement('style');el.id='iasd-theme-style';document.head.appendChild(el)}
- const isLight=['celestial','esperanca','pergaminho','minimal','luz','marfim','lavanda','montanha','neve','terra','cristal'].includes(t.id);
- const softInk=isLight?t.ink:'#f5f8fc', softMuted=isLight?t.muted:'#c1d0df';
- el.textContent=`
- :root{--iasd-theme-bg:${t.bg};--iasd-theme-surface:${t.surface};--iasd-theme-surface2:${t.surface2};--iasd-theme-ink:${t.ink};--iasd-theme-muted:${t.muted};--iasd-theme-accent:${t.accent};--iasd-theme-border:${t.border};--iasd-theme-sidebar:${t.sidebar};--iasd-theme-nav:${t.nav}}
- body{background:${t.bg}!important}
- .desktop-sidebar{background:${t.sidebar}!important;border-color:${t.border}!important}
- .sidebar-link{color:${softMuted}!important}.sidebar-link.active{background:${t.accent}24!important;color:${t.accent}!important}.sidebar-link:hover{background:${t.accent}16!important}
- .dashboard-topbar .wordmark-iasd,.sidebar-brand-copy strong{color:${softInk}!important}.dashboard-kicker,.wordmark-app,.agenda-eyebrow{color:${t.accent}!important}
- .dashboard-hero{background:linear-gradient(115deg,${t.hero},${t.hero2})!important}
- .dashboard-hero h2 em{color:${t.accent}!important}
- .dashboard-tools{background:${t.surface}!important;color:${t.ink}!important}
- .dashboard-tools>label{color:${t.muted}!important}
- .dashboard-search{background:${t.surface2}!important;border-color:${t.border}!important;color:${t.accent}!important}
- .dashboard-search input{color:${t.ink}!important}.dashboard-search input::placeholder{color:${t.muted}!important}
- .dashboard-verse{background:linear-gradient(110deg,${t.surface2},${t.surface})!important;border-color:${t.border}!important}
- .dashboard-verse blockquote{color:${t.ink}!important}.dashboard-verse small,.verse-symbol{color:${t.accent}!important}
- .dashboard-agenda{background:linear-gradient(155deg,${t.surface},${t.surface2})!important;border-color:${t.border}!important}
- .dashboard-agenda,.agenda-heading h2,.agenda-program strong{color:${t.ink}!important}.agenda-heading p,.agenda-program span,.agenda-empty p{color:${t.muted}!important}
- .agenda-view,.quick-add{background:${t.accent}!important;color:${t.accentText}!important;border-color:${t.accent}!important}
- .app-dashboard .quick-section .sectionhead h2{color:${softInk}!important}
- .quick-card{border-color:${t.border}!important}.quick-admin-title,.quick-edit{background:${t.surface2}!important;color:${t.ink}!important;border-color:${t.border}!important}
- .panel,.tile,.card,.schedule-card,.section-card,.profile-card,.profile-info{border-color:${t.border}!important}
- .panel button.primary,.auth-submit,.image-upload{background:${t.accent}!important;color:${t.accentText}!important}
- .bottomnav{background:${t.nav}!important;border-color:${t.border}!important}.bottomnav button.active{color:${t.accent}!important}
- .account-trigger,.iconbtn,.preview-launch{background:${t.surface}!important;color:${t.ink}!important;border-color:${t.border}!important}
- header,.topbar,.dashboard-topbar{border-color:${t.border}!important}
- main,#content,.page-content,.content-shell{color:${t.ink}!important}
- .panel,.tile,.card,.section-card,.schedule-card,.image-card,.founder-user-card,.schedules-panel,.schedule-group,.sound-gate,.sound-hub,.reader-toolbar,.bible-panel,.bible-result,.pec-card,.profile-form{background:${t.surface}!important;color:${t.ink}!important;border-color:${t.border}!important}
- .panel h1,.panel h2,.panel h3,.tile strong,.card h1,.card h2,.card h3,.sectionhead h2,.schedule-group h3,.sound-hub h1,.sound-hub h2,.sound-hub h3,.bible-panel h1,.bible-panel h2,.bible-result h2,.profile-heading h1{color:${t.ink}!important}
- .muted,.panel p,.tile small,.card p,.schedule-group small,.sound-hub p,.bible-note,.bible-result p,.profile-role{color:${t.muted}!important}
- input:not([type="range"]):not([type="file"]),textarea,select,.reader-toolbar,.bible-fields{background:${t.surface2}!important;color:${t.ink}!important;border-color:${t.border}!important}
- input::placeholder,textarea::placeholder{color:${t.muted}!important}
- .sectionhead,.schedules-heading,.sound-hub-head,.agenda-heading{border-color:${t.border}!important}
- .schedule,.agenda-events,.sound-hub-grid,.bible-result,.profile-layout{color:${t.ink}!important}
- .profile-hero,.profile-cover{border-color:${t.border}!important}
- .profile-form,.profile-layout{color:${t.ink}!important}
- .profile-logout{border-color:${t.border}!important}
- .sound-hub-eyebrow,.bible-result-eyebrow{color:${t.accent}!important}
- .sound-hub button,.reader-toolbar button,.bible-panel button,.schedule-group button{border-color:${t.border}!important}
- .sound-hub button.primary,.reader-toolbar button.primary,.bible-panel button.primary{background:${t.accent}!important;color:${t.accentText}!important}
-
- `;
+ activeSiteTheme=id||activeSiteTheme||'grafite';
+ document.documentElement.removeAttribute('data-site-theme');
+ const el=$('iasd-theme-style');if(el)el.textContent='';
 }
-async function loadActiveTheme(){if(!cloud)return;const r=await cloud.from('iasd_site_theme').select('theme_id,layout_id').eq('id',1).maybeSingle();if(!r.error&&r.data){applySiteTheme(r.data.theme_id);applyLayout(r.data.layout_id||'layout-01');selectedSiteTheme=activeSiteTheme;if(new URLSearchParams(location.search).has('preview')&&window.__previewTheme)applySiteTheme(window.__previewTheme)}}
+async function loadActiveTheme(){
+ if(!cloud)return;
+ const r=await cloud.from('iasd_site_theme').select('theme_id,layout_id').eq('id',1).maybeSingle();
+ if(!r.error&&r.data){activeSiteTheme=r.data.theme_id||'grafite';selectedSiteTheme=activeSiteTheme;activeLayout='layout-01';selectedLayout='layout-01'}
+ document.documentElement.removeAttribute('data-layout-structure');
+ document.documentElement.removeAttribute('data-layout-variant');
+ document.documentElement.removeAttribute('data-site-theme');
+ const el=$('iasd-theme-style');if(el)el.textContent='';
+}
 window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='IASD_THEME_PREVIEW')return;if(!new URLSearchParams(location.search).has('preview'))return;window.__previewTheme=e.data.themeId;applySiteTheme(e.data.themeId)});
 function openDevicePreview(){if(cloudRole!=='founder')return;previewDevice=layoutDevice||'desktop';previewLandscape=false;selectedSiteTheme=activeSiteTheme;drawDevicePreview()}
 function closeDevicePreview(){const root=$('device-preview-root');if(root)root.innerHTML='';document.body.classList.remove('preview-open')}
