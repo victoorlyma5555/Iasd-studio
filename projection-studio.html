@@ -104,6 +104,19 @@ main>.studio-controls{padding:11px 13px;background:linear-gradient(120deg,#14273
 #draw .draw-audio input[type=file]{width:100%;max-width:100%;font-size:11px}
 #draw #drawLocalAudio{width:100%!important;max-width:none!important;height:38px}
 #draw #drawSavedStatus:empty{display:none}
+
+/* Mobile: o Studio precisa rolar dentro do iframe; a prévia não pode virar um bloco gigante. */
+@media(max-width:850px){
+ html,body{overflow-x:hidden!important;overflow-y:auto!important;height:auto!important;min-height:100%!important;background:#0c1725!important}
+ main{padding-bottom:24px!important}
+ main>.head{min-height:0!important}
+ main>.tools{grid-row:2!important}
+ main>.preview{grid-row:3!important;height:auto!important;min-height:0!important}
+ main>.preview .live-frame{height:auto!important;min-height:0!important;aspect-ratio:16/9!important}
+ main>.work{grid-row:4!important}
+ main>.studio-controls{grid-row:5!important;position:relative!important;bottom:auto!important}
+ .tools .tool{min-height:58px!important}
+}
 </style></head><body><main>
 <div class="head"><div><span class="eyebrow">IASD APP · CENTRAL AUDIOVISUAL</span><h1>Studio de Projeção</h1><p class="muted">Tudo preparado no painel do sonoplasta. O público vê somente o que for enviado.</p></div><span id="connection" class="pill">Verificando telão…</span></div>
 <section class="panel studio-controls" aria-label="Controles principais do telão"><h2>Controle do telão</h2><div class="studio-action-bar"><button type="button" class="studio-action project-action" onclick="call('openProjection')" title="Abrir a janela de projeção no telão"><span class="action-icon" aria-hidden="true">▣</span><span>Projetar</span></button><button type="button" class="studio-action close-action" onclick="call('stopProjection')" title="Fechar a janela do telão"><span class="action-icon" aria-hidden="true">✕</span><span>Fechar telão</span></button><button type="button" class="studio-action black-action" onclick="call('project','')" title="Deixar o telão preto sem fechar a janela"><span class="action-icon" aria-hidden="true">■</span><span>Tela preta</span></button><button type="button" class="studio-action settings-action" onclick="showTool('setup')" title="Abrir configurações e pareamento"><span class="action-icon" aria-hidden="true">⚙</span><span>Configuração</span></button></div><p id="feedback" class="notice" role="status" aria-live="polite"></p></section>
