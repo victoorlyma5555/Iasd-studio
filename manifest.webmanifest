@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "IASD APP",
   "short_name": "IASD APP",
   "description": "IASD APP — organização e recursos para a igreja.",
@@ -9,17 +10,16 @@
   "theme_color": "#0b3155",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/iasd-app.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "src": "/iasd-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
-  ],
-  "id": "/"
+  ]
 }
