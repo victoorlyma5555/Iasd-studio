@@ -37,7 +37,7 @@ else app.on('second-instance',()=>{
 });
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
-let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null;
+let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
 let pairingCode=String(crypto.randomInt(100000,999999));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
 function clearMedia(){for(const item of mediaFiles.values())try{fs.unlinkSync(item.path)}catch{}mediaFiles.clear()}
@@ -60,6 +60,7 @@ function savePairing(){
  fs.renameSync(temp,tokenFile);
 }
 
+function monitorInfo(){const primary=screen.getPrimaryDisplay();return screen.getAllDisplays().map((d,i)=>({id:String(d.id),name:d.label||'Monitor '+(i+1),primary:d.id===primary.id,width:d.bounds.width,height:d.bounds.height,scale:d.scaleFactor,position:{x:d.bounds.x,y:d.bounds.y}}))}
 function chooseDisplay(){
  const displays=screen.getAllDisplays();
  return displays.find(d=>d.id!==screen.getPrimaryDisplay().id)||null;
@@ -118,6 +119,7 @@ async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error
 function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.destroy();youtubeRef=null;youtubeVideoId=null}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 function projectPreparedYoutube(){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed())windowRef.hide();youtubeRef.setBounds(display.bounds);youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();return display}
+function showSoundAlert(payload){const primary=screen.getPrimaryDisplay().workArea;if(alertRef&&!alertRef.isDestroyed())alertRef.close();const width=Math.min(480,primary.width-32),height=260;alertRef=new BrowserWindow({x:primary.x+primary.width-width-18,y:primary.y+22,width,height,show:false,frame:false,alwaysOnTop:true,skipTaskbar:true,resizable:false,backgroundColor:'#14233b',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html='<!doctype html><html><meta charset="utf-8"><style>body{margin:0;padding:20px;background:#14233b;color:#f2f6ff;font:15px Segoe UI,Arial;border:2px solid #eac56e;box-sizing:border-box;height:100vh}small{color:#eac56e}h2{margin:9px 0;font-size:20px}p{line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:110px;overflow:auto}footer{font-size:12px;color:#b4c7df}</style><small>🔔 ALERTA PARA A SONOPLASTIA</small><h2>'+escape(payload.sender_name||'Direção do culto')+'</h2><p>'+escape(payload.message)+'</p><footer>'+escape(payload.schedule_name||'IASD Studio')+' · Feche esta janela quando ler.</footer></html>';alertRef.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html));alertRef.once('ready-to-show',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.setAlwaysOnTop(true,'floating')}});alertRef.on('closed',()=>{alertRef=null})}
 function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
  dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
@@ -126,7 +128,7 @@ function showDashboard(){
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
-ipcMain.handle('iasd:status',()=>({paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
+ipcMain.handle('iasd:status',()=>({paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>latestWindowsRelease().catch(e=>({error:e.message,current:app.getVersion()})));
@@ -153,7 +155,7 @@ async function handler(req,res){
  }
 
  if(req.url==='/youtube/frame'&&req.method==='GET'){if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed()});return}
+ if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
@@ -166,6 +168,8 @@ async function handler(req,res){
   reply(res,200,{token:newToken});return;
  }
  if(!authorized(req)){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
+ if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40)};reply(res,200,{ok:true});return}
+ if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(lastAlertId!==data.id){lastAlertId=data.id;showSoundAlert(data)}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
