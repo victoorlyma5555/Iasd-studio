@@ -230,6 +230,25 @@ async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error
 function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.destroy();youtubeRef=null;youtubeVideoId=null}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 function projectPreparedYoutube(){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed())windowRef.hide();youtubeRef.setBounds(display.bounds);youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();return display}
+const notificationSetupFile=path.join(app.getPath('userData'),'notification-setup.json');
+async function openWindowsNotificationSettings(){
+ if(process.platform!=='win32')return {error:'As configurações de notificações são exclusivas do Windows.'};
+ try{await shell.openExternal('ms-settings:notifications');return {ok:true}}catch(e){return {error:'Não foi possível abrir as configurações: '+e.message}}
+}
+async function guideWindowsNotificationSetup(force=false){
+ if(!force&&fs.existsSync(notificationSetupFile))return {ok:true,previouslyShown:true};
+ if(!dashboardRef||dashboardRef.isDestroyed()||projectionActive())return {ok:true,deferred:true};
+ const supported=Notification.isSupported();
+ const result=await dialog.showMessageBox(dashboardRef,{
+  type:supported?'question':'warning',title:'Permissão para avisos no Windows',
+  message:supported?'Permitir notificações do IASD Projetor?':'As notificações nativas não estão disponíveis neste Windows.',
+  detail:supported?'O Windows controla essa permissão. Vamos abrir as configurações para você ativar as notificações do IASD Projetor. Depois, use o botão de teste para confirmar.':'Você ainda receberá a janela de aviso no monitor principal. Confira também as configurações de notificações do Windows.',
+  buttons:['Abrir configurações','Agora não'],defaultId:0,cancelId:1,noLink:true
+ });
+ if(result.response===0){const opened=await openWindowsNotificationSettings();if(opened.error)return opened}
+ try{fs.writeFileSync(notificationSetupFile,JSON.stringify({shownAt:Date.now()}))}catch(e){console.warn('Preferência de notificações:',e.message)}
+ return {ok:true,openedSettings:result.response===0,supported}
+}
 function showSoundAlert(payload){
  // Notificação nativa do Windows aparece independentemente do navegador.
  try{if(Notification.isSupported()){const notice=new Notification({title:'IASD APP · Alerta para a Sonoplastia',body:String(payload.sender_name||'Direção do culto')+': '+String(payload.message||''),silent:false});notice.on('click',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.moveTop()}else showDashboard()});notice.show()}}catch(e){console.warn('Notificação do Windows:',e.message)}
@@ -242,7 +261,8 @@ function showDashboard(){
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
-ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
+ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);setImmediate(()=>{void guideWindowsNotificationSetup()});return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
+ipcMain.handle('iasd:notification-settings',()=>guideWindowsNotificationSetup(true));
 ipcMain.handle('iasd:test-alert',()=>{if(!alertAccount)return {error:'Ative os alertas independentes entrando com sua conta no aplicativo.'};showSoundAlert({sender_name:'IASD APP · Teste',message:'Este aviso deve aparecer no Windows mesmo com o navegador fechado. A projeção não será interrompida.',schedule_name:'Teste local'});return {ok:true}});
 ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true}});
 ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
