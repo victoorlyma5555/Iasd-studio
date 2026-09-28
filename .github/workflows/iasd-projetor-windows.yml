@@ -53,5 +53,11 @@ jobs:
             Write-Host "A versão $tag já foi publicada. Para lançar uma nova atualização, aumente a versão no package.json."
             exit 0
           }
-          gh release create $tag dist/*.exe dist/*.blockmap dist/latest.yml --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
+          $assets = @(Get-ChildItem dist -File | Where-Object { $_.Name -match '\\.exe$|\\.blockmap$|^latest\\.yml "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
+
+ } | ForEach-Object { $_.FullName })
+          if (-not ($assets | Where-Object { $_ -match 'latest\\.yml "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
+
+ })) { throw 'Arquivo latest.yml não foi gerado. A publicação automática foi interrompida.' }
+          gh release create $tag $assets --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
 
