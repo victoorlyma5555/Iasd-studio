@@ -824,7 +824,7 @@ html[data-layout-variant="2"] .panel,html[data-layout-variant="2"] .quick-card,h
 html[data-layout-variant="3"] .panel{box-shadow:inset 0 1px #fff1,0 14px 35px #0002!important}html[data-layout-variant="3"] .sidebar-brand-copy strong{font-family:Georgia,serif!important;font-style:italic;font-size:15px!important}
 html[data-layout-variant="4"] .panel,html[data-layout-variant="4"] .quick-card{box-shadow:none!important;border-width:1px!important}html[data-layout-variant="4"] .sidebar-link{font-weight:400!important}html[data-layout-variant="4"] .sidebar-brand-mark{display:none!important}
 html[data-layout-variant="5"] .panel,html[data-layout-variant="5"] .quick-card{box-shadow:0 16px 38px #0003!important}html[data-layout-variant="5"] .sidebar-link.active{box-shadow:inset 3px 0 var(--iasd-accent,#d8ad62)!important}
-.sidebar-brand-mark{overflow:hidden}.sidebar-brand-mark:before{content:"";width:24px;height:24px;background:url('/icon-192.png?v=3') center/contain no-repeat;display:block}.sidebar-brand-mark{font-size:0!important}
+.sidebar-brand-mark{overflow:hidden}.sidebar-brand-mark:before{content:"";width:32px;height:32px;background:url('/iasd-app-logo.png?v=1') center/contain no-repeat;display:block}.sidebar-brand-mark{font-size:0!important}
 /* Temas alcançam controles e módulos internos */
 [data-site-theme] .schedule,[data-site-theme] .event,[data-site-theme] .media-card,[data-site-theme] .bible-card,[data-site-theme] .special-date-card,[data-site-theme] .scale-card,[data-site-theme] .projection-card,[data-site-theme] .studio-card{border-color:var(--iasd-border,currentColor)!important}[data-site-theme] .desktop-sidebar,[data-site-theme] .bottomnav,[data-site-theme] .panel,[data-site-theme] .quick-card,[data-site-theme] .profile-card{transition:background .25s,border-color .25s,color .25s,box-shadow .25s}
 /* Aparência 2.0: previews distintos e identidade global */
@@ -849,6 +849,17 @@ html[data-layout-variant="5"] .panel,html[data-layout-variant="5"] .quick-card{b
 /* Uploaded IASD APP logo: preserve the artwork cleanly in the dashboard lockup. */
 .premium-wordmark .premium-symbol{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:14px!important;overflow:hidden!important}
 .premium-wordmark .premium-symbol img{width:100%!important;height:100%!important;object-fit:contain!important;border-radius:14px!important}
+
+/* Unified IASD APP identity */
+.sidebar-brand-mark{width:38px!important;height:38px!important;flex-basis:38px!important;padding:0!important;background:transparent!important;border:0!important;border-radius:10px!important}
+.sidebar-brand-copy strong{font-size:14px!important;line-height:1!important;letter-spacing:-.025em!important;font-weight:800!important;color:#f4f7fb!important}
+.sidebar-brand-copy strong::first-letter{letter-spacing:-.025em}
+.sidebar-brand-copy small{margin-top:5px!important;font-size:7px!important;letter-spacing:.13em!important;font-weight:650!important;color:#7f99ae!important}
+.premium-wordmark .wordmark-copy{gap:0!important}
+.premium-wordmark .wordmark-eyebrow{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;text-transform:uppercase}
+.premium-wordmark h1{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;font-weight:780!important;letter-spacing:-.035em!important}
+.premium-wordmark .wordmark-iasd{font-weight:780!important}
+.premium-wordmark .wordmark-app{font-weight:720!important;margin-left:1px}
 </style></head><body><header><div class="brand"><span class="brandmark" id="site-brandmark" aria-hidden="true">✦</span><div><h1>IASD <span>APP</span></h1><small>SONOPLASTIA E PROJEÇÃO</small></div></div><div class="header-actions"><button id="account-trigger" class="account-trigger" onclick="toggleAccountMenu()" aria-label="Minha conta">♙ <span>Entrar</span></button></div></header><div id="mobile-page-actions" class="mobile-page-actions" aria-label="Navegação da página"><button type="button" class="mobile-back" onclick="mobileGoBack()" aria-label="Voltar">‹ <span>Voltar</span></button><button type="button" class="mobile-home" onclick="go('Painel')" aria-label="Ir para o início">⌂ <span>Início</span></button></div><button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Ativar modo claro"><span id="theme-icon" aria-hidden="true">☀</span></button><aside id="desktop-sidebar" class="desktop-sidebar" aria-label="Menu principal"></aside><main><section id="content"></section></main><nav class="bottomnav" id="tabs" aria-label="Navegação principal"></nav><div id="account-popover-root"></div><div id="auth-modal-root"></div><div id="welcome-popup-root"></div><div id="inline-editor-root"></div><div id="device-preview-root"></div><div id="layout-studio-root"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script>
 function toggleDesktopSidebar(){document.body.classList.toggle('iasd-sidebar-collapsed');try{localStorage.setItem('iasd-sidebar-collapsed',document.body.classList.contains('iasd-sidebar-collapsed')?'1':'0')}catch{}}try{if(localStorage.getItem('iasd-sidebar-collapsed')==='1')document.body.classList.add('iasd-sidebar-collapsed')}catch{}
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
