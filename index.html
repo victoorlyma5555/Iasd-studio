@@ -862,6 +862,11 @@ async function companionRequest(route,payload,token=companionToken){
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
  return body;
 }
+async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
+async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
+async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');return companionRequest('/youtube/project')}
+async function closePreparedYoutube(){if(!companionToken)return;return companionRequest('/youtube/close')}
+async function controlPreparedYoutube(action){if(!companionToken)return;return companionRequest('/youtube/control',{action})}
 async function pairCompanion(){
  if(!canUseSound())return;
  const code=prompt('Abra o IASD Projetor na bandeja do Windows e digite o código de seis dígitos:');
