@@ -1,6 +1,7 @@
 'use strict';
 const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell}=require('electron');
 const http=require('node:http');
+const https=require('node:https');
 const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -123,8 +124,12 @@ function showDashboard(){
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
 ipcMain.handle('iasd:status',()=>({paired:!!authToken,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
+ipcMain.handle('iasd:updates',()=>latestWindowsRelease().catch(e=>({error:e.message,current:app.getVersion()})));
+ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
+// Atualizações são verificadas online; a instalação requer confirmação do usuário.
+function latestWindowsRelease(){return new Promise((resolve,reject)=>{const req=https.get('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion(),'Accept':'application/vnd.github+json'}},res=>{let body='';res.on('data',chunk=>{body+=chunk;if(body.length>250000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>{try{if(res.statusCode!==200)throw Error('GitHub indisponível ('+res.statusCode+')');const releases=JSON.parse(body),release=releases.find(x=>/^iasd-projetor-v/i.test(x.tag_name||'')&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name)));if(!release){resolve({available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'});return}const match=/^iasd-projetor-v(\d+\.\d+\.\d+)/i.exec(release.tag_name),current=app.getVersion().split('.').map(Number),latest=match?match[1].split('.').map(Number):null;const newer=latest&&latest.some((n,i)=>n>current[i]&&latest.slice(0,i).every((v,j)=>v===current[j]));resolve({available:!!newer,current:app.getVersion(),latest:match?.[1]||release.tag_name,url:release.html_url,downloadUrl:release.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url})}catch(e){reject(e)}})});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
 function reply(res,code,data){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){
  if(req.headers.origin!==SITE&&!(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')&&!req.headers.origin)){res.writeHead(403);res.end();return}
@@ -143,7 +148,7 @@ async function handler(req,res){
  }
 
  if(req.url==='/youtube/frame'&&req.method==='GET'){if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:!!authToken,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed()});return}
+ if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:!!authToken,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed()});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
