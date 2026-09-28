@@ -42,9 +42,26 @@ main>.studio-controls .notice{margin:7px 0 0;min-height:0}
 @media(min-width:1250px){main{grid-template-columns:minmax(0,1.16fr) minmax(400px,1fr)}main>.work{max-height:min(70vh,820px)}}
 @media(max-width:850px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto auto;padding:5px 3px 24px}main>.head{grid-column:1;grid-row:1}main>.tools{grid-column:1;grid-row:2}main>.preview{grid-column:1;grid-row:3}main>.work{grid-column:1;grid-row:4;max-height:none;overflow:visible}main>.studio-controls{grid-column:1;grid-row:5}main>.tools .tool{flex:1 1 135px}}
 @media(max-width:520px){main>.head{padding:13px}main>.tools .tool{flex:1 1 43%;justify-content:flex-start}main>.preview .screen{padding:8px}main>.studio-controls .row button{flex:1 1 45%;font-size:12px}}
+
+/* Barra inferior: quatro controles reais, sempre visíveis, com área de clique confortável. */
+main>.studio-controls{padding:11px 13px;background:linear-gradient(120deg,#14273c,#192d41);border-color:#49617a}
+.studio-action-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.studio-action-bar .studio-action{display:flex;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:55px;padding:11px 10px;border:1px solid #516c86;border-radius:12px;background:#243d55;color:#f0f5fc;font-size:13px;font-weight:750;line-height:1.25;transition:background .16s,border-color .16s,transform .16s}
+.studio-action-bar .studio-action:hover{background:#31516e;border-color:#b6cee3;transform:translateY(-1px)}
+.studio-action-bar .studio-action:focus-visible{outline:3px solid #f4d28d;outline-offset:3px}
+.studio-action-bar .studio-action:active{transform:translateY(0)}
+.studio-action-bar .action-icon{display:grid;place-items:center;flex:none;width:27px;height:27px;border-radius:8px;background:#ffffff19;font-size:17px}
+.studio-action-bar .project-action{background:#d8ad65;border-color:#f1cb8d;color:#172638}
+.studio-action-bar .project-action:hover{background:#f0c986;border-color:#ffe3ae}
+.studio-action-bar .project-action .action-icon{background:#263d4c20}
+.studio-action-bar .close-action{background:#673e49;border-color:#98636f}
+.studio-action-bar .close-action:hover{background:#844b58}
+.studio-action-bar .black-action{background:#182536;border-color:#526477}
+.studio-action-bar .settings-action{background:#2a455d;border-color:#5a7690}
+@media(max-width:650px){.studio-action-bar{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.studio-action-bar .studio-action{min-height:51px;font-size:12px;padding:9px 6px;gap:6px}}
 </style></head><body><main>
 <div class="head"><div><span class="eyebrow">IASD APP · CENTRAL AUDIOVISUAL</span><h1>Studio de Projeção</h1><p class="muted">Tudo preparado no painel do sonoplasta. O público vê somente o que for enviado.</p></div><span id="connection" class="pill">Verificando telão…</span></div>
-<section class="panel studio-controls"><h2>Controle do telão</h2><div class="row"><button class="primary" onclick="call('openProjection')">▣ Abrir no telão</button><button class="danger" onclick="call('stopProjection')">✕ Fechar janela do telão</button><button onclick="call('project','')">■ Tela preta</button><button onclick="showTool('setup')">⚙ Aplicativo e configuração</button></div><p id="feedback" class="notice" role="status"></p></section>
+<section class="panel studio-controls" aria-label="Controles principais do telão"><h2>Controle do telão</h2><div class="studio-action-bar"><button type="button" class="studio-action project-action" onclick="call('openProjection')" title="Abrir a janela de projeção no telão"><span class="action-icon" aria-hidden="true">▣</span><span>Projetar</span></button><button type="button" class="studio-action close-action" onclick="call('stopProjection')" title="Fechar a janela do telão"><span class="action-icon" aria-hidden="true">✕</span><span>Fechar telão</span></button><button type="button" class="studio-action black-action" onclick="call('project','')" title="Deixar o telão preto sem fechar a janela"><span class="action-icon" aria-hidden="true">■</span><span>Tela preta</span></button><button type="button" class="studio-action settings-action" onclick="showTool('setup')" title="Abrir configurações e pareamento"><span class="action-icon" aria-hidden="true">⚙</span><span>Configuração</span></button></div><p id="feedback" class="notice" role="status" aria-live="polite"></p></section>
 <section class="preview" id="preview-layout"><div class="screen"><strong id="liveLabel" class="live-label"><span class="live-dot"></span><span id="liveLabelText">NO TELÃO AGORA</span></strong><iframe id="live" class="live-frame" src="/projection.html?preview=1" title="Espelho em tempo real do telão" loading="eager" allow="autoplay"></iframe></div><div id="next" class="hide" aria-hidden="true"></div></section>
 <section class="tools">
 <button class="tool" data-tool="ambient" onclick="showTool('ambient')"><span class="ico">♫</span>Músicas ambientes<small>Momentos de oração e pausa</small></button>
