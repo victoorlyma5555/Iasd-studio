@@ -36,7 +36,7 @@ else app.on('second-instance',()=>{
 });
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
-let tray,windowRef,dashboardRef,server;
+let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null;
 let pairingCode=String(crypto.randomInt(100000,999999));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
 function clearMedia(){for(const item of mediaFiles.values())try{fs.unlinkSync(item.path)}catch{}mediaFiles.clear()}
@@ -107,6 +107,12 @@ function showProjector(){
  }
  return display;
 }
+// Player YouTube separado: o painel permanece no navegador; a mesma BrowserWindow muda de monitor.
+function youtubeHTML(id){return '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style></head><body><iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&enablejsapi=1&origin='+encodeURIComponent(SITE)+'" allow="autoplay;encrypted-media;fullscreen;picture-in-picture" allowfullscreen></iframe></body></html>'}
+async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;closeYoutube();const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{offscreen:true,nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false}});youtubeRef=win;youtubeVideoId=id;win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});await win.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(youtubeHTML(id)));win.webContents.setFrameRate(15)}
+function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.destroy();youtubeRef=null;youtubeVideoId=null}
+async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
+function projectPreparedYoutube(){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed())windowRef.hide();youtubeRef.setBounds(display.bounds);youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();return display}
 function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
  dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
@@ -136,6 +142,7 @@ async function handler(req,res){
   const id=crypto.randomBytes(16).toString('hex'),folder=path.join(app.getPath('temp'),'iasd-projetor-media');fs.mkdirSync(folder,{recursive:true});const dest=path.join(folder,id);let bytes=0;try{const writer=fs.createWriteStream(dest,{flags:'wx'});for await(const chunk of req){bytes+=chunk.length;if(bytes>MEDIA_LIMIT||bytes>length)throw Error('Arquivo excedeu o limite');if(!writer.write(chunk))await new Promise(resolve=>writer.once('drain',resolve))}await new Promise((resolve,reject)=>writer.end(err=>err?reject(err):resolve()));if(bytes!==length)throw Error('Upload incompleto');mediaFiles.set(id,{path:dest,type});reply(res,200,{url:'http://127.0.0.1:'+PORT+'/media/'+id});return}catch(e){try{fs.unlinkSync(dest)}catch{}reply(res,400,{error:e.message});return}
  }
 
+ if(req.url==='/youtube/frame'&&req.method==='GET'){if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:!!authToken,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed()});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
@@ -148,6 +155,9 @@ async function handler(req,res){
   reply(res,200,{token:authToken});return;
  }
  if(req.headers.authorization!=='Bearer '+authToken||!authToken){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
+ if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/close'&&req.method==='POST'){closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
   try{const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
@@ -161,7 +171,7 @@ async function handler(req,res){
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/close'&&req.method==='POST'){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
+ if(req.url==='/close'&&req.method==='POST'){closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
