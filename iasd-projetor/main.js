@@ -102,7 +102,31 @@ async function alertLogout(){
 }
 let pairingCode=String(crypto.randomInt(100000,999999));
 let updateStatus={state:'idle',message:'Aguardando verificação inicial.'};
-let startupUpdateChecked=false;
+let startupUpdateChecked=false,downloadedUpdate=null,installingUpdate=false;
+const updateReceiptFile=path.join(app.getPath('userData'),'pending-update.json');
+function installDownloadedUpdate(){
+ if(!downloadedUpdate||installingUpdate)return {error:'Nenhuma atualização pronta.'};
+ if(projectionActive())return {error:'Encerre a projeção antes de instalar.'};
+ try{
+  fs.writeFileSync(updateReceiptFile,JSON.stringify({from:app.getVersion(),to:downloadedUpdate.version,time:Date.now()}));
+  installingUpdate=true;
+  updateProgress('installing','Instalando a versão '+downloadedUpdate.version+'. O aplicativo abrirá novamente.');
+  setImmediate(()=>autoUpdater.quitAndInstall(false,true));
+  return {ok:true}
+ }catch(e){installingUpdate=false;return {error:e.message}}
+}
+function confirmUpdatedVersion(){
+ try{
+  const data=JSON.parse(fs.readFileSync(updateReceiptFile,'utf8'));
+  if(Date.now()-data.time>604800000){fs.unlinkSync(updateReceiptFile);return}
+  if(data.from===app.getVersion())return;
+  fs.unlinkSync(updateReceiptFile);
+  updateProgress('installed','Atualização concluída! Versão '+app.getVersion()+' instalada.');
+  showDashboard();
+  dialog.showMessageBox(dashboardRef,{type:'info',title:'IASD Projetor atualizado',message:'Atualização concluída!',detail:'Versão '+data.from+' → '+app.getVersion()+'. Seu pareamento foi preservado.',buttons:['Continuar'],noLink:true}).catch(()=>{});
+ }catch(e){if(e.code!=='ENOENT')console.warn('Confirmação da atualização:',e.message)}
+}
+
 function updateProgress(state,message,extra={}){updateStatus={state,message,...extra};if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:update-status',updateStatus)}
 function projectionActive(){return !!(windowRef&&!windowRef.isDestroyed()&&windowRef.isVisible())||!!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible())}
 async function checkAutomaticUpdate({startup=false}={}){
@@ -121,9 +145,9 @@ async function checkAutomaticUpdate({startup=false}={}){
  }catch(e){updateProgress('error','Não foi possível atualizar: '+e.message)}
  return updateStatus;
 }
-autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=true;autoUpdater.allowPrerelease=false;
+autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=false;autoUpdater.allowPrerelease=false;
 autoUpdater.on('download-progress',p=>updateProgress('downloading','Baixando atualização: '+Math.round(p.percent)+'%',{percent:Math.round(p.percent)}));
-autoUpdater.on('update-downloaded',()=>updateProgress('downloaded','Atualização baixada. Será instalada quando o aplicativo for encerrado.'));
+autoUpdater.on('update-downloaded',info=>{downloadedUpdate={version:info.version};updateProgress('downloaded','Versão '+info.version+' baixada. Pronta para instalar e reiniciar.');if(!projectionActive())void dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'Atualização baixada',detail:'Instalar a versão '+info.version+' agora? O aplicativo será reaberto automaticamente.',buttons:['Instalar e reiniciar','Mais tarde'],defaultId:0,cancelId:1,noLink:true}).then(result=>{if(result.response===0)installDownloadedUpdate()})});
 autoUpdater.on('update-not-available',()=>updateProgress('current','Você já tem a versão mais recente.'));
 autoUpdater.on('error',e=>updateProgress('error','Falha na atualização: '+e.message));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
@@ -221,6 +245,7 @@ ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
+ipcMain.handle('iasd:install-update',()=>installDownloadedUpdate());
 ipcMain.handle('iasd:update-status',()=>updateStatus);
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
@@ -296,7 +321,7 @@ if(primaryInstance)app.whenReady().then(()=>{
   {label:'Encerrar projeção',click:()=>{if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}},
   {type:'separator'},
   {label:'Sobre o IASD Projetor',click:()=>dialog.showMessageBox({type:'info',title:'Sobre o IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nProjeto: IASD APP\\nSite: '+SITE})},
-  {label:'Sair do IASD Projetor',click:()=>app.quit()}
+  {label:'Sair do IASD Projetor',click:()=>{if(downloadedUpdate&&!projectionActive())installDownloadedUpdate();else app.quit()}}
  ]));
  server=http.createServer((req,res)=>{void handler(req,res).catch(()=>reply(res,500,{error:'Erro interno'}))});
  server.on('error',error=>{
@@ -307,7 +332,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
+ server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',()=>{server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
