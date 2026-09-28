@@ -1307,7 +1307,23 @@ function applySiteTheme(id){
  .panel,.tile,.card,.schedule-card,.section-card,.profile-card,.profile-info{border-color:${t.border}!important}
  .panel button.primary,.auth-submit,.image-upload{background:${t.accent}!important;color:${t.accentText}!important}
  .bottomnav{background:${t.nav}!important;border-color:${t.border}!important}.bottomnav button.active{color:${t.accent}!important}
- .account-trigger,.iconbtn,.preview-launch{border-color:${t.border}!important}
+ .account-trigger,.iconbtn,.preview-launch{background:${t.surface}!important;color:${t.ink}!important;border-color:${t.border}!important}
+ header,.topbar,.dashboard-topbar{border-color:${t.border}!important}
+ main,#content,.page-content,.content-shell{color:${t.ink}!important}
+ .panel,.tile,.card,.section-card,.schedule-card,.image-card,.founder-user-card,.schedules-panel,.schedule-group,.sound-gate,.sound-hub,.reader-toolbar,.bible-panel,.bible-result,.pec-card,.profile-form{background:${t.surface}!important;color:${t.ink}!important;border-color:${t.border}!important}
+ .panel h1,.panel h2,.panel h3,.tile strong,.card h1,.card h2,.card h3,.sectionhead h2,.schedule-group h3,.sound-hub h1,.sound-hub h2,.sound-hub h3,.bible-panel h1,.bible-panel h2,.bible-result h2,.profile-heading h1{color:${t.ink}!important}
+ .muted,.panel p,.tile small,.card p,.schedule-group small,.sound-hub p,.bible-note,.bible-result p,.profile-role{color:${t.muted}!important}
+ input:not([type="range"]):not([type="file"]),textarea,select,.reader-toolbar,.bible-fields{background:${t.surface2}!important;color:${t.ink}!important;border-color:${t.border}!important}
+ input::placeholder,textarea::placeholder{color:${t.muted}!important}
+ .sectionhead,.schedules-heading,.sound-hub-head,.agenda-heading{border-color:${t.border}!important}
+ .schedule,.agenda-events,.sound-hub-grid,.bible-result,.profile-layout{color:${t.ink}!important}
+ .profile-hero,.profile-cover{border-color:${t.border}!important}
+ .profile-form,.profile-layout{color:${t.ink}!important}
+ .profile-logout{border-color:${t.border}!important}
+ .sound-hub-eyebrow,.bible-result-eyebrow{color:${t.accent}!important}
+ .sound-hub button,.reader-toolbar button,.bible-panel button,.schedule-group button{border-color:${t.border}!important}
+ .sound-hub button.primary,.reader-toolbar button.primary,.bible-panel button.primary{background:${t.accent}!important;color:${t.accentText}!important}
+
  `;
 }
 async function loadActiveTheme(){if(!cloud)return;const r=await cloud.from('iasd_site_theme').select('theme_id,layout_id').eq('id',1).maybeSingle();if(!r.error&&r.data){applySiteTheme(r.data.theme_id);applyLayout(r.data.layout_id||'layout-01');selectedSiteTheme=activeSiteTheme;if(new URLSearchParams(location.search).has('preview')&&window.__previewTheme)applySiteTheme(window.__previewTheme)}}
