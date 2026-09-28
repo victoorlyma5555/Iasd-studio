@@ -124,6 +124,7 @@ function showDashboard(){
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
 ipcMain.handle('iasd:status',()=>({paired:!!authToken,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion()}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
+ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>latestWindowsRelease().catch(e=>({error:e.message,current:app.getVersion()})));
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
