@@ -17,7 +17,32 @@ html{overflow:hidden}
 body{height:auto!important;max-height:none!important}
 main{min-height:0;align-content:start}
 @media(max-width:900px){.tools{position:static}}
-.media-library{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0}.gallery{position:fixed;inset:0;z-index:3000;background:#030b15ed;display:grid;place-items:center;padding:18px}.gallery-inner{width:min(1080px,96vw);max-height:90dvh;overflow:auto;background:#13283d;border:1px solid #5c7795;border-radius:17px;padding:20px}.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.gallery-grid button{overflow:hidden;padding:0;text-align:left}.gallery-grid img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}.gallery-grid span{display:block;padding:10px}</style></head><body><main>
+.media-library{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0}.gallery{position:fixed;inset:0;z-index:3000;background:#030b15ed;display:grid;place-items:center;padding:18px}.gallery-inner{width:min(1080px,96vw);max-height:90dvh;overflow:auto;background:#13283d;border:1px solid #5c7795;border-radius:17px;padding:20px}.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}.gallery-grid button{overflow:hidden;padding:0;text-align:left}.gallery-grid img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}.gallery-grid span{display:block;padding:10px}
+/* Central de projeção: telão panorâmico real e painel contextual lado a lado. */
+body{overflow:hidden}
+main{display:grid;grid-template-columns:minmax(0,1.13fr) minmax(340px,1fr);grid-template-rows:auto auto minmax(330px,auto) auto;gap:12px;padding:8px 8px 22px;align-items:stretch}
+main>.head{grid-column:1/-1;grid-row:1;min-height:86px;padding:16px 20px;border:1px solid #3b536d;border-radius:15px;background:#14263a}
+main>.head h1{margin:3px 0;font-size:clamp(23px,2.4vw,32px)}
+main>.head .muted{margin:3px 0}
+main>.tools{grid-column:1/-1;grid-row:2;display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;padding:3px 0}
+main>.tools .tool{flex:1 1 118px;min-width:105px;min-height:52px;display:flex;flex-direction:row;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 9px;font-size:12px;line-height:1.3}
+main>.tools .tool .ico{font-size:18px;flex-shrink:0}
+main>.tools .tool small{display:none}
+main>.preview{grid-column:1;grid-row:3;min-width:0;align-self:start}
+main>.preview .screen{padding:12px;min-width:0}
+main>.preview .live-frame{display:block;width:100%;height:auto;aspect-ratio:16/9;min-height:0;border:0;border-radius:8px;background:#050a10}
+main>.work{grid-column:2;grid-row:3;min-width:0;align-self:stretch;max-height:min(68vh,720px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+main>.work.active{display:grid;align-content:start}
+main>.work h2{font-size:clamp(17px,1.5vw,23px)}
+main>.studio-controls{grid-column:1/-1;grid-row:4;display:block;padding:13px 16px}
+main>.studio-controls h2{display:none}
+main>.studio-controls .row{gap:9px}
+main>.studio-controls .row button{padding:11px 14px}
+main>.studio-controls .notice{margin:7px 0 0;min-height:0}
+@media(min-width:1250px){main{grid-template-columns:minmax(0,1.16fr) minmax(400px,1fr)}main>.work{max-height:min(70vh,820px)}}
+@media(max-width:850px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto auto;padding:5px 3px 24px}main>.head{grid-column:1;grid-row:1}main>.tools{grid-column:1;grid-row:2}main>.preview{grid-column:1;grid-row:3}main>.work{grid-column:1;grid-row:4;max-height:none;overflow:visible}main>.studio-controls{grid-column:1;grid-row:5}main>.tools .tool{flex:1 1 135px}}
+@media(max-width:520px){main>.head{padding:13px}main>.tools .tool{flex:1 1 43%;justify-content:flex-start}main>.preview .screen{padding:8px}main>.studio-controls .row button{flex:1 1 45%;font-size:12px}}
+</style></head><body><main>
 <div class="head"><div><span class="eyebrow">IASD APP · CENTRAL AUDIOVISUAL</span><h1>Studio de Projeção</h1><p class="muted">Tudo preparado no painel do sonoplasta. O público vê somente o que for enviado.</p></div><span id="connection" class="pill">Verificando telão…</span></div>
 <section class="panel studio-controls"><h2>Controle do telão</h2><div class="row"><button class="primary" onclick="call('openProjection')">▣ Abrir no telão</button><button class="danger" onclick="call('stopProjection')">✕ Fechar janela do telão</button><button onclick="call('project','')">■ Tela preta</button><button onclick="showTool('setup')">⚙ Aplicativo e configuração</button></div><p id="feedback" class="notice" role="status"></p></section>
 <section class="preview" id="preview-layout"><div class="screen"><strong id="liveLabel" class="live-label"><span class="live-dot"></span><span id="liveLabelText">NO TELÃO AGORA</span></strong><iframe id="live" class="live-frame" src="/projection.html?preview=1" title="Espelho em tempo real do telão" loading="eager" allow="autoplay"></iframe></div><div id="next" class="hide" aria-hidden="true"></div></section>
@@ -209,6 +234,6 @@ function projectBible(){if(!bibleResult)return;project('IASD_BIBLE:'+JSON.string
 function bibleNext(){const v=$('verse').value.trim();if(!/^\d+$/.test(v)){feedback('Para avançar, selecione um único versículo.');return}$('verse').value=String(Number(v)+1);searchBible()}
 function sync(){try{const p=window.parent;if(p===window)return;const stage=localStorage.getItem('iasd-stage')||'';const live=!!stage&&!!localStorage.getItem('iasd-projetor-token');$('liveLabel').classList.toggle('is-live',live);$('liveLabelText').textContent=live?'AO VIVO · NO TELÃO':'NO TELÃO AGORA';if(stage.startsWith('IASD_BIBLE:')){try{const x=JSON.parse(stage.slice(11));$('live').textContent=x.ref+'\n\n'+x.text}catch(e){}}else if(stage.startsWith('IASD_DRAW:'))$('live').textContent='Número: '+stage.slice(10);else if(stage.startsWith('IASD_LOCAL_MEDIA:'))$('live').textContent='Mídia no telão';else if(stage.startsWith('IASD_YOUTUBE:')){$('connection').textContent='YouTube no telão';}else $('live').textContent=stage||'Tela preta';$('connection').textContent=localStorage.getItem('iasd-projetor-token')?'IASD Projetor pareado':p.canReachProjection?.()?'Janela aberta':'Aguardando telão'}catch(e){}}setInterval(sync,1100);sync();
 initYouTubeTools();if($('drawYoutubeUrl'))$('drawYoutubeUrl').value=localStorage.getItem('iasd-draw-youtube')||'';
-const previousTool=sessionStorage.getItem('iasd-studio-tool');if(previousTool&&document.getElementById(previousTool)?.classList.contains('work'))showTool(previousTool);
+const previousTool=sessionStorage.getItem('iasd-studio-tool');showTool(previousTool&&document.getElementById(previousTool)?.classList.contains('work')?previousTool:'ambient');
 if(typeof ResizeObserver==='function'){new ResizeObserver(requestStudioHeight).observe(document.querySelector('main'))}window.addEventListener('load',requestStudioHeight);window.addEventListener('resize',requestStudioHeight);requestStudioHeight();
 </script></body></html>
