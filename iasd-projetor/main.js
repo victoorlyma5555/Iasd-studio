@@ -1,5 +1,5 @@
 'use strict';
-const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell,safeStorage}=require('electron');
+const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell,safeStorage,Notification}=require('electron');
 const http=require('node:http');
 const https=require('node:https');
 const {autoUpdater}=require('electron-updater');
@@ -45,8 +45,8 @@ const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
 const ALERT_SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const alertSessionFile=path.join(app.getPath('userData'),'alert-session.dat');
 const alertCloud=createClient(ALERT_SUPABASE_URL,ALERT_SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});
-let alertChannel=null,alertAccount=null,alertSeen=new Set(),alertReady=false,alertRecoveryTimer=null;
-function alertStatus(){return {connected:!!alertChannel&&alertReady,account:alertAccount?.email||null}}
+let alertChannel=null,alertAccount=null,alertSeen=new Set(),alertReady=false,alertRecoveryTimer=null,alertLastError=null;
+function alertStatus(){return {connected:!!alertChannel&&alertReady,account:alertAccount?.email||null,error:alertLastError}}
 function alertBroadcastStatus(){if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-status',alertStatus())}
 function saveAlertSession(session){
  if(!safeStorage.isEncryptionAvailable())throw Error('Criptografia do Windows indisponível. Não é seguro guardar o acesso.');
@@ -56,7 +56,7 @@ function saveAlertSession(session){
 async function alertFetchPending(initial=false){
  if(!alertAccount)return;
  const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at').order('created_at',{ascending:false}).limit(20);
- if(error){console.warn('Alertas independentes:',error.message);return}
+ if(error){alertLastError=error.message;alertBroadcastStatus();console.warn('Alertas independentes:',error.message);return}
  const items=(data||[]).reverse();
  if(initial){items.forEach(x=>alertSeen.add(x.id));return}
  for(const item of items)receiveDirectAlert(item);
@@ -75,7 +75,7 @@ async function alertSubscribe(){
  alertChannel=alertCloud.channel('iasd-windows-alerts').on('postgres_changes',{event:'INSERT',schema:'public',table:'iasd_sound_alerts'},event=>receiveDirectAlert(event.new)).subscribe(status=>{
   alertReady=status==='SUBSCRIBED';
   alertBroadcastStatus();
-  if(status==='SUBSCRIBED')void alertFetchPending(false);
+  if(status==='SUBSCRIBED'){alertLastError=null;void alertFetchPending(false)}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){alertLastError='Conexão em tempo real indisponível; usando verificação de reserva.';alertBroadcastStatus()}
  });
  if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);
  alertRecoveryTimer=setInterval(()=>{if(alertAccount)void alertFetchPending(false)},15000);
@@ -85,18 +85,18 @@ async function alertStart(session){
  if(error||!data.user)throw Error(error?.message||'Sessão inválida');
  const {data:member,error:roleError}=await alertCloud.from('iasd_members').select('role').eq('user_id',data.user.id).maybeSingle();
  if(roleError||!['sonoplasta','founder','cofounder'].includes(member?.role)){await alertCloud.auth.signOut();throw Error('A conta não possui permissão de sonoplastia.')}
- alertAccount={id:data.user.id,email:data.user.email};
+ alertAccount={id:data.user.id,email:data.user.email};alertLastError=null;
  saveAlertSession(data.session);
  await alertSubscribe();alertBroadcastStatus();
 }
 alertCloud.auth.onAuthStateChange((event,session)=>{if(event==='TOKEN_REFRESHED'&&session){try{saveAlertSession(session)}catch(e){console.warn(e.message)}}});
 async function alertRestore(){
- try{if(!fs.existsSync(alertSessionFile))return;if(!safeStorage.isEncryptionAvailable())return;const session=JSON.parse(safeStorage.decryptString(fs.readFileSync(alertSessionFile)));await alertStart(session)}catch(e){console.warn('Reconexão de alertas:',e.message);alertBroadcastStatus()}
+ try{if(!fs.existsSync(alertSessionFile))return;if(!safeStorage.isEncryptionAvailable())return;const session=JSON.parse(safeStorage.decryptString(fs.readFileSync(alertSessionFile)));await alertStart(session)}catch(e){alertLastError='Reconecte sua conta: '+e.message;console.warn('Reconexão de alertas:',e.message);alertBroadcastStatus()}
 }
 async function alertLogout(){
  if(alertChannel){await alertCloud.removeChannel(alertChannel);alertChannel=null}
  if(alertRecoveryTimer){clearInterval(alertRecoveryTimer);alertRecoveryTimer=null}
- await alertCloud.auth.signOut();alertAccount=null;alertReady=false;alertSeen.clear();
+ await alertCloud.auth.signOut();alertAccount=null;alertReady=false;alertLastError=null;alertSeen.clear();
  try{fs.unlinkSync(alertSessionFile)}catch(e){if(e.code!=='ENOENT')console.warn(e.message)}
  alertBroadcastStatus();
 }
@@ -230,7 +230,10 @@ async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error
 function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.destroy();youtubeRef=null;youtubeVideoId=null}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 function projectPreparedYoutube(){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed())windowRef.hide();youtubeRef.setBounds(display.bounds);youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();return display}
-function showSoundAlert(payload){const primary=screen.getPrimaryDisplay().workArea;if(alertRef&&!alertRef.isDestroyed())alertRef.close();const width=Math.min(480,primary.width-32),height=260;alertRef=new BrowserWindow({x:primary.x+primary.width-width-18,y:primary.y+22,width,height,show:false,frame:true,autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,backgroundColor:'#14233b',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html='<!doctype html><html><meta charset="utf-8"><style>body{margin:0;padding:20px;background:#14233b;color:#f2f6ff;font:15px Segoe UI,Arial;border:2px solid #eac56e;box-sizing:border-box;height:100vh}small{color:#eac56e}h2{margin:9px 0;font-size:20px}p{line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:110px;overflow:auto}footer{font-size:12px;color:#b4c7df}</style><small>🔔 ALERTA PARA A SONOPLASTIA</small><h2>'+escape(payload.sender_name||'Direção do culto')+'</h2><p>'+escape(payload.message)+'</p><footer>'+escape(payload.schedule_name||'IASD Studio')+' · Feche esta janela quando ler.</footer></html>';alertRef.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html));alertRef.once('ready-to-show',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.setAlwaysOnTop(true,'floating')}});alertRef.on('closed',()=>{alertRef=null})}
+function showSoundAlert(payload){
+ // Notificação nativa do Windows aparece independentemente do navegador.
+ try{if(Notification.isSupported()){const notice=new Notification({title:'IASD APP · Alerta para a Sonoplastia',body:String(payload.sender_name||'Direção do culto')+': '+String(payload.message||''),silent:false});notice.on('click',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.moveTop()}else showDashboard()});notice.show()}}catch(e){console.warn('Notificação do Windows:',e.message)}
+const primary=screen.getPrimaryDisplay().workArea;if(alertRef&&!alertRef.isDestroyed())alertRef.close();const width=Math.min(480,primary.width-32),height=260;alertRef=new BrowserWindow({x:primary.x+primary.width-width-18,y:primary.y+22,width,height,show:false,frame:true,autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,backgroundColor:'#14233b',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html='<!doctype html><html><meta charset="utf-8"><style>body{margin:0;padding:20px;background:#14233b;color:#f2f6ff;font:15px Segoe UI,Arial;border:2px solid #eac56e;box-sizing:border-box;height:100vh}small{color:#eac56e}h2{margin:9px 0;font-size:20px}p{line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:110px;overflow:auto}footer{font-size:12px;color:#b4c7df}</style><small>🔔 ALERTA PARA A SONOPLASTIA</small><h2>'+escape(payload.sender_name||'Direção do culto')+'</h2><p>'+escape(payload.message)+'</p><footer>'+escape(payload.schedule_name||'IASD Studio')+' · Feche esta janela quando ler.</footer></html>';alertRef.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html));alertRef.once('ready-to-show',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.setAlwaysOnTop(true,'floating')}});alertRef.on('closed',()=>{alertRef=null})}
 function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
  dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
@@ -240,6 +243,7 @@ function showDashboard(){
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
 ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
+ipcMain.handle('iasd:test-alert',()=>{if(!alertAccount)return {error:'Ative os alertas independentes entrando com sua conta no aplicativo.'};showSoundAlert({sender_name:'IASD APP · Teste',message:'Este aviso deve aparecer no Windows mesmo com o navegador fechado. A projeção não será interrompida.',schedule_name:'Teste local'});return {ok:true}});
 ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true}});
 ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
