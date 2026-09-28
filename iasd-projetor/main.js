@@ -1,5 +1,5 @@
 'use strict';
-const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell}=require('electron');
+const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell,safeStorage}=require('electron');
 const http=require('node:http');
 const https=require('node:https');
 const {autoUpdater}=require('electron-updater');
@@ -7,6 +7,7 @@ const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
 const zlib=require('node:zlib');
+const {createClient}=require('@supabase/supabase-js');
 // Ícone PNG desenhado localmente, sem depender de arquivos externos.
 function createTrayIcon(){
  const n=32,pixels=Buffer.alloc(n*(1+n*4));
@@ -39,6 +40,66 @@ else app.on('second-instance',()=>{
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
 let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
+
+const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
+const ALERT_SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
+const alertSessionFile=path.join(app.getPath('userData'),'alert-session.dat');
+const alertCloud=createClient(ALERT_SUPABASE_URL,ALERT_SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});
+let alertChannel=null,alertAccount=null,alertSeen=new Set(),alertReady=false,alertRecoveryTimer=null;
+function alertStatus(){return {connected:!!alertChannel&&alertReady,account:alertAccount?.email||null}}
+function alertBroadcastStatus(){if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-status',alertStatus())}
+function saveAlertSession(session){
+ if(!safeStorage.isEncryptionAvailable())throw Error('Criptografia do Windows indisponível. Não é seguro guardar o acesso.');
+ const encrypted=safeStorage.encryptString(JSON.stringify({access_token:session.access_token,refresh_token:session.refresh_token}));
+ fs.writeFileSync(alertSessionFile,encrypted,{mode:0o600});
+}
+async function alertFetchPending(initial=false){
+ if(!alertAccount)return;
+ const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at').order('created_at',{ascending:false}).limit(20);
+ if(error){console.warn('Alertas independentes:',error.message);return}
+ const items=(data||[]).reverse();
+ if(initial){items.forEach(x=>alertSeen.add(x.id));return}
+ for(const item of items)receiveDirectAlert(item);
+}
+function receiveDirectAlert(item){
+ if(!item?.id||alertSeen.has(item.id))return;
+ alertSeen.add(item.id);
+ if(alertSeen.size>300)alertSeen=new Set([...alertSeen].slice(-150));
+ lastAlertId=item.id;
+ showSoundAlert(item);
+}
+async function alertSubscribe(){
+ if(alertChannel)await alertCloud.removeChannel(alertChannel);
+ alertReady=false;alertBroadcastStatus();
+ await alertFetchPending(true);
+ alertChannel=alertCloud.channel('iasd-windows-alerts').on('postgres_changes',{event:'INSERT',schema:'public',table:'iasd_sound_alerts'},event=>receiveDirectAlert(event.new)).subscribe(status=>{
+  alertReady=status==='SUBSCRIBED';
+  alertBroadcastStatus();
+  if(status==='SUBSCRIBED')void alertFetchPending(false);
+ });
+ if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);
+ alertRecoveryTimer=setInterval(()=>{if(alertAccount)void alertFetchPending(false)},15000);
+}
+async function alertStart(session){
+ const {data,error}=await alertCloud.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token});
+ if(error||!data.user)throw Error(error?.message||'Sessão inválida');
+ const {data:member,error:roleError}=await alertCloud.from('iasd_members').select('role').eq('user_id',data.user.id).maybeSingle();
+ if(roleError||!['sonoplasta','founder','cofounder'].includes(member?.role)){await alertCloud.auth.signOut();throw Error('A conta não possui permissão de sonoplastia.')}
+ alertAccount={id:data.user.id,email:data.user.email};
+ saveAlertSession(data.session);
+ await alertSubscribe();alertBroadcastStatus();
+}
+alertCloud.auth.onAuthStateChange((event,session)=>{if(event==='TOKEN_REFRESHED'&&session){try{saveAlertSession(session)}catch(e){console.warn(e.message)}}});
+async function alertRestore(){
+ try{if(!fs.existsSync(alertSessionFile))return;if(!safeStorage.isEncryptionAvailable())return;const session=JSON.parse(safeStorage.decryptString(fs.readFileSync(alertSessionFile)));await alertStart(session)}catch(e){console.warn('Reconexão de alertas:',e.message);alertBroadcastStatus()}
+}
+async function alertLogout(){
+ if(alertChannel){await alertCloud.removeChannel(alertChannel);alertChannel=null}
+ if(alertRecoveryTimer){clearInterval(alertRecoveryTimer);alertRecoveryTimer=null}
+ await alertCloud.auth.signOut();alertAccount=null;alertReady=false;alertSeen.clear();
+ try{fs.unlinkSync(alertSessionFile)}catch(e){if(e.code!=='ENOENT')console.warn(e.message)}
+ alertBroadcastStatus();
+}
 let pairingCode=String(crypto.randomInt(100000,999999));
 let updateStatus={state:'idle',message:'Aguardando verificação inicial.'};
 let startupUpdateChecked=false;
@@ -154,7 +215,9 @@ function showDashboard(){
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
-ipcMain.handle('iasd:status',()=>({paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
+ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
+ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true}});
+ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
@@ -219,6 +282,7 @@ async function handler(req,res){
 }
 if(primaryInstance)app.whenReady().then(()=>{
  loadPairing();
+ void alertRestore();
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?['--autostart']:['.','--autostart']});
  tray=new Tray(createTrayIcon());
  tray.setToolTip('IASD Projetor — aplicativo em execução');
@@ -246,4 +310,4 @@ if(primaryInstance)app.whenReady().then(()=>{
  server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
-app.on('before-quit',()=>{server?.close();clearMedia()});
+app.on('before-quit',()=>{server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
