@@ -17,6 +17,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validar versão da tag
+        if: startsWith(github.ref, 'refs/tags/iasd-projetor-v')
+        shell: pwsh
+        run: |
+          $expected = "iasd-projetor-v$(node -p \"require('./package.json').version\")"
+          if ("${{ github.ref_name }}" -ne $expected) { throw "A tag precisa ser $expected" }
       - name: Instalar dependências
         run: npm install
       - name: Compilar instalador Windows
@@ -33,6 +39,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/iasd-projetor-v')
         uses: softprops/action-gh-release@v2
         with:
-          files: iasd-projetor/dist/*.exe
+          files: |
+            iasd-projetor/dist/*.exe
+            iasd-projetor/dist/*.blockmap
+            iasd-projetor/dist/latest.yml
           generate_release_notes: true
-          prerelease: true
+          prerelease: false
