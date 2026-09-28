@@ -1283,7 +1283,32 @@ function applySiteTheme(id){
  const t=themeById(id);activeSiteTheme=t.id;
  document.documentElement.setAttribute('data-site-theme',t.id);
  let el=$('iasd-theme-style');if(!el){el=document.createElement('style');el.id='iasd-theme-style';document.head.appendChild(el)}
- el.textContent=':root{--iasd-bg:'+t.bg+';--iasd-surface:'+t.surface+';--iasd-ink:'+t.ink+';--iasd-accent:'+t.accent+'}body{background:'+t.bg+'!important;color:'+t.ink+'!important}.desktop-sidebar{background:'+t.sidebar+'!important;border-color:'+t.border+'!important}.sidebar-link.active{background:'+t.accent+'22!important;color:'+t.accent+'!important}.bottomnav{background:'+t.nav+'!important;border-color:'+t.border+'!important}';
+ const isLight=['celestial','esperanca','pergaminho','minimal','luz','marfim','lavanda','montanha','neve','terra','cristal'].includes(t.id);
+ const softInk=isLight?t.ink:'#f5f8fc', softMuted=isLight?t.muted:'#c1d0df';
+ el.textContent=`
+ :root{--iasd-theme-bg:${t.bg};--iasd-theme-surface:${t.surface};--iasd-theme-surface2:${t.surface2};--iasd-theme-ink:${t.ink};--iasd-theme-muted:${t.muted};--iasd-theme-accent:${t.accent};--iasd-theme-border:${t.border};--iasd-theme-sidebar:${t.sidebar};--iasd-theme-nav:${t.nav}}
+ body{background:${t.bg}!important}
+ .desktop-sidebar{background:${t.sidebar}!important;border-color:${t.border}!important}
+ .sidebar-link{color:${softMuted}!important}.sidebar-link.active{background:${t.accent}24!important;color:${t.accent}!important}.sidebar-link:hover{background:${t.accent}16!important}
+ .dashboard-topbar .wordmark-iasd,.sidebar-brand-copy strong{color:${softInk}!important}.dashboard-kicker,.wordmark-app,.agenda-eyebrow{color:${t.accent}!important}
+ .dashboard-hero{background:linear-gradient(115deg,${t.hero},${t.hero2})!important}
+ .dashboard-hero h2 em{color:${t.accent}!important}
+ .dashboard-tools{background:${t.surface}!important;color:${t.ink}!important}
+ .dashboard-tools>label{color:${t.muted}!important}
+ .dashboard-search{background:${t.surface2}!important;border-color:${t.border}!important;color:${t.accent}!important}
+ .dashboard-search input{color:${t.ink}!important}.dashboard-search input::placeholder{color:${t.muted}!important}
+ .dashboard-verse{background:linear-gradient(110deg,${t.surface2},${t.surface})!important;border-color:${t.border}!important}
+ .dashboard-verse blockquote{color:${t.ink}!important}.dashboard-verse small,.verse-symbol{color:${t.accent}!important}
+ .dashboard-agenda{background:linear-gradient(155deg,${t.surface},${t.surface2})!important;border-color:${t.border}!important}
+ .dashboard-agenda,.agenda-heading h2,.agenda-program strong{color:${t.ink}!important}.agenda-heading p,.agenda-program span,.agenda-empty p{color:${t.muted}!important}
+ .agenda-view,.quick-add{background:${t.accent}!important;color:${t.accentText}!important;border-color:${t.accent}!important}
+ .app-dashboard .quick-section .sectionhead h2{color:${softInk}!important}
+ .quick-card{border-color:${t.border}!important}.quick-admin-title,.quick-edit{background:${t.surface2}!important;color:${t.ink}!important;border-color:${t.border}!important}
+ .panel,.tile,.card,.schedule-card,.section-card,.profile-card,.profile-info{border-color:${t.border}!important}
+ .panel button.primary,.auth-submit,.image-upload{background:${t.accent}!important;color:${t.accentText}!important}
+ .bottomnav{background:${t.nav}!important;border-color:${t.border}!important}.bottomnav button.active{color:${t.accent}!important}
+ .account-trigger,.iconbtn,.preview-launch{border-color:${t.border}!important}
+ `;
 }
 async function loadActiveTheme(){if(!cloud)return;const r=await cloud.from('iasd_site_theme').select('theme_id,layout_id').eq('id',1).maybeSingle();if(!r.error&&r.data){applySiteTheme(r.data.theme_id);applyLayout(r.data.layout_id||'layout-01');selectedSiteTheme=activeSiteTheme;if(new URLSearchParams(location.search).has('preview')&&window.__previewTheme)applySiteTheme(window.__previewTheme)}}
 window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='IASD_THEME_PREVIEW')return;if(!new URLSearchParams(location.search).has('preview'))return;window.__previewTheme=e.data.themeId;applySiteTheme(e.data.themeId)});
