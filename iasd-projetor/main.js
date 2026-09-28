@@ -1,5 +1,5 @@
 'use strict';
-const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell,safeStorage,Notification}=require('electron');
+const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell,safeStorage}=require('electron');
 const http=require('node:http');
 const https=require('node:https');
 const {autoUpdater}=require('electron-updater');
@@ -250,9 +250,24 @@ async function guideWindowsNotificationSetup(force=false){
  return {ok:true,openedSettings:result.response===0,supported}
 }
 function showSoundAlert(payload){
- // Notificação nativa do Windows aparece independentemente do navegador.
- try{if(Notification.isSupported()){const notice=new Notification({title:'IASD APP · Alerta para a Sonoplastia',body:String(payload.sender_name||'Direção do culto')+': '+String(payload.message||''),silent:false});notice.on('click',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.moveTop()}else showDashboard()});notice.show()}}catch(e){console.warn('Notificação do Windows:',e.message)}
-const primary=screen.getPrimaryDisplay().workArea;if(alertRef&&!alertRef.isDestroyed())alertRef.close();const width=Math.min(480,primary.width-32),height=260;alertRef=new BrowserWindow({x:primary.x+primary.width-width-18,y:primary.y+22,width,height,show:false,frame:true,autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,backgroundColor:'#14233b',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const html='<!doctype html><html><meta charset="utf-8"><style>body{margin:0;padding:20px;background:#14233b;color:#f2f6ff;font:15px Segoe UI,Arial;border:2px solid #eac56e;box-sizing:border-box;height:100vh}small{color:#eac56e}h2{margin:9px 0;font-size:20px}p{line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:110px;overflow:auto}footer{font-size:12px;color:#b4c7df}</style><small>🔔 ALERTA PARA A SONOPLASTIA</small><h2>'+escape(payload.sender_name||'Direção do culto')+'</h2><p>'+escape(payload.message)+'</p><footer>'+escape(payload.schedule_name||'IASD Studio')+' · Feche esta janela quando ler.</footer></html>';alertRef.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html));alertRef.once('ready-to-show',()=>{if(alertRef&&!alertRef.isDestroyed()){alertRef.showInactive();alertRef.setAlwaysOnTop(true,'floating')}});alertRef.on('closed',()=>{alertRef=null})}
+ // Janela própria do IASD Projetor: sem notificação duplicada do Windows.
+ // Sempre no monitor principal, preservando o conteúdo do telão secundário.
+ const area=screen.getPrimaryDisplay().workArea;
+ if(alertRef&&!alertRef.isDestroyed())alertRef.close();
+ const width=Math.min(540,area.width-36),height=Math.min(350,area.height-36);
+ const x=Math.round(area.x+(area.width-width)/2),y=Math.round(area.y+(area.height-height)/2);
+ const win=new BrowserWindow({x,y,width,height,show:false,frame:true,title:'IASD APP · Alerta da Sonoplastia',autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,minimizable:false,maximizable:false,backgroundColor:'#0b1730',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
+ alertRef=win;
+ const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const sender=escape(payload.sender_name||'Direção do culto'),message=escape(payload.message||''),schedule=escape(payload.schedule_name||'IASD Studio');
+ const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+ *{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 95% 0%,#244b79 0%,transparent 43%),linear-gradient(145deg,#0b1730,#122743);color:#f6f9ff;padding:25px 28px;overflow:hidden}
+ .top{display:flex;align-items:center;gap:13px}.bell{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(135deg,#f9d777,#d7a83d);box-shadow:0 7px 26px #e5b94d33;color:#17243c;font-size:24px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.7px;color:#f4d88a}.brand{font-size:13px;color:#c3d4e9;margin-top:4px}.rule{height:1px;background:linear-gradient(90deg,#dfba5b88,transparent);margin:18px 0 14px}h1{font-size:21px;line-height:1.25;margin:0 0 11px;font-weight:750;overflow-wrap:anywhere}.message{font-size:17px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:116px;overflow:auto;color:#f0f5ff;margin:0}.bottom{position:absolute;bottom:0;left:0;right:0;padding:13px 28px 17px;background:linear-gradient(transparent,#0b1730 30%);display:flex;align-items:center;justify-content:space-between;gap:12px}.context{color:#a9c0d9;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hint{font-size:11px;color:#f0d68c;white-space:nowrap}
+ </style></head><body><div class="top"><div class="bell">🔔</div><div><div class="eyebrow">ALERTA PARA A SONOPLASTIA</div><div class="brand">IASD APP · Comunicação em tempo real</div></div></div><div class="rule"></div><h1>${sender}</h1><p class="message">${message}</p><div class="bottom"><span class="context">${schedule}</span><span class="hint">Feche no X após ler</span></div></body></html>`;
+ win.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html)).catch(e=>console.warn('Falha ao abrir alerta:',e.message));
+ win.once('ready-to-show',()=>{if(!win.isDestroyed()){win.showInactive();win.setAlwaysOnTop(true,'floating');win.moveTop()}});
+ win.on('closed',()=>{if(alertRef===win)alertRef=null});
+}
 function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
  dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
