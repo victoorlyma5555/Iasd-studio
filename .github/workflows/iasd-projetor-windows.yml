@@ -21,7 +21,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/iasd-projetor-v')
         shell: pwsh
         run: |
-          $expected = "iasd-projetor-v$(node -p \"require('./package.json').version\")"
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $expected = "iasd-projetor-v$version"
           if ("${{ github.ref_name }}" -ne $expected) { throw "A tag precisa ser $expected" }
       - name: Instalar dependências
         run: npm install
