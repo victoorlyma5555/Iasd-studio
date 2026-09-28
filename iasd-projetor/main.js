@@ -2,6 +2,7 @@
 const {app,BrowserWindow,screen,Tray,Menu,dialog,nativeImage,ipcMain,shell}=require('electron');
 const http=require('node:http');
 const https=require('node:https');
+const {autoUpdater}=require('electron-updater');
 const crypto=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -39,6 +40,31 @@ const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
 let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
 let pairingCode=String(crypto.randomInt(100000,999999));
+let updateStatus={state:'idle',message:'Aguardando verificação inicial.'};
+let startupUpdateChecked=false;
+function updateProgress(state,message,extra={}){updateStatus={state,message,...extra};if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:update-status',updateStatus)}
+function projectionActive(){return !!(windowRef&&!windowRef.isDestroyed()&&windowRef.isVisible())||!!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible())}
+async function checkAutomaticUpdate({startup=false}={}){
+ if(!app.isPackaged){updateProgress('development','A instalação automática funciona somente no aplicativo instalado.');return updateStatus}
+ if(['downloading','downloaded','checking'].includes(updateStatus.state))return updateStatus;
+ updateProgress('checking','Procurando atualizações online…');
+ try{
+  const release=await latestWindowsRelease();
+  if(!release.available){updateProgress('current','Você já tem a versão mais recente.',{current:app.getVersion()});return updateStatus}
+  if(!/^iasd-projetor-v\d+\.\d+\.\d+$/.test(release.tag)||!release.hasMetadata){updateProgress('manual','Versão disponível sem pacote automático. Abra a página da versão para instalar.',{url:release.url});return updateStatus}
+  updateProgress('available','Nova versão '+release.latest+' disponível.',{latest:release.latest});
+  if(startup){const choice=await dialog.showMessageBox({type:'info',title:'IASD Projetor — atualização disponível',message:'Nova versão '+release.latest+' do IASD Projetor',detail:'Deseja baixar agora? A instalação ocorrerá quando você encerrar o aplicativo, sem interromper o telão durante o culto.',buttons:['Baixar atualização','Agora não'],defaultId:0,cancelId:1,noLink:true});if(choice.response!==0)return updateStatus}
+  autoUpdater.setFeedURL({provider:'generic',url:'https://github.com/victoorlyma5555/Iasd-studio/releases/download/'+encodeURIComponent(release.tag)+'/'});
+  updateProgress('downloading','Baixando a versão '+release.latest+'…',{latest:release.latest});
+  await autoUpdater.checkForUpdates();
+ }catch(e){updateProgress('error','Não foi possível atualizar: '+e.message)}
+ return updateStatus;
+}
+autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=true;autoUpdater.allowPrerelease=false;
+autoUpdater.on('download-progress',p=>updateProgress('downloading','Baixando atualização: '+Math.round(p.percent)+'%',{percent:Math.round(p.percent)}));
+autoUpdater.on('update-downloaded',()=>updateProgress('downloaded','Atualização baixada. Será instalada quando o aplicativo for encerrado.'));
+autoUpdater.on('update-not-available',()=>updateProgress('current','Você já tem a versão mais recente.'));
+autoUpdater.on('error',e=>updateProgress('error','Falha na atualização: '+e.message));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
 function clearMedia(){for(const item of mediaFiles.values())try{fs.unlinkSync(item.path)}catch{}mediaFiles.clear()}
 let authToken=null;
@@ -131,12 +157,13 @@ function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.clos
 ipcMain.handle('iasd:status',()=>({paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
-ipcMain.handle('iasd:updates',()=>latestWindowsRelease().catch(e=>({error:e.message,current:app.getVersion()})));
+ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
+ipcMain.handle('iasd:update-status',()=>updateStatus);
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
 // Atualizações são verificadas online; a instalação requer confirmação do usuário.
-function latestWindowsRelease(){return new Promise((resolve,reject)=>{const req=https.get('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion(),'Accept':'application/vnd.github+json'}},res=>{let body='';res.on('data',chunk=>{body+=chunk;if(body.length>250000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>{try{if(res.statusCode!==200)throw Error('GitHub indisponível ('+res.statusCode+')');const releases=JSON.parse(body),release=releases.find(x=>/^iasd-projetor-v/i.test(x.tag_name||'')&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name)));if(!release){resolve({available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'});return}const match=/^iasd-projetor-v(\d+\.\d+\.\d+)/i.exec(release.tag_name),current=app.getVersion().split('.').map(Number),latest=match?match[1].split('.').map(Number):null;const newer=latest&&latest.some((n,i)=>n>current[i]&&latest.slice(0,i).every((v,j)=>v===current[j]));resolve({available:!!newer,current:app.getVersion(),latest:match?.[1]||release.tag_name,url:release.html_url,downloadUrl:release.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url})}catch(e){reject(e)}})});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
+function latestWindowsRelease(){return new Promise((resolve,reject)=>{const req=https.get('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion(),'Accept':'application/vnd.github+json'}},res=>{let body='';res.on('data',chunk=>{body+=chunk;if(body.length>250000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>{try{if(res.statusCode!==200)throw Error('GitHub indisponível ('+res.statusCode+')');const releases=JSON.parse(body),release=releases.find(x=>/^iasd-projetor-v/i.test(x.tag_name||'')&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name)));if(!release){resolve({available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'});return}const match=/^iasd-projetor-v(\d+\.\d+\.\d+)/i.exec(release.tag_name),current=app.getVersion().split('.').map(Number),latest=match?match[1].split('.').map(Number):null;const newer=latest&&latest.some((n,i)=>n>current[i]&&latest.slice(0,i).every((v,j)=>v===current[j]));resolve({available:!!newer,current:app.getVersion(),latest:match?.[1]||release.tag_name,url:release.html_url,downloadUrl:release.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url,tag:release.tag_name,hasMetadata:release.assets.some(a=>a.name==='latest.yml')})}catch(e){reject(e)}})});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
 function reply(res,code,data){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){
  if(req.headers.origin!==SITE&&!(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')&&!req.headers.origin)){res.writeHead(403);res.end();return}
@@ -216,7 +243,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard()});
+ server.listen(PORT,'127.0.0.1',()=>{if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',()=>{server?.close();clearMedia()});
