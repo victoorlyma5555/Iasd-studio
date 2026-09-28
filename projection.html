@@ -18,7 +18,7 @@ body{background:var(--projection-bg,#080e19)}
 .bible-slide .bible-version{color:#8c9cae;font-size:clamp(11px,.95vw,17px);font-weight:600;letter-spacing:.18em;text-transform:uppercase}
 @media(max-width:700px){.bible-slide .bible-text{font-size:clamp(25px,4.5vw,48px)}#out.bible-mode{padding:5vh 5vw}}
 #out.draw-mode{display:flex;flex-direction:column;gap:5vh;justify-content:center}.draw-label{font-size:clamp(24px,3vw,55px);color:#f2d7a3;font-weight:800;letter-spacing:.1em}.draw-number{font-size:clamp(110px,22vw,330px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1;color:#fff;text-shadow:0 0 65px #5279a8}.draw-winner{color:#f4cc75;animation:drawPop .6s ease-out;position:relative;z-index:2}.draw-standby{color:#f4cc75;animation:standbyPulse 1.65s ease-in-out infinite;text-shadow:0 0 35px #e6b65c,0 0 90px #a37a2c}@keyframes standbyPulse{0%,100%{transform:scale(.88);opacity:.65;text-shadow:0 0 20px #e6b65c}50%{transform:scale(1.09);opacity:1;text-shadow:0 0 70px #f4cc75,0 0 150px #d49c43}}.fireworks{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}.firework-spark{position:absolute;left:var(--x);top:var(--y);width:clamp(3px,.45vw,8px);height:clamp(3px,.45vw,8px);border-radius:50%;background:var(--c);box-shadow:0 0 13px var(--c),0 0 27px var(--c);opacity:0;animation:fireworkBurst 1.35s ease-out var(--delay) both}@keyframes fireworkBurst{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}65%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.25)}}@keyframes drawPop{0%{transform:scale(.75)}65%{transform:scale(1.15)}100%{transform:scale(1)}}\n#out.youtube-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;display:block!important;overflow:hidden!important;background:#000!important}\n#out.youtube-mode iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}\n
-#out.local-media-mode{padding:0!important;background:#000!important}#out.local-media-mode video{width:100vw;height:100dvh;max-width:none!important;max-height:none!important;object-fit:contain}#out.local-media-mode audio{width:min(90%,650px)}
+#out.local-media-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;padding:0!important;margin:0!important;background:#000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}#out.local-media-mode video{display:block!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:contain!important;background:#000!important}#out.local-media-mode audio{width:min(90%,650px)}
 </style></head><body><main id="out" aria-live="polite"></main>
 <script>
 const out=document.getElementById('out');
@@ -54,8 +54,7 @@ function celebrateDraw(serial){
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
- ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode');
- out.classList.remove('bible-mode');
+ ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode');
  if(t.startsWith('IASD_BIBLE:')){
   try{
    const data=JSON.parse(t.slice('IASD_BIBLE:'.length));
@@ -106,7 +105,7 @@ function show(value){
   try{
    const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
    if(!['audio','video'].includes(media.kind)||typeof media.url!=='string'||!(media.url.startsWith('blob:'+location.origin+'/')||/^http:\/\/127\.0\.0\.1:38741\/media\/[a-f0-9]{32}$/.test(media.url)||/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/public\/iasd-offering-videos\/[a-zA-Z0-9_./%-]+$/.test(media.url)))throw Error('Arquivo inválido');
-   out.classList.add('local-media-mode');const el=document.createElement(media.kind);el.src=media.url;el.controls=!isPreview;el.autoplay=!isPreview;el.muted=isPreview;el.volume=isPreview?0:Math.max(0,Math.min(1,Number(media.volume??.75)));el.style.maxWidth='100%';el.style.maxHeight='85vh';out.append(el);
+   out.classList.add('local-media-mode');const el=document.createElement(media.kind);el.src=media.url;el.controls=!isPreview;el.autoplay=!isPreview;el.muted=isPreview;el.volume=isPreview?0:Math.max(0,Math.min(1,Number(media.volume??.75)));out.append(el);
    if(!isPreview)el.play().catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
   }catch(e){out.textContent='Não foi possível carregar esta mídia. Abra o telão neste navegador e tente novamente.'}
  }else if(t.startsWith('IASD_IMAGE:')){
