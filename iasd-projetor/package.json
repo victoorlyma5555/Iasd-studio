@@ -1,6 +1,6 @@
 {
   "name": "iasd-projetor",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "Companheiro Windows para projeção IASD APP",
   "main": "main.js",
@@ -9,7 +9,8 @@
     "dist": "electron-builder --win nsis --publish never"
   },
   "dependencies": {
-    "electron-updater": "^6.6.2"
+    "electron-updater": "^6.6.2",
+    "@supabase/supabase-js": "^2.57.0"
   },
   "devDependencies": {
     "electron-builder": "^26.0.0",
