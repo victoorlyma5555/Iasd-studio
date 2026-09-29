@@ -127,6 +127,15 @@ async function setProjectionFullscreen(enable){
   window.opener?.postMessage({type:'projection-fullscreen-result',active:!!document.fullscreenElement,blocked:true},location.origin);
  }
 }
+window.addEventListener('message',e=>{
+ if(e.origin!==location.origin||!e.data)return;
+ if(e.data.type==='iasd-project')show(e.data.content);
+ if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
+ if(e.data.type==='iasd-studio-volume'){
+  const v=Math.max(0,Math.min(1,Number(e.data.value)||0));
+  out.querySelectorAll('audio,video').forEach(el=>el.volume=v);
+ }
+});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
 </script></body></html>
