@@ -1348,10 +1348,12 @@ async function pairCompanion(){
   if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-projector-paired'},location.origin);
  }catch(e){projectionFeedback(e.message,true)}
 }
-function disconnectCompanion(){
+async function disconnectCompanion(){
+ const token=companionToken;
+ try{if(token)await companionRequest('/unpair',{},token)}catch(e){console.warn('Despareamento local:',e.message)}
  companionToken='';
  localStorage.removeItem('iasd-projetor-token');
- projectionFeedback('IASD Projetor desconectado deste navegador.');
+ projectionFeedback('IASD Projetor despareado deste navegador.');
  const frame=document.getElementById('iasd-studio-frame');
  if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-projector-disconnected'},location.origin);
 }
