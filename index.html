@@ -1313,6 +1313,12 @@ async function companionRequest(route,payload,token=companionToken){
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
  return body;
 }
+async function companionStatus(){
+ const res=await fetch(companionURL+'/status',{cache:'no-store'});
+ const body=await res.json();
+ if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
+ return body;
+}
 async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
 async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');return companionRequest('/youtube/project')}
@@ -1402,16 +1408,24 @@ async function guardedProjection(action){
  await action();
 }
 
-function project(t){
+async function project(t){
  if(!canUseSound()){go('Sonoplastia');return}
- // Nunca mantenha a janela do Chrome junto com a janela do aplicativo.
  if(companionToken&&canReachProjection()){projectionWindow.close();projectionWindow=null}
  if(!companionToken){
   projectionMonitorPopup('O aplicativo IASD Projetor não está conectado. Abra o aplicativo no Windows, confira o pareamento e configure o segundo monitor no modo Estender.');
-  projectionFeedback('Conecte o IASD Projetor em Aplicativo e configuração antes de projetar. O Chrome não abrirá janelas automaticamente.',true);
-  return;
+  projectionFeedback('Conecte o IASD Projetor antes de projetar.',true);return false;
  }
- void guardedProjection(async()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao IASD Projetor.');});
+ const content=String(t??'');
+ try{
+  const status=await companionStatus();
+  if(!status.secondMonitor)throw Error('Segundo monitor não detectado. Use Windows + P e selecione Estender.');
+  await companionRequest('/project',{content:content.startsWith('IASD_DRAW:')?content.slice('IASD_DRAW:'.length):content});
+  data.stage=content;localStorage.setItem('iasd-studio',JSON.stringify(data));localStorage.setItem('iasd-stage',content);
+  if($('stage'))$('stage').textContent=projectionPreviewLabel(content);
+  projectionFeedback('Projeção ativa no segundo monitor.');
+  const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-projector-state',projecting:true},location.origin);
+  return true;
+ }catch(e){projectionFeedback('IASD Projetor: '+e.message,true);projectionMonitorPopup(e.message);return false}
 }
 function stopProjection(){
  sendProjection('');
