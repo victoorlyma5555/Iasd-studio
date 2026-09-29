@@ -76,6 +76,10 @@
     {
       "source": "/pagina/:path*",
       "destination": "/index.html"
+    },
+    {
+      "source": "/hinario",
+      "destination": "/index.html"
     }
   ]
 }
