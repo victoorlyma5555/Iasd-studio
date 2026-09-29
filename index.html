@@ -1310,17 +1310,8 @@ function projectionFeedback(message,failed=false){
  const el=$('projection-feedback');
  if(el){el.textContent=message;el.style.color=failed?'#ffb2a9':'#9ce3ba'}
 }
-window.addEventListener('message',e=>{
- const frame=document.getElementById('iasd-studio-frame');
- if(!frame||e.source!==frame.contentWindow||e.data?.type!=='iasd-studio-command')return;
- const allowedOrigins=new Set([location.origin,'https://iasd-studio.vercel.app','https://iasdapp.com.br','https://www.iasdapp.com.br']);
- if(!allowedOrigins.has(e.origin))return;
- const command=String(e.data.command||''),args=Array.isArray(e.data.args)?e.data.args:[];
- const allowed={project:()=>project(args[0]),stopProjection:()=>stopProjection(),openProjection:()=>openProjection(),blackScreen:()=>sendProjection('')};
- if(allowed[command])try{allowed[command]()}catch(err){frame.contentWindow.postMessage({type:'iasd-studio-error',message:err.message||'Falha na projeção.'},e.origin)}
-});
-window.addEventListener('message',e=>{const frame=document.getElementById('iasd-studio-frame');const allowed=new Set([location.origin,'https://iasd-studio.vercel.app','https://iasdapp.com.br','https://www.iasdapp.com.br']);if(!allowed.has(e.origin)||e.data?.type!=='iasd-studio-height')return;const frame=document.getElementById('iasd-studio-frame');if(frame&&e.source===frame.contentWindow){const height=Number(e.data.height);/* Size from the studio's actual content, not its document/viewport height. One page scrollbar only. */ if(Number.isFinite(height)&&height>=200&&height<=20000&&Math.abs(frame.getBoundingClientRect().height-height)>2){frame.style.height=Math.ceil(height)+'px'}}});
-window.addEventListener('message',e=>{const frame=document.getElementById('iasd-studio-frame');const allowed=new Set([location.origin,'https://iasd-studio.vercel.app','https://iasdapp.com.br','https://www.iasdapp.com.br']);if(!allowed.has(e.origin)||e.source!==frame?.contentWindow||e.data?.type!=='iasd-studio-volume')return;if(canReachProjection())projectionWindow.postMessage({type:'iasd-studio-volume',value:e.data.value},location.origin)});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-height')return;const frame=document.getElementById('iasd-studio-frame');if(frame&&e.source===frame.contentWindow){const height=Number(e.data.height);/* Size from the studio's actual content, not its document/viewport height. One page scrollbar only. */ if(Number.isFinite(height)&&height>=200&&height<=20000&&Math.abs(frame.getBoundingClientRect().height-height)>2){frame.style.height=Math.ceil(height)+'px'}}});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-volume')return;if(canReachProjection())projectionWindow.postMessage({type:'iasd-studio-volume',value:e.data.value},location.origin)});
 function projectionPreviewLabel(t){
  if(!t)return 'Tela preta';
  if(t.startsWith('IASD_DRAW_ANIM:')){
