@@ -1,0 +1,41 @@
+name: Build IASD Projetor Windows
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'iasd-projetor/**'
+      - '.github/workflows/build-iasd-projetor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: iasd-projetor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: iasd-projetor/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Windows installer
+        run: npm run dist
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IASD-Projetor-Setup-0.4.4
+          path: |
+            iasd-projetor/dist/*.exe
+            iasd-projetor/dist/latest.yml
+          if-no-files-found: error
+          retention-days: 30
