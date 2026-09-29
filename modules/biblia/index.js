@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'biblia',page:'Bíblia',route:'/biblia',render(ctx){return ctx.readerUI()},afterRender(ctx){ctx.readerLoad();ctx.updateBibleChapters()}})})();
