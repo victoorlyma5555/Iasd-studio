@@ -1104,7 +1104,7 @@ async function soundHeartbeat(){if(!cloudUser||!canUseSound()||!companionToken)r
 setInterval(()=>{void soundHeartbeat();void soundAlertsPoll()},12000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){void soundHeartbeat();void soundAlertsPoll()}});
 function canEditSchedule(){return !!cloudUser&&(window.IASDAccess?.canEditSchedule(cloudRole)??['founder','cofounder','admin','editor','operator'].includes(cloudRole))}
-function canDeleteSchedule(){return !!cloudUser&&['founder','cofounder','admin'].includes(cloudRole)}
+function canDeleteSchedule(){return !!cloudUser&&(window.IASDAccess?.canManage(cloudRole)??['founder','cofounder','admin'].includes(cloudRole))}
 async function cloudLogin(){const email=$('cloud-email')?.value.trim(),password=$('cloud-password')?.value;if(!email||!password){alert('Informe e-mail e senha.');return}const r=await cloud.auth.signInWithPassword({email,password});if(r.error){alert(r.error.message);return}cloudUser=r.data.user;await loadCloud()}
 async function cloudSignup(){return submitAuthModal()}
 async function cloudLogout(){closeAccountMenu();await cloud.auth.signOut();cloudUser=null;cloudRole=null;await loadCloud();go('Painel')}
@@ -1126,8 +1126,7 @@ async function signInWithGoogle(){
  const feedback=$('auth-feedback');
  try{
   const redirectTo=window.location.origin+window.location.pathname;
-  const {error}=await cloud.auth.signInWithOAuth({provider:'google',options:{redirectTo,queryParams:{access_type:'offline',prompt:'consent'}}});
-  if(error)throw error;
+  await window.IASDCloudService.signInWithGoogle(redirectTo);
  }catch(e){authBusy=false;if(feedback){feedback.className='auth-error';feedback.textContent=e.message||'Não foi possível entrar com o Google.'}}
 }
 function switchAuthMode(signup){authBusy=false;authSignupMode=signup;authNotice='';renderAuthModal()}
@@ -1140,7 +1139,7 @@ async function submitAuthModal(){
  if(!email||!password||password.length<6){if(feedback)feedback.textContent='Informe e-mail e senha com pelo menos 6 caracteres.';return}
  authBusy=true;if(submit){submit.disabled=true;submit.textContent='Aguarde...'}if(feedback)feedback.textContent='';
  try{
-  const r=signup?await cloud.auth.signUp({email,password}):await cloud.auth.signInWithPassword({email,password});
+  const r=signup?{data:await window.IASDCloudService.signUp(email,password)}:{data:await window.IASDCloudService.signIn(email,password)};
   if(r.error){
    const msg=String(r.error.message||'');
    if(/email.rate.limit.exceeded|over.email.rate.limit|email.*rate.*limit/i.test(msg)||r.error.status===429){
