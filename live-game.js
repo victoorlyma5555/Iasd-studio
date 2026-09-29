@@ -48,7 +48,7 @@ function leave(){clearInterval(state.timer);clearInterval(state.clock);if(state.
 function fullscreen(){const el=document.getElementById('lg-modal');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 async function reconnect(){try{const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');if(h?.id){const rr=await api('live_game_rooms?id=eq.'+h.id+'&select=*');if(rr.length&&rr[0].status!=='finished'){state.room=rr[0];state.host=true;poll();state.room.status==='lobby'?lobby():hostQuestion();return}}const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');if(p?.room&&p?.player){const rr=await api('live_game_rooms?id=eq.'+p.room+'&select=*'),pp=await api('live_game_players?id=eq.'+p.player+'&select=*');if(rr.length&&pp.length&&rr[0].status!=='finished'){state.room=rr[0];state.player=pp[0];state.host=false;poll();playerView()}}}catch(e){}}
-function install(){css();if(document.getElementById('live-game-launch'))return;const b=document.createElement('button');b.id='live-game-launch';b.textContent='🎮 Jogo Coletivo';b.onclick=home;document.body.appendChild(b)}
+function install(){css();reconnect()}
 window.IASDLive={home,create,joinForm,join,start,reveal,next,answer,close,leave,fullscreen,sound:GameSound};
 const gameCode=new URLSearchParams(location.search).get('game');if(gameCode){setTimeout(()=>{home();setTimeout(()=>{joinForm();const i=document.getElementById('lg-code');if(i)i.value=gameCode},50)},250)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
