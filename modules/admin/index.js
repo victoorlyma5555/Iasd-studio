@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'admin',page:'Fundador',route:'/admin',render(ctx){return ctx.founderDashboard()}})})();
