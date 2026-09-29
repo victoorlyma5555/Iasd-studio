@@ -39,6 +39,7 @@ else app.on('second-instance',()=>{
 });
 const SITE='https://iasd-studio.vercel.app';
 const PORT=38741;
+const EXPERIMENTAL_UI=true;
 let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
 
 const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
@@ -251,7 +252,7 @@ function showSoundAlert(payload){
 }
 function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
- dashboardRef=new BrowserWindow({width:590,height:750,minWidth:480,minHeight:630,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
+ dashboardRef=new BrowserWindow({width:1280,height:820,minWidth:980,minHeight:680,title:'IASD Projetor Experimental — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false}});
  dashboardRef.setMenuBarVisibility(false);
  dashboardRef.loadFile(path.join(__dirname,'dashboard.html'));
  dashboardRef.on('closed',()=>{dashboardRef=null});
@@ -263,7 +264,7 @@ ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true
 ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
-ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
+ipcMain.handle('iasd:updates',()=>EXPERIMENTAL_UI?Promise.resolve({state:'experimental',message:'Canal de atualização desativado nesta versão experimental.'}):checkAutomaticUpdate({startup:false}));
 ipcMain.handle('iasd:install-update',()=>installDownloadedUpdate());
 ipcMain.handle('iasd:update-status',()=>updateStatus);
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
@@ -351,7 +352,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
+ server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked&&!EXPERIMENTAL_UI){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',()=>{server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
