@@ -1453,6 +1453,7 @@ async function project(t){
  const content=String(t??'');
  try{
   const status=await companionStatus();
+  if(!status.authorized)throw Error('Este navegador não está pareado com o IASD Projetor. Use o código exibido no aplicativo Windows.');
   if(!status.secondMonitor)throw Error('Segundo monitor não detectado. Use Windows + P e selecione Estender.');
   await companionRequest('/project',{content:content.startsWith('IASD_DRAW:')?content.slice('IASD_DRAW:'.length):content});
   data.stage=content;localStorage.setItem('iasd-studio',JSON.stringify(data));localStorage.setItem('iasd-stage',content);
