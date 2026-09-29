@@ -1793,12 +1793,33 @@ async function loadSabbathQuarterlies(){
   sabbathState={...sabbathState,view:'quarterlies',data,loading:false,error:''};
  }catch(e){sabbathState.loading=false;sabbathState.error=e.message||'Falha de conexão com a fonte.'}updateSabbathContent()
 }
-const SABBATH_AUDIENCE_OVERRIDES=JSON.parse(localStorage.getItem('iasd_sabbath_audience_overrides')||'{}'); function sabbathAudience(q){const id=sabbathId(q);if(SABBATH_AUDIENCE_OVERRIDES[id])return SABBATH_AUDIENCE_OVERRIDES[id];const s=(sabbathTitle(q,'')+' '+(q?.description||'')+' '+(q?.name||'')+' '+(q?.id||'')+' '+(q?.slug||'')+' '+(q?.path||'')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return /jovem|jovens|juvenil|youth|young|conexao|comtexto|contexto biblico|adolescente|teen/.test(s)?'Jovem':/adult|adulto|adultos|standard|licao da escola sabatina adultos|guia de estudo da biblia/.test(s)?'Adulto':'Outras lições'} function setSabbathAudience(id,value){if(!id)return;SABBATH_AUDIENCE_OVERRIDES[id]=value;localStorage.setItem('iasd_sabbath_audience_overrides',JSON.stringify(SABBATH_AUDIENCE_OVERRIDES));updateSabbathContent()}
-function sabbathShelf(title,items,list){if(!items.length)return '';return '<section class="sabbath-shelf"><div class="sabbath-shelf-title"><div><span>LIÇÕES</span><h3>'+esc(title)+'</h3></div><small>Deslize →</small></div><div class="sabbath-catalog">'+items.map(({q,i})=>{const id=sabbathId(q),cover=sabbathCover(q);return '<button class="sabbath-quarter-card" onclick="openSabbathQuarter('+JSON.stringify(id).replace(/"/g,'&quot;')+','+i+')">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc(sabbathTitle(q,'Capa da lição'))+'" loading="lazy">':'<span class="sabbath-cover-placeholder">▥</span>')+'<span class="sabbath-card-copy"><small>'+esc(q?.human_date||q?.date||'Escola Sabatina')+'</small><strong>'+esc(sabbathTitle(q,'Lição da Escola Sabatina'))+'</strong><em>Abrir →</em>'+(cloudRole==='founder'||cloudRole==='admin'?'<label class="sabbath-manual-sort" onclick="event.stopPropagation()">Mover para <select onchange="event.stopPropagation();setSabbathAudience('+JSON.stringify(id).replace(/"/g,'&quot;')+',this.value)"><option value="">categoria…</option><option value="Jovem">Jovem</option><option value="Adulto">Adulto</option><option value="Outras lições">Outras</option></select></label>':'')+'</span></button>'}).join('')+'</div></section>'}
+const SABBATH_AUDIENCE_OVERRIDES=JSON.parse(localStorage.getItem('iasd_sabbath_audience_overrides')||'{}');
+function sabbathEditionType(q){
+ const id=String(sabbathId(q)||'').toLowerCase().replace(/^pt\//,'').replace(/^quarterlies\//,'');
+ if(/-cq(?:$|\/)/.test(id))return 'Jovem';
+ if(/-pt(?:$|\/)/.test(id))return 'Portugal';
+ if(/^20\d{2}-0?[1-4](?:$|\/)/.test(id))return 'Adulto';
+ return 'Outras'
+}
+function sabbathAudience(q){
+ const id=sabbathId(q);
+ if(SABBATH_AUDIENCE_OVERRIDES[id])return SABBATH_AUDIENCE_OVERRIDES[id];
+ return sabbathEditionType(q)
+}
+function setSabbathAudience(id,value){
+ if(!id)return;
+ if(value)SABBATH_AUDIENCE_OVERRIDES[id]=value;else delete SABBATH_AUDIENCE_OVERRIDES[id];
+ localStorage.setItem('iasd_sabbath_audience_overrides',JSON.stringify(SABBATH_AUDIENCE_OVERRIDES));
+ updateSabbathContent()
+}
+function sabbathShelf(title,items,list){
+ if(!items.length)return '';
+ return '<section class="sabbath-shelf"><div class="sabbath-shelf-title"><div><span>LIÇÕES</span><h3>'+esc(title)+'</h3></div><small>Deslize →</small></div><div class="sabbath-catalog">'+items.map(({q,i})=>{const id=sabbathId(q),cover=sabbathCover(q),current=sabbathAudience(q);return '<button class="sabbath-quarter-card" onclick="openSabbathQuarter('+JSON.stringify(id).replace(/"/g,'&quot;')+','+i+')">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc(sabbathTitle(q,'Capa da lição'))+'" loading="lazy">':'<span class="sabbath-cover-placeholder">▥</span>')+'<span class="sabbath-card-copy"><small>'+esc(q?.human_date||q?.date||'Escola Sabatina')+'</small><strong>'+esc(sabbathTitle(q,'Lição da Escola Sabatina'))+'</strong><em>Abrir →</em>'+(cloudRole==='founder'||cloudRole==='admin'?'<label class="sabbath-manual-sort" onclick="event.stopPropagation()">Mover para <select onchange="event.stopPropagation();setSabbathAudience('+JSON.stringify(id).replace(/"/g,'&quot;')+',this.value)"><option value="">Automático</option><option value="Jovem" '+(current==='Jovem'?'selected':'')+'>Jovem</option><option value="Adulto" '+(current==='Adulto'?'selected':'')+'>Adulto</option><option value="Portugal" '+(current==='Portugal'?'selected':'')+'>Portugal</option><option value="Outras" '+(current==='Outras'?'selected':'')+'>Outras</option></select></label>':'')+'</span></button>'}).join('')+'</div></section>'
+}
 let SABBATH_DATE_ORDER=localStorage.getItem('iasd_sabbath_date_order')||'asc';
 function sabbathDateKey(q){
  const id=String(sabbathId(q)||'');
- const m=id.match(/(20\\d{2})[-_/]0?([1-4])(?:\\D|$)/);
+ const m=id.match(/(20\d{2})[-_/]0?([1-4])(?:\D|$)/);
  if(m)return Number(m[1])*10+Number(m[2]);
  const raw=String(q?.start_date||q?.date||q?.human_date||'');
  const d=Date.parse(raw);return Number.isFinite(d)?d:0
@@ -1807,10 +1828,11 @@ function setSabbathDateOrder(order){SABBATH_DATE_ORDER=order==='desc'?'desc':'as
 function sabbathSortByDate(items){return [...items].sort((a,b)=>{const d=sabbathDateKey(a.q)-sabbathDateKey(b.q);return SABBATH_DATE_ORDER==='desc'?-d:d})}
 function sabbathQuarterliesMarkup(){
  const list=sabbathList(sabbathState.data);if(!list.length)return '<div class="sabbath-loading"><strong>Preparando catálogo…</strong></div>';
- const groups={Jovem:[],Adulto:[],Outras:[]};list.forEach((q,i)=>{const a=sabbathAudience(q);groups[a==='Jovem'?'Jovem':a==='Adulto'?'Adulto':'Outras'].push({q,i})});
+ const groups={Jovem:[],Adulto:[],Portugal:[],Outras:[]};
+ list.forEach((q,i)=>{const a=sabbathAudience(q);(groups[a]||groups.Outras).push({q,i})});
  Object.keys(groups).forEach(k=>groups[k]=sabbathSortByDate(groups[k]));
  const controls='<div class="sabbath-order-tools"><span>Ordenar por data:</span><button class="'+(SABBATH_DATE_ORDER==='asc'?'active':'')+'" onclick="setSabbathDateOrder(\'asc\')">Crescente ↑</button><button class="'+(SABBATH_DATE_ORDER==='desc'?'active':'')+'" onclick="setSabbathDateOrder(\'desc\')">Decrescente ↓</button></div>';
- return '<div class="sabbath-section-head"><div><span>EDIÇÕES DISPONÍVEIS</span><h3>Escolha a lição</h3></div></div>'+controls+sabbathShelf('Jovem',groups.Jovem,list)+sabbathShelf('Adulto',groups.Adulto,list)+sabbathShelf('Outras lições',groups.Outras,list)
+ return '<div class="sabbath-section-head"><div><span>EDIÇÕES DISPONÍVEIS</span><h3>Escolha a lição</h3></div></div>'+controls+sabbathShelf('Adultos',groups.Adulto,list)+sabbathShelf('Jovens',groups.Jovem,list)+sabbathShelf('Edição de Portugal',groups.Portugal,list)+sabbathShelf('Outras lições',groups.Outras,list)
 }
 async function openSabbathQuarter(id,index){
  const q=sabbathList(sabbathState.data)[index]||{id};sabbathState.quarterly={...q,id:id||sabbathId(q)};sabbathState.loading=true;sabbathState.error='';updateSabbathContent();
