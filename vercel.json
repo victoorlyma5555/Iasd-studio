@@ -11,5 +11,71 @@
       "destination": "https://iasdapp.com.br/:path*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/biblia",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/cronogramas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/escalas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/jograis",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/licao-sabatica",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/jogos",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/sonoplastia",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/sonoplastia/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/perfil",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/datas-especiais",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/midia",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/alertas",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/menu",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/pagina/:path*",
+      "destination": "/index.html"
+    }
   ]
 }
