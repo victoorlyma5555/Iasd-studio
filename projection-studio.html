@@ -126,6 +126,22 @@ main>.studio-controls{padding:11px 13px;background:linear-gradient(120deg,#14273
  main>.studio-controls{grid-row:5!important;position:relative!important;bottom:auto!important}
  .tools .tool{min-height:58px!important}
 }
+</style><style id="iasd-studio-mobile-pack">
+@media(max-width:760px){
+ html,body{max-width:100%;overflow-x:hidden!important}
+ body{padding:8px!important}
+ .studio,.studio-shell,.studio-layout,.workspace,.studio-main,.main-area{width:100%!important;max-width:100%!important;min-width:0!important}
+ .studio-layout,.studio-grid,.workspace{display:block!important}
+ aside,.studio-sidebar,.tool-sidebar,.left-panel{position:static!important;width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 0 10px!important}
+ .studio-sidebar nav,.tool-list,.studio-tools,.side-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .studio-sidebar button,.tool-list button,.studio-tools button,.side-actions button{min-width:0!important;min-height:46px!important;padding:9px!important;font-size:12px!important;white-space:normal!important}
+ .panel,.card,.studio-panel,.tool-panel{max-width:100%!important;min-width:0!important}
+ .actions,.toolbar,.projection-actions,.studio-actions{display:flex!important;flex-wrap:wrap!important;gap:7px!important}
+ .actions button,.toolbar button,.projection-actions button,.studio-actions button{flex:1 1 120px!important;min-height:44px!important}
+ iframe,video,img{max-width:100%!important}
+ input,select,textarea{max-width:100%!important;min-width:0!important}
+}
+@media(max-width:390px){.studio-sidebar nav,.tool-list,.studio-tools,.side-actions{grid-template-columns:1fr!important}}
 </style></head><body><main>
 <div class="head"><div><span class="eyebrow">IASD APP · CENTRAL AUDIOVISUAL</span><h1>Studio de Projeção</h1><p class="muted">Tudo preparado no painel do sonoplasta. O público vê somente o que for enviado.</p></div><span id="connection" class="pill">Verificando telão…</span></div>
 <section class="panel studio-controls" aria-label="Controles principais do telão"><h2>Controle do telão</h2><div class="studio-action-bar"><button type="button" class="studio-action project-action" onclick="call('openProjection')" title="Abrir a janela de projeção no telão"><span class="action-icon" aria-hidden="true">▣</span><span>Projetar</span></button><button type="button" class="studio-action close-action" onclick="call('stopProjection')" title="Fechar a janela do telão"><span class="action-icon" aria-hidden="true">✕</span><span>Fechar telão</span></button><button type="button" class="studio-action black-action" onclick="call('project','')" title="Deixar o telão preto sem fechar a janela"><span class="action-icon" aria-hidden="true">■</span><span>Tela preta</span></button><button type="button" class="studio-action settings-action" onclick="showTool('setup')" title="Abrir configurações e pareamento"><span class="action-icon" aria-hidden="true">⚙</span><span>Configuração</span></button></div><p id="feedback" class="notice" role="status" aria-live="polite"></p></section>
