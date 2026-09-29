@@ -171,10 +171,16 @@ window.addEventListener('message',e=>{
  if(e.data.type==='iasd-project')show(e.data.content);
  if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
  if(e.data.type==='iasd-projection-background')applyProjectionBackground(e.data.color);
+ if(e.data.type==='iasd-projection-visual')applyProjectionVisual(e.data);
  if(e.data.type==='iasd-studio-volume'){const v=Math.max(0,Math.min(1,Number(e.data.value)||0));out.querySelectorAll('audio,video').forEach(el=>el.volume=v)}
 });
 function applyProjectionBackground(value){const color=/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#080e19';document.documentElement.style.setProperty('--projection-bg',color)}
+function projectionVisualDb(){return new Promise((ok,fail)=>{const q=indexedDB.open('iasd-projection-backgrounds-v1',1);q.onupgradeneeded=()=>q.result.createObjectStore('images',{keyPath:'id'});q.onsuccess=()=>ok(q.result);q.onerror=()=>fail(q.error)})}
+let projectionVisualObjectUrl='';
+async function resolveProjectionImage(id,fallback){if(!id)return fallback||'';try{const db=await projectionVisualDb(),item=await new Promise((ok,fail)=>{const q=db.transaction('images').objectStore('images').get(id);q.onsuccess=()=>ok(q.result);q.onerror=()=>fail(q.error)});db.close();if(item?.blob){if(projectionVisualObjectUrl)URL.revokeObjectURL(projectionVisualObjectUrl);projectionVisualObjectUrl=URL.createObjectURL(item.blob);return projectionVisualObjectUrl}}catch(e){}return fallback||''}
+async function applyProjectionVisual(v={}){const id=v.imageId??localStorage.getItem('iasd-projection-bg-image-id')??'',fallback=v.imageUrl??localStorage.getItem('iasd-projection-bg-image-url')??'',fit=v.fit||localStorage.getItem('iasd-projection-fit')||'cover',transition=v.transition||localStorage.getItem('iasd-projection-transition')||'fade',logo=v.logo??localStorage.getItem('iasd-projection-logo')??'';const url=await resolveProjectionImage(id,fallback);document.body.style.backgroundImage=url?'url("'+url.replace(/"/g,'%22')+'")':'none';document.body.style.backgroundRepeat='no-repeat';document.body.style.backgroundPosition='center';document.body.style.backgroundSize=fit==='contain'?'contain':fit==='center'?'auto':'cover';out.style.transition=transition==='none'?'none':'opacity .35s ease';let mark=document.getElementById('iasd-projection-logo-overlay');if(!mark){mark=document.createElement('img');mark.id='iasd-projection-logo-overlay';mark.alt='';Object.assign(mark.style,{position:'fixed',left:'4vw',top:'4vh',maxWidth:'18vw',maxHeight:'16vh',objectFit:'contain',zIndex:'30',pointerEvents:'none'});document.body.append(mark)}mark.src=logo||'';mark.style.display=logo?'block':'none'}
 applyProjectionBackground(localStorage.getItem('iasd-projection-bg')||'#080e19');
+applyProjectionVisual();
 window.addEventListener('storage',e=>{if(e.key==='iasd-projection-bg')applyProjectionBackground(e.newValue)});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
