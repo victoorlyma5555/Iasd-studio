@@ -4,7 +4,7 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
 body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-serif}
 #out{width:100%;height:100%;display:grid;place-items:center;padding:4vw;text-align:center;font-size:clamp(28px,4.8vw,88px);line-height:1.25;white-space:pre-wrap;overflow-wrap:anywhere}
-#out img,#out video{display:block;max-width:100%;max-height:100%;object-fit:contain}
+#out img,#out video{display:block;max-width:100%;max-height:100%;object-fit:contain}#out{--iasd-fit:cover}#out>img,#out.local-media-mode video{object-fit:var(--iasd-fit)!important}#out.iasd-scene-fade>*{animation:iasdSceneIn .32s ease both}@keyframes iasdSceneIn{from{opacity:0;transform:scale(.992)}to{opacity:1;transform:none}}
 
 
 /* Projection typography — clean, responsive, legible from a distance */
@@ -32,9 +32,9 @@ body{background:var(--projection-bg,#080e19)}
 .st-caption{font-size:clamp(12px,1vw,18px);letter-spacing:.16em;color:#8299ad}.st-final .st-time{font-size:clamp(55px,6.2vw,108px);line-height:1.05;letter-spacing:-.03em;max-width:1100px;animation:stFinal 1.6s ease-in-out infinite}.st-final .st-track{opacity:0}
 @keyframes stOrbit{to{transform:rotate(360deg)}}@keyframes stBreath{50%{opacity:.62}}@keyframes stFinal{50%{transform:scale(1.025)}}
 @media(prefers-reduced-motion:reduce){.st-stage:before,.st-stage:after,.st-glow,.st-final .st-time{animation:none}}
-<style id="iasd-preview-idle-style">
+</style><style id="iasd-preview-idle-style">
 .preview-idle{position:absolute;inset:0;overflow:hidden;display:grid;place-items:center;background:radial-gradient(circle at 70% 55%,#e4a44355,transparent 22%),linear-gradient(155deg,#0d3158,#0b2440 42%,#b06b31 100%);color:#fff}.preview-idle:before{content:"";position:absolute;left:-6%;right:-6%;bottom:-8%;height:43%;background:linear-gradient(165deg,transparent 0 20%,#101d2a 21% 34%,#172c3b 35% 48%,#09131d 49%);opacity:.95}.preview-idle:after{content:"✝";position:absolute;right:15%;bottom:21%;font-size:min(19vw,260px);font-family:Georgia,serif;color:#170e08;text-shadow:0 5px 8px #0008;transform:scaleX(.72)}.preview-idle-brand{position:relative;z-index:2;margin-right:18%;display:grid;grid-template-columns:auto auto;column-gap:18px;align-items:center;text-shadow:0 3px 15px #0008}.preview-idle-mark{font-size:min(8vw,100px);font-weight:800}.preview-idle-copy strong{display:block;font-size:min(6vw,76px);line-height:.9;letter-spacing:.01em}.preview-idle-copy strong b{color:#efb94f}.preview-idle-copy span{display:block;margin-top:12px;font-size:min(1.5vw,20px);letter-spacing:.16em}.preview-idle-sun{position:absolute;right:24%;bottom:28%;width:34px;height:34px;border-radius:50%;background:#fff5c6;box-shadow:0 0 45px #ffd97e,0 0 100px #f3a64c;z-index:1}
-</style></style></head><body><main id="out" aria-live="polite"></main>
+</style><style id="iasd-projection-logo-style">#iasd-projection-logo{position:fixed;right:3.2vw;bottom:3.2vh;z-index:10050;max-width:min(14vw,190px);max-height:min(12vh,110px);width:auto;height:auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 3px 10px #0008)}</style></head><body><main id="out" aria-live="polite"></main>
 <script>
 const out=document.getElementById('out');
 let drawSerial=0;let sabbathTimerSerial=0;
@@ -67,7 +67,7 @@ function celebrateDraw(serial){
  setTimeout(()=>{if(serial===drawSerial)layer.remove()},4600);
 }
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
-function show(value){
+function applyProjectionLogo(value){const url=String(value||'');let logo=document.getElementById('iasd-projection-logo');if(!url){logo?.remove();localStorage.removeItem('iasd-projection-logo');return}if(!url.startsWith(allowed))return;if(!logo){logo=document.createElement('img');logo.id='iasd-projection-logo';logo.alt='Logo da projeção';document.body.append(logo)}logo.src=url;localStorage.setItem('iasd-projection-logo',url)}function applyProjectionFit(value){const mode=value==='contain'?'contain':'cover';out.style.setProperty('--iasd-fit',mode);localStorage.setItem('iasd-projection-fit',mode)}function applyProjectionTransition(value){const mode=value==='direct'?'direct':'fade';localStorage.setItem('iasd-projection-transition',mode);out.classList.toggle('iasd-scene-fade',mode==='fade')}function show(value){
  const t=typeof value==='string'?value:'';
  ++drawSerial;++sabbathTimerSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','sabbath-timer-mode','preview-idle');
  if(t.startsWith('IASD_BIBLE:')){
@@ -180,10 +180,10 @@ window.addEventListener('message',e=>{
  if(e.data.type==='iasd-project')show(e.data.content);
  if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
  if(e.data.type==='iasd-projection-background')applyProjectionBackground(e.data.color);
- if(e.data.type==='iasd-studio-volume'){const v=Math.max(0,Math.min(1,Number(e.data.value)||0));out.querySelectorAll('audio,video').forEach(el=>el.volume=v)}
+ if(e.data.type==='iasd-studio-volume'){const v=Math.max(0,Math.min(1,Number(e.data.value)||0));out.querySelectorAll('audio,video').forEach(el=>el.volume=v)};if(e.data.type==='iasd-projection-fit')applyProjectionFit(e.data.value);if(e.data.type==='iasd-projection-transition')applyProjectionTransition(e.data.value);if(e.data.type==='iasd-projection-logo')applyProjectionLogo(e.data.url)
 });
 function applyProjectionBackground(value){const color=/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#080e19';document.documentElement.style.setProperty('--projection-bg',color)}
-applyProjectionBackground(localStorage.getItem('iasd-projection-bg')||'#080e19');
+applyProjectionBackground(localStorage.getItem('iasd-projection-bg')||'#080e19');applyProjectionFit(localStorage.getItem('iasd-projection-fit')||'cover');applyProjectionTransition(localStorage.getItem('iasd-projection-transition')||'fade');applyProjectionLogo(localStorage.getItem('iasd-projection-logo')||'');
 window.addEventListener('storage',e=>{if(e.key==='iasd-projection-bg')applyProjectionBackground(e.newValue)});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
