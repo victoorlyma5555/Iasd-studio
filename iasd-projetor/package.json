@@ -1,6 +1,6 @@
 {
   "name": "iasd-projetor",
-  "version": "0.4.9",
+  "version": "0.5.0-beta.1",
   "private": true,
   "description": "Companheiro Windows para projeção IASD APP",
   "main": "main.js",
@@ -48,5 +48,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/victoorlyma5555/Iasd-studio.git"
-  }
+  },
+  "productName": "IASD Projetor Experimental"
 }
