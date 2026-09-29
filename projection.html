@@ -19,10 +19,23 @@ body{background:var(--projection-bg,#080e19)}
 @media(max-width:700px){.bible-slide .bible-text{font-size:clamp(25px,4.5vw,48px)}#out.bible-mode{padding:5vh 5vw}}
 #out.draw-mode{display:flex;flex-direction:column;gap:5vh;justify-content:center}.draw-label{font-size:clamp(24px,3vw,55px);color:#f2d7a3;font-weight:800;letter-spacing:.1em}.draw-number{font-size:clamp(110px,22vw,330px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1;color:#fff;text-shadow:0 0 65px #5279a8}.draw-winner{color:#f4cc75;animation:drawPop .6s ease-out;position:relative;z-index:2}.draw-standby{color:#f4cc75;animation:standbyPulse 1.65s ease-in-out infinite;text-shadow:0 0 35px #e6b65c,0 0 90px #a37a2c}@keyframes standbyPulse{0%,100%{transform:scale(.88);opacity:.65;text-shadow:0 0 20px #e6b65c}50%{transform:scale(1.09);opacity:1;text-shadow:0 0 70px #f4cc75,0 0 150px #d49c43}}.fireworks{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}.firework-spark{position:absolute;left:var(--x);top:var(--y);width:clamp(3px,.45vw,8px);height:clamp(3px,.45vw,8px);border-radius:50%;background:var(--c);box-shadow:0 0 13px var(--c),0 0 27px var(--c);opacity:0;animation:fireworkBurst 1.35s ease-out var(--delay) both}@keyframes fireworkBurst{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}65%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.25)}}@keyframes drawPop{0%{transform:scale(.75)}65%{transform:scale(1.15)}100%{transform:scale(1)}}\n#out.youtube-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;display:block!important;overflow:hidden!important;background:#000!important}\n#out.youtube-mode iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}\n
 #out.local-media-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;padding:0!important;margin:0!important;background:#000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}#out.local-media-mode video{display:block!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:contain!important;background:#000!important}#out.local-media-mode audio{width:min(90%,650px)}
+
+#out.sabbath-timer-mode{position:fixed;inset:0;padding:0;background:#06111d;overflow:hidden;display:block;text-align:left}
+.st-stage{--accent:#2c86cf;position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 34%),linear-gradient(135deg,#071625,#0a1c2d 50%,#06111c);transition:background 2.4s ease}
+.st-stage:before,.st-stage:after{content:"";position:absolute;border-radius:50%;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);transition:border-color 2.4s ease;animation:stOrbit 16s linear infinite}.st-stage:before{width:72vw;height:72vw;max-width:1100px;max-height:1100px}.st-stage:after{width:48vw;height:48vw;max-width:760px;max-height:760px;animation-direction:reverse;animation-duration:12s}
+.st-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 52%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 38%);transition:background 2.4s ease;animation:stBreath 4s ease-in-out infinite}
+.st-card{position:relative;z-index:2;width:min(88vw,1280px);display:grid;place-items:center;gap:clamp(10px,2vh,26px);text-align:center}
+.st-mark{display:grid;place-items:center;width:clamp(58px,6vw,96px);height:clamp(58px,6vw,96px);border:1px solid color-mix(in srgb,var(--accent) 60%,#fff 12%);border-radius:50%;color:#fff;font-size:clamp(28px,3vw,48px);font-weight:800;box-shadow:0 0 35px color-mix(in srgb,var(--accent) 35%,transparent);transition:border-color 2.4s ease,box-shadow 2.4s ease}
+.st-kicker{font-size:clamp(14px,1.25vw,23px);font-weight:750;letter-spacing:.28em;color:#dbe9f5}.st-title{font-size:clamp(18px,1.65vw,30px);font-weight:600;letter-spacing:.08em;color:#9eb3c5}
+.st-time{font-size:clamp(110px,19vw,300px);font-weight:850;line-height:.82;letter-spacing:-.075em;font-variant-numeric:tabular-nums;color:#f8fbff;text-shadow:0 0 45px color-mix(in srgb,var(--accent) 38%,transparent);transition:text-shadow 2.4s ease,transform .5s ease}
+.st-track{width:min(62vw,900px);height:7px;border-radius:99px;background:#ffffff18;overflow:hidden}.st-fill{height:100%;width:100%;border-radius:inherit;background:var(--accent);box-shadow:0 0 22px var(--accent);transition:width 1s linear,background 2.4s ease,box-shadow 2.4s ease}
+.st-caption{font-size:clamp(12px,1vw,18px);letter-spacing:.16em;color:#8299ad}.st-final .st-time{font-size:clamp(55px,6.2vw,108px);line-height:1.05;letter-spacing:-.03em;max-width:1100px;animation:stFinal 1.6s ease-in-out infinite}.st-final .st-track{opacity:0}
+@keyframes stOrbit{to{transform:rotate(360deg)}}@keyframes stBreath{50%{opacity:.62}}@keyframes stFinal{50%{transform:scale(1.025)}}
+@media(prefers-reduced-motion:reduce){.st-stage:before,.st-stage:after,.st-glow,.st-final .st-time{animation:none}}
 </style></head><body><main id="out" aria-live="polite"></main>
 <script>
 const out=document.getElementById('out');
-let drawSerial=0;
+let drawSerial=0;let sabbathTimerSerial=0;
 const isPreview=new URLSearchParams(location.search).get('preview')==='1';
 // Keep the audience display free of on-screen controls.
 // Fullscreen may be denied without a user gesture; never display a fallback button.
@@ -54,7 +67,7 @@ function celebrateDraw(serial){
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
- ++drawSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode');
+ ++drawSerial;++sabbathTimerSerial;out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','sabbath-timer-mode');
  if(t.startsWith('IASD_BIBLE:')){
   try{
    const data=JSON.parse(t.slice('IASD_BIBLE:'.length));
@@ -89,6 +102,32 @@ function show(value){
   }catch(e){out.textContent='Não foi possível iniciar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW:')){
   const value=t.slice('IASD_DRAW:'.length);out.classList.add('draw-mode');const label=document.createElement('div');label.className='draw-label';label.textContent='NÚMERO SORTEADO';const num=document.createElement('div');num.className='draw-number draw-winner';num.textContent=value;out.append(label,num);celebrateDraw(drawSerial);
+ }else if(t.startsWith('IASD_SABBATH_TIMER:')){
+  try{
+   const d=JSON.parse(t.slice('IASD_SABBATH_TIMER:'.length)),total=Math.max(1,Number(d.total)||3600),serial=sabbathTimerSerial;
+   out.classList.add('sabbath-timer-mode');
+   const stage=document.createElement('section');stage.className='st-stage';
+   const glow=document.createElement('div');glow.className='st-glow';
+   const card=document.createElement('div');card.className='st-card';
+   const mark=document.createElement('div');mark.className='st-mark';mark.textContent='✦';
+   const kicker=document.createElement('div');kicker.className='st-kicker';kicker.textContent='ESCOLA SABATINA';
+   const title=document.createElement('div');title.className='st-title';title.textContent='LIÇÃO DA ESCOLA SABATINA';
+   const time=document.createElement('div');time.className='st-time';
+   const track=document.createElement('div');track.className='st-track';const fill=document.createElement('div');fill.className='st-fill';track.append(fill);
+   const caption=document.createElement('div');caption.className='st-caption';caption.textContent='TEMPO RESTANTE';
+   card.append(mark,kicker,title,time,track,caption);stage.append(glow,card);out.append(stage);
+   const hex=(a,b,p)=>{const A=a.match(/\w\w/g).map(x=>parseInt(x,16)),B=b.match(/\w\w/g).map(x=>parseInt(x,16));return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*p).toString(16).padStart(2,'0')).join('')};
+   const accent=r=>r>330?'#2c86cf':r>300?hex('#2c86cf','#35b66f',(330-r)/30):r>90?'#35b66f':r>60?hex('#35b66f','#d4b83f',(90-r)/30):r>10?'#d4b83f':r>0?hex('#d4b83f','#d84242',(10-r)/10):'#d84242';
+   const tick=()=>{
+    if(serial!==sabbathTimerSerial)return;
+    let r=d.running&&Number(d.endAt)>0?Math.max(0,Math.ceil((Number(d.endAt)-Date.now())/1000)):Math.max(0,Number(d.remaining)||0);
+    const done=!!d.finished||r<=0,mins=Math.floor(r/60),secs=Math.floor(r%60),a=accent(r);
+    stage.style.setProperty('--accent',a);fill.style.width=(Math.max(0,Math.min(1,r/total))*100)+'%';
+    if(done){stage.classList.add('st-final');time.textContent='LIÇÃO DA ESCOLA SABATINA FINALIZADA';caption.textContent='TEMPO ENCERRADO'}
+    else{stage.classList.remove('st-final');time.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');caption.textContent=d.running?'TEMPO RESTANTE':'CRONÔMETRO PAUSADO'}
+    if(d.running&&!done)setTimeout(tick,250);
+   };tick();
+  }catch(e){out.textContent='Não foi possível exibir o cronômetro.'}
  }else if(t.startsWith('IASD_YOUTUBE:')){
   try{
    const media=JSON.parse(t.slice('IASD_YOUTUBE:'.length));
