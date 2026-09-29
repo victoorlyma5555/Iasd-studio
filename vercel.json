@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "iasd-studio.vercel.app"
+        }
+      ],
+      "destination": "https://iasdapp.com.br/:path*",
+      "permanent": true
+    }
+  ]
+}
