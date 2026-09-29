@@ -8,6 +8,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const zlib=require('node:zlib');
 const {createClient}=require('@supabase/supabase-js');
+const {execFile}=require('node:child_process');
 // Ícone PNG desenhado localmente, sem depender de arquivos externos.
 function createTrayIcon(){
  const n=32,pixels=Buffer.alloc(n*(1+n*4));
@@ -195,6 +196,10 @@ function activateProjector(win,display){
   }
  },900);
 }
+const WALLPAPER_HOST='gtsaaixuampeaivugxdm.supabase.co';
+function downloadWallpaper(url){return new Promise((resolve,reject)=>{let parsed;try{parsed=new URL(String(url||''))}catch{return reject(Error('URL da imagem inválida'))}if(parsed.protocol!=='https:'||parsed.hostname!==WALLPAPER_HOST||!parsed.pathname.includes('/storage/v1/object/public/iasd-images/'))return reject(Error('Use uma imagem salva na biblioteca do IASD APP.'));const req=https.get(parsed,{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion()}},res=>{if(res.statusCode>=300&&res.statusCode<400&&res.headers.location){res.resume();return reject(Error('Redirecionamento de imagem não permitido'))}if(res.statusCode!==200){res.resume();return reject(Error('Não foi possível baixar a imagem ('+res.statusCode+')'))}const type=String(res.headers['content-type']||'').toLowerCase();if(!/^image\/(jpeg|png|webp)$/.test(type)){res.resume();return reject(Error('Formato de imagem não suportado pelo Windows'))}const limit=15*1024*1024;let size=0;const chunks=[];res.on('data',chunk=>{size+=chunk.length;if(size>limit){req.destroy(Error('Imagem maior que 15 MB'));return}chunks.push(chunk)});res.on('end',()=>{if(!size)return reject(Error('Imagem vazia'));const ext=type.includes('png')?'png':type.includes('webp')?'webp':'jpg',dir=path.join(app.getPath('userData'),'wallpapers');fs.mkdirSync(dir,{recursive:true});const dest=path.join(dir,'iasd-wallpaper.'+ext);fs.writeFileSync(dest,Buffer.concat(chunks));resolve(dest)});res.on('error',reject)});req.setTimeout(15000,()=>req.destroy(Error('Tempo esgotado ao baixar a imagem')));req.on('error',reject)})}
+function applyWindowsWallpaper(file){return new Promise((resolve,reject)=>{if(process.platform!=='win32')return reject(Error('Esta função está disponível apenas no Windows.'));const escaped=String(file).replace(/'/g,"''");const script="$p='"+escaped+"'; Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class IASDWallpaper { [DllImport(\"user32.dll\", CharSet=CharSet.Unicode, SetLastError=true)] public static extern bool SystemParametersInfo(int uAction,int uParam,string lpvParam,int fuWinIni); }'; if(-not [IASDWallpaper]::SystemParametersInfo(20,0,$p,3)){throw 'O Windows recusou a alteração do papel de parede.'}";execFile('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',script],{windowsHide:true,timeout:15000},err=>err?reject(Error('Falha ao alterar o plano de fundo: '+err.message)):resolve())})}
+async function setWindowsWallpaper(url){const file=await downloadWallpaper(url);await applyWindowsWallpaper(file);return file}
 function showProjector(){
  const display=chooseDisplay();
  if(!display)throw Error('Conecte um segundo monitor e use o modo Estender do Windows.');
@@ -302,7 +307,7 @@ async function handler(req,res){
   reply(res,200,{token:newToken});return;
  }
  if(!authorized(req)){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
- if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40)};reply(res,200,{ok:true});return}
+ if(req.url==='/wallpaper'&&req.method==='POST'){try{await setWindowsWallpaper(data.url);reply(res,200,{ok:true});}catch(e){reply(res,409,{error:e.message});}return}\n if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40)};reply(res,200,{ok:true});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;showSoundAlert(data)}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
