@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'licao-sabatica',page:'Lição da Escola Sabatina',route:'/licao-sabatica',render(ctx){return ctx.sabbathSchoolPage()}})})();
