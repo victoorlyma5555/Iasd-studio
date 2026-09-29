@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'cronogramas',page:'Cronograma',route:'/cronogramas',render(ctx){return ctx.schedulePage()}})})();
