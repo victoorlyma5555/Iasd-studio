@@ -329,7 +329,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
    showProjector();
    const content=data.content;
    if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
-   await windowRef.webContents.executeJavaScript('window.postMessage('+JSON.stringify({type:'iasd-project',content})+','+JSON.stringify(SITE)+')');
+   await windowRef.webContents.executeJavaScript('window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)');
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
