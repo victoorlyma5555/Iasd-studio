@@ -1293,10 +1293,12 @@ async function pairCompanion(){
  const code=prompt('Abra o IASD Projetor na bandeja do Windows e digite o código de seis dígitos:');
  if(!code)return;
  try{
-  const data=await companionRequest('/pair',{code:code.trim()},'');
-  companionToken=data.token;localStorage.setItem('iasd-projetor-token',companionToken);
+  const paired=await companionRequest('/pair',{code:code.trim()},'');
+  companionToken=paired.token;localStorage.setItem('iasd-projetor-token',companionToken);
   if(canReachProjection()){projectionWindow.close();projectionWindow=null}
   projectionFeedback('IASD Projetor conectado! Agora o botão Projetar abre em tela cheia no segundo monitor.');
+  const frame=document.getElementById('iasd-studio-frame');
+  if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-projector-paired'},location.origin);
  }catch(e){projectionFeedback(e.message,true)}
 }
 async function openCompanionProjection(){
