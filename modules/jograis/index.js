@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'jograis',page:'Palavra em Cena',route:'/jograis',render(ctx){return ctx.pecPage()}})})();
