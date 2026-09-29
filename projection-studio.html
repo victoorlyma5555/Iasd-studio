@@ -525,7 +525,7 @@ async function sync(){
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='iasd-projector-paired'){projectorConnectionState.checkedAt=0;setTimeout(()=>sync(),150)}});
 setInterval(sync,3000);sync();
 initYouTubeTools();
-const previousTool=sessionStorage.getItem('iasd-studio-tool');showTool(previousTool&&document.getElementById(previousTool)?.classList.contains('work')?previousTool:'ambient');
+sessionStorage.removeItem('iasd-studio-tool');showTool('');
 if(typeof ResizeObserver==='function'){const preview=document.querySelector('main>.preview');let lastPreviewHeight=0;const updateStudioDimensions=()=>{if(window.innerWidth>850&&preview){const h=Math.ceil(preview.querySelector('.screen').getBoundingClientRect().height);if(h>0&&Math.abs(h-lastPreviewHeight)>1){lastPreviewHeight=h;document.querySelector('main').style.setProperty('--iasd-preview-height',h+'px')}}else{lastPreviewHeight=0;document.querySelector('main').style.removeProperty('--iasd-preview-height')}requestStudioHeight()};new ResizeObserver(updateStudioDimensions).observe(preview);new ResizeObserver(requestStudioHeight).observe(document.querySelector('main'));window.addEventListener('resize',updateStudioDimensions);updateStudioDimensions()}window.addEventListener('load',requestStudioHeight);window.addEventListener('resize',requestStudioHeight);requestStudioHeight();
 </script>
 <script id="studio-reference-runtime-v1">
