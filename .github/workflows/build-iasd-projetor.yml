@@ -1,4 +1,4 @@
-name: Build IASD Projetor Windows
+name: Build and Release IASD Projetor Windows
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
@@ -30,15 +30,46 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Build Windows installer
+      - name: Read app version
+        id: app_version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=iasd-projetor-v$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build Windows installer and update metadata
         run: npm run dist
+
+      - name: Verify update package
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/latest.yml")) { throw "latest.yml was not generated" }
+          $installer = Get-ChildItem "dist/*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer was not generated" }
+          Write-Host "Installer: $($installer.Name)"
+          Get-Content "dist/latest.yml"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IASD-Projetor-Setup-0.4.7
+          name: IASD-Projetor-Setup-${{ steps.app_version.outputs.version }}
           path: |
             iasd-projetor/dist/*.exe
             iasd-projetor/dist/latest.yml
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish automatic update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.app_version.outputs.tag }}
+          name: IASD Projetor v${{ steps.app_version.outputs.version }}
+          target_commitish: main
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            iasd-projetor/dist/*.exe
+            iasd-projetor/dist/latest.yml
+          fail_on_unmatched_files: true
