@@ -1319,15 +1319,27 @@ let projectionWindow=null;
 const companionURL='http://127.0.0.1:38741';
 let companionToken=localStorage.getItem('iasd-projetor-token')||'';
 async function companionRequest(route,payload,token=companionToken){
- const res=await fetch(companionURL+route,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:JSON.stringify(payload||{})});
- const body=await res.json();
+ let res;
+ try{res=await fetch(companionURL+route,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:JSON.stringify(payload||{})})}
+ catch(e){throw Error('Não foi possível comunicar com o IASD Projetor. Confirme que o aplicativo está aberto no Windows.')}
+ let body={};try{body=await res.json()}catch{}
+ if(res.status===401&&token===companionToken){
+  companionToken='';localStorage.removeItem('iasd-projetor-token');
+  const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-projector-disconnected'},location.origin);
+  throw Error('O pareamento deste navegador expirou. Pareie novamente com o código exibido no IASD Projetor.');
+ }
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
  return body;
 }
 async function companionStatus(){
- const res=await fetch(companionURL+'/status',{cache:'no-store',headers:companionToken?{Authorization:'Bearer '+companionToken}:{}});
+ let res;
+ try{res=await fetch(companionURL+'/status',{cache:'no-store',headers:companionToken?{Authorization:'Bearer '+companionToken}:{}})}
+ catch(e){throw Error('IASD Projetor offline. Abra o aplicativo no Windows.')}
  const body=await res.json();
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
+ if(companionToken&&body.authorized===false){
+  companionToken='';localStorage.removeItem('iasd-projetor-token');
+ }
  return body;
 }
 async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
