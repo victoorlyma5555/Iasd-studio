@@ -314,6 +314,13 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   reply(res,200,{token:newToken});return;
  }
  if(!authorized(req)){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
+ if(req.url==='/unpair'&&req.method==='POST'){
+  const header=String(req.headers.authorization||'');const token=header.startsWith('Bearer ')?header.slice(7):'';
+  if(token)pairedTokens.delete(token);authToken=[...pairedTokens][0]||null;
+  try{savePairing()}catch(e){reply(res,500,{error:'Falha ao salvar o despareamento'});return}
+  if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.reload();
+  reply(res,200,{ok:true,paired:pairedTokens.size>0});return;
+ }
  if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40)};reply(res,200,{ok:true});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;showSoundAlert(data)}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
