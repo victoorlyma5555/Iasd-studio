@@ -965,6 +965,26 @@ button.primary,.auth-submit,.game-main-action{background:linear-gradient(135deg,
 </style><style id="iasd-sabbath-mobile-fix">
 .sabbath-shelf{margin:6px 0 22px}.sabbath-shelf-title{display:flex;align-items:end;justify-content:space-between;margin:0 0 10px}.sabbath-shelf-title h3{margin:0;font-size:22px}.sabbath-shelf-title span{font-size:10px;letter-spacing:.16em;color:#34c8ff;font-weight:900}.sabbath-catalog{display:flex!important;gap:12px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity;padding:2px 2px 14px!important;scrollbar-width:none;-webkit-overflow-scrolling:touch}.sabbath-catalog::-webkit-scrollbar{display:none}.sabbath-quarter-card{flex:0 0 168px!important;width:168px!important;scroll-snap-align:start}.sabbath-quarter-card>img,.sabbath-cover-placeholder{aspect-ratio:2/3!important;height:auto!important;object-fit:cover!important}.sabbath-reading,.sabbath-reading *{max-width:100%!important;box-sizing:border-box!important}.sabbath-reading{overflow-wrap:anywhere!important;word-break:normal!important;overflow-x:hidden!important}.sabbath-reading p,.sabbath-reading blockquote,.sabbath-reading div{white-space:normal!important}.sabbath-reading img,.sabbath-reading video,.sabbath-reading table{max-width:100%!important;height:auto!important}.sabbath-reading table{display:block!important;overflow-x:auto!important}.sabbath-reader{width:100%!important;min-width:0!important}.sabbath-reader-head,.sabbath-reading{min-width:0!important}
 @media(max-width:700px){.sabbath-page{width:100%;min-width:0;overflow:hidden}.sabbath-hero{overflow:hidden}.sabbath-hero p{max-width:100%;overflow-wrap:anywhere}.sabbath-quarter-card{flex-basis:142px!important;width:142px!important}.sabbath-card-copy strong{font-size:13px}.sabbath-card-copy small{font-size:10px}.sabbath-reading{padding:20px 16px!important;font-size:17px!important;line-height:1.72!important}.sabbath-reading blockquote{margin:18px 0!important;padding:14px 14px!important}.sabbath-reader-head{padding:18px 16px!important}.sabbath-reader-nav{padding:14px 16px 20px!important}.sabbath-day-tabs{max-width:100%;padding-bottom:10px}.sabbath-section-head h3{font-size:23px}}
+</style><style id="iasd-sabbath-reader-responsive-v2">
+/* Isola o leitor para conteúdo externo nunca ampliar o layout do app */
+.sabbath-page,.sabbath-reader,.sabbath-reader-head,.sabbath-reading{min-width:0!important;box-sizing:border-box!important}
+.sabbath-reader{width:min(100%,900px)!important;max-width:100%!important}
+.sabbath-reading{width:100%!important;max-width:100%!important;contain:inline-size;overflow-x:hidden!important}
+.sabbath-reading *{box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
+.sabbath-reading img,.sabbath-reading svg,.sabbath-reading canvas,.sabbath-reading video{display:block!important;max-width:100%!important;width:auto!important;height:auto!important;object-fit:contain!important}
+.sabbath-reading iframe,.sabbath-reading embed,.sabbath-reading object{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;aspect-ratio:16/9;height:auto!important;border:0}
+.sabbath-reading table{width:100%!important;max-width:100%!important;table-layout:fixed!important;border-collapse:collapse}
+.sabbath-reading th,.sabbath-reading td{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.sabbath-reading pre,.sabbath-reading code{max-width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.sabbath-reading p,.sabbath-reading li,.sabbath-reading a,.sabbath-reading span,.sabbath-reading div,.sabbath-reading blockquote,.sabbath-reading h1,.sabbath-reading h2,.sabbath-reading h3,.sabbath-reading h4,.sabbath-reading h5,.sabbath-reading h6{max-width:100%!important;overflow-wrap:anywhere!important}
+@media(max-width:700px){
+ .sabbath-page{width:100%!important;max-width:100%!important;overflow-x:clip!important}
+ .sabbath-reader{margin:0!important;border-radius:16px!important}
+ .sabbath-reading{padding:18px 14px!important;font-size:16px!important;line-height:1.68!important}
+ .sabbath-reader-head{padding:17px 14px!important}
+ .sabbath-reader-head h3{font-size:clamp(22px,7vw,30px)!important;overflow-wrap:anywhere!important}
+ .sabbath-reading img[width],.sabbath-reading img[height]{max-width:100%!important;width:auto!important;height:auto!important}
+}
 </style><style id="iasd-projection-iframe-mobile-fix">
 @media(max-width:899px){
  .projection-studio-frame{height:1800px!important;min-height:calc(100dvh - 120px)!important;overflow:visible!important;border-radius:12px}
