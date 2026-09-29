@@ -8,7 +8,7 @@ body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-seri
 
 
 /* Projection typography — clean, responsive, legible from a distance */
-body{background:var(--projection-bg,#080e19)}
+body{background:#080e19}
 #out{padding:5vw 7vw;white-space:normal;overflow:hidden}
 #out.bible-mode{padding:5vh 8vw}
 .bible-slide{width:min(100%,1500px);max-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(15px,3vh,40px);margin:auto;overflow:hidden}
@@ -127,16 +127,8 @@ async function setProjectionFullscreen(enable){
   window.opener?.postMessage({type:'projection-fullscreen-result',active:!!document.fullscreenElement,blocked:true},location.origin);
  }
 }
-window.addEventListener('message',e=>{
- if(e.origin!==location.origin||!e.data)return;
- if(e.data.type==='iasd-project')show(e.data.content);
- if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
- if(e.data.type==='iasd-projection-background')applyProjectionBackground(e.data.color);
- if(e.data.type==='iasd-studio-volume'){const v=Math.max(0,Math.min(1,Number(e.data.value)||0));out.querySelectorAll('audio,video').forEach(el=>el.volume=v)}
-});
 function applyProjectionBackground(value){const color=/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#080e19';document.documentElement.style.setProperty('--projection-bg',color)}
-applyProjectionBackground(localStorage.getItem('iasd-projection-bg')||'#080e19');
-window.addEventListener('storage',e=>{if(e.key==='iasd-projection-bg')applyProjectionBackground(e.newValue)});
+applyProjectionBackground(window.addEventListener('storage',e=>{if(e.key==='iasd-projection-bg')applyProjectionBackground(e.newValue)});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
 </script></body></html>
