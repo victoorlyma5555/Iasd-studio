@@ -1325,7 +1325,7 @@ async function companionRequest(route,payload,token=companionToken){
  return body;
 }
 async function companionStatus(){
- const res=await fetch(companionURL+'/status',{cache:'no-store'});
+ const res=await fetch(companionURL+'/status',{cache:'no-store',headers:companionToken?{Authorization:'Bearer '+companionToken}:{}});
  const body=await res.json();
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
  return body;
@@ -1427,10 +1427,8 @@ async function guardedProjection(action){
   try{await companionRequest('/open');await action();return}
   catch(e){projectionFeedback('IASD Projetor: '+e.message,true);projectionMonitorPopup('O IASD Projetor está pareado, mas o aplicativo não respondeu. Confirme que ele está aberto no Windows e tente novamente.');return}
  }
- const monitor=await checkProjectionMonitor();
- if(monitor===false)return;
- if(monitor===null){pendingUnverifiedProjection=action;projectionMonitorPopup('Não foi possível verificar os monitores automaticamente. Autorize o gerenciamento de janelas no Chrome para detectar o telão ou confira o modo Estender antes de continuar.',true);return}
- await action();
+ projectionMonitorPopup('O IASD Projetor não está pareado com este navegador. Faça o pareamento no painel de Sonoplastia. O monitor é controlado pelo aplicativo Windows e não precisa de permissão de gerenciamento de janelas do navegador.');
+ return;
 }
 
 async function project(t){
