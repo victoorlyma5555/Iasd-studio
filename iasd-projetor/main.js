@@ -46,7 +46,7 @@ function allowedOrigin(req){
  try{
   const url=new URL(origin);
   // Previews gerados pela Vercel para o projeto iasd-studio na main.
-  if(url.protocol==='https:'&&/^iasd-studio-[a-z0-9-]+\.vercel\.app$/i.test(url.hostname))return origin;
+  if(url.protocol==='https:'&&(/^iasd-studio(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(url.hostname)||/^[a-z0-9-]+-victorlymasp-2359\.vercel\.app$/i.test(url.hostname)))return origin;
  }catch{}
  return null;
 }
@@ -287,6 +287,7 @@ function reply(res,code,data,req){const origin=req?allowedOrigin(req):(res.__ias
 async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(!allowedOrigin(req)&&!(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')&&!req.headers.origin)){res.writeHead(403);res.end();return}
  if(req.method==='OPTIONS'){reply(res,204,{},req);return}
+ lastSiteContact=Date.now();
  if(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')){
   const id=req.url.slice(7),item=mediaFiles.get(id);if(!item){reply(res,404,{error:'Mídia não encontrada'});return}
   const size=fs.statSync(item.path).size,range=req.headers.range;let start=0,end=size-1,status=200;
@@ -301,7 +302,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  }
 
  if(req.url==='/youtube/frame'&&req.method==='GET'){if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity});return}
+ if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,authorized:authorized(req),secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity,origin:requestOrigin(req)});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
