@@ -49,7 +49,7 @@ function leave(){clearInterval(state.timer);clearInterval(state.clock);if(state.
 function fullscreen(){const el=document.getElementById('lg-modal');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 async function reconnect(){try{const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');if(h?.id){const rr=await rpc('live_room_state',{p_room:h.id});if(rr.length&&rr[0].status!=='finished'){state.room=rr[0];state.host=true;poll();state.room.status==='lobby'?lobby():hostQuestion();return}}const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');if(p?.room&&p?.player){const rr=await rpc('live_room_state',{p_room:p.room}),pp=await rpc('live_room_players',{p_room:p.room}),me=pp.find(x=>x.id===p.player);if(rr.length&&me&&rr[0].status!=='finished'){state.room=rr[0];state.player=me;state.host=false;poll();playerView()}}}catch(e){}}
-function install(){css();reconnect()}
+function install(){css();const gameCode=new URLSearchParams(location.search).get('game');if(location.pathname==='/jogos'||gameCode)reconnect()}
 window.IASDLive={home,create,joinForm,join,start,reveal,next,answer,close,leave,fullscreen,sound:GameSound};
 const gameCode=new URLSearchParams(location.search).get('game');if(gameCode){setTimeout(()=>{home();setTimeout(()=>{joinForm();const i=document.getElementById('lg-code');if(i)i.value=gameCode},50)},250)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
