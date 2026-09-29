@@ -301,7 +301,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  }
 
  if(req.url==='/youtube/frame'&&req.method==='GET'){if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity});return}
+ if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,authorized:authorized(req),secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity});return}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/pair'&&req.method==='POST'){
@@ -316,7 +316,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(!authorized(req)){reply(res,401,{error:'Pareie este navegador com o IASD Projetor'});return}
  if(req.url==='/unpair'&&req.method==='POST'){
   const header=String(req.headers.authorization||'');const token=header.startsWith('Bearer ')?header.slice(7):'';
-  if(token)pairedTokens.delete(token);authToken=[...pairedTokens][0]||null;
+  if(token)pairedTokens.delete(token);authToken=[...pairedTokens][0]||null;if(!pairedTokens.size){siteIdentity=null;lastSiteContact=0;}
   try{savePairing()}catch(e){reply(res,500,{error:'Falha ao salvar o despareamento'});return}
   if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.reload();
   reply(res,200,{ok:true,paired:pairedTokens.size>0});return;
