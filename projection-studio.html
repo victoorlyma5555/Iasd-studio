@@ -147,6 +147,22 @@ main>.studio-controls{padding:11px 13px;background:linear-gradient(120deg,#14273
  iframe,video,img,audio{max-width:100%!important}
 }
 @media(max-width:390px){.tools{grid-template-columns:1fr 1fr!important}.studio-action-bar{grid-template-columns:repeat(2,minmax(0,1fr))!important}.studio-action{font-size:11px!important}}
+</style><style id="iasd-mobile-studio-stability">
+/* iOS/mobile: one document scroll. Prevent the embedded Studio from clipping or jumping. */
+html,body{width:100%;min-height:100%;height:auto!important;max-height:none!important;overflow-x:hidden!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+@media(max-width:850px){
+ main{display:flex!important;flex-direction:column!important;width:100%;min-height:100%;height:auto!important;overflow:visible!important;padding:5px 3px 110px!important}
+ main>.head,main>.tools,main>.preview,main>.work,main>.studio-controls{position:static!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;grid-area:auto!important;transform:none!important}
+ main>.head{order:1}.tools{order:2}.preview{order:3}.work{order:4}.studio-controls{order:5}
+ main>.tools{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ main>.preview{display:grid!important}
+ main>.preview .screen{width:100%!important;min-width:0!important}
+ main>.preview .live-frame{width:100%!important;height:auto!important;aspect-ratio:16/9!important}
+ main>.work{display:none!important}
+ main>.work.active{display:grid!important;align-content:start!important}
+ main>.studio-controls{display:block!important;margin-top:2px!important}
+ .studio-action-bar{position:static!important}
+}
 </style></head><body><main>
 <div class="head"><div><span class="eyebrow">IASD APP · CENTRAL AUDIOVISUAL</span><h1>Studio de Projeção</h1><p class="muted">Tudo preparado no painel do sonoplasta. O público vê somente o que for enviado.</p></div><span id="connection" class="pill">Verificando telão…</span></div>
 <section class="panel studio-controls" aria-label="Controles principais do telão"><h2>Controle do telão</h2><div class="studio-action-bar"><button type="button" class="studio-action project-action" onclick="call('openProjection')" title="Abrir a janela de projeção no telão"><span class="action-icon" aria-hidden="true">▣</span><span>Projetar</span></button><button type="button" class="studio-action close-action" onclick="call('stopProjection')" title="Fechar a janela do telão"><span class="action-icon" aria-hidden="true">✕</span><span>Fechar telão</span></button><button type="button" class="studio-action black-action" onclick="call('project','')" title="Deixar o telão preto sem fechar a janela"><span class="action-icon" aria-hidden="true">■</span><span>Tela preta</span></button><button type="button" class="studio-action settings-action" onclick="showTool('setup')" title="Abrir configurações e pareamento"><span class="action-icon" aria-hidden="true">⚙</span><span>Configuração</span></button></div><p id="feedback" class="notice" role="status" aria-live="polite"></p></section>
