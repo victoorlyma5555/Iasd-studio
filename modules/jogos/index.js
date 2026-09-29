@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'jogos',page:'Jogo',route:'/jogos',render(ctx){return ctx.gamePage()}})})();
