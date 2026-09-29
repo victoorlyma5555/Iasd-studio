@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'perfil',page:'Perfil',route:'/perfil',render(ctx){return ctx.profilePage()}})})();
