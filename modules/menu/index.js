@@ -1,0 +1,1 @@
+(function(){const M=window.IASDModules;if(!M)return;M.register({id:'menu',page:'Mais',route:'/menu',render(ctx){return ctx.mobileMenuPage()}})})();
