@@ -127,7 +127,7 @@ async function setProjectionFullscreen(enable){
   window.opener?.postMessage({type:'projection-fullscreen-result',active:!!document.fullscreenElement,blocked:true},location.origin);
  }
 }
-function applyProjectionBackground(value){const color=/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#080e19';document.documentElement.style.setProperty('--projection-bg',color)}
+function applyProjectionBackground(value){const color=/^#[0-9a-f]{6}$/i.test(String(value||''))?String(value).toLowerCase():'#080e19';document.documentElement.style.setProperty('--removed-projection-bg',color)}
 applyProjectionBackground(window.addEventListener('storage',e=>{if(e.key==='iasd-projection-bg')applyProjectionBackground(e.newValue)});
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
