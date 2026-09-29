@@ -40,7 +40,16 @@ else app.on('second-instance',()=>{
 const SITE='https://iasdapp.com.br';
 const ALLOWED_SITES=new Set([SITE,'https://www.iasdapp.com.br','https://iasd-studio.vercel.app']);
 function requestOrigin(req){return String(req.headers.origin||'').replace(/\/$/,'')}
-function allowedOrigin(req){const origin=requestOrigin(req);return ALLOWED_SITES.has(origin)?origin:null}
+function allowedOrigin(req){
+ const origin=requestOrigin(req);
+ if(ALLOWED_SITES.has(origin))return origin;
+ try{
+  const url=new URL(origin);
+  // Previews gerados pela Vercel para o projeto iasd-studio na main.
+  if(url.protocol==='https:'&&/^iasd-studio-[a-z0-9-]+\.vercel\.app$/i.test(url.hostname))return origin;
+ }catch{}
+ return null;
+}
 const PORT=38741;
 let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
 
