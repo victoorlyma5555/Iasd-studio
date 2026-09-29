@@ -36,7 +36,7 @@ jobs:
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IASD-Projetor-Setup-0.4.5
+          name: IASD-Projetor-Setup-0.4.6
           path: |
             iasd-projetor/dist/*.exe
             iasd-projetor/dist/latest.yml
