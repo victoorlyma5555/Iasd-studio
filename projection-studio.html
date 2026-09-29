@@ -387,6 +387,7 @@ async function sync(){
   else badge.textContent=token?'Projetor pareado · aplicativo offline':'Aguardando telão';
  }catch(e){}
 }
+window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data?.type==='iasd-projector-paired'){projectorConnectionState.checkedAt=0;setTimeout(()=>sync(),150)}});
 setInterval(sync,3000);sync();
 initYouTubeTools();
 const previousTool=sessionStorage.getItem('iasd-studio-tool');showTool(previousTool&&document.getElementById(previousTool)?.classList.contains('work')?previousTool:'ambient');
