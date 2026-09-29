@@ -1670,7 +1670,7 @@ function readerShowBookmarks(){const el=$('reader-saved');if(!el)return;el.hidde
 function readerGoto(book,chapter){readerState.book=book;readerState.chapter=chapter;saveReader();render();readerLoad()}
 function readerCopy(){const el=$('reader-text');if(!el)return;const content=el.innerText||el.textContent;navigator.clipboard?.writeText(content).then(()=>{const b=el.parentElement.querySelector('.reader-footer button');if(b)b.textContent='✓ Copiado'}).catch(()=>{})}
 async function readerLoad(){const el=$('reader-text');if(!el)return;const serial=++readerRequest,book=readerState.book,chapter=Number(readerState.chapter),name=bibleBooks.find(x=>x[1]===book)?.[0]||book;el.style.fontSize=readerState.font+'px';el.innerHTML='<p class="reader-loading">Carregando '+esc(name)+' '+chapter+'…</p>';const ref=$('reader-ref');if(ref)ref.textContent=name+' '+chapter;try{const verses=await fetchBibleChapter(book,chapter,readerState.translation||'almeida');if(serial!==readerRequest||!$('reader-text'))return;const seen=new Set();const unique=verses.filter(v=>!seen.has(v.verse)&&seen.add(v.verse));if(unique[0]?.verse!==1||unique.some((v,i)=>i&&v.verse!==unique[i-1].verse+1))throw Error('A fonte retornou um capítulo com lacunas.');el.innerHTML='<h3>'+esc(name)+' <span>'+chapter+'</span></h3>'+unique.map(v=>'<p class="reader-verse"><sup>'+v.verse+'</sup>'+esc(v.text.trim())+'</p>').join('');}catch(e){if(serial!==readerRequest)return;el.innerHTML='<p>Não foi possível carregar este capítulo. '+esc(e.message||'Confira a conexão.')+'</p><button onclick="readerLoad()">Tentar novamente</button>'}}
-function bibleUI(){return '<div class="panel bible-panel"><h2>Pesquisar na Bíblia</h2><p class="muted">Selecione o livro, capítulo e versículo · João Ferreira de Almeida.</p><label for="btranslation">Tradução</label><select id="btranslation" onchange="bibleChapterCache.clear();updateBibleChapters()"><option value="almeida">Almeida 1911 (português)</option><option value="kjv">King James (inglês)</option><option value="web">World English Bible (inglês)</option><option disabled>NVI — requer fonte licenciada</option></select><label for="bbook">Livro</label><select id="bbook" onchange="updateBibleChapters()">'+bibleBooks.map(([pt,en])=>'<option value="'+en+'" '+(en==='john'?'selected':'')+'>'+pt+'</option>').join('')+'</select><div class="bible-fields"><div><label for="bchapterSelect">Capítulo</label><select id="bchapterSelect" onchange="syncBibleChapter(this.value)"></select><input type="number" min="1" max="150" id="bchapter" aria-label="Digitar capítulo" placeholder="Ou digite o capítulo" oninput="syncBibleChapterSelect(this.value)"></div><div><label for="bverseSelect">Versículo</label><select id="bverseSelect" onchange="syncBibleVerse(this.value)"></select><input id="bverse" placeholder="Ou digite: 16 ou 16-18" aria-label="Digitar versículo ou intervalo" oninput="syncBibleVerseSelect(this.value)"></div></div><div class="row"><button class="primary" onclick="searchBible()">⌕ Buscar versículo</button><button onclick="readBibleChapter()">📖 Ler capítulo inteiro</button></div><div id="bresult" aria-live="polite"></div><p class="muted bible-note">Texto: Almeida em português · Consulta online.</p></div>'}
+function bibleUI(){return '<div class="panel bible-panel"><h2>Pesquisar na Bíblia</h2><p class="muted">Selecione o livro, capítulo, versículo e tradução.</p><label for="btranslation">Tradução</label><select id="btranslation" onchange="bibleChapterCache.clear();updateBibleChapters()"><option value="acf">Almeida Corrigida e Fiel (ACF)</option><option value="aa">Almeida Revisada (AA)</option><option value="nvi">Nova Versão Internacional (NVI)</option><option value="almeida">Almeida 1911</option><option value="kjv">King James (inglês)</option><option value="web">World English Bible (inglês)</option></select><label for="bbook">Livro</label><select id="bbook" onchange="updateBibleChapters()">'+bibleBooks.map(([pt,en])=>'<option value="'+en+'" '+(en==='john'?'selected':'')+'>'+pt+'</option>').join('')+'</select><div class="bible-fields"><div><label for="bchapterSelect">Capítulo</label><select id="bchapterSelect" onchange="syncBibleChapter(this.value)"></select><input type="number" min="1" max="150" id="bchapter" aria-label="Digitar capítulo" placeholder="Ou digite o capítulo" oninput="syncBibleChapterSelect(this.value)"></div><div><label for="bverseSelect">Versículo</label><select id="bverseSelect" onchange="syncBibleVerse(this.value)"></select><input id="bverse" placeholder="Ou digite: 16 ou 16-18" aria-label="Digitar versículo ou intervalo" oninput="syncBibleVerseSelect(this.value)"></div></div><div class="row"><button class="primary" onclick="searchBible()">⌕ Buscar versículo</button><button onclick="readBibleChapter()">📖 Ler capítulo inteiro</button></div><div id="bresult" aria-live="polite"></div><p class="muted bible-note">Textos bíblicos carregados por tradução, com fonte de contingência quando disponível.</p></div>'}
 const bibleChapterCounts=[50,40,27,36,34,24,21,4,31,24,22,25,29,36,10,13,10,42,150,31,12,8,66,52,5,48,12,14,3,9,1,4,7,3,3,3,2,14,4,28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22];
 const bibleChapterCache=new Map();let bibleRequestSerial=0;
 function updateBibleChapters(){
@@ -1697,11 +1697,28 @@ async function iasdGetBible1911(book,chapter){
  if(!verses.length||verses[0].verse!==1)throw Error('Capítulo incompleto');
  return verses
 }
+const iasdBibleJsonSources={
+ acf:'https://cdn.jsdelivr.net/gh/thiagobodruk/biblia@master/json/acf.json',
+ aa:'https://cdn.jsdelivr.net/gh/thiagobodruk/biblia@master/json/aa.json',
+ nvi:'https://cdn.jsdelivr.net/gh/thiagobodruk/biblia@master/json/nvi.json'
+};
+const iasdBibleJsonCache=new Map();
+async function iasdGetBibleJson(translation,book,chapter){
+ const source=iasdBibleJsonSources[translation];if(!source)throw Error('Tradução local indisponível');
+ let promise=iasdBibleJsonCache.get(translation);
+ if(!promise){promise=fetch(source).then(r=>{if(!r.ok)throw Error('Fonte bíblica indisponível');return r.json()}).catch(e=>{iasdBibleJsonCache.delete(translation);throw e});iasdBibleJsonCache.set(translation,promise)}
+ const data=await promise,index=bibleBooks.findIndex(x=>x[1]===book),item=Array.isArray(data)?data[index]:null;
+ const raw=item?.chapters?.[Number(chapter)-1];if(!Array.isArray(raw))throw Error('Capítulo indisponível');
+ const verses=raw.map((text,i)=>({verse:i+1,text:String(text||'')})).filter(v=>v.text.trim());
+ if(!verses.length||verses[0].verse!==1)throw Error('Capítulo incompleto');
+ return verses
+}
 async function fetchBibleChapter(book,chapter,requestedTranslation){
  const translation=requestedTranslation||$('btranslation')?.value||readerState.translation||'almeida';const key=book+'|'+chapter+'|'+translation;
  if(bibleChapterCache.has(key))return bibleChapterCache.get(key);
  const url='https://bible-api.com/'+encodeURIComponent(book+' '+chapter)+'?translation='+encodeURIComponent(translation)+'&single_chapter_book_matching=indifferent';
  const promise=(async()=>{
+  if(iasdBibleJsonSources[translation]){try{return await iasdGetBibleJson(translation,book,Number(chapter))}catch(e){console.warn('JSON bíblico indisponível:',translation,e)}}
   if(translation==='almeida'){try{return await iasdGetBible1911(book,Number(chapter))}catch(e){console.warn('Almeida 1911 indisponível:',e)}}
   const response=await fetch(url);
   if(!response.ok)throw Error('Consulta indisponível ('+response.status+')');
