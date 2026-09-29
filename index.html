@@ -1817,6 +1817,8 @@ function sabbathShelf(title,items,list){
  return '<section class="sabbath-shelf"><div class="sabbath-shelf-title"><div><span>LIÇÕES</span><h3>'+esc(title)+'</h3></div><small>Deslize →</small></div><div class="sabbath-catalog">'+items.map(({q,i})=>{const id=sabbathId(q),cover=sabbathCover(q),current=sabbathAudience(q);return '<button class="sabbath-quarter-card" onclick="openSabbathQuarter('+JSON.stringify(id).replace(/"/g,'&quot;')+','+i+')">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc(sabbathTitle(q,'Capa da lição'))+'" loading="lazy">':'<span class="sabbath-cover-placeholder">▥</span>')+'<span class="sabbath-card-copy"><small>'+esc(q?.human_date||q?.date||'Escola Sabatina')+'</small><strong>'+esc(sabbathTitle(q,'Lição da Escola Sabatina'))+'</strong><em>Abrir →</em>'+(cloudRole==='founder'||cloudRole==='admin'?'<label class="sabbath-manual-sort" onclick="event.stopPropagation()">Mover para <select onchange="event.stopPropagation();setSabbathAudience('+JSON.stringify(id).replace(/"/g,'&quot;')+',this.value)"><option value="">Automático</option><option value="Jovem" '+(current==='Jovem'?'selected':'')+'>Jovem</option><option value="Adulto" '+(current==='Adulto'?'selected':'')+'>Adulto</option><option value="Portugal" '+(current==='Portugal'?'selected':'')+'>Portugal</option><option value="Outras" '+(current==='Outras'?'selected':'')+'>Outras</option></select></label>':'')+'</span></button>'}).join('')+'</div></section>'
 }
 let SABBATH_DATE_ORDER=localStorage.getItem('iasd_sabbath_date_order')||'asc';
+let SABBATH_YEAR_FILTER=localStorage.getItem('iasd_sabbath_year_filter')||'all';
+function sabbathYear(q){const m=String(sabbathId(q)||'').match(/(20\d{2})/);if(m)return m[1];const m2=String(q?.human_date||q?.date||q?.start_date||'').match(/(20\d{2})/);return m2?m2[1]:''}
 function sabbathDateKey(q){
  const id=String(sabbathId(q)||'');
  const m=id.match(/(20\d{2})[-_/]0?([1-4])(?:\D|$)/);
@@ -1825,14 +1827,18 @@ function sabbathDateKey(q){
  const d=Date.parse(raw);return Number.isFinite(d)?d:0
 }
 function setSabbathDateOrder(order){SABBATH_DATE_ORDER=order==='desc'?'desc':'asc';localStorage.setItem('iasd_sabbath_date_order',SABBATH_DATE_ORDER);updateSabbathContent()}
+function setSabbathYearFilter(year){SABBATH_YEAR_FILTER=String(year||'all');localStorage.setItem('iasd_sabbath_year_filter',SABBATH_YEAR_FILTER);updateSabbathContent()}
 function sabbathSortByDate(items){return [...items].sort((a,b)=>{const d=sabbathDateKey(a.q)-sabbathDateKey(b.q);return SABBATH_DATE_ORDER==='desc'?-d:d})}
 function sabbathQuarterliesMarkup(){
  const list=sabbathList(sabbathState.data);if(!list.length)return '<div class="sabbath-loading"><strong>Preparando catálogo…</strong></div>';
+ const years=[...new Set(list.map(sabbathYear).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
  const groups={Jovem:[],Adulto:[],Portugal:[],Outras:[]};
- list.forEach((q,i)=>{const a=sabbathAudience(q);(groups[a]||groups.Outras).push({q,i})});
+ list.forEach((q,i)=>{if(SABBATH_YEAR_FILTER!=='all'&&sabbathYear(q)!==SABBATH_YEAR_FILTER)return;const a=sabbathAudience(q);(groups[a]||groups.Outras).push({q,i})});
  Object.keys(groups).forEach(k=>groups[k]=sabbathSortByDate(groups[k]));
- const controls='<div class="sabbath-order-tools"><span>Ordenar por data:</span><button class="'+(SABBATH_DATE_ORDER==='asc'?'active':'')+'" onclick="setSabbathDateOrder(\'asc\')">Crescente ↑</button><button class="'+(SABBATH_DATE_ORDER==='desc'?'active':'')+'" onclick="setSabbathDateOrder(\'desc\')">Decrescente ↓</button></div>';
- return '<div class="sabbath-section-head"><div><span>EDIÇÕES DISPONÍVEIS</span><h3>Escolha a lição</h3></div></div>'+controls+sabbathShelf('Adultos',groups.Adulto,list)+sabbathShelf('Jovens',groups.Jovem,list)+sabbathShelf('Edição de Portugal',groups.Portugal,list)+sabbathShelf('Outras lições',groups.Outras,list)
+ const controls='<div class="sabbath-order-tools"><span>Ordenar por data:</span><button class="'+(SABBATH_DATE_ORDER==='asc'?'active':'')+'" onclick="setSabbathDateOrder(\'asc\')">Crescente ↑</button><button class="'+(SABBATH_DATE_ORDER==='desc'?'active':'')+'" onclick="setSabbathDateOrder(\'desc\')">Decrescente ↓</button></div>'+
+ '<div class="sabbath-order-tools sabbath-year-tools"><span>Selecionar ano:</span><button class="'+(SABBATH_YEAR_FILTER==='all'?'active':'')+'" onclick="setSabbathYearFilter(\'all\')">Todos</button>'+years.map(y=>'<button class="'+(SABBATH_YEAR_FILTER===y?'active':'')+'" onclick="setSabbathYearFilter(\''+y+'\')">'+y+'</button>').join('')+'</div>';
+ const empty=SABBATH_YEAR_FILTER!=='all'&&!groups.Adulto.length&&!groups.Jovem.length&&!groups.Portugal.length&&!groups.Outras.length?'<div class="sabbath-loading"><strong>Nenhuma edição encontrada em '+esc(SABBATH_YEAR_FILTER)+'.</strong></div>':'';
+ return '<div class="sabbath-section-head"><div><span>EDIÇÕES DISPONÍVEIS</span><h3>Escolha a lição</h3></div></div>'+controls+empty+sabbathShelf('Adultos',groups.Adulto,list)+sabbathShelf('Jovens',groups.Jovem,list)+sabbathShelf('Edição de Portugal',groups.Portugal,list)+sabbathShelf('Outras lições',groups.Outras,list)
 }
 async function openSabbathQuarter(id,index){
  const q=sabbathList(sabbathState.data)[index]||{id};sabbathState.quarterly={...q,id:id||sabbathId(q)};sabbathState.loading=true;sabbathState.error='';updateSabbathContent();
