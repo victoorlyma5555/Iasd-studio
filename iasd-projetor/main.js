@@ -130,7 +130,7 @@ function installDownloadedUpdate(){
   fs.writeFileSync(updateReceiptFile,JSON.stringify({from:app.getVersion(),to:downloadedUpdate.version,time:Date.now()}));
   installingUpdate=true;
   updateProgress('installing','Instalando a versão '+downloadedUpdate.version+'. O aplicativo abrirá novamente.');
-  setImmediate(()=>autoUpdater.quitAndInstall(false,true));
+  setTimeout(()=>autoUpdater.quitAndInstall(true,true),2500);
   return {ok:true}
  }catch(e){installingUpdate=false;return {error:e.message}}
 }
@@ -221,7 +221,7 @@ function showProjector(){
    width:display.bounds.width,height:display.bounds.height,
    show:false,frame:false,fullscreen:false,autoHideMenuBar:true,
    backgroundColor:'#000',
-   webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}
+   webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,autoplayPolicy:'no-user-gesture-required'}
   });
   windowRef=win;
   let activated=false;

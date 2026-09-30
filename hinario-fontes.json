@@ -1,0 +1,26 @@
+{
+  "versao": 1,
+  "aviso": "Edite este arquivo para trocar ou acrescentar fontes de letras sem precisar atualizar o aplicativo. adapter: hina7 (lista com numero/title/estrofes/coro) ou videopsalm (Songs[].ID/Text/Verses[].Text).",
+  "edicoes": [
+    {
+      "id": "antigo",
+      "nome": "Hinário Adventista",
+      "sub": "Edição antiga (1996)",
+      "adapter": "hina7",
+      "urls": [
+        "https://cdn.jsdelivr.net/gh/moser-jose/Hina7@main/src/api/hinario.json",
+        "https://raw.githubusercontent.com/moser-jose/Hina7/main/src/api/hinario.json"
+      ]
+    },
+    {
+      "id": "novo",
+      "nome": "Novo Hinário Adventista",
+      "sub": "Edição nova (2022)",
+      "adapter": "videopsalm",
+      "urls": [
+        "https://cdn.jsdelivr.net/gh/rejnac/portuguese-hymnal@main/Novo%20Hin%C3%A1rio%20Adventista%20Lyrics.json",
+        "https://raw.githubusercontent.com/rejnac/portuguese-hymnal/main/Novo%20Hin%C3%A1rio%20Adventista%20Lyrics.json"
+      ]
+    }
+  ]
+}

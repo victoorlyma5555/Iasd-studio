@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IASD · Studio de Projeção</title><link rel="stylesheet" href="/ui/studio-legacy.css?v=1"><link rel="stylesheet" href="/ui/studio.css?v=15"></head><body class="st2"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IASD · Studio de Projeção</title><link rel="stylesheet" href="/ui/studio-legacy.css?v=1"><link rel="stylesheet" href="/ui/studio.css?v=16"></head><body class="st2"><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-headset" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0116 0v3M4 14h3v5H5.5A1.5 1.5 0 014 17.5zM20 14h-3v5h1.5a1.5 1.5 0 001.5-1.5zM19 19.5V20a3 3 0 01-3 3h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -69,7 +69,7 @@
 <div class="tm-presets" id="tmPresets"></div>
 <div class="tm-fields"><label>Min<input id="tmMin" type="number" min="0" max="600" value="60"></label><label>Seg<input id="tmSec" type="number" min="0" max="59" value="0"></label><label class="tm-w">Título no telão<input id="tmTitle" maxlength="40" value="Escola Sabatina"></label></div>
 <div class="tm-fields"><label>Amarelo aos (min)<input id="tmWarn" type="number" min="0" max="120" value="5"></label><label>Vermelho aos (seg)<input id="tmAlertS" type="number" min="0" max="600" value="60"></label></div>
-<div class="m-actions"><button type="button" onclick="tmAdjust(-60)">− 1 min</button><button type="button" onclick="tmAdjust(60)">+ 1 min</button><button type="button" onclick="tmReset()">↺ Reiniciar</button><button type="button" onclick="tmShow()">▣ Mostrar no telão</button></div>
+<div class="m-actions"><button type="button" onclick="tmAdjust(-60)">− 1 min</button><button type="button" onclick="tmAdjust(60)">+ 1 min</button><button type="button" onclick="tmReset()">↺ Reiniciar</button><button type="button" onclick="tmShow()">▣ Mostrar no telão</button><button type="button" id="tmQr" onclick="tmQrToggle()" title="Mostra no canto do telão um QR Code que abre a Lição da Escola Sabatina">▦ QR da lição: desligado</button></div>
 <div class="m-recent"><h4>Tema</h4><div class="tm-themes tm-dots" id="tmThemes"></div></div></section>
 <section id="themes" class="panel work m-mod"><div class="mp-head"><span class="mp-ic"><svg class="ti"><use href="#i-palette"/></svg></span><div class="mp-tt"><h2>Temas</h2><p>Fundo do cronômetro e dos versículos projetados.</p></div></div>
 <div class="th-prev" id="thPrev" aria-hidden="true"></div>
@@ -87,4 +87,4 @@
 <button type="button" class="qk qk-img" onclick="try{parent.go('Mídia')}catch(e){}"><svg class="ti"><use href="#i-img"/></svg><span>Imagem</span></button>
 <button type="button" class="qk qk-bib" onclick="showTool('bible')"><svg class="ti"><use href="#i-book"/></svg><span>Bíblia</span></button>
 <button type="button" class="qk qk-sor" onclick="showTool('draw')"><svg class="ti"><use href="#i-shuffle"/></svg><span>Sorteio</span></button></div></section>
-</main><script src="/shared/timer-display.js?v=1"></script><script src="/app/studio.js?v=5"></script><script src="/ui/studio-ambient.js?v=2"></script></body></html>
+</main><script src="/shared/timer-display.js?v=4"></script><script src="/app/studio.js?v=7"></script><script src="/ui/studio-ambient.js?v=2"></script></body></html>

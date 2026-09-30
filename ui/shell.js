@@ -152,7 +152,7 @@ function cardsHTML(){
 }
 function parseItems(items){
   const f=g(()=>parseSchedule);
-  return (items||[]).map(x=>f?f(x):{time:'•',title:String(x),person:''});
+  return (items||[]).filter(x=>!String(x).startsWith('@@equipe ')).map(x=>f?f(x):{time:'•',title:String(x),person:''});
 }
 const sched={expanded:false,LIMIT:5};
 function scheduleInner(){

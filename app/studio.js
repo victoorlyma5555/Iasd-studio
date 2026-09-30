@@ -33,9 +33,11 @@ function requestStudioHeight(){try{window.parent.postMessage({type:'iasd-studio-
 
 
 let tmTheme='noturno';try{tmTheme=localStorage.getItem('iasd-timer-theme')||'noturno'}catch(e){}
+let tmQr=false;try{tmQr=localStorage.getItem('iasd-timer-qr')==='1'}catch(e){}
 const TM={total:3600,remaining:3600,state:'idle',endsAt:0,warn:300,alert:60};
 function tmLeft(){return TM.state==='running'?Math.max(0,(TM.endsAt-Date.now())/1000):TM.remaining}
-function tmPayload(){return{title:($('tmTitle').value.trim()||'Escola Sabatina'),subtitle:'Caldas do Jorro',total:TM.total,state:TM.state,remaining:TM.remaining,endsAt:TM.endsAt,warn:TM.warn,alert:TM.alert,theme:tmTheme}}
+function tmPayload(){return{title:($('tmTitle').value.trim()||'Escola Sabatina'),subtitle:'Caldas do Jorro',total:TM.total,state:TM.state,remaining:TM.remaining,endsAt:TM.endsAt,warn:TM.warn,alert:TM.alert,theme:tmTheme,qr:tmQr}}
+function tmQrToggle(){tmQr=!tmQr;try{localStorage.setItem('iasd-timer-qr',tmQr?'1':'0')}catch(e){}tmSync();tmRender()}
 function tmOnScreen(){return(localStorage.getItem('iasd-stage')||'').startsWith('IASD_TIMER:')}
 function tmSend(){project('IASD_TIMER:'+JSON.stringify(tmPayload()))}
 function tmSync(){if(tmOnScreen())tmSend()}
@@ -47,11 +49,15 @@ function tmFromInputs(){tmSetTotal((+$('tmMin').value||0)*60+(+$('tmSec').value|
 function tmToggle(){if(TM.state==='running'){TM.remaining=tmLeft();TM.state='paused';tmSync();tmRender();return}if(TM.remaining<=0)TM.remaining=TM.total;TM.endsAt=Date.now()+TM.remaining*1000;TM.state='running';tmSend();tmRender()}
 function tmReset(){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;tmSync();tmRender()}
 function tmAdjust(delta){const left=tmLeft(),next=Math.max(1,Math.min(36000,left+delta));if(TM.state==='running')TM.endsAt=Date.now()+next*1000;else{TM.remaining=next;if(TM.state==='idle')TM.total=next}TM.total=Math.max(TM.total,Math.ceil(next));tmSync();tmRender()}
+let tmPrev=null;
 function tmRender(){
  const rem=tmLeft(),done=TM.state!=='idle'&&rem<=0;
+ if(TM.state==='running'&&done&&tmPrev!==null&&tmPrev>0&&!tmOnScreen()&&window.IASDTimerDisplay?.beep)IASDTimerDisplay.beep();
+ tmPrev=rem;
  $('tmTime').textContent=window.IASDTimerDisplay?IASDTimerDisplay.format(rem):String(Math.ceil(rem));
  const box=$('tmRead');box.classList.toggle('alert',TM.state!=='idle'&&rem<=TM.alert);box.classList.toggle('warn',TM.state!=='idle'&&rem>TM.alert&&rem<=TM.warn);
  $('tmState').textContent=TM.state==='idle'?'Pronto':done?'Tempo encerrado':TM.state==='paused'?'Pausado':'Em andamento';
+ {const qb=$('tmQr');if(qb){qb.classList.toggle('on',tmQr);qb.textContent=tmQr?'▦ QR da lição: ligado':'▦ QR da lição: desligado'}}
  $('tmGo').textContent=TM.state==='running'&&!done?'❚❚ Pausar':TM.state==='paused'&&!done?'▶ Continuar':'▶ Iniciar e projetar';
  document.querySelectorAll('#tmThemes button,#stThemes button').forEach(b=>b.classList.toggle('on',b.dataset.t===tmTheme));document.querySelectorAll('#tmPresets button').forEach(b=>b.classList.toggle('on',TM.state==='idle'&&+b.dataset.s===TM.total))}
 (function(){const box=$('tmPresets');if(!box)return;[[60,'Escola Sabatina 1 h'],[50,'50 min'],[40,'40 min'],[30,'30 min'],[15,'15 min'],[10,'10 min'],[5,'5 min'],[1,'1 min']].forEach(([m,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.s=m*60;b.onclick=()=>tmSetTotal(m*60);box.append(b)});['tmThemes','stThemes'].forEach(id=>{const th=$(id);if(!th||!window.IASDTimerDisplay)return;Object.entries(IASDTimerDisplay.themes).forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.dataset.t=k;b.title=t.name;b.innerHTML='<i style="background:'+t.bg+'"><u style="border-color:'+t.c1+'"></u></i><span></span>';b.lastChild.textContent=t.name;b.onclick=()=>tmPickTheme(k);th.append(b)})});$('tmMin').onchange=$('tmSec').onchange=tmFromInputs;$('tmWarn').onchange=()=>{TM.warn=Math.max(0,Math.round((+$('tmWarn').value||0)*60));tmSync();tmRender()};$('tmAlertS').onchange=()=>{TM.alert=Math.max(0,Math.round(+$('tmAlertS').value||0));tmSync();tmRender()};$('tmTitle').onchange=tmSync;setInterval(tmRender,250);tmRender();thMount()})();

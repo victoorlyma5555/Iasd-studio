@@ -117,7 +117,17 @@ function games(){
  return '<div class="pg pg-jogos">'+hero('jogos',{kick:'JOGOS',title:'Aprenda de forma <em>divertida</em>',text:'Desafie seus conhecimentos, participe de jogos e atividades que fortalecem a sua fé e o aprendizado da Palavra de Deus.',cta:'<button class="pg-cta" onclick="'+jump('pg-games')+'">'+I('pad')+'Ver todos os jogos'+I('right')+'</button>',quote:['Tudo o que fizerem, façam de todo o coração, como para o Senhor e não para os homens.','Colossenses 3:23']})+
  '<div class="gm-tiles">'+tile('t1','pad','5','Jogos disponíveis',jump('pg-games'))+tile('t2','users',String(rank.length),'Participantes no ranking',jump('pg-rank'))+tile('t3','trophy',score.toLocaleString('pt-BR'),'Sua pontuação',jump('pg-rank'))+tile('t4','chart','Ver ranking','Confira os melhores da comunidade',jump('pg-rank'),true)+'</div>'+
  '<section id="pg-games" class="gm-sec"><div class="pg-head">'+'<h2 class="pg-h">'+I('pad','blue')+'Jogos disponíveis</h2><div class="gm-tools"><label class="pg-search">'+I('search')+'<input type="search" placeholder="Pesquisar jogos…" oninput="var q=this.value.trim().toLowerCase();document.querySelectorAll(\'.gm-card\').forEach(c=>c.style.display=(!q||c.dataset.t.includes(q))?\'\':\'none\')"></label><label class="pg-sel sm">'+I('sort')+'<select onchange="var r=document.getElementById(\'gm-row\');if(!r)return;var cs=[...r.children];cs.sort((a,b)=>this.value===\'nome\'?a.dataset.t.localeCompare(b.dataset.t):0);if(this.value===\'nome\')cs.forEach(c=>r.appendChild(c));else{/* ordem padrão */var o=[\'quiz bíblico\',\'quem sou eu?\',\'linha do tempo\',\'memória bíblica\',\'jogo coletivo\'];cs.sort((a,b)=>o.indexOf(a.dataset.t)-o.indexOf(b.dataset.t)).forEach(c=>r.appendChild(c))}"><option value="">Ordenar por</option><option value="nome">Nome (A–Z)</option></select></label><button class="pg-blue" onclick="gameSfx(\'start\');openCollectiveGame()">'+I('plus')+'Novo jogo</button></div></div><div id="game-stage">'+gameCards()+'</div></section>'+
- '<section id="pg-rank" class="gm-sec"><div class="pg-head"><h2 class="pg-h">'+I('trophy','gold')+'Ranking da comunidade</h2><button class="pg-link" onclick="var l=document.getElementById(\'gm-rank\');l.classList.toggle(\'all\');this.firstChild.textContent=l.classList.contains(\'all\')?\'Ver menos \':\'Ver completo \'">Ver completo '+I('right')+'</button></div><div id="gm-rank" class="gm-rank">'+rankRows(rank)+'</div></section></div>';
+ '<section id="pg-rank" class="gm-sec"><div class="pg-head"><h2 class="pg-h">'+I('trophy','gold')+'Ranking da comunidade</h2>'+(cloudRole==='founder'?'<button class="pg-danger" onclick="IASDPages.resetRank(this)">'+I('trash')+'Zerar ranking</button>':'')+'<button class="pg-link" onclick="var l=document.getElementById(\'gm-rank\');l.classList.toggle(\'all\');this.firstChild.textContent=l.classList.contains(\'all\')?\'Ver menos \':\'Ver completo \'">Ver completo '+I('right')+'</button></div><div id="gm-rank" class="gm-rank">'+rankRows(rank)+'</div></section></div>';
+}
+async function resetRank(btn){
+ if(cloudRole!=='founder')return;
+ if(!confirm('Zerar o ranking de TODOS os participantes? Esta ação não pode ser desfeita.'))return;
+ if(prompt('Para confirmar, digite ZERAR')?.trim().toUpperCase()!=='ZERAR')return;
+ btn.disabled=true;
+ const r=await cloud.rpc('iasd_reset_ranking');
+ btn.disabled=false;
+ if(r.error){alert(/function|schema cache|does not exist/i.test(r.error.message)?'Falta rodar o script docs/supabase-ranking-reset.sql no Supabase (uma vez).':'Não foi possível zerar: '+r.error.message);return}
+ gameRanking=[];gameRankingLoaded=false;loadGameRanking(true);render();
 }
 function rankRows(rows){
  if(!rows.length)return '<p class="pg-empty">O ranking começa com a primeira partida.</p>';
@@ -128,6 +138,53 @@ function rankRows(rows){
 
 /* ====================== BÍBLIA ====================== */
 const VOTD=[['João','John',17,'A tua palavra é a verdade.','João 17:17'],['Salmos','Psalms',119,'Lâmpada para os meus pés é a tua palavra.','Salmos 119:105'],['Filipenses','Philippians',4,'Tudo posso naquele que me fortalece.','Filipenses 4:13'],['Isaías','Isaiah',41,'Não temas, porque eu sou contigo.','Isaías 41:10']];
+
+/* ---- Bíblia: escolher versículos (intervalo + seleção por toque) ---- */
+const RD={verses:[],name:'',chapter:0,from:0,to:0,sel:new Set(),key:''};
+function rdVersionLabel(){const t=(readerState.translation||'nvi').toUpperCase();return t==='ALMEIDA'?'Almeida 1911':t}
+function rdSet(name,chapter,verses){
+ const key=readerState.book+'|'+chapter;
+ if(RD.key!==key){RD.key=key;RD.from=0;RD.to=0;RD.sel=new Set()}
+ RD.name=name;RD.chapter=chapter;RD.verses=verses;rdPaint();
+}
+function rdVisible(){return RD.from?RD.verses.filter(v=>v.verse>=RD.from&&v.verse<=(RD.to||RD.from)):RD.verses}
+function rdPaint(){
+ const el=document.getElementById('reader-text');if(!el)return;
+ const vis=rdVisible();
+ el.innerHTML='<h3>'+esc(RD.name)+' <span>'+RD.chapter+(RD.from?':'+RD.from+(RD.to&&RD.to!==RD.from?'-'+RD.to:''):'')+'</span></h3>'+vis.map(v=>'<p class="reader-verse'+(RD.sel.has(v.verse)?' sel':'')+'" data-v="'+v.verse+'" tabindex="0"><sup>'+v.verse+'</sup>'+esc(v.text.trim())+'</p>').join('');
+ const f=document.getElementById('rd-from'),t=document.getElementById('rd-to');
+ if(f&&t){const max=RD.verses.length,opts=(sel)=>Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'"'+(sel===i+1?' selected':'')+'>'+(i+1)+'</option>').join('');
+  f.innerHTML='<option value="0">Todos</option>'+opts(RD.from);t.innerHTML='<option value="0">—</option>'+opts(RD.to);t.disabled=!RD.from}
+ const ref=document.getElementById('reader-ref');if(ref)ref.textContent=RD.name+' '+RD.chapter+(RD.from?':'+RD.from+(RD.to&&RD.to!==RD.from?'-'+RD.to:''):'');
+ rdBar();
+}
+function rdRange(){
+ const f=+document.getElementById('rd-from').value,t0=+document.getElementById('rd-to').value;
+ RD.from=f;RD.to=f&&t0>=f?t0:0;if(t0&&t0<f){RD.to=0}
+ RD.sel=new Set();rdPaint();
+ if(f)document.getElementById('reader-text')?.scrollTo?.({top:0});
+}
+function rdAll(){RD.from=0;RD.to=0;rdPaint()}
+function rdSelRef(){const a=[...RD.sel].sort((x,y)=>x-y);if(!a.length)return '';const parts=[];let s=a[0],p=a[0];for(let i=1;i<=a.length;i++){if(a[i]===p+1){p=a[i];continue}parts.push(s===p?String(s):s+'-'+p);s=a[i];p=a[i]}return RD.name+' '+RD.chapter+':'+parts.join(',')}
+function rdSelText(){const a=[...RD.sel].sort((x,y)=>x-y);return a.map(n=>RD.verses.find(v=>v.verse===n)).filter(Boolean).map(v=>v.text.trim()).join(' ')}
+function rdQuote(){return '“'+rdSelText()+'” — '+rdSelRef()+' ('+rdVersionLabel()+')'}
+function rdBar(){
+ let bar=document.getElementById('rd-bar');const n=RD.sel.size;
+ const host=document.querySelector('.bb-main');if(!host)return;
+ if(!n){bar?.remove();return}
+ const canP=typeof canUseSound==='function'&&canUseSound()&&typeof project==='function';
+ const html='<b>'+esc(rdSelRef())+'</b><span>'+n+' selecionado'+(n===1?'':'s')+'</span><button onclick="IASDPages.rdCopy(this)">'+I('doc')+'Copiar</button><button onclick="IASDPages.rdShare()">'+I('share')+'Compartilhar</button>'+(canP?'<button class="gold" onclick="IASDPages.rdProject()">'+I('play')+'Projetar</button>':'')+'<button onclick="IASDPages.rdClear()" aria-label="Limpar seleção">✕</button>';
+ if(!bar){bar=document.createElement('div');bar.id='rd-bar';bar.className='rd-bar';document.body.appendChild(bar)}
+ bar.innerHTML=html;
+}
+function rdToggle(v){if(RD.sel.has(v))RD.sel.delete(v);else RD.sel.add(v);document.querySelector('#reader-text .reader-verse[data-v="'+v+'"]')?.classList.toggle('sel',RD.sel.has(v));rdBar()}
+function rdClear(){RD.sel=new Set();rdPaint()}
+function rdCopy(btn){navigator.clipboard?.writeText(rdQuote()).then(()=>{if(btn){const o=btn.innerHTML;btn.textContent='Copiado ✓';setTimeout(()=>btn.innerHTML=o,1400)}})}
+function rdShare(){const t=rdQuote();if(navigator.share)navigator.share({title:rdSelRef(),text:t,url:location.origin+'/biblia'}).catch(()=>{});else rdCopy()}
+function rdProject(){if(typeof project!=='function')return;project(rdSelText()+'\n\n'+rdSelRef()+' ('+rdVersionLabel()+')')}
+setInterval(()=>{if(!document.querySelector('.bb-main'))document.getElementById('rd-bar')?.remove()},600);
+document.addEventListener('click',e=>{const p=e.target.closest?.('#reader-text .reader-verse');if(p&&!window.getSelection().toString())rdToggle(+p.dataset.v)});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches?.('#reader-text .reader-verse')){e.preventDefault();rdToggle(+e.target.dataset.v)}});
 function bible(){
  const index=Math.max(0,bibleBooks.findIndex(x=>x[1]===readerState.book));
  const max=bibleChapterCounts[index]||1,name=bibleBooks[index][0];
@@ -140,6 +197,7 @@ function bible(){
  return '<div class="pg pg-biblia '+(readerState.theme==='light'?'reader-light':'')+'" id="personal-reader">'+hero('biblia',{kick:'SUA BÍBLIA • LEITURA PESSOAL',title:'Um momento com a <em class="big">PALAVRA</em>',text:'Leia nos cultos, em casa ou onde estiver. Seu último capítulo e seus favoritos ficam salvos neste aparelho.',quote:['Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.','Salmos 119:105']})+
  '<section class="pg-card bb-bar"><label><span>Tradução</span><div class="pg-sel">'+I('book')+'<select id="reader-translation" onchange="readerTranslation(this.value)">'+tr.map(([k,l])=>'<option value="'+k+'" '+(cur===k?'selected':'')+'>'+l+'</option>').join('')+'</select></div></label><label><span>Livro</span><div class="pg-sel">'+I('book')+'<select id="reader-book" onchange="readerSelectBook(this.value)">'+options+'</select></div></label><label><span>Capítulo</span><div class="pg-sel">'+I('list')+'<select id="reader-chapter" onchange="readerOpen(this.value)">'+chapters+'</select></div></label><div class="bb-tools"><button class="pg-ghost sq" onclick="readerFont(-1)" title="Diminuir letra">A−</button><button class="pg-ghost sq" onclick="readerFont(1)" title="Aumentar letra">A+</button><button class="pg-ghost" onclick="readerTheme()" title="Alternar tema">'+(readerState.theme==='light'?'☾ Escuro':'☀ Claro')+'</button><button class="pg-ghost" onclick="readerBookmark()" title="Salvar capítulo">'+I('star')+'Salvar</button></div></section>'+
  '<div class="pg-card bb-nav"><button class="pg-ghost strong" onclick="readerMove(-1)">'+I('left')+'Anterior</button><span id="reader-ref">'+esc(name)+' '+readerState.chapter+'</span><button class="pg-ghost strong" onclick="readerMove(1)">Próximo'+I('right')+'</button></div>'+
+ '<div class="pg-card bb-verses"><div class="bv-l"><b>'+I('list')+'Versículos</b><small>Escolha um trecho ou toque nos versículos para selecioná-los.</small></div><label>De<div class="pg-sel"><select id="rd-from" onchange="IASDPages.rdRange()"><option value="0">Todos</option></select></div></label><label>Até<div class="pg-sel"><select id="rd-to" onchange="IASDPages.rdRange()" disabled><option value="0">—</option></select></div></label><button class="pg-ghost" onclick="IASDPages.rdAll()">Capítulo inteiro</button></div>'+
  '<div class="bb-main"><article class="pg-card bb-paper reader-paper" id="reader-text" aria-live="polite"><p>Carregando capítulo…</p></article><aside class="bb-side">'+
  '<div class="pg-card bb-cur"><span class="bb-cur-i">'+I('book')+'</span><div><b>Leitura atual</b><small id="bb-cur">'+esc(name)+' '+readerState.chapter+'</small></div><button class="bb-bm '+(fav?'on':'')+'" onclick="readerBookmark();this.classList.toggle(\'on\')" title="Favoritar">'+I('star')+'</button></div>'+
  '<div class="pg-card bb-quick"><h3>'+I('star','gold')+'Ações rápidas</h3><div class="bb-grid"><button onclick="readerBookmark()">'+I('star','gold')+'Adicionar favorito</button><button onclick="IASDPages.share()">'+I('share')+'Compartilhar</button><button onclick="readerCopy()">'+I('doc')+'Copiar texto</button><button onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button></div><button class="bb-favs" onclick="readerShowBookmarks()">'+I('list')+'Meus favoritos</button><div class="reader-saved" id="reader-saved" hidden></div></div>'+
@@ -163,9 +221,75 @@ function sched(ctx){
  else body='<section class="pg-card"><h2 class="pg-h">Nenhum cronograma ainda</h2><p class="pg-sub">Toque em “Novo cronograma” para cadastrar o primeiro culto.</p></section>';
  return '<div class="pg pg-cronogramas">'+hero('cronogramas',{kick:'CRONOGRAMAS',title:'PROGRAMAÇÃO <em>DA IGREJA</em>',text:'Organize, edite e acompanhe todas as programações da igreja de forma simples e completa.',quote:['Tudo tem o seu tempo, e tudo o que se quer debaixo do céu tem a sua hora.','Eclesiastes 3:1']})+strip+body+'</div>';
 }
+
+/* ---- Formulário de cronograma: colar tudo de uma vez + equipe escalada ---- */
+const TEAM_TAG='@@equipe ';
+const isTeam=x=>String(x).startsWith(TEAM_TAG);
+const teamOf=items=>{const t=(items||[]).find(isTeam);return t?t.slice(TEAM_TAG.length).split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean):[]};
+const plain=items=>(items||[]).filter(x=>!isTeam(x));
+let schTeam=[],schKey=null;
+const SCH_TPL={
+ sabado:['09:00 — Escola Sabatina — Superintendente','09:45 — Recepção e boas-vindas —','10:00 — Hino inicial e oração —','10:10 — Informativos —','10:20 — Estudo da lição —','11:00 — Intervalo —','11:15 — Louvor congregacional —','11:30 — Sermão — Pregador','12:15 — Oração final e bênção —'],
+ escola:['09:00 — Recepção —','09:10 — Louvor inicial —','09:20 — Oração —','09:25 — Relatório missionário —','09:35 — Estudo da lição —','10:15 — Encerramento —'],
+ jovem:['19:00 — Recepção —','19:10 — Louvor inicial —','19:25 — Boas-vindas e oração —','19:30 — Tema —','20:10 — Dinâmica —','20:30 — Oração final —'],
+ oracao:['19:30 — Hino e oração inicial —','19:40 — Meditação — Dirigente','20:00 — Pedidos e motivos de oração —','20:20 — Oração final —']
+};
+/* Limpa o texto colado: tira marcadores (*, •, -), "9h30" vira "09:30" e mantém o restante como está */
+function normSched(text){
+ return String(text||'').split(/\r?\n/).map(l=>{
+  l=l.replace(/^\s*(?:[*•▪◦●·\-–—]+|\d{1,2}[.)])\s+(?=\S)/,'').replace(/\s+/g,' ').trim();
+  l=l.replace(/^(\d{1,2})\s*[hH]\s*(\d{2})?(?=\s|$|[-–—:])/,(m,h,mi)=>String(h).padStart(2,'0')+':'+(mi||'00'));
+  l=l.replace(/^(\d{1,2}:\d{2})\s*[-–:]?\s+(?=[^\s—–-])/,(m,t)=>t+' — ');
+  l=l.replace(/\s[-–]\s/g,' — ');
+  return l}).filter(Boolean).filter(x=>!isTeam(x)).filter((x,i)=>!(i===0&&/^cronograma\b/i.test(x)&&!/\s—\s/.test(x)));
+}
+function schParse(text){const f=typeof parseSchedule==='function'?parseSchedule:x=>({time:'•',title:x,person:''});return normSched(text).map(x=>f(x))}
+function schKnownPeople(){const set=new Set();(cloudSchedules||[]).forEach(g=>{teamOf(g.items).forEach(n=>set.add(n));plain(g.items).forEach(x=>{const a=schParse(x)[0];(a?.person||'').split(/[,;]| e /).map(n=>n.trim()).filter(n=>n&&n.length<40).forEach(n=>set.add(n))})});return [...set].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function schPeopleFromText(text){const set=[];schParse(text).filter(a=>!/^(tema|vers[ií]culo|texto|lema|leitura|obs|observa|local|data)/i.test(a.title)).forEach(a=>(a.person||'').split(/[,;]| e /).map(n=>n.trim().replace(/[.:]+$/,'')).filter(n=>n&&n.length<40&&/[A-Za-zÀ-ú]/.test(n)&&!/[\d:]/.test(n)).forEach(n=>{if(!set.some(x=>x.toLowerCase()===n.toLowerCase()))set.push(n)}));return set}
+function schPrev(){
+ const ta=document.getElementById('schedule-lines'),box=document.getElementById('sf-prev');if(!ta||!box)return;
+ const rows=schParse(ta.value);
+ box.innerHTML=rows.length?'<div class="sf-ph"><b>'+rows.length+' atividade'+(rows.length===1?'':'s')+' reconhecida'+(rows.length===1?'':'s')+'</b><small>Confira como vai ficar. Edite o texto acima se precisar.</small></div>'+rows.map(a=>'<div class="sf-r"><span class="t'+(a.time==='•'?' n':'')+'">'+esc(a.time)+'</span><span class="x"><b>'+esc(a.title)+'</b>'+(a.person?'<small>'+esc(a.person)+'</small>':'')+'</span></div>').join(''):'<p class="pg-empty">As atividades aparecem aqui conforme você cola ou digita.</p>';
+ const n=document.getElementById('sf-pull');if(n){const c=schPeopleFromText(ta.value).filter(x=>!schTeam.some(t=>t.toLowerCase()===x.toLowerCase())).length;n.hidden=!c;n.querySelector('b').textContent=c}
+}
+function schTeamPaint(){
+ const box=document.getElementById('sf-chips');if(!box)return;
+ box.innerHTML=schTeam.length?schTeam.map((n,i)=>'<span class="sf-chip"><i>'+esc(n[0].toUpperCase())+'</i>'+esc(n)+'<button type="button" aria-label="Remover '+esc(n)+'" onclick="IASDPages.schTeamDel('+i+')">×</button></span>').join(''):'<p class="pg-empty">Ninguém escalado ainda.</p>';
+ const c=document.getElementById('sf-count');if(c)c.textContent=schTeam.length;
+}
+function schTeamAdd(raw){
+ const inp=document.getElementById('sf-person');const v=raw!=null?raw:(inp?inp.value:'');
+ String(v).split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).forEach(n=>{if(!schTeam.some(t=>t.toLowerCase()===n.toLowerCase()))schTeam.push(n)});
+ if(inp&&raw==null){inp.value='';inp.focus()}schTeamPaint();schPrev();
+}
+function schTeamDel(i){schTeam.splice(i,1);schTeamPaint();schPrev()}
+function schPull(){const ta=document.getElementById('schedule-lines');if(ta)schPeopleFromText(ta.value).forEach(n=>schTeamAdd(n))}
+function schTpl(k){const ta=document.getElementById('schedule-lines');if(!ta||!SCH_TPL[k])return;if(ta.value.trim()&&!confirm('Substituir o texto atual pelo modelo?'))return;ta.value=SCH_TPL[k].join('\n');schPrev()}
+function schFromOld(id){const g=(cloudSchedules||[]).find(x=>x.id===id);const ta=document.getElementById('schedule-lines');if(!g||!ta)return;if(ta.value.trim()&&!confirm('Substituir o texto atual pelo cronograma copiado?'))return;ta.value=plain(g.items).join('\n');schTeam=teamOf(g.items);schTeamPaint();schPrev()}
+function schTeamGet(){const inp=document.getElementById('sf-person');if(inp&&inp.value.trim())schTeamAdd();return schTeam.slice()}
+function schedForm(g,isNew){
+ const key=isNew?'new':g.id;
+ if(schKey!==key){schKey=key;schTeam=teamOf(g.items)}
+ const tpl=[['sabado','Culto de sábado'],['escola','Escola Sabatina'],['jovem','Culto jovem'],['oracao','Culto de oração']];
+ const olds=(cloudSchedules||[]).filter(x=>x.id!==g.id).slice(0,12);
+ const known=schKnownPeople();
+ setTimeout(()=>{schTeamPaint();schPrev()},0);
+ return '<section class="pg-card sf"><h2 class="pg-h">'+I(isNew?'plus':'pen')+(isNew?'Novo cronograma':'Editar cronograma')+'</h2>'+
+ '<div class="sf-top"><label>Nome do culto<input id="schedule-name" placeholder="Ex.: Culto de sábado — manhã" value="'+esc(g.name)+'"></label><label>Data (opcional)<input type="date" id="schedule-date" value="'+esc(g.date||'')+'"></label></div>'+
+ '<div class="sf-step"><span class="n">1</span><div><b>Cole a programação inteira de uma vez</b><small>Uma atividade por linha. Serve texto do WhatsApp, com marcadores (*, •, -) ou no formato “09:00 — Abertura — Ana”.</small></div></div>'+
+ '<div class="sf-tpl"><small>Começar de um modelo:</small>'+tpl.map(t=>'<button type="button" class="pg-ghost" onclick="IASDPages.schTpl(\''+t[0]+'\')">'+t[1]+'</button>').join('')+(olds.length?'<select onchange="if(this.value){IASDPages.schFromOld(this.value);this.value=\'\'}" aria-label="Copiar de outro cronograma"><option value="">Copiar de outro cronograma…</option>'+olds.map(o=>'<option value="'+esc(o.id)+'">'+esc(o.name)+(o.date?' — '+esc(fdate(o.date)):'')+'</option>').join('')+'</select>':'')+'</div>'+
+ '<textarea id="schedule-lines" rows="10" oninput="IASDPages.schPrev()" placeholder="Cole aqui o cronograma completo&#10;&#10;09:00 — Abertura — Ana Paula&#10;09:15 — Louvor — Equipe de música&#10;* Recepção - Ingrid, Clecia">'+esc(plain(g.items).join('\n'))+'</textarea>'+
+ '<div id="sf-prev" class="sf-prev"></div>'+
+ '<div class="sf-step"><span class="n">2</span><div><b>Pessoas escaladas</b><small>Quem vai participar neste culto. Digite vários nomes separados por vírgula.</small></div></div>'+
+ '<div class="sf-add"><input id="sf-person" list="sf-known" placeholder="Nome da pessoa (ou vários: Ana, João, Maria)" onkeydown="if(event.key===\'Enter\'||event.key===\',\'){event.preventDefault();IASDPages.schTeamAdd()}"><datalist id="sf-known">'+known.map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist><button type="button" class="pg-blue" onclick="IASDPages.schTeamAdd()">'+I('plus')+'Adicionar</button></div>'+
+ '<button type="button" id="sf-pull" class="sf-pull" hidden onclick="IASDPages.schPull()">'+I('users')+'Adicionar <b>0</b> pessoas citadas nas atividades</button>'+
+ '<div class="sf-ch"><span>Escalados (<b id="sf-count">0</b>)</span><div id="sf-chips" class="sf-chips"></div></div>'+
+ '<div class="actions sf-act"><button id="save-schedule-btn" class="pg-gold" onclick="saveSchedule()">✓ Salvar cronograma</button><button class="pg-ghost" onclick="cancelSchedule()">Cancelar</button></div><p id="schedule-feedback" role="alert" style="display:none;font-weight:650"></p></section>';
+}
 function detail(g){
- const items=g.items.map(parseSchedule),times=items.map(a=>minutes(a.time)).filter(n=>n!==null);
- const who=new Set(items.map(a=>(a.person||'').split(/[,;]/)[0].trim()).filter(Boolean));
+ const team=teamOf(g.items),gitems=plain(g.items);
+ const items=gitems.map(parseSchedule),times=items.map(a=>minutes(a.time)).filter(n=>n!==null);
+ const who=new Set(items.map(a=>(a.person||'').split(/[,;]/)[0].trim()).filter(Boolean));team.forEach(n=>who.add(n));
  let dur='—';if(times.length>1){const d=Math.max(...times)-Math.min(...times);dur=Math.floor(d/60)+'h '+String(d%60).padStart(2,'0')+'min'}
  const today=new Date().toLocaleDateString('en-CA');
  const status=!g.date?['Programado','ok']:g.date===today?['Hoje','live']:g.date>today?['Programado','ok']:['Realizado','done'];
@@ -175,12 +299,12 @@ function detail(g){
  const canE=canEditSchedule();
  return '<section class="pg-card sc-detail"><div class="sc-dh"><span class="sc-big">'+I('cal')+'</span><div class="sc-dt"><h2>'+esc(g.name)+'<span class="sc-st '+status[1]+'">'+I('check')+status[0]+'</span></h2>'+(g.date?'<small>'+I('cal')+esc(fdate(g.date))+' ('+wd+')</small>':'')+'</div><div class="sc-dact">'+(canE?'<button class="pg-ghost" onclick="editSchedule(\''+g.id+'\')">'+I('pen')+'Editar</button>':'')+(canDeleteSchedule()?'<button class="pg-danger" onclick="deleteSchedule(\''+g.id+'\')">'+I('trash')+'Excluir</button>':'')+'<button class="pg-ghost sq" title="Copiar programação" onclick="IASDPages.copySched(\''+g.id+'\',this)">'+I('more')+'</button></div></div>'+
  '<div class="sc-info"><div class="sc-cover" style="'+(cover?'background-image:url('+esc(cover)+')':'')+'"><b>'+esc(g.name)+'</b>'+(canE?'<button onclick="IASDPages.cover(\''+g.id+'\')">'+I('img')+'Alterar imagem</button>':'')+'</div>'+
- '<div class="pg-card sc-desc"><div class="sc-row">'+I('doc')+'<div><b>Descrição</b><p>Programação com '+g.items.length+' atividade'+(g.items.length===1?'':'s')+(span?', '+span:'')+'.</p></div></div><div class="sc-row">'+I('pin')+'<div><b>Local</b><p>IASD - Caldas do Jorro</p></div></div></div>'+
- '<div class="sc-stats"><div class="sc-stat">'+I('list','blue')+'<span><b>'+g.items.length+'</b><small>Atividades</small></span></div><div class="sc-stat">'+I('users','gold')+'<span><b>'+who.size+'</b><small>Responsáveis</small></span></div><div class="sc-stat">'+I('clock','blue')+'<span><b>'+dur+'</b><small>Duração estimada</small></span></div></div></div>'+
- '<div class="pg-head sc-ph"><h2 class="pg-h">'+I('list','blue')+'Programação</h2><span class="pg-sub">'+g.items.length+' atividades</span>'+(canE?'<button class="pg-blue" onclick="editSchedule(\''+g.id+'\')">'+I('plus')+'Adicionar atividade</button>':'')+'</div>'+
- '<div class="sc-tl" data-id="'+esc(g.id)+'">'+(items.length?items.map((a,i)=>'<div class="sc-it" '+(canE?'draggable="true"':'')+' data-i="'+i+'"><i class="dot '+(i===0?'first':'')+'"></i><span class="sc-time">'+esc(a.time)+'</span><div class="sc-tx"><b>'+esc(a.title)+'</b>'+(a.person?'<small>'+esc(a.person)+'</small>':'')+'</div>'+(canE?'<span class="sc-drag" title="Arraste para reordenar">'+I('drag')+'</span><button class="pg-ico" title="Projetar" onclick="project(cloudSchedules.find(g=>g.id===selectedSchedule).items['+i+'])">'+I('play')+'</button><button class="pg-ico" title="Editar" onclick="editSchedule(\''+g.id+'\')">'+I('pen')+'</button><button class="pg-ico red" title="Excluir atividade" onclick="removeScheduleLine('+i+')">'+I('trash')+'</button>':'')+'</div>').join(''):'<p class="pg-empty">Nenhuma atividade cadastrada.</p>')+'</div></section>';
+ '<div class="pg-card sc-desc"><div class="sc-row">'+I('doc')+'<div><b>Descrição</b><p>Programação com '+gitems.length+' atividade'+(gitems.length===1?'':'s')+(span?', '+span:'')+'.</p></div></div><div class="sc-row">'+I('pin')+'<div><b>Local</b><p>IASD - Caldas do Jorro</p></div></div></div>'+
+ '<div class="sc-stats"><div class="sc-stat">'+I('list','blue')+'<span><b>'+gitems.length+'</b><small>Atividades</small></span></div><div class="sc-stat">'+I('users','gold')+'<span><b>'+who.size+'</b><small>Responsáveis</small></span></div><div class="sc-stat">'+I('clock','blue')+'<span><b>'+dur+'</b><small>Duração estimada</small></span></div></div></div>'+
+ '<div class="pg-head sc-ph"><h2 class="pg-h">'+I('list','blue')+'Programação</h2><span class="pg-sub">'+gitems.length+' atividades</span>'+(canE?'<button class="pg-blue" onclick="editSchedule(\''+g.id+'\')">'+I('plus')+'Adicionar atividade</button>':'')+'</div>'+
+ '<div class="sc-tl" data-id="'+esc(g.id)+'">'+(items.length?items.map((a,i)=>'<div class="sc-it" '+(canE?'draggable="true"':'')+' data-i="'+i+'"><i class="dot '+(i===0?'first':'')+'"></i><span class="sc-time">'+esc(a.time)+'</span><div class="sc-tx"><b>'+esc(a.title)+'</b>'+(a.person?'<small>'+esc(a.person)+'</small>':'')+'</div>'+(canE?'<span class="sc-drag" title="Arraste para reordenar">'+I('drag')+'</span><button class="pg-ico" title="Projetar" onclick="project(cloudSchedules.find(g=>g.id===selectedSchedule).items['+i+'])">'+I('play')+'</button><button class="pg-ico" title="Editar" onclick="editSchedule(\''+g.id+'\')">'+I('pen')+'</button><button class="pg-ico red" title="Excluir atividade" onclick="removeScheduleLine('+i+')">'+I('trash')+'</button>':'')+'</div>').join(''):'<p class="pg-empty">Nenhuma atividade cadastrada.</p>')+'</div>'+(team.length?'<div class="pg-card sc-team"><h2 class="pg-h">'+I('users','gold')+'Equipe escalada<span class="pg-sub">'+team.length+' pessoa'+(team.length===1?'':'s')+'</span></h2><div class="sf-chips">'+team.map(n=>'<span class="sf-chip"><i>'+esc(n[0].toUpperCase())+'</i>'+esc(n)+'</span>').join('')+'</div></div>':'')+'</section>';
 }
-function copySched(id,btn){const g=cloudSchedules.find(x=>x.id===id);if(!g)return;const t=g.name+(g.date?' — '+fdate(g.date):'')+'\n'+g.items.join('\n');navigator.clipboard?.writeText(t).then(()=>{btn.classList.add('ok');setTimeout(()=>btn.classList.remove('ok'),1500)})}
+function copySched(id,btn){const g=cloudSchedules.find(x=>x.id===id);if(!g)return;const tm=teamOf(g.items);const t=g.name+(g.date?' — '+fdate(g.date):'')+'\n'+plain(g.items).join('\n')+(tm.length?'\n\nEscalados: '+tm.join(', '):'');navigator.clipboard?.writeText(t).then(()=>{btn.classList.add('ok');setTimeout(()=>btn.classList.remove('ok'),1500)})}
 function cover(id){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,640/Math.max(img.width,img.height));c.width=img.width*k;c.height=img.height*k;c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{localStorage.setItem('iasd-sched-cover-'+id,c.toDataURL('image/jpeg',.82))}catch(e){alert('Imagem grande demais para guardar neste aparelho.')}render()};img.src=URL.createObjectURL(f)};inp.click()}
 document.addEventListener('dragstart',e=>{const it=e.target.closest?.('.sc-it[draggable]');if(!it)return;window.__scDrag=+it.dataset.i;it.classList.add('drag');e.dataTransfer.effectAllowed='move'});
 document.addEventListener('dragend',e=>{e.target.closest?.('.sc-it')?.classList.remove('drag')});
@@ -335,5 +459,5 @@ function esBody(){
  return filter+chips+'<div class="es-grid">'+cal+side+'</div>'+add;
 }
 
-window.IASDPages={escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

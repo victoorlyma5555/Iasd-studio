@@ -232,3 +232,4 @@ body.st2 main{grid-template-rows:auto auto auto auto!important}
 }
 @media (max-width:560px){.st-qg{grid-template-columns:repeat(3,minmax(0,1fr))}.st-bn-txt small{font-size:15px;margin-bottom:6px}.st-bn-txt .st-hp{display:none}}
 @media (max-width:560px){.q-head{flex-wrap:wrap;gap:8px}.q-head h3{font-size:15px}.q-head .st-sp{display:none}.q-head button{flex:1 1 auto}.st-emi{width:54px;height:54px}.st-empty b{font-size:16px}.st-empty small{font-size:12px}.st-empty{gap:5px}}
+.m-actions button#tmQr.on{background:rgba(201,162,74,.18)!important;border-color:#c9a24a!important;color:#f5e3a6!important}

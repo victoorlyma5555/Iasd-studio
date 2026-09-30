@@ -269,3 +269,88 @@ html[data-theme="light"] .gm-tile,html[data-theme="light"] .fd-tile{background:v
 .pg-jogos .gm-art{height:84px}.pg-jogos .gm-art>.pgi{width:42px;height:42px}.pg-jogos .gm-body{padding:10px 12px 12px;gap:6px}.pg-jogos .gm-body h3{font-size:17px}.pg-jogos .gm-body p{min-height:0;font-size:13px}
 .pg-jogos .gm-tools .pg-search{flex:1 1 100%;order:-1}.pg-jogos .gm-tools .pg-blue{flex:1}
 }
+
+/* ===== Formulário de cronograma (colar tudo + equipe) ===== */
+body.iu .pg .sf{display:grid;gap:14px}
+body.iu .pg .sf-top{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:12px}
+body.iu .pg .sf label{display:grid;gap:6px;font-weight:700;font-size:13px;color:var(--t)}
+body.iu .pg .sf input,body.iu .pg .sf textarea,body.iu .pg .sf select{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--b);background:var(--iu-sf2);color:var(--t);padding:11px 13px;font:inherit;font-weight:500}
+body.iu .pg .sf textarea{min-height:190px;resize:vertical;line-height:1.5}
+body.iu .pg .sf-step{display:flex;gap:12px;align-items:center;margin-top:6px}
+body.iu .pg .sf-step .n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608;font-weight:800}
+body.iu .pg .sf-step b{display:block}body.iu .pg .sf-step small{display:block;opacity:.7;margin-top:2px;line-height:1.4}
+body.iu .pg .sf-tpl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body.iu .pg .sf-tpl small{opacity:.7}body.iu .pg .sf-tpl button{height:34px;padding:0 12px;font-size:13px}
+body.iu .pg .sf-tpl select{width:auto;max-width:100%;padding:7px 10px;font-size:13px}
+body.iu .pg .sf-prev{border:1px dashed var(--b);border-radius:14px;padding:12px;max-height:280px;overflow:auto;display:grid;gap:6px}
+body.iu .pg .sf-ph{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}body.iu .pg .sf-ph small{opacity:.65}
+body.iu .pg .sf-r{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;align-items:start;padding:7px 9px;border-radius:10px;background:var(--iu-sf2)}
+body.iu .pg .sf-r .t{font-weight:800;color:#f5b73a;font-variant-numeric:tabular-nums}body.iu .pg .sf-r .t.n{opacity:.4;text-align:center}
+body.iu .pg .sf-r .x b{display:block;overflow-wrap:anywhere}body.iu .pg .sf-r .x small{display:block;opacity:.7;overflow-wrap:anywhere}
+body.iu .pg .sf-add{display:flex;gap:8px}body.iu .pg .sf-add input{flex:1 1 auto;min-width:0}body.iu .pg .sf-add button{flex:none;height:auto}
+body.iu .pg .sf-pull{justify-self:start;border:1px dashed #3b82f6;background:rgba(59,130,246,.1);color:inherit;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+body.iu .pg .sf-pull[hidden]{display:none}
+body.iu .pg .sf-ch>span{font-weight:700;font-size:13px}
+body.iu .pg .sf-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+body.iu .pg .sf-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 6px 5px 5px;border-radius:999px;background:var(--iu-sf2);border:1px solid var(--b);font-weight:600;font-size:13.5px}
+body.iu .pg .sf-chip i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#3b82f6,#6d4be0);color:#fff;font-size:12px;font-weight:800}
+body.iu .pg .sf-chip:not(:has(button)){padding-right:12px}
+body.iu .pg .sf-chip button{border:0;background:transparent;color:inherit;opacity:.6;font-size:18px;line-height:1;width:24px;height:24px;border-radius:50%;cursor:pointer}body.iu .pg .sf-chip button:hover{opacity:1;background:rgba(239,68,68,.25)}
+body.iu .pg .sc-team{margin-top:14px}body.iu .pg .sc-team .pg-h{display:flex;align-items:center;gap:8px}body.iu .pg .sc-team .pg-sub{margin-left:auto}
+body.iu .pg .sf-act{display:flex;gap:10px;flex-wrap:wrap}
+@media (max-width:560px){body.iu .pg .sf-top{grid-template-columns:minmax(0,1fr)}body.iu .pg .sf-add{flex-wrap:wrap}body.iu .pg .sf-add button{width:100%;justify-content:center}}
+body.iu .pg .sf-act button{height:44px;padding:0 20px}
+
+/* ===== Hinário ===== */
+.hn{display:grid;gap:14px}
+.hn .hn-head{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:end}
+.hn .hn-kick{font-size:12px;font-weight:800;letter-spacing:.2em;color:#f5b73a}
+.hn h1{margin:4px 0;font-size:clamp(26px,4vw,38px)}.hn .hn-head p{margin:0;opacity:.75}
+.hn .hn-eds{display:flex;gap:8px;flex-wrap:wrap}
+.hn .hn-eds button{border:1px solid var(--b,#26375f);background:var(--iu-sf2,#0f1a33);color:inherit;border-radius:14px;padding:10px 16px;text-align:left;cursor:pointer;font:inherit}
+.hn .hn-eds button b{display:block}.hn .hn-eds button small{opacity:.65}
+.hn .hn-eds button.on{border-color:#f5b73a;background:rgba(245,183,58,.12)}
+.hn .hn-bar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.hn .hn-search{flex:1 1 320px;display:flex;align-items:center;gap:10px;border:1px solid var(--b,#26375f);background:var(--iu-sf2,#0f1a33);border-radius:14px;padding:0 14px}
+.hn .hn-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:inherit;font:inherit;font-size:16px;padding:13px 0}
+.hn .hn-chk{display:flex;gap:8px;align-items:center;font-size:14px;opacity:.85}
+.hn .hn-main{display:grid;grid-template-columns:minmax(260px,380px) minmax(0,1fr);gap:14px;align-items:start}
+.hn .hn-list{border:1px solid var(--b,#26375f);border-radius:16px;background:var(--c,#0b1429);max-height:calc(100vh - 290px);min-height:260px;overflow:auto;padding:8px;display:grid;gap:4px;align-content:start}
+.hn .hn-row{display:flex;align-items:center;gap:12px;border:0;background:transparent;color:inherit;text-align:left;padding:10px;border-radius:12px;cursor:pointer;font:inherit}
+.hn .hn-row:hover{background:rgba(255,255,255,.06)}.hn .hn-row.on{background:rgba(59,130,246,.22)}
+.hn .hn-row b{flex:none;width:46px;height:38px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#3b82f6,#6d4be0);color:#fff;font-variant-numeric:tabular-nums}
+.hn .hn-row span{flex:1;min-width:0}.hn .hn-row strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hn .hn-row small{opacity:.6}
+.hn .hn-star{color:#f5b73a;font-style:normal}
+.hn .hn-view{border:1px solid var(--b,#26375f);border-radius:16px;background:var(--c,#0b1429);padding:clamp(14px,3vw,26px);min-height:320px}
+.hn .hn-placeholder{display:grid;place-items:center;text-align:center;min-height:280px;opacity:.6}.hn .hn-placeholder b{font-size:54px}
+.hn .hn-dh{display:flex;gap:14px;align-items:center}
+.hn .hn-num{flex:none;min-width:64px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:24px;font-weight:800;background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608}
+.hn .hn-det h2{margin:0;font-size:clamp(22px,3vw,30px)}.hn .hn-dh small{opacity:.6;display:block}
+.hn .hn-meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.hn .hn-meta span{font-size:13px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.07)}
+.hn .hn-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.hn .hn-btn{border:1px solid var(--b,#26375f);background:var(--iu-sf2,#0f1a33);color:inherit;border-radius:10px;padding:8px 13px;cursor:pointer;font:inherit;font-size:14px}
+.hn .hn-btn.gold{background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608;border-color:transparent;font-weight:700}
+.hn .hn-lyrics{display:grid;gap:18px;font-size:calc(18px + var(--hf,0) * 2px);line-height:1.6}
+.hn .hn-est,.hn .hn-coro{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 12px;align-items:start}
+.hn .hn-est em,.hn .hn-coro em{font-style:normal;font-weight:800;color:#f5b73a;font-size:.8em;padding-top:.25em}
+.hn .hn-est p,.hn .hn-coro p{margin:0}
+.hn .hn-coro{padding:12px 14px;border-left:3px solid #f5b73a;background:rgba(245,183,58,.08);border-radius:0 12px 12px 0}.hn .hn-coro p{font-style:italic}
+.hn .hn-mini{grid-column:2;justify-self:start;border:1px dashed var(--b,#26375f);background:transparent;color:inherit;opacity:.7;border-radius:8px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.hn .hn-empty{padding:24px 12px;text-align:center;opacity:.8}
+.hn .hn-spin{display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#f5b73a;margin-right:10px;vertical-align:middle;animation:hnsp 1s linear infinite}@keyframes hnsp{to{transform:rotate(360deg)}}
+.hn .hn-note{font-size:12px;opacity:.55;margin:0}
+@media (max-width:900px){.hn .hn-main{grid-template-columns:minmax(0,1fr)}.hn .hn-list{max-height:340px}}
+
+/* ===== Bíblia: versículos ===== */
+body.iu .pg .bb-verses{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:end;padding:14px 18px}
+body.iu .pg .bb-verses .bv-l{flex:1 1 240px}body.iu .pg .bb-verses .bv-l b{display:flex;gap:8px;align-items:center}body.iu .pg .bb-verses .bv-l small{display:block;opacity:.65;margin-top:3px}
+body.iu .pg .bb-verses label{display:grid;gap:4px;font-size:12px;font-weight:700}body.iu .pg .bb-verses .pg-sel select{min-width:86px}
+body.iu .reader-verse{cursor:pointer;border-radius:8px;transition:background .15s}
+body.iu .reader-verse:hover{background:rgba(245,183,58,.08)}
+body.iu .reader-verse.sel{background:rgba(245,183,58,.22);box-shadow:-3px 0 0 #f5b73a}
+.rd-bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;max-width:calc(100vw - 24px);padding:10px 14px;border-radius:16px;background:#101b36;color:#fff;border:1px solid #f5b73a;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.rd-bar b{color:#f5b73a}.rd-bar span{opacity:.7;font-size:13px}
+.rd-bar button{border:1px solid #2b3c66;background:#182646;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.rd-bar button.gold{background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608;border-color:transparent;font-weight:700}
+.rd-bar svg{width:15px;height:15px}
