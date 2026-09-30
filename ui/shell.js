@@ -39,7 +39,7 @@ const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=
 const $=id=>document.getElementById(id);
 
 /* ---------- ícones ---------- */
-const P={menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
+const P={down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3',menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
@@ -154,11 +154,12 @@ function parseItems(items){
   const f=g(()=>parseSchedule);
   return (items||[]).map(x=>f?f(x):{time:'•',title:String(x),person:''});
 }
-function scheduleHTML(){
+const sched={expanded:false,LIMIT:5};
+function scheduleInner(){
   const today=new Date().toLocaleDateString('en-CA');
   const featured=S.schedules().find(x=>x.date===today)||null;
   const label=(()=>{const d=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});return d.charAt(0).toUpperCase()+d.slice(1)})();
-  let body;
+  let body='',toggle='';
   if(!featured){
     body='<div class="iu-empty"><strong>Nenhuma programação para hoje</strong>Quando houver atividades cadastradas, elas aparecerão aqui.</div>';
   }else{
@@ -166,10 +167,23 @@ function scheduleHTML(){
     const rows=parseItems(featured.items);
     let idx=-1;
     rows.forEach((a,i)=>{const m=/^(\d{1,2}):(\d{2})$/.exec(a.time);if(m&&(+m[1])*60+(+m[2])<=cur)idx=i});
-    body='<ul class="iu-sch">'+rows.map((a,i)=>`<li class="${i<idx?'d':i===idx?'n':''}"><time>${E(a.time)}</time><i></i><span class="t">${E(a.title)}${a.person?`<small>${E(a.person)}</small>`:''}</span>${i===idx?'<em class="iu-now" style="font-style:normal">Agora</em>':''}</li>`).join('')+'</ul>';
-    body=`<div style="font-weight:600">${E(featured.name)} <span style="color:var(--iu-mu);font-weight:400;font-size:12px">· ${rows.length} atividades</span></div>`+body;
+    const many=rows.length>sched.LIMIT,collapsed=many&&!sched.expanded;
+    let start=0,end=rows.length;
+    if(collapsed){start=Math.min(Math.max(0,idx-1),rows.length-sched.LIMIT);end=start+sched.LIMIT}
+    const li=(a,i)=>`<li class="${i<idx?'d':i===idx?'n':''}"><time>${E(a.time)}</time><i></i><span class="t">${E(a.title)}${a.person?`<small>${E(a.person)}</small>`:''}</span>${i===idx?'<em class="iu-now" style="font-style:normal">Agora</em>':''}</li>`;
+    const before=start,after=rows.length-end;
+    body=`<div style="font-weight:600">${E(featured.name)} <span style="color:var(--iu-mu);font-weight:400;font-size:12px">· ${rows.length} atividades</span></div>`
+      +(before?`<div class="iu-more">${before} anterior${before>1?'es':''}</div>`:'')
+      +`<div class="iu-sch-wrap${many&&sched.expanded?' scroll':''}"><ul class="iu-sch">${rows.slice(start,end).map((a,k)=>li(a,start+k)).join('')}</ul></div>`
+      +(after?`<div class="iu-more">mais ${after} depois</div>`:'');
+    if(many)toggle=`<button class="iu-btn" data-act="sched-toggle" aria-expanded="${sched.expanded}">${ic(sched.expanded?'up':'down',16)}${sched.expanded?'Recolher cronograma':'Mostrar todas as '+rows.length+' atividades'}</button>`;
   }
-  return `<section class="iu-pan"><div class="iu-ph">${ic('calendar',20)}<h2>Cronograma de hoje</h2><small>${E(label)}</small></div>${body}<button class="iu-btn" data-go="Cronograma">${ic('calendar',16)}Ver cronograma completo${ic('chev',16)}</button></section>`;
+  return `<div class="iu-ph">${ic('calendar',20)}<h2>Cronograma de hoje</h2><small>${E(label)}</small></div>${body}${toggle}<button class="iu-btn" data-go="Cronograma">${ic('calendar',16)}Ver cronograma completo${ic('chev',16)}</button>`;
+}
+function scheduleHTML(){return `<section class="iu-pan" id="iu-sched">${scheduleInner()}</section>`}
+function updateSchedule(){
+  const el=$('iu-sched');if(el)el.innerHTML=scheduleInner();
+  const grid=document.querySelector('.iu-grid');if(grid)grid.classList.toggle('exp',sched.expanded);
 }
 
 /* IASD Projetor: lê o status real do aplicativo do Windows (GET /status, sem login). */
@@ -251,6 +265,84 @@ function passageHTML(){
   loadPassage();
   return `<section class="iu-pan iu-pas" id="iu-passage" style="${passageStyle()}">${passageInner()}</section>`;
 }
+
+/* ---------- Destaques da comunidade (ranking do Desafio da Palavra) ---------- */
+const rank={rows:null,loading:false,error:false,at:0,me:null,uid:undefined,reqUid:undefined};
+function initials(name){const w=String(name||'?').trim().split(/\s+/);return ((w[0]||'?')[0]+(w.length>1?w[w.length-1][0]:'')).toUpperCase()}
+function hue(name){let h=0;for(const c of String(name))h=(h*31+c.charCodeAt(0))%360;return h}
+function avatarHTML(r,big){
+  const cls='iu-rav'+(big?' big':'');
+  if(r.avatar)return `<span class="${cls}"><img src="${E(r.avatar)}" alt=""></span>`;
+  return `<span class="${cls}" style="background:hsl(${hue(r.name)} 55% 42%)">${E(initials(r.name))}</span>`;
+}
+function normRows(list){
+  return (list||[]).map(x=>{
+    const p=x.iasd_profiles||{};
+    const path=p.avatar_path,url=path?g(()=>profileMediaUrl(path)):'';
+    const total=Number(x.total_answers||0),ok=Number(x.correct_answers||0);
+    return {name:x.display_name||p.full_name||'Participante',score:Number(x.score||0),acc:total?Math.round(ok*100/total):0,streak:Number(x.best_streak||0),avatar:url||'',uid:x.user_id||null};
+  });
+}
+function loadRanking(force){
+  const user=S.user(),uid=user?user.id:null;
+  if(rank.loading&&rank.reqUid===uid)return;
+  if(!force&&rank.uid===uid&&rank.at&&Date.now()-rank.at<60000)return;
+  rank.loading=true;rank.reqUid=uid;
+  const done=()=>{
+    if((S.user()?S.user().id:null)!==uid){rank.loading=false;loadRanking(true);return}   // a conta mudou no meio da busca
+    rank.loading=false;rank.uid=uid;rank.at=Date.now();updateRank();
+  };
+  if(user){
+    Promise.resolve(g(()=>loadGameRanking())).catch(()=>{}).then(()=>{
+      const list=g(()=>gameRanking)||[];
+      rank.rows=normRows(list);rank.error=false;
+      const i=list.findIndex(x=>x.user_id===user.id);
+      rank.me=i>=0?{pos:i+1,score:Number(list[i].score||0)}:null;
+      done();
+    });
+    return;
+  }
+  // visitante: função pública do Supabase (docs/supabase-ranking-publico.sql). Sem ela, mostra o convite para entrar.
+  const c=g(()=>cloud);
+  if(!c||!c.rpc){rank.rows=[];rank.error=true;done();return}
+  Promise.resolve(c.rpc('iasd_public_ranking',{p_limit:10})).then(r=>{
+    if(r&&!r.error&&Array.isArray(r.data)){rank.rows=normRows(r.data);rank.error=false}
+    else{rank.rows=[];rank.error=true}
+    rank.me=null;done();
+  }).catch(()=>{rank.rows=[];rank.error=true;rank.me=null;done()});
+}
+function pts(n){return Number(n||0).toLocaleString('pt-BR')}
+function podiumSlot(r,place){
+  if(!r)return `<div class="iu-pd p${place} empty"><span class="iu-rav${place===1?' big':''}">?</span><b>Vaga aberta</b><small>—</small><div class="bar">${place}</div></div>`;
+  return `<div class="iu-pd p${place}">${place===1?`<span class="iu-crown">${ic('trophy',20)}</span>`:''}${avatarHTML(r,place===1)}<b>${E(r.name)}</b><small>${pts(r.score)} pts</small><div class="bar">${place}</div></div>`;
+}
+function rankBody(){
+  if(rank.rows===null)return '<div class="iu-empty">Carregando destaques…</div>';
+  const rows=rank.rows;
+  const podium=`<div class="iu-podium">${podiumSlot(rows[1],2)}${podiumSlot(rows[0],1)}${podiumSlot(rows[2],3)}</div>`;
+  let note='';
+  if(!rows.length)note=`<p class="iu-rank-note">${rank.error?'Entre na sua conta para ver e participar dos destaques da comunidade.':'O ranking começa com a primeira partida. Seja o primeiro da lista!'}</p>`;
+  const rest=rows.slice(3,6).map((r,i)=>`<li>${'<b class="pos">'+(i+4)+'</b>'}${avatarHTML(r,false)}<span class="nm">${E(r.name)}<small>${r.acc}% de acertos · sequência ${r.streak}</small></span><b class="sc">${pts(r.score)} pts</b></li>`).join('');
+  return podium+note+(rest?`<ul class="iu-rlist">${rest}</ul>`:'');
+}
+function ctaBody(){
+  const user=S.user(),me=rank.me;
+  if(user&&me){
+    const lvl=Math.max(1,Math.floor(me.score/500)+1);
+    return `<span class="iu-k">Desafio da Palavra</span><h3>Você está em ${me.pos}º lugar</h3><p>${pts(me.score)} pontos · nível ${lvl}. Jogue mais uma rodada e suba no ranking.</p><button class="iu-btn" data-go="Jogo">${ic('game',17)}Jogar agora</button>`;
+  }
+  if(user)return `<span class="iu-k">Desafio da Palavra</span><h3>Jogue. Aprenda. Suba no ranking.</h3><p>Responda perguntas bíblicas, acumule pontos e apareça nos destaques da comunidade.</p><button class="iu-btn" data-go="Jogo">${ic('game',17)}Jogar agora</button>`;
+  return `<span class="iu-k">Desafio da Palavra</span><h3>Participe e apareça aqui</h3><p>Crie sua conta gratuita, jogue o quiz bíblico e dispute o topo com a comunidade.</p><button class="iu-btn" data-act="signup">${ic('user',17)}Entrar para participar</button>`;
+}
+function updateRank(){
+  const a=$('iu-rank-body'),b=$('iu-rank-cta');
+  if(a)a.innerHTML=rankBody();
+  if(b)b.innerHTML=ctaBody();
+}
+function rankHTML(){
+  loadRanking();
+  return `<section class="iu-rank"><div class="iu-pan iu-rank-main"><div class="iu-ph">${ic('trophy',20)}<h2>Destaques da comunidade</h2><button class="iu-link" data-go="Jogo">Ver ranking completo${ic('chev',14)}</button></div><small class="iu-sub">Quem mais se dedica ao Desafio da Palavra.</small><div id="iu-rank-body">${rankBody()}</div></div><div class="iu-rank-cta" id="iu-rank-cta">${ctaBody()}</div></section>`;
+}
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
   if(!items.length)return '';
@@ -263,7 +355,7 @@ function bannerHTML(){
 }
 api.home=function(){
   try{
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${quickHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}${sched.expanded?' exp':''}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${rankHTML()}${quickHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -320,6 +412,8 @@ function bind(){
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
       else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
       else if(a==='projtest')checkProjector();
+      else if(a==='sched-toggle'){sched.expanded=!sched.expanded;updateSchedule()}
+      else if(a==='signup')g(()=>openAuthModal(true));
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
       else if(a==='passage'){
         g(()=>{readerState.book=passage.book;readerState.chapter=passage.chapter;saveReader()});

@@ -51,7 +51,7 @@ function walk(dir) {
     return p.endsWith('.js') ? [p] : [];
   });
 }
-for (const dir of ['app', 'core', 'modules', 'services', 'ui'].filter((d) => fs.existsSync(path.join(root, d)))) {
+for (const dir of ['app', 'core', 'modules', 'services', 'ui', 'shared'].filter((d) => fs.existsSync(path.join(root, d)))) {
   for (const f of walk(dir)) {
     const code = read(f);
     syntax(code, f);
