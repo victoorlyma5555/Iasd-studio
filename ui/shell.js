@@ -1,0 +1,331 @@
+/* IASD APP — casco visual novo (menu, topo, navegação do celular e Home).
+   Este arquivo só DESENHA. Toda ação chama as funções que já existem em app/main.js
+   (go, toggleTheme, toggleAccountMenu, newTab, pairCompanion, editCover...).
+   Carregue ANTES de app/main.js. Se algo falhar aqui, o visual antigo volta sozinho.
+   Para voltar ao visual antigo manualmente: abra o site com ?ui=old  (e ?ui=new para reativar). */
+(function(){
+'use strict';
+
+/* ---------- textos da Home (edite aqui) ---------- */
+const config={
+  banner:{eyebrow:'EVANGELISMO',title:['O FIM DO','PECADO'],verse:'“E vi novo céu e nova terra...”',ref:'Apocalipse 21:1',button:'Ver programação da semana'},
+  passage:{text:'“Porque para Deus nada é impossível.”',ref:'Lucas 1:37',book:'luke',chapter:1}
+};
+
+/* ---------- ligado / desligado ---------- */
+function preference(){
+  try{
+    const q=new URLSearchParams(location.search).get('ui');
+    if(q==='old'||q==='new')localStorage.setItem('iasd-ui',q);
+    return localStorage.getItem('iasd-ui')!=='old';
+  }catch(e){return true}
+}
+const api={enabled:preference(),config};
+
+/* ---------- acesso seguro ao estado do app (main.js) ---------- */
+const g=fn=>{try{return fn()}catch(e){return undefined}};
+const S={
+  user:()=>g(()=>cloudUser)||null,
+  role:()=>g(()=>cloudRole)||null,
+  cur:()=>g(()=>current)||'Painel',
+  tabs:()=>g(()=>customTabs)||[],
+  schedules:()=>g(()=>cloudSchedules)||[],
+  sound:()=>!!g(()=>canUseSound()),
+  manage:()=>!!g(()=>canManageSite()),
+  assigned:()=>!!g(()=>hasAssignedRole()),
+  founder:()=>!!g(()=>cloudUser)&&g(()=>cloudRole)==='founder'
+};
+const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
+const $=id=>document.getElementById(id);
+
+/* ---------- ícones ---------- */
+const P={menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
+const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
+
+/* ---------- páginas do menu ---------- */
+const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Sonoplastia','music','Sonoplastia'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
+const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
+const TITLES={Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'Sonoplastia','Projeção':'Studio de Projeção',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+function titleOf(cur){
+  if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
+  return TITLES[cur]||cur;
+}
+function searchable(){
+  const out=MAIN.map(([id,i,l])=>({id,icon:i,label:l}));
+  S.tabs().forEach(t=>out.push({id:'custom:'+t.id,icon:'star',label:t.title||'Aba'}));
+  if(S.sound()){out.push({id:'Projeção',icon:'play',label:'Studio de Projeção'},{id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
+  out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'},{id:'Perfil',icon:'user',label:'Meu perfil'});
+  if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
+  if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
+  return out;
+}
+const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+
+/* ---------- menu lateral ---------- */
+function navBtn(id,iconHtml,label,cur){return `<button class="iu-nav${cur===id?' on':''}" data-go="${E(id)}">${iconHtml}<span>${E(label)}</span></button>`}
+function sideHTML(){
+  const cur=S.cur();
+  let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
+  h+=MAIN.map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
+  h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
+  if(S.assigned())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
+  if(S.manage()){
+    h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
+    if(S.founder())h+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
+    h+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
+    h+=`<button class="iu-nav" data-act="newtab">${ic('plus',19)}<span>Criar aba</span></button>`;
+  }
+  h+='<div class="iu-tag"><b>IASD APP</b>Mais que tecnologia, uma ferramenta para o Reino de Deus.</div>';
+  return h;
+}
+function barHTML(){
+  const cur=S.cur();
+  return MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('');
+}
+
+/* ---------- topo ---------- */
+function topHTML(){
+  return `<button class="iu-ib iu-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}</button>
+<button class="iu-ib iu-back" data-act="back" aria-label="Voltar">${ic('back',20)}</button>
+<div class="iu-title" id="iu-title"></div>
+<div class="iu-search" role="search">${ic('search',18)}<input id="iu-q" placeholder="Pesquisar no IASD APP..." aria-label="Pesquisar no IASD APP" autocomplete="off"><kbd>Ctrl + K</kbd><div class="iu-sr" id="iu-sr" hidden></div></div>
+<div class="iu-sp"></div>
+<button class="iu-ib" id="iu-theme" data-act="theme"></button>
+<button class="iu-ib" id="iu-bell" data-go="Alertas" aria-label="Alertar sonoplastia" title="Alertar sonoplastia" hidden>${ic('bell',19)}</button>
+<button class="iu-me" id="iu-me" data-act="account" aria-label="Minha conta"></button>`;
+}
+function accountHTML(){
+  const user=S.user();
+  if(!user)return `<span class="iu-av">${ic('user',16)}</span><div><b>Entrar</b><small>Área da equipe</small></div>`;
+  const prof=g(()=>myProfile)||null;
+  const name=prof?.full_name||user.user_metadata?.full_name||(user.email||'').split('@')[0]||'Usuário';
+  let av=E(String(name).slice(0,1).toUpperCase());
+  if(prof?.avatar_path){
+    const src=g(()=>profileMediaUrl(prof.avatar_path));
+    const st=g(()=>profileImageStyle('avatar'))||'';
+    if(src)av=`<img src="${E(src)}" style="width:100%;height:100%;object-fit:cover;${E(st)}" alt="">`;
+  }
+  return `<span class="iu-av">${av}</span><div><b>${E(name)}</b><small>${E(g(()=>roleLabel())||'')}</small></div>`;
+}
+function themeIcon(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const b=$('iu-theme');if(!b)return;
+  b.innerHTML=ic(dark?'moon':'sun',19);
+  b.setAttribute('aria-label',dark?'Ativar modo claro':'Ativar modo escuro');
+  b.title=dark?'Ativar modo claro':'Ativar modo escuro';
+}
+
+/* ---------- Home ---------- */
+const CARDS=[
+ ['Cronograma','calendar','Cronogramas','Veja a programação de hoje','home_icon_schedule','#5b3aa8','#e8792f'],
+ ['Sonoplastia','music','Sonoplastia','Acesse o Studio de Projeção','home_icon_projection','#1e2a78','#7c3aed'],
+ ['Bíblia','book','Bíblia','Leia e pesquise as Escrituras','home_icon_bible','#8a4b2a','#e9b56a'],
+ ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','','#1c3b6e','#4a7bd0'],
+ ['Jogo','game','Jogos','Atividades e interação','','#a86a12','#f4c24a'],
+ ['Escalas','users','Escalas','Consulte as escalas mensais','home_icon_scales','#1d2f6b','#6d4be0'],
+ ['Datas especiais','star','Datas Especiais','Eventos e comemorações','home_icon_dates','#a0304a','#f08a5d'],
+ ['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','','#33307a','#8f6fe8']
+];
+const QUICK=[
+ ['Sorteadores','dice','Sorteador','#92400e','#3b2a1a','sound'],
+ ['Sorteadores','dice','Provai e Vede','#1d4ed8','#4c1d95','sound'],
+ ['Mídia','music','Mídia e músicas','#b45309','#7c2d12',''],
+ ['Projeção','play','Studio de Projeção','#6d28d9','#312e81','sound'],
+ ['Bíblia','book','Bíblia de Projeção','#9a3412','#1e293b',''],
+ ['Alertas','horn','Alertar sonoplastia','#a16207','#422006','assigned']
+];
+function coverStyle(slot,c1,c2){
+  const path=slot&&g(()=>siteAssets[slot]);
+  if(path&&!/\.(mp4|webm|mov)$/i.test(path)){
+    const url=g(()=>imageUrl(path));
+    if(url)return `background-image:url('${E(url)}');`;
+  }
+  return `background-image:linear-gradient(135deg,${c1},${c2});`;
+}
+function cardsHTML(){
+  const edit=S.manage();
+  const base=CARDS.map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}"></div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
+  return base.concat(custom).join('');
+}
+function parseItems(items){
+  const f=g(()=>parseSchedule);
+  return (items||[]).map(x=>f?f(x):{time:'•',title:String(x),person:''});
+}
+function scheduleHTML(){
+  const today=new Date().toLocaleDateString('en-CA');
+  const featured=S.schedules().find(x=>x.date===today)||null;
+  const label=(()=>{const d=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});return d.charAt(0).toUpperCase()+d.slice(1)})();
+  let body;
+  if(!featured){
+    body='<div class="iu-empty"><strong>Nenhuma programação para hoje</strong>Quando houver atividades cadastradas, elas aparecerão aqui.</div>';
+  }else{
+    const now=new Date(),cur=now.getHours()*60+now.getMinutes();
+    const rows=parseItems(featured.items);
+    let idx=-1;
+    rows.forEach((a,i)=>{const m=/^(\d{1,2}):(\d{2})$/.exec(a.time);if(m&&(+m[1])*60+(+m[2])<=cur)idx=i});
+    body='<ul class="iu-sch">'+rows.map((a,i)=>`<li class="${i<idx?'d':i===idx?'n':''}"><time>${E(a.time)}</time><i></i><span class="t">${E(a.title)}${a.person?`<small>${E(a.person)}</small>`:''}</span>${i===idx?'<em class="iu-now" style="font-style:normal">Agora</em>':''}</li>`).join('')+'</ul>';
+    body=`<div style="font-weight:600">${E(featured.name)} <span style="color:var(--iu-mu);font-weight:400;font-size:12px">· ${rows.length} atividades</span></div>`+body;
+  }
+  return `<section class="iu-pan"><div class="iu-ph">${ic('calendar',20)}<h2>Cronograma de hoje</h2><small>${E(label)}</small></div>${body}<button class="iu-btn" data-go="Cronograma">${ic('calendar',16)}Ver cronograma completo${ic('chev',16)}</button></section>`;
+}
+
+/* IASD Projetor: lê o status real do aplicativo do Windows (GET /status, sem login). */
+const proj={state:'idle',data:null,busy:false,checkedAt:0};
+function lastSeen(){try{return Number(localStorage.getItem('iasd-ui-proj-last'))||0}catch(e){return 0}}
+function fmtLast(ts){
+  if(!ts)return '—';
+  const d=new Date(ts),hm=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  return d.toDateString()===new Date().toDateString()?'Hoje, '+hm:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+', '+hm;
+}
+function projInner(){
+  const st=proj.state,d=proj.data;
+  const badge={ok:['Conectado',''],unpaired:['Sem pareamento','warn'],off:['Desconectado','off'],checking:['Verificando…','warn'],idle:['Pronto para conectar','off']}[st]||['—','off'];
+  const monitors=d&&d.online?(d.secondMonitor?`${Math.max(1,(d.monitors||[]).length-1)} telão`+((d.monitors||[]).length-1>1?'s':''):'Nenhum telão'):'—';
+  const name=S.user()?g(()=>loggedUserName()):'Visitante';
+  const sound=S.sound();
+  return `<div class="iu-ph">${ic('monitor',20)}<h2>IASD Projetor</h2><span class="iu-ok ${badge[1]}">${badge[0]}</span></div>
+<div class="iu-pv">${ic('monitor',40)}</div>
+<div class="iu-inf"><div>${ic('clock',15)}Última conexão: <b>${E(fmtLast(lastSeen()))}</b></div><div>${ic('monitor',15)}Monitor detectado: <b>${E(monitors)}</b></div><div>${ic('user',15)}Usuário: <b>${E(name||'—')}</b></div></div>
+<button class="iu-btn p" data-go="Projeção">${ic('play',16)}Abrir Studio de Projeção${ic('chev',16)}</button>
+${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div>`:''}`;
+}
+function updateProj(){const el=$('iu-proj');if(el)el.innerHTML=projInner()}
+async function checkProjector(){
+  if(proj.busy)return;
+  proj.busy=true;proj.state='checking';updateProj();
+  const token=g(()=>companionToken);
+  try{
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),2500);
+    const url=g(()=>companionURL)||'http://127.0.0.1:38741';
+    const r=await fetch(url+'/status',{targetAddressSpace:'loopback',signal:ctl.signal,cache:'no-store'});
+    clearTimeout(timer);
+    const b=await r.json();
+    proj.data=b;
+    proj.state=b.online?(b.paired&&token?'ok':'unpaired'):'off';
+    if(proj.state==='ok'){try{localStorage.setItem('iasd-ui-proj-last',String(Date.now()))}catch(e){}}
+  }catch(e){proj.state='off';proj.data=null}
+  proj.busy=false;proj.checkedAt=Date.now();updateProj();
+}
+function passageHTML(){
+  const p=config.passage;
+  return `<section class="iu-pan iu-pas"><div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q>${E(p.text)}</q><small>${E(p.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ler capítulo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button></div></section>`;
+}
+function quickHTML(){
+  const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
+  if(!items.length)return '';
+  return `<section class="iu-pan iu-quick"><div class="iu-ph">${ic('bolt',20)}<h2>Acessos rápidos</h2></div><div class="iu-qg">${items.map(([go,icon,label,c1,c2])=>`<button class="iu-q" style="background:linear-gradient(135deg,${c1},${c2})" data-go="${E(go)}">${ic(icon,22)}<span>${E(label)}</span>${ic('chev',16)}</button>`).join('')}</div></section>`;
+}
+function bannerHTML(){
+  const b=config.banner;
+  const media=g(()=>homeCarouselMarkup())||'';
+  return `<section class="iu-ban">${media?'':'<div class="iu-orb"></div>'}<div class="iu-ban-shade"></div>${S.manage()?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}<div class="in"><div class="iu-eb">${E(b.eyebrow)}</div><h1>${E(b.title[0])} <i>${E(b.title[1])}</i></h1><p>${E(b.verse)}</p><small>${E(b.ref)}</small><br><button class="iu-btn p" data-go="Cronograma">${ic('calendar',17)}${E(b.button)}${ic('chev',16)}</button></div>${media}</section>`;
+}
+api.home=function(){
+  try{
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid">${scheduleHTML()}<section class="iu-pan" id="iu-proj">${projInner()}</section>${passageHTML()}</div>${quickHTML()}</div>`;
+  }catch(e){
+    console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
+    return api.fail(e);
+  }
+};
+
+/* ---------- busca ---------- */
+function runSearch(q){
+  const box=$('iu-sr');if(!box)return;
+  const v=fold(q.trim());
+  if(!v){box.hidden=true;box.innerHTML='';return}
+  const hits=searchable().filter(x=>fold(x.label).includes(v)).slice(0,7);
+  box.innerHTML=hits.length?hits.map((x,i)=>`<button class="${i===0?'hl':''}" data-go="${E(x.id)}">${ic(x.icon,17)}${E(x.label)}</button>`).join(''):'<p>Nada encontrado.</p>';
+  box.hidden=false;
+}
+
+/* ---------- montagem e atualização ---------- */
+let mounted=false;
+function mount(){
+  if(mounted)return true;
+  const side=document.createElement('aside');side.className='iu-side';side.id='iu-side';side.setAttribute('aria-label','Menu principal');
+  const ov=document.createElement('div');ov.className='iu-ov';ov.id='iu-ov';
+  const top=document.createElement('div');top.className='iu-top';top.id='iu-top';top.innerHTML=topHTML();
+  const bn=document.createElement('nav');bn.className='iu-bn';bn.id='iu-bn';bn.setAttribute('aria-label','Navegação principal');
+  const main=document.querySelector('body > main');
+  document.body.insertBefore(side,document.body.firstChild);
+  document.body.insertBefore(ov,document.body.firstChild);
+  document.body.insertBefore(top,main||null);
+  document.body.appendChild(bn);
+  bind();
+  mounted=true;
+  return true;
+}
+function bind(){
+  document.addEventListener('click',e=>{
+    if(!api.enabled||!mounted)return;
+    const goEl=e.target.closest('[data-go]');
+    if(goEl&&goEl.closest('.iu-side,.iu-top,.iu-bn,.iu-home')){
+      e.preventDefault();
+      document.body.classList.remove('iu-open');
+      const q=$('iu-q'),sr=$('iu-sr');if(sr){sr.hidden=true}if(q&&goEl.closest('.iu-sr'))q.value='';
+      g(()=>go(goEl.dataset.go));
+      return;
+    }
+    const act=e.target.closest('[data-act]');
+    if(act&&act.closest('.iu-side,.iu-top,.iu-home')){
+      const a=act.dataset.act;
+      if(a==='menu')document.body.classList.add('iu-open');
+      else if(a==='back')g(()=>mobileGoBack());
+      else if(a==='theme')g(()=>toggleTheme());
+      else if(a==='account')g(()=>toggleAccountMenu());
+      else if(a==='newtab'){document.body.classList.remove('iu-open');g(()=>newTab())}
+      else if(a==='banner')g(()=>editHomeCarousel());
+      else if(a==='cover')g(()=>editCover(act.dataset.slot));
+      else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
+      else if(a==='projtest')checkProjector();
+      else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
+      else if(a==='passage'){
+        g(()=>{readerState.book=config.passage.book;readerState.chapter=config.passage.chapter;saveReader()});
+        g(()=>go('Bíblia'));
+      }
+      return;
+    }
+    if(e.target.id==='iu-ov')document.body.classList.remove('iu-open');
+    if(!e.target.closest('.iu-search')){const sr=$('iu-sr');if(sr)sr.hidden=true}
+  });
+  document.addEventListener('input',e=>{if(e.target.id==='iu-q')runSearch(e.target.value)});
+  document.addEventListener('keydown',e=>{
+    if(!api.enabled||!mounted)return;
+    if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();const q=$('iu-q');if(q){q.focus();q.select()}}
+    if(e.key==='Escape'){const sr=$('iu-sr');if(sr)sr.hidden=true;document.body.classList.remove('iu-open')}
+    if(e.key==='Enter'&&e.target.id==='iu-q'){const first=document.querySelector('#iu-sr button');if(first)first.click()}
+  });
+  new MutationObserver(themeIcon).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+}
+function refresh(){
+  const cur=S.cur();
+  document.body.classList.toggle('iu-is-home',cur==='Painel');
+  const side=$('iu-side');if(side)side.innerHTML=sideHTML();
+  const bn=$('iu-bn');if(bn)bn.innerHTML=barHTML();
+  const me=$('iu-me');if(me)me.innerHTML=accountHTML();
+  const t=$('iu-title');if(t)t.textContent=titleOf(cur);
+  const bell=$('iu-bell');if(bell)bell.hidden=!S.assigned();
+  themeIcon();
+  if(cur==='Painel'&&S.sound()&&g(()=>companionToken)&&Date.now()-proj.checkedAt>20000&&!proj.busy)checkProjector();
+}
+api.afterRender=function(){
+  if(!api.enabled)return;
+  try{
+    mount();
+    refresh();
+    document.body.classList.add('iu');   // só ativa o visual novo depois que tudo montou sem erro
+  }catch(e){api.fail(e)}
+};
+api.fail=function(e){
+  console.error('[IASD UI] desativado por erro:',e);
+  api.enabled=false;
+  document.body.classList.remove('iu','iu-open');
+  ['iu-side','iu-ov','iu-top','iu-bn'].forEach(id=>{const el=$(id);if(el)el.remove()});
+  mounted=false;
+  setTimeout(()=>g(()=>render()),0);
+  return '';
+};
+window.IASDUI=api;
+})();
