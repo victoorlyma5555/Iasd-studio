@@ -68,6 +68,7 @@ function receiveDirectAlert(item){
  if(alertSeen.size>300)alertSeen=new Set([...alertSeen].slice(-150));
  lastAlertId=item.id;
  storeAlert(item);
+ if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed');
  showSoundAlert(item);
 }
 async function alertSubscribe(){
@@ -328,8 +329,8 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.reload();
   reply(res,200,{ok:true,paired:pairedTokens.size>0});return;
  }
- if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40)};reply(res,200,{ok:true});return}
- if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;showSoundAlert(data)}reply(res,200,{ok:true});return}
+ if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40),avatar:String(data.avatar||data.avatar_url||'').slice(0,1000)};reply(res,200,{ok:true});return}
+ if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
@@ -386,7 +387,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
+ server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',event=>{if(installUpdateOnQuit&&downloadedUpdate&&!installingUpdate&&!projectionActive()){event.preventDefault();installDownloadedUpdate();return}server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
