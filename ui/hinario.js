@@ -4,9 +4,9 @@
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
-const FALLBACK={versao:1,edicoes:[
- {id:'antigo',nome:'Hinário Adventista',sub:'Edição antiga (1996)',adapter:'hina7',urls:['https://cdn.jsdelivr.net/gh/moser-jose/Hina7@main/src/api/hinario.json','https://raw.githubusercontent.com/moser-jose/Hina7/main/src/api/hinario.json']},
- {id:'novo',nome:'Novo Hinário Adventista',sub:'Edição nova (2022)',adapter:'videopsalm',urls:['https://cdn.jsdelivr.net/gh/rejnac/portuguese-hymnal@main/Novo%20Hin%C3%A1rio%20Adventista%20Lyrics.json','https://raw.githubusercontent.com/rejnac/portuguese-hymnal/main/Novo%20Hin%C3%A1rio%20Adventista%20Lyrics.json']}]};
+const FALLBACK={versao:2,edicoes:[
+ {id:'antigo',nome:'Hinário Adventista',sub:'Edição antiga (1996)',adapter:'local',urls:['/data/hinario-hasd.json']},
+ {id:'novo',nome:'Novo Hinário Adventista',sub:'Edição nova (2022)',adapter:'local',urls:['/data/hinario-nha.json']}]};
 const S={manifest:null,ed:'antigo',q:'',deep:false,sel:null,fav:[],font:0,data:{},status:{},favOnly:false};
 try{S.fav=JSON.parse(localStorage.getItem('iasd-hin-fav')||'[]');S.ed=localStorage.getItem('iasd-hin-ed')||'antigo';S.font=+localStorage.getItem('iasd-hin-font')||0}catch(e){}
 
@@ -20,6 +20,9 @@ const ADAPT={
    autores:(x.autores||[]).map(a=>a.nome||a).filter(Boolean),ref:x.texto_biblico||'',
    coro:(x.coro||[]).map(c=>c&&c.coro).filter(Boolean),
    estrofes:(x.estrofes||[]).map((e,j)=>({n:e.numero||roman[j]||String(j+1),txt:String(e.estrofe||'').trim()})).filter(e=>e.txt)}));
+ },
+ local(raw){
+  return (Array.isArray(raw)?raw:[]).map(x=>finish({n:Number(x.n),t:String(x.t||'').trim(),en:'',cat:'',sub:'',autores:x.a||[],ref:'',coro:[],estrofes:(x.v||[]).map((v,j)=>({n:roman[j]||String(j+1),txt:String(v).trim()})).filter(e=>e.txt)}));
  },
  videopsalm(raw){
   const list=raw.Songs||raw.songs||(Array.isArray(raw)?raw:[]);
@@ -41,7 +44,7 @@ async function getManifest(){
 async function load(id,force){
  const m=await getManifest(),ed=m.edicoes.find(e=>e.id===id);if(!ed)return;
  if(S.data[id]&&!force)return;
- const key='iasd-hin-data-'+id;
+ const key='iasd-hin-data-v2-'+id;try{localStorage.removeItem('iasd-hin-data-'+id)}catch(e){}
  if(!force){try{const c=JSON.parse(localStorage.getItem(key)||'null');if(c&&c.list&&c.list.length){S.data[id]=c.list;S.status[id]='ok';return}}catch(e){}}
  S.status[id]='loading';paint();
  let lastErr='';

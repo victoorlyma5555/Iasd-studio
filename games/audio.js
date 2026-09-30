@@ -93,6 +93,23 @@ const API={
 };
 Object.keys(FX).forEach(k=>{if(!(k in API))API[k]=()=>API.sfx(k)});
 window.IASDGameAudio=API;
-/* o navegador só libera áudio depois de um toque */
-['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{try{C()}catch(e){}},{once:true,passive:true,capture:true}));
+/* Celulares só liberam áudio dentro de um toque — e o iPhone ainda silencia o WebAudio no modo silencioso.
+   A cada toque: retoma o contexto, toca um instante de silêncio e mantém um <audio> mudo em loop (põe o som como "mídia"). */
+let mute=null;
+function wake(){
+ try{
+  const x=C();if(!x)return;
+  if(x.state!=='running')x.resume&&x.resume();
+  const b=x.createBuffer(1,1,22050),n=x.createBufferSource();n.buffer=b;n.connect(x.destination);n.start(0);
+  if(!mute){
+   const wav='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+   mute=document.createElement('audio');mute.src=wav;mute.loop=true;mute.setAttribute('playsinline','');mute.volume=.01;
+   mute.play&&mute.play().catch(()=>{mute=null})}
+  else if(mute.paused)mute.play().catch(()=>{});
+  if(cur&&st.music&&!timer){const n2=cur;cur=null;music(n2)}
+ }catch(e){}
+}
+['touchstart','touchend','pointerdown','click','keydown'].forEach(ev=>addEventListener(ev,wake,{passive:true,capture:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx&&ctx.state!=='running')ctx.resume().catch(()=>{})});
+API.unlock=wake;
 })();
