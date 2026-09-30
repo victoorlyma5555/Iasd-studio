@@ -147,6 +147,38 @@ main>.studio-controls{background:linear-gradient(135deg,#0d2033,#0a1928)!importa
 @media(min-width:851px){main{grid-template-columns:minmax(0,1.22fr) minmax(390px,.78fr)!important}.work.active{border:1px solid #1e3b57!important;padding:18px!important;background:linear-gradient(150deg,#0d1e30,#091522)!important}}
 @media(max-width:850px){main{padding:8px 5px 28px!important}.head{border-radius:16px!important}.head h1{font-size:25px!important}.tools{grid-template-columns:repeat(2,minmax(0,1fr))!important}.tools .tool{border-radius:13px!important}.panel,.screen{border-radius:15px!important}}
 
+
+/* IASD APP Studio — visual integration from the approved Floot prototype.
+   Functional selectors, IDs and projection handlers remain unchanged. */
+:root{--iasd-bg:#07111f;--iasd-surface:#0d1b2c;--iasd-card:#11243a;--iasd-border:#29425c;--iasd-blue:#1680ff;--iasd-green:#06ad62;--iasd-red:#cf2146;--iasd-text:#f4f7fb;--iasd-muted:#91a6bc}
+body{background:var(--iasd-bg);color:var(--iasd-text)}
+main{gap:12px!important;padding:14px!important}
+main>.head{min-height:64px!important;padding:8px 10px!important;border:0!important;background:transparent!important}
+main>.head .eyebrow{color:var(--iasd-blue);font-size:10px;letter-spacing:.16em}
+main>.head h1{font-size:28px!important;margin:3px 0!important}
+main>.head .muted{font-size:11px;line-height:1.45}
+main>.head .pill{background:var(--iasd-card);border-color:var(--iasd-border)}
+main>.tools{display:flex!important;grid-template-columns:none!important;flex-wrap:nowrap!important;overflow-x:auto;gap:8px!important;padding:2px 0 7px!important;scrollbar-width:thin}
+main>.tools>.tool{flex:1 0 145px!important;width:auto!important;min-width:145px!important;min-height:50px!important;border-radius:9px!important;background:var(--iasd-card)!important;border-color:var(--iasd-border)!important;color:var(--iasd-text)!important}
+main>.tools>.tool.active{background:linear-gradient(135deg,#1680ff,#075ce8)!important;border-color:#3c92ff!important;box-shadow:0 6px 18px #006dff38}
+main>.tools>.tool .ico{color:inherit!important}
+.panel,.screen{border-color:var(--iasd-border);background:var(--iasd-card);border-radius:13px}
+main>.preview .screen{padding:7px!important}
+main>.preview .live-frame{border-radius:9px!important;background:#02050a}
+main>.work{border-radius:13px;scrollbar-width:thin}
+main>.work.active{padding:14px!important}
+main>.studio-controls{grid-column:1!important;grid-row:4!important;background:transparent!important;border:0!important;padding:8px 0 0!important}
+.studio-action-bar{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}
+.studio-action-bar .studio-action{min-height:56px;border-radius:9px;font-size:14px}
+.studio-action-bar .project-action{background:linear-gradient(135deg,#04b75c,#07954d);border-color:#1ee48c;color:white}
+.studio-action-bar .close-action{background:linear-gradient(135deg,#e82046,#b40d31);border-color:#ff3c61}
+.studio-action-bar .black-action{background:linear-gradient(135deg,#075bbf,#063c86);border-color:#1680ff}
+.studio-action-bar .settings-action{display:none}
+main>.studio-controls .notice{font-size:11px}
+input,select,textarea{background:var(--iasd-surface);border-color:var(--iasd-border);border-radius:9px}
+button{border-radius:9px}
+@media(min-width:851px){main{grid-template-columns:minmax(0,54fr) minmax(430px,46fr)!important;grid-template-rows:auto auto auto auto!important}main>.head{grid-area:1/1/2/-1!important}main>.tools{grid-area:2/1/3/-1!important}main>.preview{grid-area:3/1/4/2!important}main>.work{grid-area:3/2/5/3!important;max-height:720px}main>.studio-controls{grid-area:4/1/5/2!important}}
+@media(max-width:850px){main{padding:8px!important;grid-template-columns:1fr!important}main>.head{grid-row:1!important}main>.tools{grid-row:2!important}main>.preview{grid-row:3!important}main>.studio-controls{grid-row:4!important}main>.work{grid-row:5!important}.studio-action-bar{grid-template-columns:1fr 1fr!important}.studio-action-bar .black-action{grid-column:1/-1}.studio-action-bar .studio-action{min-height:48px;font-size:11px}main>.tools>.tool{flex:0 0 52px!important;min-width:52px!important;font-size:0!important;padding:0!important}main>.tools>.tool.active{flex-basis:145px!important;font-size:10px!important}main>.tools>.tool .ico{font-size:18px!important}}
 </style><style id="iasd-studio-mobile-pack">
 @media(max-width:760px){
  html,body{max-width:100%;overflow-x:hidden!important}
