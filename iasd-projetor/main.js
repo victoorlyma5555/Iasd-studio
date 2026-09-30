@@ -59,7 +59,7 @@ async function alertFetchPending(initial=false){
  const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at,created_by').order('created_at',{ascending:false}).limit(20);
  if(error){alertLastError=error.message;alertBroadcastStatus();console.warn('Alertas independentes:',error.message);return}
  const items=(data||[]).reverse();
- if(initial){items.forEach(x=>alertSeen.add(x.id));return}
+ if(initial){items.forEach(x=>{alertSeen.add(x.id);storeAlert(x)});return}
  for(const item of items)receiveDirectAlert(item);
 }
 function receiveDirectAlert(item){
@@ -283,7 +283,7 @@ function loadAppearance(){try{return JSON.parse(fs.readFileSync(appearanceFile,'
 function saveAppearance(v){fs.writeFileSync(appearanceFile,JSON.stringify(v,null,2),'utf8')}
 function imageDataUrl(file){const ext=path.extname(file).toLowerCase(),mime=ext==='.png'?'image/png':ext==='.webp'?'image/webp':'image/jpeg';return 'data:'+mime+';base64,'+fs.readFileSync(file).toString('base64')}
 async function applyDesktopProjectionAppearance(a){const bg=String(a.background||'linear-gradient(135deg,#061a2d,#0b4b91)');showProjector();let script;if(a.image&&fs.existsSync(a.image)){const url=imageDataUrl(a.image),fit=a.fit==='contain'?'contain':a.fit==='center'||a.fit==='none'?'center':'cover';script=`(async()=>{applyProjectionBackground('#000000');await applyProjectionVisual({imageUrl:${JSON.stringify(url)},fit:${JSON.stringify(fit)},transition:'fade'});return true})()`}else{script=`(async()=>{applyProjectionBackground(${JSON.stringify(bg)});await applyProjectionVisual({imageUrl:'',imageId:'',fit:'cover',transition:'fade'});return true})()`}await projectorScript(script)}
-ipcMain.handle('iasd:appearance',()=>{const a=loadAppearance();return{...a,images:(a.images||[]).filter(x=>fs.existsSync(x)).map(x=>({path:x,name:path.basename(x)}))}});
+ipcMain.handle('iasd:appearance',()=>{const a=loadAppearance();return{...a,images:(a.images||[]).filter(x=>fs.existsSync(x)).map(x=>({path:x,name:path.basename(x),preview:imageDataUrl(x)}))}});
 ipcMain.handle('iasd:choose-backgrounds',async()=>{const r=await dialog.showOpenDialog(dashboardRef,{title:'Adicionar imagens',properties:['openFile','multiSelections'],filters:[{name:'Imagens',extensions:['jpg','jpeg','png','webp']}]});if(r.canceled)return{canceled:true};const a=loadAppearance();a.images=[...new Set([...(a.images||[]),...r.filePaths])];saveAppearance(a);return{ok:true,images:a.images.map(x=>({path:x,name:path.basename(x)}))}});
 ipcMain.handle('iasd:remove-background',(_,file)=>{try{const a=loadAppearance();a.images=(a.images||[]).filter(x=>x!==file);if(a.image===file)a.image='';saveAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:clear-backgrounds',()=>{try{const a=loadAppearance();a.images=[];a.image='';saveAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
