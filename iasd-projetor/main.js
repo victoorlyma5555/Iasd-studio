@@ -104,7 +104,7 @@ async function alertLogout(){
 }
 let pairingCode=String(crypto.randomInt(100000,999999));
 let updateStatus={state:'idle',message:'Aguardando verificação inicial.'};
-let startupUpdateChecked=false,downloadedUpdate=null,installingUpdate=false;
+let startupUpdateChecked=false,downloadedUpdate=null,installingUpdate=false,installUpdateOnQuit=false;
 const updateReceiptFile=path.join(app.getPath('userData'),'pending-update.json');
 function installDownloadedUpdate(){
  if(!downloadedUpdate||installingUpdate)return {error:'Nenhuma atualização pronta.'};
@@ -125,7 +125,6 @@ function confirmUpdatedVersion(){
   fs.unlinkSync(updateReceiptFile);
   updateProgress('installed','Atualização concluída! Versão '+app.getVersion()+' instalada.');
   showDashboard();
-  dialog.showMessageBox(dashboardRef,{type:'info',title:'IASD Projetor atualizado',message:'Atualização concluída!',detail:'Versão '+data.from+' → '+app.getVersion()+'. Seu pareamento foi preservado.',buttons:['Continuar'],noLink:true}).catch(()=>{});
  }catch(e){if(e.code!=='ENOENT')console.warn('Confirmação da atualização:',e.message)}
 }
 
@@ -140,7 +139,6 @@ async function checkAutomaticUpdate({startup=false}={}){
   if(!release.available){updateProgress('current','Você já tem a versão mais recente.',{current:app.getVersion()});return updateStatus}
   if(!/^iasd-projetor-v\d+\.\d+\.\d+$/.test(release.tag)||!release.hasMetadata){updateProgress('manual','Versão disponível sem pacote automático. Abra a página da versão para instalar.',{url:release.url});return updateStatus}
   updateProgress('available','Nova versão '+release.latest+' disponível.',{latest:release.latest});
-  if(startup){const choice=await dialog.showMessageBox({type:'info',title:'IASD Projetor — atualização disponível',message:'Nova versão '+release.latest+' do IASD Projetor',detail:'Deseja baixar agora? A instalação ocorrerá quando você encerrar o aplicativo, sem interromper o telão durante o culto.',buttons:['Baixar atualização','Agora não'],defaultId:0,cancelId:1,noLink:true});if(choice.response!==0)return updateStatus}
   autoUpdater.setFeedURL({provider:'generic',url:'https://github.com/victoorlyma5555/Iasd-studio/releases/download/'+encodeURIComponent(release.tag)+'/'});
   updateProgress('downloading','Baixando a versão '+release.latest+'…',{latest:release.latest});
   await autoUpdater.checkForUpdates();
@@ -149,7 +147,7 @@ async function checkAutomaticUpdate({startup=false}={}){
 }
 autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=false;autoUpdater.allowPrerelease=false;
 autoUpdater.on('download-progress',p=>updateProgress('downloading','Baixando atualização: '+Math.round(p.percent)+'%',{percent:Math.round(p.percent)}));
-autoUpdater.on('update-downloaded',info=>{downloadedUpdate={version:info.version};updateProgress('downloaded','Versão '+info.version+' baixada. Pronta para instalar e reiniciar.');if(!projectionActive())void dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'Atualização baixada',detail:'Instalar a versão '+info.version+' agora? O aplicativo será reaberto automaticamente.',buttons:['Instalar e reiniciar','Mais tarde'],defaultId:0,cancelId:1,noLink:true}).then(result=>{if(result.response===0)installDownloadedUpdate()})});
+autoUpdater.on('update-downloaded',info=>{downloadedUpdate={version:info.version};updateProgress('downloaded','Versão '+info.version+' baixada. Pronta para instalar e reiniciar.',{latest:info.version});showDashboard()});
 autoUpdater.on('update-not-available',()=>updateProgress('current','Você já tem a versão mais recente.'));
 autoUpdater.on('error',e=>updateProgress('error','Falha na atualização: '+e.message));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
@@ -270,6 +268,7 @@ ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
 ipcMain.handle('iasd:install-update',()=>installDownloadedUpdate());
+ipcMain.handle('iasd:install-on-quit',()=>{if(!downloadedUpdate)return{error:'Nenhuma atualização pronta.'};installUpdateOnQuit=true;updateProgress('downloaded','Versão '+downloadedUpdate.version+' pronta. Será instalada quando o IASD Projetor for fechado.',{latest:downloadedUpdate.version,installOnQuit:true});return{ok:true}});
 ipcMain.handle('iasd:update-status',()=>updateStatus);
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
@@ -373,7 +372,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    {label:'Código de pareamento: '+pairingCode,click:()=>dialog.showMessageBox({type:'info',title:'Pareamento · IASD Projetor',message:'Código: '+pairingCode,detail:'Digite este código no IASD APP para autorizar este computador.'})},
    {type:'separator'},
    {label:'Sobre',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nIASD APP'})},
-   {label:'Sair',click:()=>{if(downloadedUpdate&&!projectionActive())installDownloadedUpdate();else app.quit()}}
+   {label:'Sair',click:()=>{if(installUpdateOnQuit&&downloadedUpdate&&!projectionActive())installDownloadedUpdate();else app.quit()}}
   ]));
  }
  refreshTrayMenu();
@@ -390,4 +389,4 @@ if(primaryInstance)app.whenReady().then(()=>{
  server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden')&&!process.argv.includes('--autostart'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
-app.on('before-quit',()=>{server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
+app.on('before-quit',event=>{if(installUpdateOnQuit&&downloadedUpdate&&!installingUpdate&&!projectionActive()){event.preventDefault();installDownloadedUpdate();return}server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
