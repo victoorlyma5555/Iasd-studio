@@ -29,9 +29,9 @@ function apply(){
 }
 let tm=null;const later=()=>{clearTimeout(tm);tm=setTimeout(()=>{try{apply();bar()}catch(e){}},90)};
 function css(){if(document.getElementById('ue-css'))return;const s=document.createElement('style');s.id='ue-css';s.textContent=`
-#ue-bar{position:fixed;z-index:9000;left:50%;top:10px;transform:translateX(-50%);display:none;gap:8px;align-items:center;padding:6px 8px;border-radius:999px;background:#0f1c3a;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35);font:700 14px Inter,system-ui,sans-serif}
+#ue-bar{position:fixed;z-index:9000;right:18px;bottom:18px;display:none;gap:8px;align-items:center;padding:6px 8px;border-radius:999px;background:#0f1c3a;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35);font:700 14px Inter,system-ui,sans-serif}
 #ue-bar.show{display:flex}#ue-bar button{border:0;border-radius:999px;padding:9px 16px;font:inherit;cursor:pointer;background:#f5b73a;color:#1c1406}
-#ue-bar.on button{background:#34d399}#ue-bar span{padding:0 6px;opacity:.85;font-weight:600}
+#ue-bar.on button{background:#34d399}#ue-bar span{padding:0 6px;opacity:.85;font-weight:600;max-width:260px;font-size:12.5px;line-height:1.25}@media(max-width:899px){#ue-bar{bottom:78px;right:10px;left:10px;justify-content:center;border-radius:18px}}
 body.ue-on #content [data-ue]:hover{outline:2px dashed #f5b73a;outline-offset:3px;cursor:pointer;background:rgba(245,183,58,.12)}
 body.ue-on #content img:hover{outline:3px dashed #38bdf8;outline-offset:2px;cursor:pointer}
 body:not(.ue-on) .ue-hid{display:none!important}body.ue-on .ue-hid{opacity:.35;text-decoration:line-through}
