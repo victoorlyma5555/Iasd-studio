@@ -1100,7 +1100,7 @@ function setupSoundAlertsRealtime(){const user=cloudUser?.id||null;if(soundAlert
  void soundAlertsPoll().finally(()=>{if(soundAlertChannelUser!==user||!cloudUser||!canUseSound())return;
  soundAlertChannel=cloud.channel('iasd-sound-alerts-'+user).on('postgres_changes',{event:'INSERT',schema:'public',table:'iasd_sound_alerts'},payload=>{void deliverSoundAlert(payload.new)}).subscribe(status=>{if(status==='SUBSCRIBED')void soundAlertsPoll();if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Alertas em tempo real: reconectando; consulta de reserva permanece ativa.')});
  })}
-async function soundHeartbeat(){if(!cloudUser||!canUseSound()||!companionToken)return;try{await companionRequest('/heartbeat',{name:loggedUserName(),email:cloudUser.email||'',role:cloudRole||'usuário'})}catch{}}
+async function soundHeartbeat(){if(!cloudUser||!canUseSound()||!companionToken)return;try{const avatar=myProfile?.avatar_path?profileMediaUrl(myProfile.avatar_path):String(cloudUser.user_metadata?.avatar_url||'');await companionRequest('/heartbeat',{name:loggedUserName(),email:cloudUser.email||'',role:cloudRole||'usuário',avatar})}catch{}}
 setInterval(()=>{void soundHeartbeat();void soundAlertsPoll()},12000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){void soundHeartbeat();void soundAlertsPoll()}});
 function canEditSchedule(){return !!cloudUser&&(window.IASDAccess?.canEditSchedule(cloudRole)??['founder','cofounder','admin','editor','operator'].includes(cloudRole))}
