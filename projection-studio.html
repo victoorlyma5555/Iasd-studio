@@ -179,6 +179,26 @@ input,select,textarea{background:var(--iasd-surface);border-color:var(--iasd-bor
 button{border-radius:9px}
 @media(min-width:851px){main{grid-template-columns:minmax(0,54fr) minmax(430px,46fr)!important;grid-template-rows:auto auto auto auto!important}main>.head{grid-area:1/1/2/-1!important}main>.tools{grid-area:2/1/3/-1!important}main>.preview{grid-area:3/1/4/2!important}main>.work{grid-area:3/2/5/3!important;max-height:720px}main>.studio-controls{grid-area:4/1/5/2!important}}
 @media(max-width:850px){main{padding:8px!important;grid-template-columns:1fr!important}main>.head{grid-row:1!important}main>.tools{grid-row:2!important}main>.preview{grid-row:3!important}main>.studio-controls{grid-row:4!important}main>.work{grid-row:5!important}.studio-action-bar{grid-template-columns:1fr 1fr!important}.studio-action-bar .black-action{grid-column:1/-1}.studio-action-bar .studio-action{min-height:48px;font-size:11px}main>.tools>.tool{flex:0 0 52px!important;min-width:52px!important;font-size:0!important;padding:0!important}main>.tools>.tool.active{flex-basis:145px!important;font-size:10px!important}main>.tools>.tool .ico{font-size:18px!important}}
+
+/* Floot parity — operational panels keep the real IASD APP functions. */
+main>.work>h2,.testimony-header h2{margin:0 0 4px!important;font-size:19px!important}
+main>.work>.muted,.testimony-header+.muted{margin-top:0}
+main>.work>.row,main>.work>label,main>.work>.youtube-search-box,main>.work>.panel{margin-top:10px}
+main>.work label{color:#9db0c4;font-size:11px;font-weight:650}
+main>.work input,main>.work select,main>.work textarea{width:100%;min-height:42px;padding:10px 11px}
+main>.work textarea{min-height:92px}
+main>.work .row button{min-height:40px;padding:9px 12px}
+main>.work .primary{background:linear-gradient(135deg,#167cff,#0759dc);border-color:#3b93ff;color:#fff}
+main>.work .danger{background:#5b2331;border-color:#8b3c50}
+.youtube-search-box{background:#0b1929!important;border-color:var(--iasd-border)!important}
+.youtube-search-results,.gallery-grid{gap:8px!important}
+.youtube-search-card{background:#0c1b2c!important;border-color:var(--iasd-border)!important;border-radius:10px!important}
+.media-library{gap:7px!important}
+.testimony-drawer{background:#0b1929!important;border-color:var(--iasd-border)!important}
+.draw-audio{background:#0b1929!important;border-color:var(--iasd-border)!important;border-radius:11px!important}
+#bibleResult{background:#0b1929}
+#setup>.panel{background:#0b1929}
+@media(max-width:520px){main>.work.active{padding:11px!important}main>.work .row{gap:7px}main>.work .row>label{min-width:125px}.youtube-search-results{grid-template-columns:1fr 1fr!important}}
 </style><style id="iasd-studio-mobile-pack">
 @media(max-width:760px){
  html,body{max-width:100%;overflow-x:hidden!important}
