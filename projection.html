@@ -120,7 +120,8 @@ function show(value){
   const url=t.slice(11);
   if(url.startsWith(allowed)){const img=document.createElement('img');img.src=url;img.alt='Imagem projetada';out.append(img)}
   else out.textContent='Imagem indisponível';
- }else out.textContent=t.replace(/\\n/g,'\n');
+ }else if(/^IASD_(?!TEXT:)[A-Z_]+:/.test(t)){out.textContent=''}
+ else out.textContent=t.replace(/\\n/g,'\n');
 }
 const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('iasd-stage'):null;
 if(channel){channel.onmessage=e=>show(e.data);channel.postMessage({type:'projection-ready'})}

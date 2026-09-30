@@ -187,3 +187,6 @@ body.st2 main>.work{scrollbar-width:thin;scrollbar-color:#2a4385 transparent}
 .st-left .preview .screen{height:auto!important;aspect-ratio:16/9;display:block}
 .st-left .live-frame{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none;aspect-ratio:auto}
 @media (max-width:1000px){body.st2 main>.work{contain:none!important;min-height:0!important;max-height:none!important}}
+/* evita o fundo branco padrão do iframe: cor sólida igual à do app */
+html:has(body.st2),body.st2{background:#050b1a!important;color-scheme:dark}
+body.st2 main{background:transparent!important}
