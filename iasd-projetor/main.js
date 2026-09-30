@@ -52,7 +52,7 @@ function allowedOrigin(req){
  return null;
 }
 const PORT=38741;
-let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0;
+let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0,lastProjectionContent='';
 
 const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
 const ALERT_SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
@@ -273,7 +273,7 @@ function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.clos
 ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
 ipcMain.handle('iasd:test-alert',()=>{if(!alertAccount)return {error:'Ative os alertas independentes entrando com sua conta no aplicativo.'};showSoundAlert({sender_name:'IASD APP · Teste',message:'Este aviso deve aparecer no Windows mesmo com o navegador fechado. A projeção não será interrompida.',schedule_name:'Teste local'});return {ok:true}});
 ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true}});
-ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity}));
+ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
@@ -285,7 +285,7 @@ ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
 ipcMain.handle('iasd:window',(_,action)=>{if(!dashboardRef||dashboardRef.isDestroyed())return{error:'Janela indisponível'};if(action==='minimize')dashboardRef.minimize();else if(action==='maximize')dashboardRef.isMaximized()?dashboardRef.unmaximize():dashboardRef.maximize();else if(action==='close')dashboardRef.close();else return{error:'Ação inválida'};return{ok:true,maximized:dashboardRef&&!dashboardRef.isDestroyed()&&dashboardRef.isMaximized()}});
 async function projectorScript(script){if(!windowRef||windowRef.isDestroyed())showProjector();if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(Error(desc)))});return windowRef.webContents.executeJavaScript(script)}
 ipcMain.handle('iasd:blackout',async(_,enabled)=>{try{await projectorScript(`(()=>{let x=document.getElementById('iasd-desktop-blackout');if(!x){x=document.createElement('div');x.id='iasd-desktop-blackout';Object.assign(x.style,{position:'fixed',inset:'0',background:'#000',zIndex:'2147483647',display:'none'});document.body.appendChild(x)}x.style.display=${enabled?'\'block\'':'\'none\''};return true})()`);return{ok:true,enabled:!!enabled}}catch(e){return{error:e.message}}});
-ipcMain.handle('iasd:test-projection',async()=>{try{showProjector();await projectorScript(`window.postMessage({type:'iasd-project',content:'IASD_TEXT:'+JSON.stringify({title:'Teste de projeção',text:'IASD Projetor conectado e funcionando.'})},location.origin);true`);return{ok:true}}catch(e){return{error:e.message}}});
+ipcMain.handle('iasd:test-projection',async()=>{try{lastProjectionContent='IASD_TEXT:'+JSON.stringify({title:'Teste de projeção',text:'IASD Projetor conectado e funcionando.'});showProjector();await projectorScript(`window.postMessage({type:'iasd-project',content:'IASD_TEXT:'+JSON.stringify({title:'Teste de projeção',text:'IASD Projetor conectado e funcionando.'})},location.origin);true`);return{ok:true}}catch(e){return{error:e.message}}});
 const appearanceFile=path.join(app.getPath('userData'),'appearance.json');
 function loadAppearance(){try{return JSON.parse(fs.readFileSync(appearanceFile,'utf8'))}catch{return{images:[],background:'linear-gradient(135deg,#061a2d,#0b4b91)',fit:'cover'}}}
 function saveAppearance(v){fs.writeFileSync(appearanceFile,JSON.stringify(v,null,2),'utf8')}
@@ -348,7 +348,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   if(typeof data.content!=='string'||data.content.length>50000){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
    showProjector();
-   const content=data.content;
+   const content=data.content;lastProjectionContent=content;
    if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
    await windowRef.webContents.executeJavaScript('window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)');
    reply(res,200,{ok:true});
