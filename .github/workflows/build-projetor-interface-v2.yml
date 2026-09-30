@@ -1,0 +1,32 @@
+name: Build IASD Projetor Interface V2
+on:
+  push:
+    branches:
+      - teste-interface-projetor-v2
+    paths:
+      - "iasd-projetor/**"
+      - ".github/workflows/build-projetor-interface-v2.yml"
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: iasd-projetor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build Windows installer
+        run: npm run dist
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IASD-Projetor-Interface-V2
+          path: |
+            iasd-projetor/dist/IASD-Projetor-Setup-0.4.10.exe
+            iasd-projetor/dist/IASD-Projetor-Setup-0.4.10.exe.blockmap
+            iasd-projetor/dist/latest.yml
+          if-no-files-found: error
