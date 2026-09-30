@@ -1,0 +1,38 @@
+name: Publish IASD Projetor 0.4.12
+on:
+  push:
+    branches:
+      - teste-interface-projetor-v2
+    paths:
+      - ".github/workflows/publish-projetor-0.4.12.yml"
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: iasd-projetor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build official Windows release
+        run: npm run dist
+      - name: Publish 0.4.12 as latest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "iasd-projetor-v0.4.12" `
+            "dist/IASD-Projetor-Setup-0.4.12.exe" `
+            "dist/IASD-Projetor-Setup-0.4.12.exe.blockmap" `
+            "dist/latest.yml" `
+            --repo "${{ github.repository }}" `
+            --target "${{ github.sha }}" `
+            --title "IASD Projetor 0.4.12" `
+            --notes "Atualização da interface com Centro de Saúde, diagnóstico de conexão e monitores, identificação de telas, usuário ativo no cabeçalho, histórico e contador de alertas, modo silencioso, abertura visível com o Windows e atualização integrada ao próprio painel sem popups nativos." `
+            --latest
