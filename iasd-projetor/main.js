@@ -36,7 +36,7 @@ function allowedOrigin(req){
  return null;
 }
 const PORT=38741;
-let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0,lastProjectionContent='';
+let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alertRef=null,lastAlertId=null,siteIdentity=null,lastSiteContact=0,lastProjectionContent='',alertsMuted=false;
 
 const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
 const ALERT_SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
@@ -69,7 +69,7 @@ function receiveDirectAlert(item){
  lastAlertId=item.id;
  storeAlert(item);
  if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed');
- showSoundAlert(item);
+ if(!alertsMuted)showSoundAlert(item);
 }
 async function alertSubscribe(){
  if(alertChannel)await alertCloud.removeChannel(alertChannel);
@@ -264,7 +264,9 @@ ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true
 ipcMain.handle('iasd:alerts-history',()=>({ok:true,items:loadAlertHistory()}));
 ipcMain.handle('iasd:alert-delete',(_,id)=>{saveAlertHistory(loadAlertHistory().filter(x=>x.id!==id));return{ok:true}});
 ipcMain.handle('iasd:alerts-clear',()=>{saveAlertHistory([]);return{ok:true}});
-ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()}));
+ipcMain.handle('iasd:alerts-mute',(_,value)=>{alertsMuted=!!value;return{ok:true,muted:alertsMuted}});
+ipcMain.handle('iasd:identify-monitors',()=>{const wins=[];screen.getAllDisplays().forEach((display,index)=>{const b=display.bounds,w=new BrowserWindow({x:b.x,y:b.y,width:b.width,height:b.height,frame:false,alwaysOnTop:true,skipTaskbar:true,focusable:false,transparent:false,backgroundColor:'#081525',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});wins.push(w);const label=index===0?'COMPUTADOR':'TELÃO';w.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(`<html><body style="margin:0;background:#081525;color:white;height:100vh;display:grid;place-items:center;font-family:Segoe UI"><div style="text-align:center"><div style="font-size:22vw;font-weight:900">${index+1}</div><div style="font-size:4vw;color:#f3cf77;font-weight:800">${label}</div></div></body></html>`));w.once('ready-to-show',()=>w.showInactive())});setTimeout(()=>wins.forEach(w=>{if(!w.isDestroyed())w.close()}),3500);return{ok:true}});
+ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible(),alertsMuted,projecting:projectionActive(),projectionType:youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()?'YouTube':lastProjectionContent?'Conteúdo do IASD APP':'Telão livre'}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
@@ -330,7 +332,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   reply(res,200,{ok:true,paired:pairedTokens.size>0});return;
  }
  if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40),avatar:String(data.avatar||data.avatar_url||'').slice(0,1000)};reply(res,200,{ok:true});return}
- if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
+ if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}try{const command=data.action==='play'?'playVideo':data.action==='pause'?'pauseVideo':data.action==='mute'?'mute':'unMute';await youtubeRef.webContents.executeJavaScript("document.querySelector('iframe')?.contentWindow?.postMessage("+JSON.stringify(JSON.stringify({event:'command',func:command,args:[]}))+",'https://www.youtube-nocookie.com')");reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=projectPreparedYoutube();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
