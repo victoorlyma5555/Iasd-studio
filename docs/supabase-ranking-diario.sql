@@ -87,6 +87,8 @@ as $$
   janela as (
     select case when p_scope = 'week'
                 then (select d - ((extract(isodow from d)::int) - 1) from hoje)
+                when p_scope = 'month'
+                then (select date_trunc('month', d)::date from hoje)
                 else (select d from hoje) end as ini,
            (select d from hoje) as fim
   )

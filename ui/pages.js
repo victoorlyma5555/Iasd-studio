@@ -110,7 +110,7 @@ function gameCards(){
 }
 
 /* ---- Ranking diário/semanal + Desafio do Dia ---- */
-const DR={scope:'day',rows:{day:[],week:[]},loaded:{},legacy:false,err:''};
+const DR={scope:'day',rows:{day:[],week:[],month:[]},loaded:{},legacy:false,err:''};
 const DAILY_GAMES=[['quiz','⚡','Quiz Bíblico','#f5b73a'],['who','🎭','Quem Sou Eu?','#a78bfa'],['order','⏳','Linha do Tempo','#38bdf8'],['memory','🃏','Memória Bíblica','#34d399']];
 const PRIZE_TEXT='Os campeões do dia e da semana (segunda a domingo) são anunciados no Domingo Jovem.';
 function drDone(g){try{return window.IASDSolo?.dailyDone(g)}catch(e){return null}}
@@ -122,13 +122,13 @@ function dailySection(){
  '<p class="dy-note">Uma tentativa por jogo por dia, com as mesmas perguntas para todos. É isso que vale para o ranking: jogar mais horas não dá vantagem. <b>'+PRIZE_TEXT+'</b> Os jogos livres continuam abertos para treinar, sem pontuar.</p>'+
  '<div class="dy-grid">'+DAILY_GAMES.map(([k,ic,t,c])=>{const d=drDone(k);return '<article class="dy-card '+(d?'done':'')+'" style="--gc:'+c+'"><span class="dy-ic">'+ic+'</span><div><b>'+esc(t)+'</b><small>'+(d?'✓ '+Number(d.score).toLocaleString('pt-BR')+' pontos hoje':'Disponível agora')+'</small></div><button class="pg-outline" '+(d?'disabled':'onclick="IASDSolo.startDaily(\''+k+'\')"')+'>'+(d?'Concluído':I('play')+'Jogar')+'</button></article>'}).join('')+'</div></section>';
 }
-function rankTabs(){return '<div class="dy-tabs" id="dy-tabs"><button class="'+(DR.scope==='day'?'on':'')+'" onclick="IASDPages.dailyScope(\'day\')">Hoje</button><button class="'+(DR.scope==='week'?'on':'')+'" onclick="IASDPages.dailyScope(\'week\')">Esta semana</button></div>'}
+function rankTabs(){return '<div class="dy-tabs" id="dy-tabs"><button class="'+(DR.scope==='day'?'on':'')+'" onclick="IASDPages.dailyScope(\'day\')">Hoje</button><button class="'+(DR.scope==='week'?'on':'')+'" onclick="IASDPages.dailyScope(\'week\')">Esta semana</button><button class="'+(DR.scope==='month'?'on':'')+'" onclick="IASDPages.dailyScope(\'month\')">Este mês</button></div>'}
 function rankBody(){
  if(DR.legacy){const rank=(typeof gameRanking!=='undefined'?gameRanking:[]);return '<p class="dy-note">Ranking antigo (geral). O ranking diário será ativado quando o administrador rodar o script do servidor.</p>'+rankRows(rank)}
  if(!DR.loaded[DR.scope])return '<p class="pg-empty">Carregando ranking…</p>';
  if(DR.err&&!DR.rows[DR.scope].length)return '<p class="pg-empty">Não foi possível carregar o ranking agora.</p>';
  const rows=DR.rows[DR.scope];
- return rows.length?rankRows(rows):'<p class="pg-empty">'+(DR.scope==='day'?'Ninguém pontuou hoje ainda. Faça um Desafio do dia e abra o ranking!':'Ninguém pontuou nesta semana ainda.')+'</p>';
+ return rows.length?rankRows(rows):'<p class="pg-empty">'+(DR.scope==='day'?'Ninguém pontuou hoje ainda. Faça um Desafio do dia e abra o ranking!':DR.scope==='month'?'Ninguém pontuou neste mês ainda.':'Ninguém pontuou nesta semana ainda.')+'</p>';
 }
 function paintRank(){const b=document.getElementById('gm-rank');if(b)b.innerHTML=rankBody();const t=document.getElementById('dy-tabs');if(t)t.outerHTML=rankTabs();const n=document.querySelector('.gm-tile.t2 b');if(n)n.textContent=String(DR.legacy?(typeof gameRanking!=='undefined'?gameRanking.length:0):(DR.rows[DR.scope]||[]).length)}
 async function dailyLoad(scope,force){
