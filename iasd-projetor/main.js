@@ -11,25 +11,9 @@ const {execFile}=require('node:child_process');
 const {createClient}=require('@supabase/supabase-js');
 // Ícone PNG desenhado localmente, sem depender de arquivos externos.
 function createTrayIcon(){
- const n=32,pixels=Buffer.alloc(n*(1+n*4));
- function dot(x,y,r,g,b,a=255){if(x<0||y<0||x>=n||y>=n)return;const i=y*(1+n*4)+1+x*4;pixels[i]=r;pixels[i+1]=g;pixels[i+2]=b;pixels[i+3]=a;}
- for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-  // Fundo azul com cantos arredondados.
-  const dx=Math.max(5-x,0,x-26),dy=Math.max(5-y,0,y-26);
-  if(dx*dx+dy*dy<=25)dot(x,y,12,42,82);
-  // Tela branca com interior azul-escuro.
-  if(x>=5&&x<=26&&y>=7&&y<=22)dot(x,y,236,246,255);
-  if(x>=7&&x<=24&&y>=9&&y<=20)dot(x,y,21,80,126);
-  // Feixe de projeção amarelo.
-  if(x>=12&&x<=19&&y>=12&&y<=17&&Math.abs(y-14.5)<=Math.floor((x-11)/2)+1)dot(x,y,255,204,65);
-  if(y>=23&&y<=25&&x>=14&&x<=17)dot(x,y,236,246,255);
-  if(y===26&&x>=10&&x<=21)dot(x,y,236,246,255);
- }
- const crcTable=Array.from({length:256},(_,i)=>{let c=i;for(let j=0;j<8;j++)c=c&1?0xedb88320^(c>>>1):c>>>1;return c>>>0});
- function chunk(type,data){const name=Buffer.from(type),len=Buffer.alloc(4),crc=Buffer.alloc(4);len.writeUInt32BE(data.length);let c=0xffffffff;for(const b of Buffer.concat([name,data]))c=crcTable[(c^b)&255]^(c>>>8);crc.writeUInt32BE((c^0xffffffff)>>>0);return Buffer.concat([len,name,data,crc]);}
- const header=Buffer.alloc(13);header.writeUInt32BE(n,0);header.writeUInt32BE(n,4);header[8]=8;header[9]=6;
- const png=Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',header),chunk('IDAT',zlib.deflateSync(pixels)),chunk('IEND',Buffer.alloc(0))]);
- return nativeImage.createFromBuffer(png);
+ const iconPath=path.join(__dirname,'assets','iasd-app.ico');
+ const icon=nativeImage.createFromPath(iconPath);
+ return icon.isEmpty()?nativeImage.createEmpty():icon;
 }
 
 // Apenas uma instância pode usar a porta local de projeção.
@@ -362,19 +346,28 @@ if(primaryInstance)app.whenReady().then(()=>{
  void alertRestore();
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?['--autostart']:['.','--autostart']});
  tray=new Tray(createTrayIcon());
- tray.setToolTip('IASD Projetor — aplicativo em execução');
+ tray.setToolTip('IASD Projetor · v'+app.getVersion());
  tray.on('double-click',showDashboard);
- tray.setContextMenu(Menu.buildFromTemplate([
-  {label:'Abrir IASD Projetor',click:showDashboard},
-  {label:'Abrir IASD APP (site)',click:()=>shell.openExternal(SITE)},
-  {type:'separator'},
-  {label:'Mostrar código de pareamento',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'Código de pareamento: '+pairingCode,detail:'Digite este código no painel do sonoplasta. Compartilhe apenas com operadores autorizados.'})},
-  {label:'Abrir projeção',click:()=>{try{showProjector()}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
-  {label:'Encerrar projeção',click:()=>{if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}},
-  {type:'separator'},
-  {label:'Sobre o IASD Projetor',click:()=>dialog.showMessageBox({type:'info',title:'Sobre o IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nProjeto: IASD APP\\nSite: '+SITE})},
-  {label:'Sair do IASD Projetor',click:()=>{if(downloadedUpdate&&!projectionActive())installDownloadedUpdate();else app.quit()}}
- ]));
+ function refreshTrayMenu(){
+  const siteOnline=Date.now()-lastSiteContact<45000;
+  const screenOpen=projectionActive();
+  tray.setContextMenu(Menu.buildFromTemplate([
+   {label:'IASD Projetor · v'+app.getVersion(),enabled:false},
+   {label:(siteOnline?'● IASD APP conectado':'○ Aguardando IASD APP'),enabled:false},
+   {label:(screenOpen?'● Telão em projeção':'○ Telão aguardando'),enabled:false},
+   {type:'separator'},
+   {label:'Abrir painel',click:showDashboard},
+   {label:'Abrir IASD APP',click:()=>shell.openExternal(SITE)},
+   {type:'separator'},
+   {label:screenOpen?'Fechar telão':'Abrir telão',click:()=>{try{if(projectionActive()){closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}else showProjector();setTimeout(refreshTrayMenu,150)}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
+   {label:'Código de pareamento: '+pairingCode,click:()=>dialog.showMessageBox({type:'info',title:'Pareamento · IASD Projetor',message:'Código: '+pairingCode,detail:'Digite este código no IASD APP para autorizar este computador.'})},
+   {type:'separator'},
+   {label:'Sobre',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nIASD APP'})},
+   {label:'Sair',click:()=>{if(downloadedUpdate&&!projectionActive())installDownloadedUpdate();else app.quit()}}
+  ]));
+ }
+ refreshTrayMenu();
+ tray.on('click',()=>refreshTrayMenu());
  server=http.createServer((req,res)=>{void handler(req,res).catch(()=>reply(res,500,{error:'Erro interno'}))});
  server.on('error',error=>{
   if(error.code==='EADDRINUSE'){
