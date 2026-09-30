@@ -1,0 +1,38 @@
+name: Publish IASD Projetor 0.4.11
+on:
+  push:
+    branches:
+      - teste-interface-projetor-v2
+    paths:
+      - ".github/workflows/publish-projetor-0.4.11.yml"
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: iasd-projetor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build official Windows release
+        run: npm run dist
+      - name: Publish 0.4.11 as latest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "iasd-projetor-v0.4.11" `
+            "dist/IASD-Projetor-Setup-0.4.11.exe" `
+            "dist/IASD-Projetor-Setup-0.4.11.exe.blockmap" `
+            "dist/latest.yml" `
+            --repo "${{ github.repository }}" `
+            --target "${{ github.sha }}" `
+            --title "IASD Projetor 0.4.11" `
+            --notes "Nova interface do IASD Projetor, atualização online, biblioteca visual de papéis de parede, painel de alertas, status AO VIVO e melhorias na bandeja. Mantém a base de projeção compatível com IASD APP, incluindo Bíblia, Sorteio e YouTube." `
+            --latest
