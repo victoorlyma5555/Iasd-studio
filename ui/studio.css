@@ -1,0 +1,86 @@
+/* Studio de Projeção — camada visual nova. Tudo escopado em body.st2; o CSS antigo segue valendo nos painéis internos. */
+body.st2{--bg:#060e1f;--sf:#0b1730;--sf2:#10203f;--sf3:#16284d;--bd:#1f3157;--tx:#e8eefc;--mu:#8fa0c4;--pr:#2563eb;--am:#f59e0b;--rd:#ef4444;--gr:#22c55e;background:transparent;color:var(--tx);font-family:Inter,system-ui,sans-serif}
+body.st2 main{display:grid!important;grid-template-areas:none!important;grid-template-columns:minmax(0,1.9fr) minmax(320px,1fr)!important;grid-template-rows:auto auto auto auto auto!important;gap:16px!important;padding:2px 0 28px!important;align-items:start}
+body.st2 .panel,body.st2 main>.preview .screen{background:var(--sf);border:1px solid var(--bd);border-radius:18px;box-shadow:none}
+/* cabeçalho */
+body.st2 main>.head{grid-area:1 / 1 / 2 / -1!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 2px!important;margin:0!important}
+body.st2 .head h1{font-size:26px;letter-spacing:-.4px;margin:2px 0}
+body.st2 .head .eyebrow{font-size:11px;letter-spacing:.14em;color:var(--mu)}
+body.st2 #connection{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--sf);font-weight:600;font-size:13px;color:var(--tx)}
+/* ferramentas agrupadas */
+body.st2 main>.tools{grid-area:2 / 1 / 3 / -1!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;padding:0!important;position:static!important;align-self:stretch}
+body.st2 .st-grp{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:12px;min-width:0}
+body.st2 .st-grp h3{margin:0 0 10px 4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
+body.st2 .st-tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body.st2 .tool{all:unset;box-sizing:border-box;position:relative;display:flex!important;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;min-height:104px!important;padding:12px!important;border-radius:12px!important;background:var(--sf2)!important;border:1px solid transparent!important;box-shadow:none!important;color:var(--tx)!important;font-size:14px!important;font-weight:700!important;line-height:1.2;cursor:pointer;text-align:left!important;min-width:0;transition:background .15s,border-color .15s}
+body.st2 .tool:hover{background:var(--sf3)!important}
+body.st2 .tool:focus-visible{outline:3px solid #f4d28d;outline-offset:2px}
+body.st2 .tool.active{background:var(--sf3)!important;border-color:var(--pr)!important;box-shadow:0 0 0 1px var(--pr) inset!important}
+body.st2 .tool .ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:18px;color:#fff;background:#334155;flex:none}
+body.st2 .tool small{display:block;margin-top:0;font-size:11.5px;font-weight:500;color:var(--mu)}
+body.st2 .tool[data-tool=bible] .ico{background:#9a3412}body.st2 .tool[data-tool=hymnal] .ico{background:#6d28d9}
+body.st2 .tool[data-tool=ambient] .ico{background:#b45309}body.st2 .tool[data-tool=special] .ico{background:#a16207}
+body.st2 .tool[data-tool=testimony] .ico{background:#1d4ed8}body.st2 .tool[data-tool=draw] .ico{background:#92400e}
+body.st2 .tool[data-tool=timer] .ico{background:#be123c}body.st2 .tool[data-tool=video] .ico{background:#0f766e}
+/* telão grande */
+body.st2 main>.preview{grid-area:3 / 1 / 4 / 2!important;height:auto!important;min-height:0!important;overflow:visible!important;align-self:start}
+body.st2 main>.preview .screen{padding:14px;position:relative}
+body.st2 .live-label{display:flex!important;width:100%;align-items:center;gap:8px;margin:0 0 10px;padding:8px 12px;border-radius:10px;background:var(--sf2);font-size:11px!important;font-weight:800;letter-spacing:.12em;color:var(--tx)}
+body.st2 .live-label.is-live{background:linear-gradient(90deg,#7f1d1d,#b91c1c);color:#fff}
+body.st2 .live-dot{width:9px;height:9px;border-radius:50%;background:#7c8795}
+body.st2 .live-label.is-live .live-dot{background:#fff}
+body.st2 main>.preview .live-frame{display:block;width:100%;height:auto!important;aspect-ratio:16/9!important;min-height:0!important;border:2px solid var(--bd);border-radius:12px;background:#000}
+body.st2 .live-label.is-live ~ .live-frame{border-color:var(--rd)}
+/* botões de transporte */
+body.st2 main>.studio-controls{grid-area:4 / 1 / 5 / 2!important;padding:0!important;background:transparent!important;border:0!important;margin:0!important;align-self:start}
+body.st2 .st-hide{display:none}
+body.st2 .studio-action-bar{display:grid!important;grid-template-columns:1.25fr 1fr 1fr 1fr!important;gap:12px!important;position:static!important}
+body.st2 .studio-action-bar .studio-action{display:flex!important;align-items:center;justify-content:flex-start!important;gap:12px!important;min-height:76px!important;padding:0 14px!important;border-radius:14px!important;border:1px solid var(--bd)!important;background:var(--sf2)!important;color:var(--tx)!important;text-align:left;transform:none!important;box-shadow:none!important}
+body.st2 .studio-action-bar .studio-action:hover{background:var(--sf3)!important}
+body.st2 .studio-action-bar .action-icon{width:44px!important;height:44px!important;border-radius:12px!important;background:var(--sf3)!important;font-size:19px!important}
+body.st2 .st-lab b{display:block;font-size:15px;white-space:nowrap}
+body.st2 .st-lab small{display:block;margin-top:2px;font-size:11.5px;font-weight:500;color:var(--mu);white-space:nowrap}
+body.st2 .studio-action-bar .project-action{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#3b82f6!important;color:#fff!important}
+body.st2 .project-action .action-icon{background:rgba(255,255,255,.18)!important}
+body.st2 .project-action .st-lab small{color:rgba(255,255,255,.8)}
+body.st2 .studio-action-bar .close-action{background:linear-gradient(180deg,#2c1219,#1f0d12)!important;border-color:#7f1d1d!important;color:#fecaca!important}
+body.st2 .close-action .action-icon{background:#7f1d1d!important;color:#fecaca}
+body.st2 .black-action .action-icon{background:#000!important;border:1px solid #39486b}
+body.st2 .settings-action .action-icon{background:rgba(34,197,94,.16)!important;color:#4ade80}
+body.st2 .notice{margin:8px 2px 0}
+/* painel da ferramenta */
+body.st2 main>.work{grid-area:3 / 2 / 5 / 3!important;min-width:0;align-self:stretch;height:auto!important;max-height:760px!important;overflow-y:auto!important;overflow-x:hidden!important;padding:18px!important}
+body.st2 main>.work.active{display:grid!important;align-content:start!important}
+body.st2 main>.work>*{min-width:0;max-width:100%}
+/* temas e alertas */
+body.st2 main>.st-themes{grid-area:5 / 1 / 6 / 2;align-self:stretch}
+body.st2 main>.st-alerts{grid-area:5 / 2 / 6 / 3;align-self:stretch}
+body.st2 .st-themes h2,body.st2 .st-alerts h2{margin:0 0 4px;font-size:16px}
+body.st2 #stThemes{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:12px}
+body.st2 #stThemes button{flex-direction:column;padding:6px;border-radius:12px;text-align:left;font-size:12px;font-weight:700;background:transparent;border:2px solid transparent;display:flex;gap:6px}
+body.st2 #stThemes button.on{border-color:var(--pr)}
+body.st2 #stThemes i{height:112px}
+body.st2 #stThemes u{width:68px;height:68px;border-width:6px}
+.st-al-list{display:grid;gap:10px;margin-top:12px}
+.st-al{padding:12px;border-radius:12px;background:var(--sf2)}
+.st-al-h{display:flex;gap:10px;align-items:flex-start}.st-al-h>div{flex:1;min-width:0}
+.st-al-h b{display:block;font-size:13.5px}.st-al-h small{color:var(--mu);font-size:11.5px}
+.st-al-i{width:34px;height:34px;border-radius:10px;background:rgba(245,158,11,.18);display:grid;place-items:center;flex:none}
+.st-al-h em{font-style:normal;font-size:12px;font-weight:800;white-space:nowrap}.st-al-h em.ok{color:var(--gr)}.st-al-h em.new{color:var(--am)}
+.st-al-r{margin:10px 0 0 44px;padding:8px 12px;border-radius:10px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);font-size:13px}.st-al-r b{color:var(--gr)}
+.st-al-a{margin:10px 0 0 44px;display:flex;gap:8px;flex-wrap:wrap}
+.st-al-a button{padding:6px 12px;border-radius:99px;font-size:12.5px;background:var(--sf3);border:1px solid var(--bd)}
+.st-al-a input{flex:1 1 150px;min-width:0;padding:6px 12px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:var(--tx)}
+/* telas estreitas */
+@media (max-width:1100px){body.st2 main>.tools{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:900px){
+ body.st2 main{grid-template-columns:minmax(0,1fr)!important}
+ body.st2 main>.head{grid-area:1 / 1!important}body.st2 main>.tools{grid-area:2 / 1!important}
+ body.st2 main>.preview{grid-area:3 / 1!important}body.st2 main>.studio-controls{grid-area:4 / 1!important}
+ body.st2 main>.work{grid-area:5 / 1!important;max-height:none!important;overflow:visible!important}
+ body.st2 main>.st-themes{grid-area:6 / 1}body.st2 main>.st-alerts{grid-area:7 / 1}
+ body.st2 .studio-action-bar{grid-template-columns:1fr 1fr!important}
+ body.st2 .studio-action-bar .studio-action{min-height:64px!important}
+}
+@media (max-width:520px){body.st2 main>.tools{grid-template-columns:minmax(0,1fr)!important}body.st2 .tool{min-height:84px!important}}
+@media (max-width:900px){body.st2 .st-lab b,body.st2 .st-lab small{white-space:normal}body.st2 .studio-action-bar .studio-action{gap:9px!important;padding:0 10px!important;min-width:0}body.st2 .studio-action-bar .action-icon{width:36px!important;height:36px!important}body.st2 .st-lab b{font-size:14px}}
