@@ -720,7 +720,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px"><strong style="color:#e8c687">IASD Studio · Nova central de projeção</strong></div><iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=5" class="projection-studio-frame" scrolling="yes" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=7" class="projection-studio-frame" scrolling="yes" loading="eager"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');

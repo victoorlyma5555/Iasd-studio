@@ -56,7 +56,7 @@ function celebrateDraw(serial){
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 function show(value){
  const t=typeof value==='string'?value:'';
- ++drawSerial;if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
+ ++drawSerial;out.style.background='';if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
  if(t.startsWith('IASD_TIMER:')){
   try{
    if(!window.IASDTimerDisplay)throw Error('timer');
@@ -71,6 +71,7 @@ function show(value){
    const quote=document.createElement('p');quote.className='bible-text';quote.textContent=data.text.replace(/\\n/g,' ').replace(/\s+/g,' ').trim();
    const reference=document.createElement('div');reference.className='bible-reference';reference.textContent=data.ref;
    const version=document.createElement('div');version.className='bible-version';version.textContent='João Ferreira de Almeida';
+   const th=window.IASDTimerDisplay&&IASDTimerDisplay.themes[data.theme];if(th){out.style.background=th.bg;reference.style.color=th.c2;if(th.tx){quote.style.color=th.tx;version.style.color=th.c1}}
    slide.append(quote,reference,version);out.append(slide);
    const fit=()=>{let size=parseFloat(getComputedStyle(quote).fontSize);while(slide.scrollHeight>out.clientHeight-30&&size>19){size-=2;quote.style.fontSize=size+'px'}};
    requestAnimationFrame(fit);
