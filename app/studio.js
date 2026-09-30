@@ -91,11 +91,12 @@ function stRenderChips(){const d=stSt.data,token=!!localStorage.getItem('iasd-pr
  stPill('chipMon',null,!d?'Telão —':d.secondMonitor&&m?'Monitor '+idx+' - Telão Principal':'Telão não detectado');
  stRenderNow()}
 function stRenderNow(){const st=localStorage.getItem('iasd-stage')||'';const live=!!st;
- const el=$('chipNow');if(!el)return;el.classList.toggle('is-live',live);stPill('chipNow',live?'live':'off',live?'AO VIVO':'SEM CONTEÚDO')}
+ const el=$('chipNow');if(!el)return;el.classList.toggle('is-live',live);stPill('chipNow',live?'live':'off',live?'Ao vivo':'Sem Conteúdo')}
 function stFullscreen(){const f=$('live');try{(f.requestFullscreen||f.webkitRequestFullscreen).call(f)}catch(e){feedback('Não foi possível abrir em tela cheia.')}}
 async function stCheck(){try{const r=await fetch('http://127.0.0.1:38741/status',{targetAddressSpace:'loopback',cache:'no-store',signal:AbortSignal.timeout(2500)});const b=await r.json();stSt.data=b;if(b.online&&b.paired)stSt.at=Date.now()}catch(e){stSt.data=null}stRenderChips()}
 stCheck();setInterval(stCheck,6000);setInterval(stRenderNow,1000);
-function showTool(name){selectedTool=name;document.body.dataset.tool=name;sessionStorage.setItem('iasd-studio-tool',name);document.querySelectorAll('.work').forEach(x=>x.classList.toggle('active',x.id===name));document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('active',x.dataset.tool===name));if(window.innerWidth<900)document.getElementById(name)?.scrollIntoView({behavior:'smooth',block:'nearest'});requestStudioHeight()}
+window.addEventListener('pointerdown',()=>{window.__stUser=true},{once:true,capture:true});window.addEventListener('keydown',()=>{window.__stUser=true},{once:true,capture:true});
+function showTool(name){selectedTool=name;document.body.dataset.tool=name;sessionStorage.setItem('iasd-studio-tool',name);document.querySelectorAll('.work').forEach(x=>x.classList.toggle('active',x.id===name));document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('active',x.dataset.tool===name));if(window.innerWidth<900&&window.__stUser)document.getElementById(name)?.scrollIntoView({behavior:'smooth',block:'nearest'});requestStudioHeight()}
 function prepare(content,preview){nextContent=content;$('next').textContent=preview||'Pronto para projetar';syncNextPreview()}
 function projectPrepared(){if(!nextContent){feedback('Selecione um versículo primeiro.');return}if(nextContent.startsWith('IASD_LOCAL_MEDIA:')){feedback('Para mídia local, use o botão da própria ferramenta.');return}project(nextContent)}
 function clearPrepared(){nextContent='';$('next').textContent='Selecione uma ferramenta';syncNextPreview()}

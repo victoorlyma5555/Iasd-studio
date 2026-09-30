@@ -37,7 +37,7 @@ function queueMenu(btn,i){const id=queue[i];openMenu(btn,[{label:'Tocar agora',f
 function move(a,b){if(b<0||b>=queue.length||a===b)return;const [x]=queue.splice(a,1);queue.splice(b,0,x);save();renderQueue()}
 /* biblioteca */
 function playBtn(id){const b=el('button','amb-play');b.type='button';b.title='Tocar';b.setAttribute('aria-label','Tocar '+title(id));b.append(icon('play'));b.onclick=()=>play(id);return b}
-function moreBtn(fn,label){const b=el('button','amb-more');b.type='button';b.title='Mais opções';b.setAttribute('aria-label',label||'Mais opções');b.textContent='•••';b.onclick=e=>{e.stopPropagation();fn(b)};return b}
+function moreBtn(fn,label){const b=el('button','amb-more');b.type='button';b.title='Mais opções';b.setAttribute('aria-label',label||'Mais opções');b.textContent='⋮';b.onclick=e=>{e.stopPropagation();fn(b)};return b}
 function renderChips(){const box=$('ambChips');if(!box)return;box.replaceChildren();['',...TAGS].forEach(t=>{const b=el('button',t===tag?'on':'',t||'Todas');b.type='button';b.onclick=()=>{tag=t;renderChips();renderList()};box.append(b)})}
 function renderList(){const box=$('ambList');if(!box)return;box.replaceChildren();const ql=q.trim().toLowerCase();
  const ids=lib().filter(id=>(!tag||tagOf(id)===tag)&&(!ql||title(id).toLowerCase().includes(ql)||id.toLowerCase()===ql));
@@ -52,7 +52,7 @@ function renderQueue(){const box=$('ambQueue');if(!box)return;box.replaceChildre
  const sh=el('button','mp-btn');sh.type='button';sh.append(icon('shuffle'),document.createTextNode('Embaralhar'));sh.onclick=()=>{for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}save();renderQueue()};
  const cl=el('button','mp-btn');cl.type='button';cl.append(icon('trash'),document.createTextNode('Limpar'));cl.onclick=()=>{if(queue.length&&confirm('Limpar a fila de reprodução?')){queue=[];save();renderQueue()}};
  h.append(sh,cl);box.append(h);
- if(!queue.length){box.append(el('p','amb-empty muted','A fila está vazia. Use ••• → Adicionar à fila nas músicas da biblioteca.'));return}
+ if(!queue.length){{const e=el('div','q-empty');e.append(icon('queue'),el('b','','A fila de reprodução está vazia.'),el('small','','Adicione músicas para criar uma sequência. Use ⋮ → Adicionar à fila.'));box.append(e)}return}
  queue.forEach((id,i)=>{const r=el('div','q-row');r.draggable=true;r.append(el('span','q-drag','⠿'),el('span','q-n',String(i+1)),thumb(id));const inf=el('div','amb-info');inf.append(el('b','',title(id)),el('small','','Música ambiente'+(tagOf(id)?' · '+tagOf(id):'')));r.append(inf,playBtn(id),moreBtn(b=>queueMenu(b,i),'Opções da fila'));const x=el('button','amb-x');x.type='button';x.title='Remover da fila';x.setAttribute('aria-label','Remover da fila');x.append(icon('x'));x.onclick=()=>{queue.splice(i,1);save();renderQueue()};r.append(x);
   r.ondragstart=e=>{dragFrom=i;r.classList.add('drag');try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(i))}catch(_){}};
   r.ondragend=()=>{dragFrom=-1;r.classList.remove('drag');box.querySelectorAll('.over').forEach(n=>n.classList.remove('over'))};

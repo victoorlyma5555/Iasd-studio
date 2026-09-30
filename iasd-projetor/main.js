@@ -172,7 +172,7 @@ function savePairing(){
  fs.renameSync(temp,tokenFile);
 }
 
-function monitorInfo(){const primary=screen.getPrimaryDisplay();return screen.getAllDisplays().map((d,i)=>({id:String(d.id),name:d.label||'Monitor '+(i+1),primary:d.id===primary.id,width:d.bounds.width,height:d.bounds.height,scale:d.scaleFactor,position:{x:d.bounds.x,y:d.bounds.y}}))}
+function monitorInfo(){const primary=screen.getPrimaryDisplay();return screen.getAllDisplays().map((d,i)=>({id:String(d.id),name:d.label||'Monitor '+(i+1),primary:d.id===primary.id,width:d.bounds.width,height:d.bounds.height,scale:d.scaleFactor,position:{x:d.bounds.x,y:d.bounds.y},refresh:d.displayFrequency||0}))}
 function chooseDisplay(){
  const displays=screen.getAllDisplays();
  return displays.find(d=>d.id!==screen.getPrimaryDisplay().id)||null;
@@ -255,6 +255,7 @@ function showDashboard(){
  dashboardRef=new BrowserWindow({width:1180,height:760,minWidth:980,minHeight:650,frame:false,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false,webviewTag:true}});
  dashboardRef.setMenuBarVisibility(false);
  dashboardRef.loadFile(path.join(__dirname,'dashboard.html'));
+ dashboardRef.once('ready-to-show',()=>{if(!dashboardRef||dashboardRef.isDestroyed())return;dashboardRef.show();dashboardRef.moveTop();dashboardRef.focus()});
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}

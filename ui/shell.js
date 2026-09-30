@@ -43,10 +43,10 @@ const P={down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
-const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Sonoplastia','music','Sonoplastia'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
-function mainPages(){return MAIN.filter(x=>x[0]!=='Sonoplastia'||S.sound())}
+const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
+function mainPages(){return MAIN.filter(x=>x[0]!=='Projeção'||S.sound())}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
-const TITLES={Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'Sonoplastia','Projeção':'Studio de Projeção',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+const TITLES={Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
   if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
   return TITLES[cur]||cur;
@@ -54,7 +54,7 @@ function titleOf(cur){
 function searchable(){
   const out=mainPages().map(([id,i,l])=>({id,icon:i,label:l}));
   S.tabs().forEach(t=>out.push({id:'custom:'+t.id,icon:'star',label:t.title||'Aba'}));
-  if(S.sound()){out.push({id:'Projeção',icon:'play',label:'Studio de Projeção'},{id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
+  if(S.sound()){out.push({id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
   if(S.sound())out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'});
   out.push({id:'Perfil',icon:'user',label:'Meu perfil'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
@@ -120,7 +120,7 @@ function themeIcon(){
 /* ---------- Home ---------- */
 const CARDS=[
  ['Cronograma','calendar','Cronogramas','Veja a programação de hoje','home_icon_schedule','#5b3aa8','#e8792f'],
- ['Sonoplastia','music','Sonoplastia','Acesse o Studio de Projeção','home_icon_projection','#1e2a78','#7c3aed'],
+ ['Projeção','music','IASD Projetor','Abra o Studio de Projeção','home_icon_projection','#1e2a78','#7c3aed'],
  ['Bíblia','book','Bíblia','Leia e pesquise as Escrituras','home_icon_bible','#8a4b2a','#e9b56a'],
  ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','home_icon_lesson','#1c3b6e','#4a7bd0'],
  ['Jogo','game','Jogos','Atividades e interação','home_icon_games','#a86a12','#f4c24a'],
@@ -132,7 +132,7 @@ const QUICK=[
  ['Sorteadores','dice','Sorteador','#92400e','#3b2a1a','sound'],
  ['Sorteadores','dice','Provai e Vede','#1d4ed8','#4c1d95','sound'],
  ['Mídia','music','Mídia e músicas','#b45309','#7c2d12','sound'],
- ['Projeção','play','Studio de Projeção','#6d28d9','#312e81','sound'],
+ ['Projeção','play','IASD Projetor','#6d28d9','#312e81','sound'],
  ['Bíblia','book','Bíblia de Projeção','#9a3412','#1e293b','sound'],
  ['Alertas','horn','Alertar sonoplastia','#a16207','#422006','assigned']
 ];
@@ -146,7 +146,7 @@ function coverStyle(slot,c1,c2){
 }
 function cardsHTML(){
   const edit=S.manage();
-  const base=CARDS.filter(x=>x[0]!=='Sonoplastia'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
   const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}"></div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
   return base.concat(custom).join('');
 }
@@ -238,15 +238,15 @@ function dailyRef(){
   return DAILY[day%DAILY.length];
 }
 function bookName(id){return (g(()=>bibleBooks.find(x=>x[1]===id))||[])[0]||id}
-function passageCacheKey(){return 'iasd-ui-passage:'+todayKey()+':'+(g(()=>readerState.translation)||'almeida')}
+function passageCacheKey(){return 'iasd-ui-passage:'+todayKey()+':'+'nvi'}
 function loadPassage(){
   const [book,chapter,verse]=dailyRef();
-  passage.book=book;passage.chapter=chapter;passage.verse=verse;passage.ref=bookName(book)+' '+chapter+':'+verse;
+  passage.book=book;passage.chapter=chapter;passage.verse=verse;passage.ref=bookName(book)+' '+chapter+':'+verse+' (NVI)';
   try{const c=JSON.parse(localStorage.getItem(passageCacheKey())||'null');if(c&&c.text){passage.text=c.text;passage.loaded=true;return Promise.resolve()}}catch(e){}
   if(passage.fetching)return passage.fetching;
   passage.fetching=(async()=>{
     try{
-      const verses=await fetchBibleChapter(book,chapter);
+      const verses=await fetchBibleChapter(book,chapter,'nvi');
       const v=(verses||[]).find(x=>Number(x.verse)===verse);
       const text=v&&String(v.text||'').replace(/\s+/g,' ').trim();
       if(text){passage.text='“'+text+'”';passage.loaded=true;try{localStorage.setItem(passageCacheKey(),JSON.stringify({text:passage.text}))}catch(e){}}

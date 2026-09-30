@@ -8,7 +8,7 @@ Aplicativo auxiliar do IASD APP para o painel de Sonoplastia. O programa mantém
 - Oferece botão para abrir o site IASD APP, verificar o segundo monitor e abrir/encerrar a projeção.
 - Exibe os créditos **Desenvolvido por Victor Lima** e a versão instalada.
 - Ao abrir o programa novamente enquanto ele já está rodando, a janela de controle reaparece, sem duplicar o serviço.
-- Quando iniciado automaticamente com o Windows, funciona discretamente em segundo plano; um duplo clique no ícone da bandeja abre a janela.
+- O programa inicia junto com o Windows e já mostra a janela de controle na tela. Ao fechar (X), ele continua na bandeja do Windows; um duplo clique no ícone abre a janela de novo. Para iniciar sem mostrar a janela, use o argumento `--hidden`.
 
 ## Pareamento
 

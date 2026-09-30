@@ -174,8 +174,8 @@ html[data-theme="light"] .gm-tile,html[data-theme="light"] .fd-tile{background:v
 .pg>*,.gm-wrap,#game-stage{min-width:0}.sc-detail,.al-form,.al-recent,.gm-sec,.fd-sec{grid-template-columns:minmax(0,1fr)}
 /* ===== responsivo ===== */
 @media (max-width:1200px){.gm-tiles,.fd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.sc-info{grid-template-columns:220px minmax(0,1fr)}.sc-stats{grid-column:1/-1;grid-template-columns:repeat(3,1fr)}.fd-card{grid-template-columns:1fr 1fr}.gm-r{grid-template-columns:54px 40px minmax(0,1fr) 100px}.gm-j,.gm-acc{display:none}}
-@media (max-width:900px){.al-cols,.pg-cols,.bb-main{grid-template-columns:1fr}.bb-bar{grid-template-columns:1fr 1fr}.bb-tools{grid-column:1/-1}.pg-hero-txt{max-width:none;padding:22px}.pg-hero::before{background:linear-gradient(90deg,rgba(6,12,30,.95),rgba(6,12,30,.6))}.pg-quote{display:none}.sc-info{grid-template-columns:1fr}.sc-cover{min-height:180px}.sc-tabs{flex-direction:column;align-items:stretch}.sc-nav{justify-content:space-between}.sc-tx{gap:4px 16px}.al-row{grid-template-columns:auto minmax(0,1fr) auto}.al-chip{display:none}.al-act{flex-wrap:wrap}}
-@media (max-width:560px){.gm-tiles,.fd-tiles{grid-template-columns:1fr}.bb-bar{grid-template-columns:1fr}.fd-card{grid-template-columns:1fr;grid-template-areas:"id" "acc" "meta" "btns" "pos"}.gm-card{flex-basis:78%}.sc-dact{width:100%}.sc-it{flex-wrap:wrap}.pg-h{font-size:19px}.pg-search{min-width:0;flex:1}}
+@media (max-width:900px){.al-cols,.pg-cols,.bb-main{grid-template-columns:1fr}.bb-bar{grid-template-columns:1fr 1fr}.bb-tools{grid-column:1/-1}.pg-hero-txt{max-width:none;padding:22px}.pg-hero::before{background:linear-gradient(90deg,rgba(6,12,30,.95),rgba(6,12,30,.6))}.pg-quote{display:none}.sc-info{grid-template-columns:minmax(0,1fr)}.sc-cover{min-height:180px}.sc-tabs{flex-direction:column;align-items:stretch}.sc-nav{justify-content:space-between}.sc-tx{gap:4px 16px}.al-row{grid-template-columns:auto minmax(0,1fr) auto}.al-chip{display:none}.al-act{flex-wrap:wrap}}
+@media (max-width:560px){.gm-tiles,.fd-tiles{grid-template-columns:1fr}.bb-bar{grid-template-columns:1fr}.fd-card{grid-template-columns:1fr;grid-template-areas:"id" "acc" "meta" "btns" "pos"}.gm-card{flex-basis:78%}.sc-dact{width:100%}.sc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.sc-stat{padding:10px 12px;gap:10px}.sc-stat:last-child:nth-child(odd){grid-column:1/-1}.sc-stat b{font-size:22px}.sc-stat>.pgi{width:34px;height:34px;padding:7px}.sc-tab{min-width:170px}.sc-cover b{font-size:22px;word-break:break-word}.sc-row,.sc-row>div{min-width:0}.sc-row p{overflow-wrap:anywhere}.sc-dt h2{font-size:22px}.sc-it{flex-wrap:wrap;gap:8px 12px}.sc-tx{flex:1 1 calc(100% - 110px);gap:2px 12px}.sc-tx b{min-width:0;overflow-wrap:anywhere}.sc-drag{margin-left:auto}.pg-h{font-size:19px}.pg-search{min-width:0;flex:1}}
 
 /* ===== Lição da Escola Sabatina ===== */
 .pg-src{color:var(--m);font-size:12px;margin:0}
@@ -250,3 +250,22 @@ html[data-theme="light"] .gm-tile,html[data-theme="light"] .fd-tile{background:v
 @media (max-width:1200px){.es-areas{grid-template-columns:repeat(3,minmax(0,1fr))}.es-grid{grid-template-columns:1fr}.es-filter{grid-template-columns:repeat(2,minmax(0,1fr))}.es-go{grid-column:1/-1}.es-af{grid-template-columns:repeat(2,minmax(0,1fr))}.es-af button{grid-column:1/-1}}
 @media (max-width:560px){.es-areas{display:flex;overflow-x:auto}.es-area{flex:0 0 auto}.es-day{min-height:56px;padding:3px}.es-chip b,.es-chip small{display:none}.es-chip{justify-content:center;padding:3px}.es-mt h2{font-size:19px}.es-filter{grid-template-columns:1fr}}
 .es-x{display:none}.es-chip:hover .es-x{display:inline}
+
+#es-root{display:grid;gap:16px;min-width:0}
+.es-day{position:relative}.es-day.today{background:color-mix(in srgb,#2563eb 9%,transparent)}.es-hoje{position:absolute;top:8px;right:8px;font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d8dff}
+@media (max-width:560px){.es-hoje{display:none}}
+@media (hover:none){.es-x{display:inline;padding:0 4px}}
+
+/* Bíblia: leitura com rolagem interna e coluna principal ocupando o espaço */
+.bb-main>.bb-paper{max-width:none!important;width:100%!important;justify-self:stretch;max-height:clamp(420px,calc(100vh - 150px),900px)!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin}
+@media (max-width:900px){.bb-main>.bb-paper{max-height:clamp(360px,calc(100vh - 200px),720px)!important}}
+.ls-root{display:grid;gap:16px;min-width:0;max-width:100%;width:100%}.ls-root>*,.ls-wrap,.ls-row{min-width:0;max-width:100%}
+/* Jogos no celular: informativos em duplas e topo mais compacto */
+@media (max-width:700px){
+.pg-jogos .pg-hero{min-height:0}.pg-jogos .pg-hero-txt{padding:16px 18px}.pg-jogos .pg-hero h1{font-size:22px;margin-bottom:6px}.pg-jogos .pg-hero p{font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.pg-jogos .pg-cta{margin-top:10px;height:36px;padding:0 14px;font-size:13px}
+.pg-jogos .gm-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pg-jogos .gm-tile{min-height:62px;padding:10px 12px;gap:10px;border-radius:14px}.pg-jogos .gm-ti{width:38px;height:38px}.pg-jogos .gm-ti .pgi{width:20px;height:20px}
+.pg-jogos .gm-tx b{font-size:22px}.pg-jogos .gm-tx b.sm{font-size:14px}.pg-jogos .gm-tx small{font-size:12px}.pg-jogos .gm-tile .chev{display:none}
+.pg-jogos .gm-art{height:84px}.pg-jogos .gm-art>.pgi{width:42px;height:42px}.pg-jogos .gm-body{padding:10px 12px 12px;gap:6px}.pg-jogos .gm-body h3{font-size:17px}.pg-jogos .gm-body p{min-height:0;font-size:13px}
+.pg-jogos .gm-tools .pg-search{flex:1 1 100%;order:-1}.pg-jogos .gm-tools .pg-blue{flex:1}
+}

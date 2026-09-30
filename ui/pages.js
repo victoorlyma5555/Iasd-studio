@@ -144,7 +144,7 @@ function bible(){
  '<div class="pg-card bb-cur"><span class="bb-cur-i">'+I('book')+'</span><div><b>Leitura atual</b><small id="bb-cur">'+esc(name)+' '+readerState.chapter+'</small></div><button class="bb-bm '+(fav?'on':'')+'" onclick="readerBookmark();this.classList.toggle(\'on\')" title="Favoritar">'+I('star')+'</button></div>'+
  '<div class="pg-card bb-quick"><h3>'+I('star','gold')+'Ações rápidas</h3><div class="bb-grid"><button onclick="readerBookmark()">'+I('star','gold')+'Adicionar favorito</button><button onclick="IASDPages.share()">'+I('share')+'Compartilhar</button><button onclick="readerCopy()">'+I('doc')+'Copiar texto</button><button onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button></div><button class="bb-favs" onclick="readerShowBookmarks()">'+I('list')+'Meus favoritos</button><div class="reader-saved" id="reader-saved" hidden></div></div>'+
  '<div class="pg-card bb-plan"><span class="bb-cur-i blue">'+I('cal')+'</span><div><b>Planos de leitura</b><small>Acompanhe sua leitura diária da Bíblia</small></div><em>em breve</em></div>'+
- '<button class="pg-card bb-votd" onclick="readerGoto('+JSON.stringify(v[1]).replace(/"/g,'&quot;')+','+v[2]+')"><b>“'+esc(v[3])+'”</b><small>'+esc(v[4])+'</small></button></aside></div>'+
+ '<button class="pg-card bb-votd" data-votd="go" onclick="readerGoto('+JSON.stringify(v[1]).replace(/"/g,'&quot;')+','+v[2]+')"><b data-votd="text">“'+esc(v[3])+'”</b><small data-votd="ref">'+esc(v[4])+'</small></button></aside></div>'+
  '<p class="reader-source">Tradução Almeida em português, consultada online. A disponibilidade dos capítulos depende da fonte externa e da conexão. Não há projeção nesta área.</p></div>';
 }
 function share(){const t=(document.getElementById('reader-ref')?.textContent||'Bíblia')+' — IASD APP',u=location.href;if(navigator.share)navigator.share({title:t,text:t,url:u}).catch(()=>{});else if(navigator.clipboard){navigator.clipboard.writeText(t+' '+u);const b=document.querySelector('.bb-grid button:nth-child(2)');if(b)b.lastChild.textContent='Link copiado'}}
@@ -219,7 +219,7 @@ function licao(){
 function setLC(k,v){LC[k]=v;updateSabbathContent()}
 const SHELF={Adulto:['Lições para Adultos','Estudo da Palavra de forma profunda e contextualizada.','book'],Jovem:['Lições para Jovens','Conteúdo dinâmico e relevante para a juventude.','users'],Portugal:['Edição de Portugal','Lições da edição portuguesa.','book'],Outras:['Outras lições','Demais edições disponíveis.','book']};
 function catalog(list){
- const years=[...new Set(list.map(sabbathYear).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
+ const years=[...new Set([...list.map(sabbathYear).filter(Boolean),'2026'])].sort((a,b)=>Number(b)-Number(a));
  const groups={Adulto:[],Jovem:[],Portugal:[],Outras:[]};
  list.forEach((q,i)=>{if(SABBATH_YEAR_FILTER!=='all'&&sabbathYear(q)!==SABBATH_YEAR_FILTER)return;if(LC.q!=='all'&&quarterOf(q)!==LC.q)return;const a=sabbathAudience(q);if(LC.type!=='all'&&a!==LC.type)return;(groups[a]||groups.Outras).push({q,i})});
  Object.keys(groups).forEach(k=>groups[k]=sabbathSortByDate(groups[k]));
@@ -235,7 +235,7 @@ function catalog(list){
  const shelf=(k)=>{const items=groups[k];if(!items.length)return '';const [t,sub,ic]=SHELF[k],rid='ls-row-'+k;
   return '<section class="ls-shelf"><div class="pg-head"><h2 class="pg-h">'+I(ic,'blue')+esc(t)+'</h2><span class="pg-sub lead">'+esc(sub)+'</span><button class="pg-link" onclick="var r=document.getElementById(\''+rid+'\');r.classList.toggle(\'wrap\');this.firstChild.textContent=r.classList.contains(\'wrap\')?\'Ver menos \':\'Ver todas \'">Ver todas '+I('right')+'</button></div><div class="ls-wrap"><div class="ls-row" id="'+rid+'">'+items.map(({q,i})=>{const id=sabbathId(q),cover=sabbathCover(q);return '<article class="ls-card" tabindex="0" role="button" onclick="openSabbathQuarter('+JSON.stringify(id).replace(/"/g,'&quot;')+','+i+')" onkeydown="if(event.key===\'Enter\')this.click()"><div class="ls-cov">'+(cover?'<img src="'+esc(cover)+'" alt="'+esc(sabbathTitle(q,'Capa da lição'))+'" loading="lazy">':I('book'))+'</div><div class="ls-cp"><small>'+esc(q?.human_date||q?.date||'Escola Sabatina')+'</small><b>'+esc(sabbathTitle(q,'Lição da Escola Sabatina'))+'</b></div><div class="ls-open"><span>'+I('book')+'Abrir</span>'+I('right')+'</div>'+manual(q)+'</article>'}).join('')+'</div><button class="gm-next" aria-label="Ver mais" onclick="document.getElementById(\''+rid+'\').scrollBy({left:420,behavior:\'smooth\'})">'+I('right')+'</button></div></section>'};
  const any=Object.values(groups).some(g=>g.length);
- return filters+(any?shelf('Adulto')+shelf('Jovem')+shelf('Portugal')+shelf('Outras'):'<div class="pg-card pg-empty">Nenhuma edição encontrada com esses filtros.</div>');
+ return '<div class="ls-root">'+filters+(any?shelf('Adulto')+shelf('Jovem')+shelf('Portugal')+shelf('Outras'):'<div class="pg-card pg-empty">Nenhuma edição encontrada com esses filtros.</div>')+'</div>';
 }
 
 /* ====================== ACERVO DO SITE ====================== */
@@ -286,18 +286,22 @@ function parseEsc(str,i){
  return {i,raw:str,date:dt,name:rest[0]||str,area:rest[1]||'Outras',time};
 }
 function escList(){return (typeof data!=='undefined'&&Array.isArray(data.escalas)?data.escalas:[]).map(parseEsc).filter(e=>e.date)}
-function escFiltered(list){const today=new Date(now0.getFullYear(),now0.getMonth(),now0.getDate());return list.filter(e=>(ES.area==='all'||e.area.toLowerCase()===ES.area.toLowerCase())&&(ES.status==='all'||(ES.status==='next'?e.date>=today:e.date<today)))}
+const todayD=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+function escFiltered(list){const today=todayD();return list.filter(e=>(ES.area==='all'||e.area.toLowerCase()===ES.area.toLowerCase())&&(ES.status==='all'||(ES.status==='next'?e.date>=today:e.date<today)))}
 function escalas(){return '<div class="pg pg-escalas">'+hero('escalas',{kick:'ORGANIZAÇÃO DA IGREJA',title:'Escalas da <em>Igreja</em>',text:'Veja os escalados do mês para a função selecionada. Mantenha sua equipe organizada e bem informada.'})+'<div id="es-root">'+esBody()+'</div></div>'}
 function esRender(){const r=document.getElementById('es-root');if(r)r.innerHTML=esBody()}
 function esSet(k,v){if(k==='m'||k==='y')ES[k]=+v;else ES[k]=v;if(k==='m'||k==='y')ES.anchor=new Date(ES.y,ES.m,1);esRender()}
 function esNav(d){if(ES.view==='week'){ES.anchor=new Date(ES.anchor.getFullYear(),ES.anchor.getMonth(),ES.anchor.getDate()+7*d);ES.m=ES.anchor.getMonth();ES.y=ES.anchor.getFullYear()}else{const x=new Date(ES.y,ES.m+d,1);ES.m=x.getMonth();ES.y=x.getFullYear();ES.anchor=x}esRender()}
 function esToday(){const t=new Date();ES.m=t.getMonth();ES.y=t.getFullYear();ES.anchor=new Date(t.getFullYear(),t.getMonth(),t.getDate());esRender()}
-function esAdd(){const g=id=>document.getElementById(id);const d=g('es-d').value,n=g('es-n').value.trim(),a=g('es-a').value.trim(),t=g('es-t').value;if(!d||!n||!a){alert('Preencha data, nome e área.');return}data.escalas.push(d+' — '+n+' — '+a+(t?' — '+t:''));save()}
-function esDel(i){if(!confirm('Remover este escalado?'))return;data.escalas.splice(i,1);save()}
+function esAdd(){const g=id=>document.getElementById(id);const d=g('es-d').value,n=g('es-n').value.trim(),a=g('es-a').value.trim(),t=g('es-t').value;if(!d||!n||!a){alert('Preencha data, nome e área.');return}
+ data.escalas.push(d+' — '+n+' — '+a+(t?' — '+t:''));localStorage.setItem('iasd-studio',JSON.stringify(data));
+ const dt=parseEsc(data.escalas[data.escalas.length-1]).date;if(dt){ES.m=dt.getMonth();ES.y=dt.getFullYear();ES.anchor=dt}
+ ES.area=(AREAS.find(x=>x[0].toLowerCase()===a.toLowerCase())||[a])[0];ES.status='all';esRender();const nn=g('es-n');if(nn)nn.focus()}
+function esDel(i){if(!confirm('Remover este escalado?'))return;data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
 function esExport(){const rows=escFiltered(escList()).filter(e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y).sort((a,b)=>a.date-b.date);const csv='Data;Horário;Nome;Área\n'+rows.map(e=>[isoOf(e.date),e.time,e.name,e.area].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='escalas-'+ES.y+'-'+pad(ES.m+1)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del?'<button class="es-x" onclick="IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
 function esBody(){
- const all=escList(),list=escFiltered(all),today=new Date(now0.getFullYear(),now0.getMonth(),now0.getDate());
+ const all=escList(),list=escFiltered(all),today=todayD();
  const inMonth=e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y;
  const years=[...new Set([now0.getFullYear()-1,now0.getFullYear(),now0.getFullYear()+1,ES.y,...all.map(e=>e.date.getFullYear())])].sort();
  const opt=(v,l,c)=>'<option value="'+esc(v)+'" '+(String(c)===String(v)?'selected':'')+'>'+esc(l)+'</option>';
@@ -312,7 +316,7 @@ function esBody(){
  if(ES.view==='month'){
   const first=new Date(ES.y,ES.m,1),start=new Date(ES.y,ES.m,1-first.getDay()),weeks=Math.ceil((first.getDay()+new Date(ES.y,ES.m+1,0).getDate())/7);
   body='<div class="es-cal">'+DOW.map(d=>'<div class="es-dow">'+d+'</div>').join('');
-  for(let k=0;k<weeks*7;k++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+k),out=d.getMonth()!==ES.m,es=list.filter(e=>isoOf(e.date)===isoOf(d));body+='<div class="es-day '+(out?'out':'')+' '+(isoOf(d)===isoOf(today)?'today':'')+'"><span>'+d.getDate()+'</span>'+es.map(e=>chip(e,true)).join('')+'</div>'}
+  for(let k=0;k<weeks*7;k++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+k),out=d.getMonth()!==ES.m,es=list.filter(e=>isoOf(e.date)===isoOf(d));body+='<div class="es-day '+(out?'out':'')+' '+(isoOf(d)===isoOf(today)?'today':'')+'"><span>'+d.getDate()+'</span>'+(isoOf(d)===isoOf(today)?'<em class="es-hoje">Hoje</em>':'')+es.map(e=>chip(e,true)).join('')+'</div>'}
   body+='</div>';
  }else if(ES.view==='week'){
   const a=ES.anchor,s0=new Date(a.getFullYear(),a.getMonth(),a.getDate()-a.getDay()),e0=new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+6);
