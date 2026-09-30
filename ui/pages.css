@@ -354,3 +354,15 @@ body.iu .reader-verse.sel{background:rgba(245,183,58,.22);box-shadow:-3px 0 0 #f
 .rd-bar button{border:1px solid #2b3c66;background:#182646;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:14px;display:inline-flex;gap:6px;align-items:center}
 .rd-bar button.gold{background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608;border-color:transparent;font-weight:700}
 .rd-bar svg{width:15px;height:15px}
+
+/* ===== Desafio do dia / ranking diário ===== */
+.pg-jogos .dy-note{margin:0 0 12px;opacity:.8;line-height:1.5;font-size:14px}
+.pg-jogos .dy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.pg-jogos .dy-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--c,#0b1429);border:1px solid var(--b,#26375f);border-left:4px solid var(--gc)}
+.pg-jogos .dy-card.done{opacity:.8;border-left-color:#34d399}
+.pg-jogos .dy-ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:rgba(255,255,255,.07)}
+.pg-jogos .dy-card div{flex:1;min-width:0}.pg-jogos .dy-card b{display:block}.pg-jogos .dy-card small{display:block;opacity:.7}
+.pg-jogos .dy-card button{flex:none}
+.pg-jogos .dy-tabs{display:inline-flex;gap:6px;padding:4px;border-radius:12px;background:var(--iu-sf2,#0f1a33);margin-bottom:12px}
+.pg-jogos .dy-tabs button{border:0;background:transparent;color:inherit;padding:8px 16px;border-radius:9px;cursor:pointer;font:inherit;font-weight:700;opacity:.7}
+.pg-jogos .dy-tabs button.on{background:linear-gradient(135deg,#f8c14f,#e38a10);color:#1c1406;opacity:1}

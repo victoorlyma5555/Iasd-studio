@@ -1,6 +1,6 @@
 -- Reset do ranking de jogos (somente FUNDADOR).
 -- Rode UMA vez no Supabase: SQL Editor > New query > colar > Run.
--- Cria iasd_reset_ranking(): apaga as pontuações da tabela iasd_game_stats.
+-- Cria iasd_reset_ranking(): apaga as pontuações de iasd_game_stats (ranking antigo) e de iasd_game_daily (ranking diário/semanal, se existir).
 -- Só funciona se quem chama tem o cargo "founder" em iasd_members.
 
 create or replace function public.iasd_reset_ranking()
@@ -19,6 +19,9 @@ begin
   end if;
   delete from public.iasd_game_stats where true;
   get diagnostics v_n = row_count;
+  if to_regclass('public.iasd_game_daily') is not null then
+    delete from public.iasd_game_daily where true;
+  end if;
   return v_n;
 end;
 $$;

@@ -98,26 +98,61 @@ function alertRows(rows,sound){
 
 /* ====================== JOGOS ====================== */
 const GAMES=[
- {m:'quiz',t:'Quiz Bíblico',d:'Teste seus conhecimentos sobre a Palavra de Deus.',b:'Quiz',c:'#7c5cff',n:()=>typeof GAME_QUIZ!=='undefined'?GAME_QUIZ.length+' perguntas':'Perguntas',pts:'+100 pts',art:'linear-gradient(135deg,#1b2a6b,#6b3fa8 60%,#e8a21f)',g:'help'},
- {m:'who',t:'Quem Sou Eu?',d:'Descubra personagens bíblicos e suas histórias.',b:'Pistas',c:'#22c3a6',n:()=>typeof GAME_WHO!=='undefined'?GAME_WHO.length+' personagens':'Personagens',pts:'+150 pts',art:'linear-gradient(135deg,#0d2c4a,#1c6c8a 55%,#ffb347)',g:'users'},
- {m:'order',t:'Linha do Tempo',d:'Organize os acontecimentos bíblicos na ordem correta.',b:'Desafio',c:'#f0b44c',n:()=>typeof GAME_ORDER!=='undefined'?GAME_ORDER.length+' desafios':'Desafios',pts:'+180 pts',art:'linear-gradient(135deg,#24305f,#8a5a7a 55%,#ffcf86)',g:'sort'},
- {m:'memory',t:'Memória Bíblica',d:'Encontre os pares relacionados aos versículos.',b:'Memória',c:'#a855f7',n:()=>'6 pares',pts:'+120 pts',art:'linear-gradient(135deg,#3a1d5c,#a8473a 60%,#ffb347)',g:'book'}
+ {m:'quiz',t:'Quiz Bíblico',d:'Teste seus conhecimentos sobre a Palavra de Deus.',b:'Quiz',c:'#7c5cff',n:()=>'1.000+ perguntas',pts:'+100 pts',art:'linear-gradient(135deg,#1b2a6b,#6b3fa8 60%,#e8a21f)',g:'help'},
+ {m:'who',t:'Quem Sou Eu?',d:'Descubra personagens bíblicos e suas histórias.',b:'Pistas',c:'#22c3a6',n:()=>'120+ personagens',pts:'+150 pts',art:'linear-gradient(135deg,#0d2c4a,#1c6c8a 55%,#ffb347)',g:'users'},
+ {m:'order',t:'Linha do Tempo',d:'Organize os acontecimentos bíblicos na ordem correta.',b:'Desafio',c:'#f0b44c',n:()=>'45+ linhas do tempo',pts:'+180 pts',art:'linear-gradient(135deg,#24305f,#8a5a7a 55%,#ffcf86)',g:'sort'},
+ {m:'memory',t:'Memória Bíblica',d:'Encontre os pares: personagens, feitos, lugares e mais.',b:'Memória',c:'#a855f7',n:()=>'17 temas',pts:'+120 pts',art:'linear-gradient(135deg,#3a1d5c,#a8473a 60%,#ffb347)',g:'book'}
 ];
 function gameCards(){
- const solo=GAMES.map(g=>'<article class="gm-card" data-t="'+esc(g.t.toLowerCase())+'"><div class="gm-art" style="background:'+g.art+'">'+I(g.g)+'<span class="gm-badge" style="--bc:'+g.c+'">'+g.b+'</span></div><div class="gm-body"><h3>'+esc(g.t)+'</h3><p>'+esc(g.d)+'</p><div class="gm-meta"><span>'+I('doc')+esc(g.n())+'</span><b>'+I('users','gold')+g.pts+'</b></div><button class="pg-outline" onclick="gameSfx(\'click\');startGameMode(\''+g.m+'\')">'+I('play')+'Jogar agora</button></div></article>').join('');
+ const solo=GAMES.map(g=>'<article class="gm-card" data-t="'+esc(g.t.toLowerCase())+'"><div class="gm-art" style="background:'+g.art+'">'+I(g.g)+'<span class="gm-badge" style="--bc:'+g.c+'">'+g.b+'</span></div><div class="gm-body"><h3>'+esc(g.t)+'</h3><p>'+esc(g.d)+'</p><div class="gm-meta"><span>'+I('doc')+esc(g.n())+'</span><b>'+I('users','gold')+g.pts+'</b></div><button class="pg-outline" onclick="IASDSolo.open(\''+g.m+'\')">'+I('play')+'Jogar agora</button></div></article>').join('');
  const live='<article class="gm-card" data-t="jogo coletivo"><div class="gm-art" style="background:linear-gradient(135deg,#0d2c4a,#2563eb 60%,#22c55e)">'+I('pad')+'<span class="gm-badge" style="--bc:#22c55e">Ao vivo</span></div><div class="gm-body"><h3>Jogo Coletivo</h3><p>Crie uma sala, conecte os celulares e jogue ao vivo no telão.</p><div class="gm-meta"><span>'+I('users')+'Multijogador</span><b>'+I('users','gold')+'Telão</b></div><button class="pg-outline" onclick="gameSfx(\'start\');openCollectiveGame()">'+I('play')+'Jogar agora</button></div></article>';
  return '<div class="gm-wrap"><div class="gm-row" id="gm-row">'+solo+live+'</div><button class="gm-next" aria-label="Ver mais jogos" onclick="document.getElementById(\'gm-row\').scrollBy({left:320,behavior:\'smooth\'})">'+I('right')+'</button></div>';
 }
+
+/* ---- Ranking diário/semanal + Desafio do Dia ---- */
+const DR={scope:'day',rows:{day:[],week:[]},loaded:{},legacy:false,err:''};
+const DAILY_GAMES=[['quiz','⚡','Quiz Bíblico','#f5b73a'],['who','🎭','Quem Sou Eu?','#a78bfa'],['order','⏳','Linha do Tempo','#38bdf8'],['memory','🃏','Memória Bíblica','#34d399']];
+const PRIZE_TEXT='Os campeões do dia e da semana (segunda a domingo) são anunciados no Domingo Jovem.';
+function drDone(g){try{return window.IASDSolo?.dailyDone(g)}catch(e){return null}}
+function drPointsToday(){return DAILY_GAMES.reduce((t,g)=>t+(drDone(g[0])?.score||0),0)}
+function drMap(x){return {user_id:x.user_id,score:Number(x.score||0),correct_answers:Number(x.correct||0),total_answers:Number(x.total||0),best_streak:x.best_streak,games_played:x.games,iasd_profiles:{full_name:x.full_name,avatar_path:x.avatar_path}}}
+function dailySection(){
+ const done=DAILY_GAMES.filter(g=>drDone(g[0])).length,pts=drPointsToday();
+ return '<section id="pg-daily" class="gm-sec"><div class="pg-head"><h2 class="pg-h">'+I('trophy','gold')+'Desafio do dia</h2><span class="pg-sub">'+done+' de '+DAILY_GAMES.length+' concluídos · '+pts.toLocaleString('pt-BR')+' pts hoje</span></div>'+
+ '<p class="dy-note">Uma tentativa por jogo por dia, com as mesmas perguntas para todos. É isso que vale para o ranking: jogar mais horas não dá vantagem. <b>'+PRIZE_TEXT+'</b> Os jogos livres continuam abertos para treinar, sem pontuar.</p>'+
+ '<div class="dy-grid">'+DAILY_GAMES.map(([k,ic,t,c])=>{const d=drDone(k);return '<article class="dy-card '+(d?'done':'')+'" style="--gc:'+c+'"><span class="dy-ic">'+ic+'</span><div><b>'+esc(t)+'</b><small>'+(d?'✓ '+Number(d.score).toLocaleString('pt-BR')+' pontos hoje':'Disponível agora')+'</small></div><button class="pg-outline" '+(d?'disabled':'onclick="IASDSolo.startDaily(\''+k+'\')"')+'>'+(d?'Concluído':I('play')+'Jogar')+'</button></article>'}).join('')+'</div></section>';
+}
+function rankTabs(){return '<div class="dy-tabs" id="dy-tabs"><button class="'+(DR.scope==='day'?'on':'')+'" onclick="IASDPages.dailyScope(\'day\')">Hoje</button><button class="'+(DR.scope==='week'?'on':'')+'" onclick="IASDPages.dailyScope(\'week\')">Esta semana</button></div>'}
+function rankBody(){
+ if(DR.legacy){const rank=(typeof gameRanking!=='undefined'?gameRanking:[]);return '<p class="dy-note">Ranking antigo (geral). O ranking diário será ativado quando o administrador rodar o script do servidor.</p>'+rankRows(rank)}
+ if(!DR.loaded[DR.scope])return '<p class="pg-empty">Carregando ranking…</p>';
+ if(DR.err&&!DR.rows[DR.scope].length)return '<p class="pg-empty">Não foi possível carregar o ranking agora.</p>';
+ const rows=DR.rows[DR.scope];
+ return rows.length?rankRows(rows):'<p class="pg-empty">'+(DR.scope==='day'?'Ninguém pontuou hoje ainda. Faça um Desafio do dia e abra o ranking!':'Ninguém pontuou nesta semana ainda.')+'</p>';
+}
+function paintRank(){const b=document.getElementById('gm-rank');if(b)b.innerHTML=rankBody();const t=document.getElementById('dy-tabs');if(t)t.outerHTML=rankTabs();const n=document.querySelector('.gm-tile.t2 b');if(n)n.textContent=String(DR.legacy?(typeof gameRanking!=='undefined'?gameRanking.length:0):(DR.rows[DR.scope]||[]).length)}
+async function dailyLoad(scope,force){
+ scope=scope||DR.scope;if(typeof cloud==='undefined'||!cloud||!cloudUser)return;
+ if(!force&&DR.loaded[scope]&&Date.now()-DR.loaded[scope]<45000){paintRank();return}
+ const r=await cloud.rpc('iasd_daily_ranking',{p_scope:scope});
+ if(r.error){DR.err=r.error.message;DR.legacy=/function|schema cache|does not exist/i.test(r.error.message);DR.loaded[scope]=Date.now()}
+ else{DR.err='';DR.legacy=false;DR.rows[scope]=(r.data||[]).map(drMap);DR.loaded[scope]=Date.now()}
+ paintRank();
+ if(!DR.legacy&&!DR.myLoaded){DR.myLoaded=true;const m=await cloud.rpc('iasd_my_daily');if(!m.error&&Array.isArray(m.data)){let ch=false;m.data.forEach(x=>{try{const k='iasd-daily-'+new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'})+'-'+x.game;if(!localStorage.getItem(k)){localStorage.setItem(k,JSON.stringify({score:x.score,correct:x.correct,total:x.total,at:Date.now()}));ch=true}}catch(e){}});if(ch&&document.getElementById('pg-daily'))render()}}
+}
+function dailyScope(s){DR.scope=s;paintRank();dailyLoad(s,true)}
+function dailyReload(){DR.loaded={};DR.myLoaded=false;setTimeout(()=>{if(document.getElementById('gm-rank'))dailyLoad(DR.scope,true)},200)}
 function games(){
+ setTimeout(()=>dailyLoad(),0);
  const rank=(typeof gameRanking!=='undefined'?gameRanking:[]);
  const me=rank.find(x=>x.user_id===cloudUser?.id);
  const score=me?Number(me.score||0):0;
  const tile=(cls,ico,num,label,click,sm)=>'<button class="gm-tile '+cls+'" onclick="'+click+'"><span class="gm-ti">'+I(ico)+'</span><span class="gm-tx">'+(sm?'<b class="sm">'+esc(num)+'</b><small>'+esc(label)+'</small>':'<b>'+esc(num)+'</b><small>'+esc(label)+'</small>')+'</span>'+I('right','chev')+'</button>';
  const jump=id=>"document.getElementById('"+id+"')?.scrollIntoView({behavior:'smooth',block:'start'})";
  return '<div class="pg pg-jogos">'+hero('jogos',{kick:'JOGOS',title:'Aprenda de forma <em>divertida</em>',text:'Desafie seus conhecimentos, participe de jogos e atividades que fortalecem a sua fé e o aprendizado da Palavra de Deus.',cta:'<button class="pg-cta" onclick="'+jump('pg-games')+'">'+I('pad')+'Ver todos os jogos'+I('right')+'</button>',quote:['Tudo o que fizerem, façam de todo o coração, como para o Senhor e não para os homens.','Colossenses 3:23']})+
- '<div class="gm-tiles">'+tile('t1','pad','5','Jogos disponíveis',jump('pg-games'))+tile('t2','users',String(rank.length),'Participantes no ranking',jump('pg-rank'))+tile('t3','trophy',score.toLocaleString('pt-BR'),'Sua pontuação',jump('pg-rank'))+tile('t4','chart','Ver ranking','Confira os melhores da comunidade',jump('pg-rank'),true)+'</div>'+
- '<section id="pg-games" class="gm-sec"><div class="pg-head">'+'<h2 class="pg-h">'+I('pad','blue')+'Jogos disponíveis</h2><div class="gm-tools"><label class="pg-search">'+I('search')+'<input type="search" placeholder="Pesquisar jogos…" oninput="var q=this.value.trim().toLowerCase();document.querySelectorAll(\'.gm-card\').forEach(c=>c.style.display=(!q||c.dataset.t.includes(q))?\'\':\'none\')"></label><label class="pg-sel sm">'+I('sort')+'<select onchange="var r=document.getElementById(\'gm-row\');if(!r)return;var cs=[...r.children];cs.sort((a,b)=>this.value===\'nome\'?a.dataset.t.localeCompare(b.dataset.t):0);if(this.value===\'nome\')cs.forEach(c=>r.appendChild(c));else{/* ordem padrão */var o=[\'quiz bíblico\',\'quem sou eu?\',\'linha do tempo\',\'memória bíblica\',\'jogo coletivo\'];cs.sort((a,b)=>o.indexOf(a.dataset.t)-o.indexOf(b.dataset.t)).forEach(c=>r.appendChild(c))}"><option value="">Ordenar por</option><option value="nome">Nome (A–Z)</option></select></label><button class="pg-blue" onclick="gameSfx(\'start\');openCollectiveGame()">'+I('plus')+'Novo jogo</button></div></div><div id="game-stage">'+gameCards()+'</div></section>'+
- '<section id="pg-rank" class="gm-sec"><div class="pg-head"><h2 class="pg-h">'+I('trophy','gold')+'Ranking da comunidade</h2>'+(cloudRole==='founder'?'<button class="pg-danger" onclick="IASDPages.resetRank(this)">'+I('trash')+'Zerar ranking</button>':'')+'<button class="pg-link" onclick="var l=document.getElementById(\'gm-rank\');l.classList.toggle(\'all\');this.firstChild.textContent=l.classList.contains(\'all\')?\'Ver menos \':\'Ver completo \'">Ver completo '+I('right')+'</button></div><div id="gm-rank" class="gm-rank">'+rankRows(rank)+'</div></section></div>';
+ '<div class="gm-tiles">'+tile('t1','pad','5','Jogos disponíveis',jump('pg-games'))+tile('t2','users',String((DR.rows[DR.scope]||[]).length||rank.length),'Participantes no ranking',jump('pg-rank'))+tile('t3','trophy',drPointsToday().toLocaleString('pt-BR'),'Seus pontos hoje',jump('pg-daily'))+tile('t4','chart','Ver ranking','Confira os melhores da comunidade',jump('pg-rank'),true)+'</div>'+
+ dailySection()+'<section id="pg-games" class="gm-sec"><div class="pg-head">'+'<h2 class="pg-h">'+I('pad','blue')+'Jogos disponíveis</h2><div class="gm-tools"><label class="pg-search">'+I('search')+'<input type="search" placeholder="Pesquisar jogos…" oninput="var q=this.value.trim().toLowerCase();document.querySelectorAll(\'.gm-card\').forEach(c=>c.style.display=(!q||c.dataset.t.includes(q))?\'\':\'none\')"></label><label class="pg-sel sm">'+I('sort')+'<select onchange="var r=document.getElementById(\'gm-row\');if(!r)return;var cs=[...r.children];cs.sort((a,b)=>this.value===\'nome\'?a.dataset.t.localeCompare(b.dataset.t):0);if(this.value===\'nome\')cs.forEach(c=>r.appendChild(c));else{/* ordem padrão */var o=[\'quiz bíblico\',\'quem sou eu?\',\'linha do tempo\',\'memória bíblica\',\'jogo coletivo\'];cs.sort((a,b)=>o.indexOf(a.dataset.t)-o.indexOf(b.dataset.t)).forEach(c=>r.appendChild(c))}"><option value="">Ordenar por</option><option value="nome">Nome (A–Z)</option></select></label><button class="pg-blue" onclick="gameSfx(\'start\');openCollectiveGame()">'+I('plus')+'Novo jogo</button></div></div><div id="game-stage">'+gameCards()+'</div></section>'+
+ '<section id="pg-rank" class="gm-sec"><div class="pg-head"><h2 class="pg-h">'+I('trophy','gold')+'Ranking da comunidade</h2>'+(cloudRole==='founder'?'<button class="pg-danger" onclick="IASDPages.resetRank(this)">'+I('trash')+'Zerar ranking</button>':'')+'<button class="pg-link" onclick="var l=document.getElementById(\'gm-rank\');l.classList.toggle(\'all\');this.firstChild.textContent=l.classList.contains(\'all\')?\'Ver menos \':\'Ver completo \'">Ver completo '+I('right')+'</button></div>'+rankTabs()+'<div id="gm-rank" class="gm-rank">'+rankBody()+'</div></section></div>';
 }
 async function resetRank(btn){
  if(cloudRole!=='founder')return;
@@ -459,5 +494,5 @@ function esBody(){
  return filter+chips+'<div class="es-grid">'+cal+side+'</div>'+add;
 }
 
-window.IASDPages={rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();
