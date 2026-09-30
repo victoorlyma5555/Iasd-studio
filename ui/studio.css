@@ -173,7 +173,17 @@ body.st2 .tm-presets{display:flex;flex-wrap:wrap;gap:8px;margin:0}.tm-presets bu
 body.st2 main>.tools{flex-wrap:nowrap!important;gap:6px!important}
 body.st2 .tool{flex:1 1 auto!important;padding:0 8px!important;gap:6px;font-size:12px!important;white-space:nowrap}
 body.st2 .tool .ti{width:16px;height:16px}
-body.st2 main>.work{contain:none!important}
+
 .amb-x{background:transparent!important;border:0!important;width:32px!important;height:32px!important;padding:0!important;display:grid!important;place-items:center;color:#9fb0d8!important}
 .amb-x .ti{width:17px;height:17px}
 body.st2 main>.work button.primary,body.st2 main>.work .primary,body.st2 main>.work button[class*=gold]{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#3b82f6!important;color:#fff!important}
+
+/* popups flutuantes: sem painel de fundo atrás dos cards */
+html:has(body.st2),body.st2,body.st2 main{background:transparent!important;border:0!important;box-shadow:none!important}
+body.st2 main::before,body.st2 main::after{display:none!important}
+body.st2 main>.work{contain:size!important;min-height:560px!important;overflow-y:auto!important}
+body.st2 main>.work{scrollbar-width:thin;scrollbar-color:#2a4385 transparent}
+/* telão preenche a largura do card */
+.st-left .preview .screen{height:auto!important;aspect-ratio:16/9;display:block}
+.st-left .live-frame{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none;aspect-ratio:auto}
+@media (max-width:1000px){body.st2 main>.work{contain:none!important;min-height:0!important;max-height:none!important}}

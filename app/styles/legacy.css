@@ -1221,3 +1221,7 @@ button.primary,.auth-submit,.game-main-action{background:linear-gradient(135deg,
  .sabbath-reading p,.sabbath-reading div,.sabbath-reading section,.sabbath-reading article,.sabbath-reading blockquote,.sabbath-reading li,.sabbath-reading h1,.sabbath-reading h2,.sabbath-reading h3,.sabbath-reading h4,.sabbath-reading h5,.sabbath-reading h6{width:100%!important;white-space:normal!important;overflow-wrap:break-word!important;word-break:normal!important}
  .sabbath-reading img,.sabbath-reading picture,.sabbath-reading picture img,.sabbath-reading svg,.sabbath-reading video{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;object-fit:contain!important}
 }
+
+/* Studio: sem painel de fundo atrás do iframe */
+#content:has(.projection-studio-frame),#content:has(.projection-studio-frame)>*{background:transparent!important;border:0!important;box-shadow:none!important}
+.projection-studio-frame{background:transparent!important}
