@@ -44,6 +44,7 @@ const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="no
 
 /* ---------- páginas do menu ---------- */
 const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Sonoplastia','music','Sonoplastia'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
+function mainPages(){return MAIN.filter(x=>x[0]!=='Sonoplastia'||S.sound())}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
 const TITLES={Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'Sonoplastia','Projeção':'Studio de Projeção',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
@@ -51,10 +52,11 @@ function titleOf(cur){
   return TITLES[cur]||cur;
 }
 function searchable(){
-  const out=MAIN.map(([id,i,l])=>({id,icon:i,label:l}));
+  const out=mainPages().map(([id,i,l])=>({id,icon:i,label:l}));
   S.tabs().forEach(t=>out.push({id:'custom:'+t.id,icon:'star',label:t.title||'Aba'}));
   if(S.sound()){out.push({id:'Projeção',icon:'play',label:'Studio de Projeção'},{id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
-  out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'},{id:'Perfil',icon:'user',label:'Meu perfil'});
+  if(S.sound())out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'});
+  out.push({id:'Perfil',icon:'user',label:'Meu perfil'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
   if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
   return out;
@@ -66,7 +68,7 @@ function navBtn(id,iconHtml,label,cur){return `<button class="iu-nav${cur===id?'
 function sideHTML(){
   const cur=S.cur();
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
-  h+=MAIN.map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
+  h+=mainPages().map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
   if(S.assigned())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
   if(S.manage()){
@@ -120,31 +122,31 @@ const CARDS=[
  ['Cronograma','calendar','Cronogramas','Veja a programação de hoje','home_icon_schedule','#5b3aa8','#e8792f'],
  ['Sonoplastia','music','Sonoplastia','Acesse o Studio de Projeção','home_icon_projection','#1e2a78','#7c3aed'],
  ['Bíblia','book','Bíblia','Leia e pesquise as Escrituras','home_icon_bible','#8a4b2a','#e9b56a'],
- ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','','#1c3b6e','#4a7bd0'],
- ['Jogo','game','Jogos','Atividades e interação','','#a86a12','#f4c24a'],
+ ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','home_icon_lesson','#1c3b6e','#4a7bd0'],
+ ['Jogo','game','Jogos','Atividades e interação','home_icon_games','#a86a12','#f4c24a'],
  ['Escalas','users','Escalas','Consulte as escalas mensais','home_icon_scales','#1d2f6b','#6d4be0'],
  ['Datas especiais','star','Datas Especiais','Eventos e comemorações','home_icon_dates','#a0304a','#f08a5d'],
- ['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','','#33307a','#8f6fe8']
+ ['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','home_icon_pec','#33307a','#8f6fe8']
 ];
 const QUICK=[
  ['Sorteadores','dice','Sorteador','#92400e','#3b2a1a','sound'],
  ['Sorteadores','dice','Provai e Vede','#1d4ed8','#4c1d95','sound'],
- ['Mídia','music','Mídia e músicas','#b45309','#7c2d12',''],
+ ['Mídia','music','Mídia e músicas','#b45309','#7c2d12','sound'],
  ['Projeção','play','Studio de Projeção','#6d28d9','#312e81','sound'],
- ['Bíblia','book','Bíblia de Projeção','#9a3412','#1e293b',''],
+ ['Bíblia','book','Bíblia de Projeção','#9a3412','#1e293b','sound'],
  ['Alertas','horn','Alertar sonoplastia','#a16207','#422006','assigned']
 ];
 function coverStyle(slot,c1,c2){
   const path=slot&&g(()=>siteAssets[slot]);
   if(path&&!/\.(mp4|webm|mov)$/i.test(path)){
     const url=g(()=>imageUrl(path));
-    if(url)return `background-image:url('${E(url)}');`;
+    if(url){const f=g(()=>assetFrames[slot])||{};return `background-image:url('${E(url)}');background-position:${Number(f.position_x??50)}% ${Number(f.position_y??50)}%;`}
   }
   return `background-image:linear-gradient(135deg,${c1},${c2});`;
 }
 function cardsHTML(){
   const edit=S.manage();
-  const base=CARDS.map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const base=CARDS.filter(x=>x[0]!=='Sonoplastia'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
   const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}"></div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
   return base.concat(custom).join('');
 }
@@ -178,6 +180,12 @@ function fmtLast(ts){
   const d=new Date(ts),hm=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   return d.toDateString()===new Date().toDateString()?'Hoje, '+hm:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+', '+hm;
 }
+function imageOf(slot){const path=g(()=>siteAssets[slot]);return path&&!/\.(mp4|webm|mov)$/i.test(path)?g(()=>imageUrl(path)):''}
+function bgImage(slot,shade){
+  const url=imageOf(slot);if(!url)return '';
+  const f=g(()=>assetFrames[slot])||{};
+  return `background-image:${shade?shade+',':''}url('${E(url)}');background-size:cover;background-position:${Number(f.position_x??50)}% ${Number(f.position_y??50)}%;`;
+}
 function projInner(){
   const st=proj.state,d=proj.data;
   const badge={ok:['Conectado',''],unpaired:['Sem pareamento','warn'],off:['Desconectado','off'],checking:['Verificando…','warn'],idle:['Pronto para conectar','off']}[st]||['—','off'];
@@ -185,7 +193,7 @@ function projInner(){
   const name=S.user()?g(()=>loggedUserName()):'Visitante';
   const sound=S.sound();
   return `<div class="iu-ph">${ic('monitor',20)}<h2>IASD Projetor</h2><span class="iu-ok ${badge[1]}">${badge[0]}</span></div>
-<div class="iu-pv">${ic('monitor',40)}</div>
+<div class="iu-pv" style="${bgImage('home_projector')}">${imageOf('home_projector')?'':ic('monitor',40)}${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_projector">✎ Editar imagem</button>':''}</div>
 <div class="iu-inf"><div>${ic('clock',15)}Última conexão: <b>${E(fmtLast(lastSeen()))}</b></div><div>${ic('monitor',15)}Monitor detectado: <b>${E(monitors)}</b></div><div>${ic('user',15)}Usuário: <b>${E(name||'—')}</b></div></div>
 <button class="iu-btn p" data-go="Projeção">${ic('play',16)}Abrir Studio de Projeção${ic('chev',16)}</button>
 ${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div>`:''}`;
@@ -207,9 +215,41 @@ async function checkProjector(){
   }catch(e){proj.state='off';proj.data=null}
   proj.busy=false;proj.checkedAt=Date.now();updateProj();
 }
+/* Passagem do dia: uma referência por dia (lista abaixo) e o texto vem da mesma Bíblia usada na tela Bíblia. */
+const DAILY=[['psalms',23,1],['john',3,16],['proverbs',3,5],['isaiah',41,10],['philippians',4,13],['romans',8,28],['jeremiah',29,11],['matthew',11,28],['joshua',1,9],['psalms',46,1],['luke',1,37],['2 timothy',1,7],['hebrews',11,1],['matthew',6,33],['romans',12,2],['psalms',119,105],['galatians',2,20],['colossians',3,23],['1 john',4,19],['ephesians',2,8],['revelation',21,4],['psalms',27,1],['proverbs',16,3],['isaiah',40,31],['john',14,6],['1 corinthians',13,13],['deuteronomy',31,6],['matthew',28,20],['psalms',91,1],['2 corinthians',12,9],['james',1,5]];
+const passage={book:config.passage.book,chapter:config.passage.chapter,verse:1,ref:config.passage.ref,text:config.passage.text,loaded:false};
+function todayKey(){return new Date().toLocaleDateString('en-CA')}
+function dailyRef(){
+  const d=new Date(),day=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
+  return DAILY[day%DAILY.length];
+}
+function bookName(id){return (g(()=>bibleBooks.find(x=>x[1]===id))||[])[0]||id}
+function passageCacheKey(){return 'iasd-ui-passage:'+todayKey()+':'+(g(()=>readerState.translation)||'almeida')}
+function loadPassage(){
+  const [book,chapter,verse]=dailyRef();
+  passage.book=book;passage.chapter=chapter;passage.verse=verse;passage.ref=bookName(book)+' '+chapter+':'+verse;
+  try{const c=JSON.parse(localStorage.getItem(passageCacheKey())||'null');if(c&&c.text){passage.text=c.text;passage.loaded=true;return Promise.resolve()}}catch(e){}
+  if(passage.fetching)return passage.fetching;
+  passage.fetching=(async()=>{
+    try{
+      const verses=await fetchBibleChapter(book,chapter);
+      const v=(verses||[]).find(x=>Number(x.verse)===verse);
+      const text=v&&String(v.text||'').replace(/\s+/g,' ').trim();
+      if(text){passage.text='“'+text+'”';passage.loaded=true;try{localStorage.setItem(passageCacheKey(),JSON.stringify({text:passage.text}))}catch(e){}}
+    }catch(e){console.warn('[IASD UI] passagem do dia indisponível, usando texto padrão',e)}
+    passage.fetching=null;updatePassage();
+  })();
+  return passage.fetching;
+}
+function passageInner(){
+  const long=passage.text.length>150;
+  return `<div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q${long?' class="long"':''}>${E(passage.text)}</q><small>${E(passage.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ler capítulo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
+}
+function passageStyle(){return bgImage('home_passage','linear-gradient(180deg,rgba(8,16,38,.25),rgba(8,16,38,.82))')}
+function updatePassage(){const el=$('iu-passage');if(el){el.innerHTML=passageInner();el.setAttribute('style',passageStyle())}}
 function passageHTML(){
-  const p=config.passage;
-  return `<section class="iu-pan iu-pas"><div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q>${E(p.text)}</q><small>${E(p.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ler capítulo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button></div></section>`;
+  loadPassage();
+  return `<section class="iu-pan iu-pas" id="iu-passage" style="${passageStyle()}">${passageInner()}</section>`;
 }
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
@@ -223,7 +263,7 @@ function bannerHTML(){
 }
 api.home=function(){
   try{
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid">${scheduleHTML()}<section class="iu-pan" id="iu-proj">${projInner()}</section>${passageHTML()}</div>${quickHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${quickHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -282,7 +322,7 @@ function bind(){
       else if(a==='projtest')checkProjector();
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
       else if(a==='passage'){
-        g(()=>{readerState.book=config.passage.book;readerState.chapter=config.passage.chapter;saveReader()});
+        g(()=>{readerState.book=passage.book;readerState.chapter=passage.chapter;saveReader()});
         g(()=>go('Bíblia'));
       }
       return;
@@ -301,6 +341,7 @@ function bind(){
 }
 function refresh(){
   const cur=S.cur();
+  if(!S.sound()){proj.state='idle';proj.data=null}
   document.body.classList.toggle('iu-is-home',cur==='Painel');
   const side=$('iu-side');if(side)side.innerHTML=sideHTML();
   const bn=$('iu-bn');if(bn)bn.innerHTML=barHTML();

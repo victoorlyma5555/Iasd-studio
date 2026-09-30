@@ -3,8 +3,8 @@
    Carregado DEPOIS de app/styles/legacy.css. */
 
 body.iu{
-  --iu-bg:#eef3fb;--iu-sf:#fff;--iu-sf2:#f3f6fc;--iu-bd:#dbe5f4;--iu-tx:#0f1c3a;--iu-mu:#5b6b8c;
-  --iu-pr:#2563eb;--iu-gd:#e39a1f;--iu-gr:#16a34a;--iu-sh:0 4px 16px rgba(20,40,90,.08);
+  --iu-bg:#e4ebf7;--iu-sf:#fff;--iu-sf2:#edf1f9;--iu-bd:#b4c3dc;--iu-tx:#0f1c3a;--iu-mu:#51617f;
+  --iu-pr:#2563eb;--iu-gd:#e39a1f;--iu-gr:#16a34a;--iu-sh:0 2px 10px rgba(20,40,90,.12);
   --iu-ban:linear-gradient(120deg,#cfe3ff,#eaf2ff 55%,#ffe1c2);
   --iu-side:248px;
 }
@@ -162,3 +162,18 @@ html[data-theme="light"] .iu-ban-shade{background:linear-gradient(90deg,rgba(255
 html body.iu .home-ranking{margin-top:16px;color:#e8eefc}
 html body.iu .home-ranking h3,html body.iu .home-ranking strong{color:#fff}
 html body.iu .home-ranking small,html body.iu .home-ranking .ranking-head span{color:#9fb6cc}
+
+/* painéis: imagem de fundo editável, botão de editar e grade sem o projetor */
+.iu-pan{position:relative}
+.iu-pv{position:relative;background-size:cover;background-position:center}
+.iu-pan>.iu-edit,.iu-pv>.iu-edit{top:10px;right:10px}
+.iu-pas{background-size:cover;background-position:center;min-height:260px}
+.iu-pas q.long{font-size:17px}
+.iu-pas small{text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.iu-pas q{text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.iu-grid.two{grid-template-columns:1fr 1fr}
+.iu-grid.two .iu-pas{grid-column:auto}
+@media (max-width:640px){.iu-grid.two{grid-template-columns:1fr}}
+/* linhas e divisórias do modo claro mais visíveis */
+html[data-theme="light"] body.iu .iu-sch li{border-bottom-color:var(--iu-bd)}
+html[data-theme="light"] body.iu .iu-ph{padding-bottom:0}
