@@ -23,6 +23,22 @@ else app.on('second-instance',()=>{
  showDashboard();
 });
 const SITE='https://iasdapp.com.br';
+const PROJECTION_URL='https://www.iasdapp.com.br/sonoplastia/projecao';
+// Configuração online: os links abaixo podem ser mudados no site (arquivo /projetor-config.json), sem recompilar o programa.
+const CONFIG_URL='https://www.iasdapp.com.br/projetor-config.json';
+const CONFIG_HOSTS=new Set(['iasdapp.com.br','www.iasdapp.com.br']);
+let remoteConfig={};
+function safeLink(v){try{const u=new URL(String(v||''));return u.protocol==='https:'&&CONFIG_HOSTS.has(u.hostname)?u.href:null}catch{return null}}
+function projectionUrl(){return safeLink(remoteConfig.projectionUrl)||PROJECTION_URL}
+function siteUrl(){return safeLink(remoteConfig.siteUrl)||SITE}
+const DASHBOARD_URL='https://www.iasdapp.com.br/iasd-projetor/dashboard.html';
+function dashboardRemoteUrl(){return remoteConfig.dashboardMode==='local'?null:(safeLink(remoteConfig.dashboardUrl)||DASHBOARD_URL)}
+function loadCachedRemoteConfig(){try{remoteConfig=JSON.parse(fs.readFileSync(path.join(app.getPath('userData'),'remote-config.json'),'utf8'))||{}}catch{remoteConfig={}}}
+async function refreshRemoteConfig(){
+ const file=path.join(app.getPath('userData'),'remote-config.json');
+ try{const res=await fetch(CONFIG_URL+'?t='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(8000)});if(!res.ok)throw Error('HTTP '+res.status);const cfg=await res.json();if(cfg&&typeof cfg==='object'){remoteConfig={projectionUrl:safeLink(cfg.projectionUrl)||undefined,siteUrl:safeLink(cfg.siteUrl)||undefined,dashboardMode:cfg.dashboardMode==='local'?'local':'remote',dashboardUrl:safeLink(cfg.dashboardUrl)||undefined};try{fs.writeFileSync(file,JSON.stringify(remoteConfig))}catch{}}}
+ catch{if(!Object.keys(remoteConfig).length){try{remoteConfig=JSON.parse(fs.readFileSync(file,'utf8'))||{}}catch{}}}
+}
 const ALLOWED_SITES=new Set([SITE,'https://www.iasdapp.com.br','https://iasd-studio.vercel.app']);
 function requestOrigin(req){return String(req.headers.origin||'').replace(/\/$/,'')}
 function allowedOrigin(req){
@@ -254,7 +270,21 @@ function showDashboard(){
  if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
  const wa=screen.getPrimaryDisplay().workArea;dashboardRef=new BrowserWindow({width:Math.min(1400,wa.width),height:Math.min(860,wa.height),minWidth:980,minHeight:650,maximizable:false,fullscreenable:false,frame:false,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false,webviewTag:true}});
  dashboardRef.setMenuBarVisibility(false);
- dashboardRef.loadFile(path.join(__dirname,'dashboard.html'));
+ const localPanel=()=>{if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.loadFile(path.join(__dirname,'dashboard.html'))};
+ const remotePanel=dashboardRemoteUrl();
+ if(!remotePanel)localPanel();
+ else{
+  const wc=dashboardRef.webContents;let settled=false;
+  const fallback=()=>{if(settled)return;settled=true;clearTimeout(timer);localPanel()};
+  const timer=setTimeout(fallback,7000);
+  wc.on('did-fail-load',(e,code,desc,url,isMain)=>{if(isMain!==false&&code!==-3)fallback()});
+  wc.once('did-navigate',(e,url,status)=>{if(status>=400)fallback()});
+  wc.once('dom-ready',()=>{if(settled)return;wc.executeJavaScript('window.__IASD_PANEL_OK===true').then(ok=>{if(ok){settled=true;clearTimeout(timer)}else fallback()}).catch(fallback)});
+  // o painel online só pode navegar dentro do site autorizado; links externos abrem no navegador
+  wc.on('will-navigate',(e,url)=>{if(!safeLink(url)&&!url.startsWith('file://')){e.preventDefault()}});
+  wc.setWindowOpenHandler(({url})=>{const u=safeLink(url);if(u)shell.openExternal(u);return{action:'deny'}});
+  dashboardRef.loadURL(remotePanel,{extraHeaders:'pragma: no-cache\n'}).catch(()=>{});
+ }
  dashboardRef.once('ready-to-show',()=>{if(!dashboardRef||dashboardRef.isDestroyed())return;dashboardRef.show();dashboardRef.moveTop();dashboardRef.focus()});
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
@@ -268,7 +298,7 @@ ipcMain.handle('iasd:alerts-clear',()=>{saveAlertHistory([]);return{ok:true}});
 ipcMain.handle('iasd:alerts-mute',(_,value)=>{alertsMuted=!!value;return{ok:true,muted:alertsMuted}});
 ipcMain.handle('iasd:identify-monitors',()=>{const wins=[];screen.getAllDisplays().forEach((display,index)=>{const b=display.bounds,w=new BrowserWindow({x:b.x,y:b.y,width:b.width,height:b.height,frame:false,alwaysOnTop:true,skipTaskbar:true,focusable:false,transparent:false,backgroundColor:'#081525',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});wins.push(w);const label=index===0?'COMPUTADOR':'TELÃO';w.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(`<html><body style="margin:0;background:#081525;color:white;height:100vh;display:grid;place-items:center;font-family:Segoe UI"><div style="text-align:center"><div style="font-size:22vw;font-weight:900">${index+1}</div><div style="font-size:4vw;color:#f3cf77;font-weight:800">${label}</div></div></body></html>`));w.once('ready-to-show',()=>w.showInactive())});setTimeout(()=>wins.forEach(w=>{if(!w.isDestroyed())w.close()}),3500);return{ok:true}});
 ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:pairedTokens.size>0&&(Date.now()-lastSiteContact<900000||!!siteIdentity),siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible(),alertsMuted,projecting:projectionActive(),projectionType:youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()?'YouTube':lastProjectionContent?'Conteúdo do IASD APP':'Telão livre'}));
-ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
+ipcMain.handle('iasd:site',async()=>{await refreshRemoteConfig();return shell.openExternal(projectionUrl())});
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
 ipcMain.handle('iasd:install-update',()=>installDownloadedUpdate());
@@ -355,6 +385,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
+ loadCachedRemoteConfig();
  loadPairing();
  void alertRestore();
  app.setLoginItemSettings({openAtLogin:true,path:process.execPath,args:app.isPackaged?['--autostart']:['.','--autostart']});
@@ -370,7 +401,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    {label:(screenOpen?'● Telão em projeção':'○ Telão aguardando'),enabled:false},
    {type:'separator'},
    {label:'Abrir painel',click:showDashboard},
-   {label:'Abrir IASD APP',click:()=>shell.openExternal(SITE)},
+   {label:'Abrir IASD Projetor no site',click:()=>{void refreshRemoteConfig().finally(()=>shell.openExternal(projectionUrl()))}},
    {type:'separator'},
    {label:screenOpen?'Fechar telão':'Abrir telão',click:()=>{try{if(projectionActive()){closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}else showProjector();setTimeout(refreshTrayMenu,150)}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
    {label:'Código de pareamento: '+pairingCode,click:()=>dialog.showMessageBox({type:'info',title:'Pareamento · IASD Projetor',message:'Código: '+pairingCode,detail:'Digite este código no IASD APP para autorizar este computador.'})},
@@ -390,7 +421,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    app.quit();
   }
  });
- server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();if(!process.argv.includes('--hidden'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
+ server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();void refreshRemoteConfig();setInterval(()=>{void refreshRemoteConfig()},3600000);if(!process.argv.includes('--hidden'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
 app.on('before-quit',event=>{if(installUpdateOnQuit&&downloadedUpdate&&!installingUpdate&&!projectionActive()){event.preventDefault();installDownloadedUpdate();return}server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
