@@ -68,7 +68,7 @@ const ART={
 };
 function hero(key,o){
  const url=(typeof siteAssets!=='undefined'&&siteAssets&&siteAssets['hero_'+key]&&typeof imageUrl==='function')?imageUrl(siteAssets['hero_'+key]):'';
- return '<section class="pg-hero pg-hero-'+key+'"><div class="pg-art">'+(url?'<img src="'+esc(url)+'" alt="">':ART[key])+'</div><div class="pg-hero-txt"><span class="pg-kick">'+esc(o.kick)+'</span><h1>'+o.title+'</h1><p>'+esc(o.text)+'</p>'+(o.cta||'')+'</div>'+(o.quote?'<blockquote class="pg-quote">“'+esc(o.quote[0])+'”<cite>'+esc(o.quote[1])+'</cite></blockquote>':'')+'</section>';
+ return '<section class="pg-hero pg-hero-'+key+'"><div class="pg-art">'+(url?'<img src="'+esc(url)+'" alt=""'+(window.IASDMedia&&typeof assetFrames!=='undefined'&&assetFrames['hero_'+key]?' style="'+IASDMedia.frameStyle(IASDMedia.frameOf('hero_'+key))+'"':'')+'>':ART[key])+'</div><div class="pg-hero-txt"><span class="pg-kick">'+esc(o.kick)+'</span><h1>'+o.title+'</h1><p>'+esc(o.text)+'</p>'+(o.cta||'')+'</div>'+(o.quote?'<blockquote class="pg-quote">“'+esc(o.quote[0])+'”<cite>'+esc(o.quote[1])+'</cite></blockquote>':'')+'</section>';
 }
 const go=n=>"go('"+n+"')";
 const dt=v=>{const d=new Date(v);if(isNaN(d))return '';return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
@@ -83,7 +83,23 @@ function alerts(){
  '<div class="al-ta">'+I('msg')+'<textarea id="founder-sound-alert" maxlength="500" rows="3" placeholder="Ex.: O próximo hino foi alterado. Prepare o hino 123." oninput="document.getElementById(\'al-count\').textContent=this.value.length+\'/500\'"></textarea><small id="al-count">0/500</small></div>'+
  '<div class="al-act"><button class="pg-gold" id="founder-send-alert" onclick="sendFounderSoundAlert()">'+I('send')+'Enviar alerta ao sonoplasta</button><button class="pg-ghost" onclick="var t=document.getElementById(\'founder-sound-alert\');t.value=\'\';document.getElementById(\'al-count\').textContent=\'0/500\'">'+I('trash')+'Limpar mensagem</button></div></section>'+
  '<aside class="pg-card al-how"><div class="al-how-i">'+I('bulb','gold')+'<div><h3>Como funciona?</h3><p>O alerta será exibido apenas no monitor principal do computador da igreja, sem substituir o conteúdo do telão.</p></div></div><hr><div class="al-how-i">'+I('users','blue')+'<p>Todos os membros com cargo podem enviar alertas. O computador da sonoplastia precisa estar com o site aberto e o aplicativo Windows em execução.</p></div></aside></div>'+
- '<section class="pg-card al-recent"><div class="pg-head"><h2 class="pg-h">'+I('clock','blue')+'Alertas recentes</h2><span class="pg-sub lead">Veja os últimos alertas enviados para o sonoplasta.</span><button class="pg-ghost" onclick="refreshSoundAlertThread()">'+I('refresh')+'Atualizar</button></div><div id="sound-alert-thread"></div></section></div>';
+ '<section class="pg-card al-recent"><div class="pg-head"><h2 class="pg-h">'+I('clock','blue')+'Alertas recentes</h2><span class="pg-sub lead">Veja os últimos alertas enviados para o sonoplasta.</span><button class="pg-ghost" onclick="refreshSoundAlertThread()">'+I('refresh')+'Atualizar</button>'+(alStaff()?'<button class="pg-danger" onclick="IASDPages.alDelAll()">'+I('trash')+'Apagar todos</button>':'')+'</div><div id="sound-alert-thread"></div></section></div>';
+}
+const alStaff=()=>typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.hasAssignedRole(cloudRole);
+const delBtn=x=>alStaff()?'<button type="button" class="pg-danger" style="margin-top:8px" onclick="IASDPages.alDel(\''+esc(x.id)+'\')">'+I('trash')+'Apagar este alerta</button>':'';
+async function alDel(id){
+ if(!alStaff()||!confirm('Apagar este alerta?'))return;
+ const r=await cloud.from('iasd_sound_alerts').delete().eq('id',id).select();
+ if(r.error)return alert('Não foi possível apagar: '+r.error.message);
+ if(!(r.data||[]).length)return alert('Nada foi apagado. Falta permissão no servidor: rode docs/supabase-alertas-apagar.sql no Supabase.');
+ refreshSoundAlertThread();
+}
+async function alDelAll(){
+ if(!alStaff()||!confirm('Apagar TODOS os alertas? Não dá para desfazer.'))return;
+ const r=await cloud.from('iasd_sound_alerts').delete().not('id','is',null).select();
+ if(r.error)return alert('Não foi possível apagar: '+r.error.message);
+ if(!(r.data||[]).length)return alert('Nada foi apagado (não há alertas ou falta permissão). Se os alertas continuam aparecendo, rode docs/supabase-alertas-apagar.sql no Supabase.');
+ refreshSoundAlertThread();
 }
 function alertRows(rows,sound){
  if(!rows.length)return '<p class="pg-empty">Nenhum alerta ainda.</p>';
@@ -91,7 +107,7 @@ function alertRows(rows,sound){
  return rows.map((x,i)=>{
   const replied=!!x.reply_message;
   const reply=replied?'<div class="al-reply-b"><b>'+I('left')+esc(x.replied_by_name||'Sonoplastia')+'</b><small>'+esc(typeof soundAgo==='function'?soundAgo(x.replied_at):'')+'</small><div>'+esc(x.reply_message)+'</div></div>':(sound?'':'<div class="al-wait">Aguardando resposta da sonoplastia…</div>');
-  const panel=sound?'<div class="al-panel" hidden><div class="al-quick">'+quick.map((t,k)=>'<button type="button" data-alert-reply="'+esc(x.id)+'" data-quick="'+k+'">'+esc(t)+'</button>').join('')+'</div><div class="al-write"><input type="text" maxlength="300" placeholder="Escrever resposta…" data-alert-input="'+esc(x.id)+'"><button type="button" class="pg-blue" data-alert-reply="'+esc(x.id)+'" data-send="1">Responder</button></div></div>':'<div class="al-panel" hidden><button type="button" class="pg-ghost" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.dataset.t);this.textContent=\'Copiado\'" data-t="'+esc(x.message)+'">'+I('copy')+'Copiar mensagem</button></div>';
+  const panel=sound?'<div class="al-panel" hidden><div class="al-quick">'+quick.map((t,k)=>'<button type="button" data-alert-reply="'+esc(x.id)+'" data-quick="'+k+'">'+esc(t)+'</button>').join('')+'</div><div class="al-write"><input type="text" maxlength="300" placeholder="Escrever resposta…" data-alert-input="'+esc(x.id)+'"><button type="button" class="pg-blue" data-alert-reply="'+esc(x.id)+'" data-send="1">Responder</button></div>'+delBtn(x)+'</div>':'<div class="al-panel" hidden><button type="button" class="pg-ghost" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.dataset.t);this.textContent=\'Copiado\'" data-t="'+esc(x.message)+'">'+I('copy')+'Copiar mensagem</button>'+delBtn(x)+'</div>';
   return '<article class="al-row"><span class="al-ico '+(replied?'ok':(i%2?'blue':'ok'))+'">'+I('send')+'</span><div class="al-main"><b>'+esc(x.message)+'</b><small>'+esc(x.sender_name||'Equipe')+' <i>•</i> '+esc(dt(x.created_at))+(x.schedule_name?' <i>✦</i> '+esc(x.schedule_name):' <i>✦</i> Aviso geral')+'</small>'+reply+'</div><span class="al-chip '+(replied?'replied':'')+'">'+I('check')+(replied?'Respondido':'Enviado')+'</span><button class="al-more" type="button" aria-label="Mais ações" onclick="var p=this.closest(\'.al-row\').querySelector(\'.al-panel\');p.hidden=!p.hidden">'+I('more')+'</button>'+panel+'</article>';
  }).join('');
 }
@@ -494,5 +510,5 @@ function esBody(){
  return filter+chips+'<div class="es-grid">'+cal+side+'</div>'+add;
 }
 
-window.IASDPages={dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

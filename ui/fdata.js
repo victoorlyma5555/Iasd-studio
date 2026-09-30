@@ -36,6 +36,8 @@ const css=()=>{if(document.getElementById('fdata-css'))return;const s=document.c
 .fdx-b.pri{background:var(--iu-pr,#2563eb);color:#fff;border-color:transparent}.fdx-b.dan{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}.fdx-b:disabled{opacity:.45;cursor:default}
 .fdx-warn{padding:10px 14px;border-radius:12px;background:#fef3c7;color:#78350f;font-size:14px;margin-bottom:10px}
 .fdx-list{display:grid;gap:8px}
+.fdm{width:100%;border-collapse:collapse;font-size:13.5px}.fdm th,.fdm td{padding:9px 10px;border-bottom:1px solid var(--iu-bd,#b4c3dc);text-align:center}.fdm th{font-size:12px;opacity:.75;position:sticky;top:0}.fdm th:first-child,.fdm td:first-child{text-align:left;min-width:230px}
+.fdm td small{display:block;opacity:.6}.fdm .y{color:#16a34a;font-weight:900}.fdm .n{opacity:.3}.fdm .cnt td{background:var(--iu-sf2,#edf1f9)}
 .fdx-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--iu-bd,#b4c3dc);background:var(--iu-sf,#fff)}
 .fdx-row.sel{outline:2px solid var(--iu-pr,#2563eb)}.fdx-row input[type=checkbox]{width:18px;height:18px;flex:none}
 .fdx-tx{flex:1;min-width:0}.fdx-tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fdx-tx small{display:block;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -78,9 +80,37 @@ function body(){
  return h;
 }
 function repaint(){const el=document.getElementById('fdx-body');if(!el)return;const keep=document.activeElement&&document.activeElement.id==='fdx-q';el.innerHTML=body();if(keep){const i=document.getElementById('fdx-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+
+/* ---------- quem pode o quê (conferido com as regras do app) ---------- */
+const ROLES=[['founder','Fundador'],['cofounder','Co-fundador'],['admin','Administrador'],['editor','Editor (legado)'],['operator','Operador (legado)'],['sonoplasta','Sonoplasta'],['viewer','Usuário comum']];
+function matrix(){
+ const R=(window.IASDAccess&&IASDAccess.roles)||{management:['founder','cofounder','admin'],scheduleEditors:['founder','cofounder','admin','editor','operator'],assigned:['founder','cofounder','admin','editor','operator','sonoplasta'],sound:['sonoplasta','founder','cofounder']};
+ const ALL=ROLES.map(r=>r[0]);
+ const rows=[
+  ['Ver cronogramas, escalas, Bíblia, hinário e jogos','Qualquer pessoa logada',ALL],
+  ['Criar e editar cronogramas',null,R.scheduleEditors],
+  ['Enviar alertas à sonoplastia',null,R.assigned],
+  ['Ver e responder alertas (sonoplasta)',null,R.sound],
+  ['Apagar alertas',null,R.assigned],
+  ['Usar o IASD Projetor e o Studio de Projeção',null,R.sound],
+  ['Modo edição: textos, banners, capas e carrossel',null,R.management],
+  ['Acervo do Site (imagens, vídeos, arquivos)',null,R.management],
+  ['Criar, renomear, mover e excluir abas',null,R.management],
+  ['Gerenciar usuários e cargos',null,['founder']],
+  ['Central de Dados (editar ou excluir qualquer tabela)',null,['founder']],
+  ['Zerar o ranking dos jogos',null,['founder']]
+ ];
+ const accs=(typeof founderAccounts!=='undefined'&&founderAccounts)||[];
+ const count=k=>accs.filter(u=>k==='viewer'?(!u.role||u.role==='pending'||u.role==='viewer'):u.role===k).length;
+ return '<section class="fdx pg-card"><h2>🔑 Quem pode o quê</h2><p class="muted">Tudo o que depende de cargo para ser visto ou editado. A linha “Pessoas” mostra quantas contas têm cada cargo hoje.</p><div style="overflow:auto"><table class="fdm"><thead><tr><th>Função</th>'+ROLES.map(r=>'<th>'+esc(r[1])+'</th>').join('')+'</tr></thead><tbody>'+
+  '<tr class="cnt"><td><b>Pessoas</b></td>'+ROLES.map(r=>'<td><b>'+count(r[0])+'</b></td>').join('')+'</tr>'+
+  rows.map(r=>'<tr><td>'+esc(r[0])+(r[1]?'<small>'+esc(r[1])+'</small>':'')+'</td>'+ROLES.map(x=>'<td>'+(r[2].includes(x[0])?'<span class="y">✓</span>':'<span class="n">—</span>')+'</td>').join('')+'</tr>').join('')+
+  '</tbody></table></div></section>';
+}
+
 function section(){
  css();setTimeout(()=>{if(!D.loaded[D.k]&&!D.loading)load(true)},0);
- return '<section class="fdx pg-card"><h2>🗂️ Central de Dados do Site</h2><p class="muted">Domínio total: veja, pesquise, crie, edite, duplique, mova, exclua e faça backup de tudo que o site guarda.</p><div id="fdx-body">'+body()+'</div></section>';
+ return matrix()+'<section class="fdx pg-card"><h2>🗂️ Central de Dados do Site</h2><p class="muted">Domínio total: veja, pesquise, crie, edite, duplique, mova, exclua e faça backup de tudo que o site guarda.</p><div id="fdx-body">'+body()+'</div></section>';
 }
 const find=id=>(D.rows[D.k]||[]).find(r=>String(rid(r))===String(id));
 /* ---------- editor ---------- */

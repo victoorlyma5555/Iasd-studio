@@ -140,14 +140,14 @@ function coverStyle(slot,c1,c2){
   const path=slot&&g(()=>siteAssets[slot]);
   if(path&&!/\.(mp4|webm|mov)$/i.test(path)){
     const url=g(()=>imageUrl(path));
-    if(url){const f=g(()=>assetFrames[slot])||{};return `background-image:url('${E(url)}');background-position:${Number(f.position_x??50)}% ${Number(f.position_y??50)}%;`}
+    if(url){return `background-image:linear-gradient(135deg,${c1},${c2});`}
   }
   return `background-image:linear-gradient(135deg,${c1},${c2});`;
 }
 function cardsHTML(){
   const edit=S.manage();
-  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}"></div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
-  const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}"></div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
+  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
   return base.concat(custom).join('');
 }
 function parseItems(items){
@@ -207,7 +207,7 @@ function projInner(){
   const name=S.user()?g(()=>loggedUserName()):'Visitante';
   const sound=S.sound();
   return `<div class="iu-ph">${ic('monitor',20)}<h2>IASD Projetor</h2><span class="iu-ok ${badge[1]}">${badge[0]}</span></div>
-<div class="iu-pv" style="${bgImage('home_projector')}">${imageOf('home_projector')?'':ic('monitor',40)}${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_projector">✎ Editar imagem</button>':''}</div>
+<div class="iu-pv">${g(()=>IASDMedia.img('home_projector'))||''}${imageOf('home_projector')?'':ic('monitor',40)}${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_projector">✎ Editar imagem</button>':''}</div>
 <div class="iu-inf"><div>${ic('clock',15)}Última conexão: <b>${E(fmtLast(lastSeen()))}</b></div><div>${ic('monitor',15)}Monitor detectado: <b>${E(monitors)}</b></div><div>${ic('user',15)}Usuário: <b>${E(name||'—')}</b></div></div>
 <button class="iu-btn p" data-go="Projeção">${ic('play',16)}Abrir Studio de Projeção${ic('chev',16)}</button>
 ${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div>`:''}`;
