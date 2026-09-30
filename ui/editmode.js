@@ -43,7 +43,7 @@ body:not(.ue-on) .ue-hid{display:none!important}body.ue-on .ue-hid{opacity:.35;t
 function bar(){
  let b=document.getElementById('ue-bar');
  if(!b){b=document.createElement('div');b.id='ue-bar';b.innerHTML='<button type="button" id="ue-tg" onclick="IASDEdit.toggle()"></button><span id="ue-tx"></span>';document.body.appendChild(b)}
- const ok=allowed();b.classList.toggle('show',ok);b.classList.toggle('on',on&&ok);
+ const ok=allowed();b.classList.toggle('show',ok&&on);b.classList.toggle('on',on&&ok);
  if(!ok&&on){on=false;document.body.classList.remove('ue-on')}
  document.getElementById('ue-tg').textContent=on?'✔ Concluir edição':'✏️ Editar site';
  document.getElementById('ue-tx').textContent=on?'Clique em qualquer texto para editar ou ocultar · imagens abrem o Acervo':'';

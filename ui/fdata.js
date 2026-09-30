@@ -82,9 +82,9 @@ function body(){
 function repaint(){const el=document.getElementById('fdx-body');if(!el)return;const keep=document.activeElement&&document.activeElement.id==='fdx-q';el.innerHTML=body();if(keep){const i=document.getElementById('fdx-q');i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
 
 /* ---------- quem pode o quê (conferido com as regras do app) ---------- */
-const ROLES=[['founder','Fundador'],['cofounder','Co-fundador'],['admin','Administrador'],['editor','Editor (legado)'],['operator','Operador (legado)'],['sonoplasta','Sonoplasta'],['viewer','Usuário comum']];
+const ROLES=[['founder','Fundador'],['cofounder','Co-fundador'],['admin','Administrador'],['editor','Programação'],['midia','Comunicação'],['lider','Líder'],['sonoplasta','Sonoplasta'],['viewer','Usuário comum']];
 function matrix(){
- const R=(window.IASDAccess&&IASDAccess.roles)||{management:['founder','cofounder','admin'],scheduleEditors:['founder','cofounder','admin','editor','operator'],assigned:['founder','cofounder','admin','editor','operator','sonoplasta'],sound:['sonoplasta','founder','cofounder']};
+ const R=(window.IASDAccess&&IASDAccess.roles)||{management:['founder','cofounder','admin'],siteEditors:['founder','cofounder','admin','midia'],scheduleEditors:['founder','cofounder','admin','editor','operator'],assigned:['founder','cofounder','admin','editor','operator','midia','lider','sonoplasta'],sound:['sonoplasta','founder','cofounder']};
  const ALL=ROLES.map(r=>r[0]);
  const rows=[
   ['Ver cronogramas, escalas, Bíblia, hinário e jogos','Qualquer pessoa logada',ALL],
@@ -93,15 +93,16 @@ function matrix(){
   ['Ver e responder alertas (sonoplasta)',null,R.sound],
   ['Apagar alertas',null,R.assigned],
   ['Usar o IASD Projetor e o Studio de Projeção',null,R.sound],
-  ['Modo edição: textos, banners, capas e carrossel',null,R.management],
-  ['Acervo do Site (imagens, vídeos, arquivos)',null,R.management],
-  ['Criar, renomear, mover e excluir abas',null,R.management],
+  ['Modo edição: textos, banners, capas e carrossel',null,R.siteEditors],
+  ['Acervo do Site (imagens, vídeos, arquivos)',null,R.siteEditors],
+  ['Criar, renomear e excluir abas',null,R.management],
+  ['Excluir cronogramas',null,R.management],
   ['Gerenciar usuários e cargos',null,['founder']],
   ['Central de Dados (editar ou excluir qualquer tabela)',null,['founder']],
   ['Zerar o ranking dos jogos',null,['founder']]
  ];
  const accs=(typeof founderAccounts!=='undefined'&&founderAccounts)||[];
- const count=k=>accs.filter(u=>k==='viewer'?(!u.role||u.role==='pending'||u.role==='viewer'):u.role===k).length;
+ const count=k=>accs.filter(u=>k==='viewer'?(!u.role||u.role==='pending'||u.role==='viewer'):(u.role===k||(k==='editor'&&u.role==='operator'))).length;
  return '<section class="fdx pg-card"><h2>🔑 Quem pode o quê</h2><p class="muted">Tudo o que depende de cargo para ser visto ou editado. A linha “Pessoas” mostra quantas contas têm cada cargo hoje.</p><div style="overflow:auto"><table class="fdm"><thead><tr><th>Função</th>'+ROLES.map(r=>'<th>'+esc(r[1])+'</th>').join('')+'</tr></thead><tbody>'+
   '<tr class="cnt"><td><b>Pessoas</b></td>'+ROLES.map(r=>'<td><b>'+count(r[0])+'</b></td>').join('')+'</tr>'+
   rows.map(r=>'<tr><td>'+esc(r[0])+(r[1]?'<small>'+esc(r[1])+'</small>':'')+'</td>'+ROLES.map(x=>'<td>'+(r[2].includes(x[0])?'<span class="y">✓</span>':'<span class="n">—</span>')+'</td>').join('')+'</tr>').join('')+

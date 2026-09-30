@@ -76,13 +76,13 @@ function css(){if($('media-css'))return;const s=document.createElement('style');
 .acp-dismiss{position:fixed;inset:0;z-index:40;background:rgba(3,8,20,.25);animation:cvin .15s both}
 .acp{position:fixed;right:max(14px,calc((100vw - 1200px)/2 + 16px));top:76px;z-index:41;width:min(352px,calc(100vw - 20px));border-radius:22px;overflow:hidden;background:var(--iu-sf,#fff);color:var(--iu-tx,#0f1c3a);border:1px solid var(--iu-bd,#b4c3dc);box-shadow:0 24px 70px rgba(4,10,30,.45);animation:acpin .22s cubic-bezier(.2,1.2,.4,1) both;transform-origin:top right}
 @keyframes acpin{from{opacity:0;transform:translateY(-8px) scale(.96)}}
-.acp-top{position:relative;padding:22px 18px 16px;background:linear-gradient(135deg,#1d2f6b,#6d4be0 60%,#e8945a);color:#fff;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
-.acp-top.c{background-size:cover;background-position:center}.acp-top.c:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,14,31,.75),rgba(6,14,31,.35))}.acp-top>*{position:relative}
+.acp-top{position:relative;padding:24px 20px 20px;background:linear-gradient(135deg,#1d2f6b,#6d4be0 60%,#e8945a);color:#fff;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+.acp-top.c{background-size:cover;background-position:center}.acp-top.c:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,14,31,.88),rgba(6,14,31,.62))}.acp-top.c .acp-nm{text-shadow:0 1px 6px rgba(0,0,0,.7)}.acp-top>*{position:relative}
 .acp-av{position:relative;width:64px;height:64px;border-radius:50%;background:#f5b73a;color:#1c1406;font-size:28px;font-weight:900;display:grid;place-items:center;box-shadow:0 0 0 3px #fff8,0 6px 18px #0006;overflow:visible}
 .acp-av .ph{position:absolute;inset:0;border-radius:50%;overflow:hidden}.acp-av .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .acp-av i{position:absolute;right:0;bottom:2px;width:14px;height:14px;border-radius:50%;background:#34d399;border:2px solid #fff}
-.acp-nm{min-width:0}.acp-nm b{display:block;font-size:18px;line-height:1.15;overflow:hidden;text-overflow:ellipsis}.acp-nm small{display:block;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
-.acp-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.acp-tags span{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px)}
+.acp-nm{min-width:0}.acp-nm b{display:block;font-size:18px;line-height:1.15;overflow:hidden;text-overflow:ellipsis}.acp-nm small{display:block;opacity:.92;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}
+.acp-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.acp-tags span{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px)}
 .acp-lst{padding:8px}.acp-lst button,.acp-lst .acp-sw{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;border-radius:14px;padding:10px;font:inherit;cursor:pointer;transition:.12s}
 .acp-lst button:hover{background:var(--iu-sf2,#edf1f9)}.acp-lst .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;background:var(--iu-sf2,#edf1f9)}
 .acp-lst b{display:block;font-size:14.5px}.acp-lst small{display:block;opacity:.65;font-size:12px}.acp-lst .ch{opacity:.4;font-size:18px}
@@ -290,7 +290,16 @@ window.toggleAccountMenu=function(){
   h+='<div class="acp-guest"><div style="font-size:42px">✦</div><h3>Bem-vindo ao IASD APP</h3><p>Navegue livremente ou entre para participar dos jogos, escalas e alertas.</p><button class="p" onclick="closeAccountMenu();openAuthModal()">Entrar na conta</button><button class="s" onclick="closeAccountMenu();openAuthModal(true)">Criar conta</button></div>';
  }
  root.innerHTML=h+'</div>';
+ placeAcp();
 };
+function placeAcp(){
+ const pop=document.querySelector('#account-popover-root .acp');if(!pop)return;
+ if(innerWidth<=640){pop.style.top='';pop.style.right='';return}
+ const trg=[...document.querySelectorAll('[data-act="account"],[onclick*="toggleAccountMenu"]')].find(el=>el.offsetParent!==null&&el.getBoundingClientRect().width>0);
+ if(!trg)return;const r=trg.getBoundingClientRect();
+ pop.style.top=Math.round(r.bottom+10)+'px';pop.style.right=Math.max(12,Math.round(innerWidth-r.right))+'px';
+}
+addEventListener('resize',()=>{if(document.querySelector('#account-popover-root .acp'))placeAcp()});
 
 /* ---------- entrega ---------- */
 window.editCover=editCover;window.closeCover=closeCover;window.saveCover=save;window.removeCover=remove;
