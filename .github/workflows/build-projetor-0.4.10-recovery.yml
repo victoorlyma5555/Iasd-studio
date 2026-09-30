@@ -1,0 +1,36 @@
+name: Build IASD Projetor 0.4.10 Recovery
+
+on:
+  push:
+    branches:
+      - release-projetor-0.4.10-from-0.4.7
+    paths:
+      - "iasd-projetor/**"
+      - ".github/workflows/build-projetor-0.4.10-recovery.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: iasd-projetor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: iasd-projetor/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Windows installer
+        run: npm run dist
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IASD-Projetor-0.4.10-test
+          path: |
+            iasd-projetor/dist/IASD-Projetor-Setup-0.4.10.exe
+            iasd-projetor/dist/IASD-Projetor-Setup-0.4.10.exe.blockmap
+            iasd-projetor/dist/latest.yml
+          if-no-files-found: error
