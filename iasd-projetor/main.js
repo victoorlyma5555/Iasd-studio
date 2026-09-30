@@ -41,6 +41,10 @@ let tray,windowRef,dashboardRef,server,youtubeRef=null,youtubeVideoId=null,alert
 const ALERT_SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
 const ALERT_SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const alertSessionFile=path.join(app.getPath('userData'),'alert-session.dat');
+const alertHistoryFile=path.join(app.getPath('userData'),'alert-history.json');
+function loadAlertHistory(){try{return JSON.parse(fs.readFileSync(alertHistoryFile,'utf8'))}catch{return[]}}
+function saveAlertHistory(v){fs.writeFileSync(alertHistoryFile,JSON.stringify(v.slice(0,200),null,2),'utf8')}
+function storeAlert(item){const list=loadAlertHistory().filter(x=>x.id!==item.id);list.unshift({id:item.id,sender_name:item.sender_name||'IASD APP',message:item.message||'',schedule_name:item.schedule_name||'',created_at:item.created_at||new Date().toISOString(),created_by:item.created_by||null});saveAlertHistory(list)}
 const alertCloud=createClient(ALERT_SUPABASE_URL,ALERT_SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true,detectSessionInUrl:false}});
 let alertChannel=null,alertAccount=null,alertSeen=new Set(),alertReady=false,alertRecoveryTimer=null,alertLastError=null;
 function alertStatus(){return {connected:!!alertChannel&&alertReady,account:alertAccount?.email||null,error:alertLastError}}
@@ -52,7 +56,7 @@ function saveAlertSession(session){
 }
 async function alertFetchPending(initial=false){
  if(!alertAccount)return;
- const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at').order('created_at',{ascending:false}).limit(20);
+ const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at,created_by').order('created_at',{ascending:false}).limit(20);
  if(error){alertLastError=error.message;alertBroadcastStatus();console.warn('Alertas independentes:',error.message);return}
  const items=(data||[]).reverse();
  if(initial){items.forEach(x=>alertSeen.add(x.id));return}
@@ -63,6 +67,7 @@ function receiveDirectAlert(item){
  alertSeen.add(item.id);
  if(alertSeen.size>300)alertSeen=new Set([...alertSeen].slice(-150));
  lastAlertId=item.id;
+ storeAlert(item);
  showSoundAlert(item);
 }
 async function alertSubscribe(){
@@ -257,6 +262,9 @@ function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.clos
 ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
 ipcMain.handle('iasd:test-alert',()=>{if(!alertAccount)return {error:'Ative os alertas independentes entrando com sua conta no aplicativo.'};showSoundAlert({sender_name:'IASD APP · Teste',message:'Este aviso deve aparecer no Windows mesmo com o navegador fechado. A projeção não será interrompida.',schedule_name:'Teste local'});return {ok:true}});
 ipcMain.handle('iasd:alert-logout',async()=>{await alertLogout();return {ok:true}});
+ipcMain.handle('iasd:alerts-history',()=>({ok:true,items:loadAlertHistory()}));
+ipcMain.handle('iasd:alert-delete',(_,id)=>{saveAlertHistory(loadAlertHistory().filter(x=>x.id!==id));return{ok:true}});
+ipcMain.handle('iasd:alerts-clear',()=>{saveAlertHistory([]);return{ok:true}});
 ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()}));
 ipcMain.handle('iasd:site',()=>shell.openExternal(SITE));
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
@@ -277,6 +285,8 @@ function imageDataUrl(file){const ext=path.extname(file).toLowerCase(),mime=ext=
 async function applyDesktopProjectionAppearance(a){const bg=String(a.background||'linear-gradient(135deg,#061a2d,#0b4b91)');showProjector();let script;if(a.image&&fs.existsSync(a.image)){const url=imageDataUrl(a.image),fit=a.fit==='contain'?'contain':a.fit==='center'||a.fit==='none'?'center':'cover';script=`(async()=>{applyProjectionBackground('#000000');await applyProjectionVisual({imageUrl:${JSON.stringify(url)},fit:${JSON.stringify(fit)},transition:'fade'});return true})()`}else{script=`(async()=>{applyProjectionBackground(${JSON.stringify(bg)});await applyProjectionVisual({imageUrl:'',imageId:'',fit:'cover',transition:'fade'});return true})()`}await projectorScript(script)}
 ipcMain.handle('iasd:appearance',()=>{const a=loadAppearance();return{...a,images:(a.images||[]).filter(x=>fs.existsSync(x)).map(x=>({path:x,name:path.basename(x)}))}});
 ipcMain.handle('iasd:choose-backgrounds',async()=>{const r=await dialog.showOpenDialog(dashboardRef,{title:'Adicionar imagens',properties:['openFile','multiSelections'],filters:[{name:'Imagens',extensions:['jpg','jpeg','png','webp']}]});if(r.canceled)return{canceled:true};const a=loadAppearance();a.images=[...new Set([...(a.images||[]),...r.filePaths])];saveAppearance(a);return{ok:true,images:a.images.map(x=>({path:x,name:path.basename(x)}))}});
+ipcMain.handle('iasd:remove-background',(_,file)=>{try{const a=loadAppearance();a.images=(a.images||[]).filter(x=>x!==file);if(a.image===file)a.image='';saveAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
+ipcMain.handle('iasd:clear-backgrounds',()=>{try{const a=loadAppearance();a.images=[];a.image='';saveAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:set-background',async(_,v)=>{try{const a=loadAppearance();if(v?.background)a.background=String(v.background);if(v?.fit)a.fit=String(v.fit);a.image=v?.image||'';saveAppearance(a);await applyDesktopProjectionAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:set-wallpaper',async(_,file)=>new Promise(resolve=>{if(typeof file!=='string'||!fs.existsSync(file))return resolve({error:'Imagem não encontrada'});const safe=file.replace(/'/g,"''");const ps=`$p='${safe}'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name WallpaperStyle -Value '10'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name TileWallpaper -Value '0'; Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class W { [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int SystemParametersInfo(int a,int b,string c,int d); }'; $r=[W]::SystemParametersInfo(20,0,$p,3); if(-not $r){exit 1}`;execFile('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',ps],{windowsHide:true},e=>resolve(e?{error:'O Windows não conseguiu aplicar esta imagem como papel de parede.'}:{ok:true}))}));
 // Atualizações são verificadas online; a instalação requer confirmação do usuário.
