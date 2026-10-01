@@ -273,7 +273,7 @@ function sendProjection(t,opts){
  if($('stage'))$('stage').textContent=projectionPreviewLabel(t);
  if(channel)try{channel.postMessage(t)}catch(e){console.warn('Canal de projeção',e)}
  if(canReachProjection())try{projectionWindow.postMessage({type:'iasd-project',content:t},location.origin)}catch(e){console.warn('Janela de projeção',e)}
- if(!(opts&&opts.localOnly)&&companionToken&&(!t.startsWith('IASD_LOCAL_MEDIA:')||t.includes('http://127.0.0.1:38741/media/')||t.includes('https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-offering-videos/'))){void (async()=>{try{if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))await companionRequest('/open');await companionRequest('/project',{content:t.startsWith('IASD_DRAW:')?t.slice('IASD_DRAW:'.length):t});if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))projectionFeedback('Mídia enviada ao aplicativo. Se não aparecer, verifique se esta versão do IASD Projetor suporta vídeo do YouTube ou arquivos locais.')}catch(e){projectionFeedback('IASD Projetor: '+e.message,true);const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-studio-error',message:'Falha no aplicativo de projeção: '+e.message},location.origin)}})()}
+ if(!(opts&&opts.localOnly)&&companionToken&&(!t.startsWith('IASD_LOCAL_MEDIA:')||t.includes('http://127.0.0.1:38741/media/')||t.includes('https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-offering-videos/'))){void (async()=>{try{if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))await companionRequest('/open');await companionRequest('/project',{content:t});if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))projectionFeedback('Mídia enviada ao aplicativo. Se não aparecer, verifique se esta versão do IASD Projetor suporta vídeo do YouTube ou arquivos locais.')}catch(e){projectionFeedback('IASD Projetor: '+e.message,true);const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-studio-error',message:'Falha no aplicativo de projeção: '+e.message},location.origin)}})()}
 }
 
 function projectionMonitorPopup(message,allowProceed=false){
@@ -738,7 +738,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=18" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=19" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');

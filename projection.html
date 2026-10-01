@@ -42,8 +42,37 @@ body{background:#080e19}
 #out.youtube-mode iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}\n
 #out.local-media-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;padding:0!important;margin:0!important;background:#000!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}#out.local-media-mode video{display:block!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;object-fit:contain!important;background:#000!important}#out.local-media-mode audio{width:min(90%,650px)}
 #out.timer-mode{padding:0;display:block;overflow:hidden;position:relative}
+/* ===== modelos do sorteador, decoração dos temas e comemorações ===== */
+#out{position:relative;font-family:var(--tf,Inter,system-ui,Arial,sans-serif)}
+#out>.iasd-deco~*:not(.fireworks):not(.confetti):not(.draw-flash){position:relative;z-index:2}
+.tpl-bolas .draw-tile{width:.92em;height:.92em;min-width:0;padding:0;border-radius:50%;border:0;background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.95) 0 9%,var(--c2) 30%,var(--c1) 82%);box-shadow:inset -.05em -.06em .12em rgba(0,0,0,.4),0 .07em .22em var(--tsh),0 0 .5em var(--glow)}
+.tpl-bolas .draw-tile:after{display:none}
+.tpl-bolas .draw-tile i,.tpl-bolas.draw-winner .draw-tile i,.tpl-bolas.draw-standby .draw-tile i{font-size:.58em;font-weight:900;background:none;color:#241707;-webkit-text-fill-color:#241707;text-shadow:none;filter:none}
+.tpl-neon .draw-tile{background:none;border:0;box-shadow:none;padding:0 .02em;min-width:.58em}.tpl-neon .draw-tile:after{display:none}
+.tpl-neon .draw-tile i,.tpl-neon.draw-winner .draw-tile i,.tpl-neon.draw-standby .draw-tile i{background:none;color:var(--c2);-webkit-text-fill-color:var(--c2);filter:none;text-shadow:0 0 .04em #fff,0 0 .14em var(--c2),0 0 .34em var(--c1),0 0 .7em var(--c1);animation:neonBuzz 2.8s ease-in-out infinite}
+@keyframes neonBuzz{0%,44%,100%{opacity:1}46%{opacity:.55}48%{opacity:1}53%{opacity:.7}55%{opacity:1}}
+.tpl-led{font-family:ui-monospace,Menlo,Consolas,monospace}
+.tpl-led .draw-tile{background:linear-gradient(180deg,#0b0b0b,#000);border:.02em solid #2a2a2a;border-radius:.06em;min-width:.62em;box-shadow:inset 0 0 .12em #000,0 0 .3em var(--glow)}
+.tpl-led .draw-tile:after{top:0;bottom:0;height:auto;background:repeating-linear-gradient(0deg,rgba(0,0,0,.38) 0 2px,transparent 2px 4px);box-shadow:none}
+.tpl-led .draw-tile i,.tpl-led.draw-winner .draw-tile i,.tpl-led.draw-standby .draw-tile i{background:none;color:var(--c1);-webkit-text-fill-color:var(--c1);filter:none;text-shadow:0 0 .12em var(--c1),0 0 .3em var(--glow)}
+.tpl-slot .draw-tile{width:.72em;height:1.05em;min-width:0;padding:0;overflow:hidden;border-radius:.1em;display:block}
+.tpl-slot .draw-tile:after{top:0;bottom:0;height:auto;background:linear-gradient(180deg,rgba(0,0,0,.6),transparent 30%,transparent 70%,rgba(0,0,0,.6));box-shadow:none;z-index:2}
+.tpl-slot .draw-tile>i{position:absolute;inset:0;display:none;place-items:center}
+.tpl-slot .draw-tile.nodigit>i{display:grid}.tpl-slot .draw-tile.nodigit .reel{display:none}
+.tpl-slot .reel{display:flex;flex-direction:column;align-items:center;transform:translateY(calc(var(--d,0)*-1.05em));transition:transform .16s cubic-bezier(.3,1.4,.5,1)}
+.tpl-slot .reel b{display:block;height:1.05em;line-height:1.05em;font-weight:900;color:var(--tx)}
+.tpl-slot.draw-winner .reel b{color:var(--c2);text-shadow:0 0 .2em var(--glow)}
+.tpl-minimal .draw-tile{background:none;border:0;box-shadow:none;min-width:.5em;padding:0}.tpl-minimal .draw-tile:after{display:none}
+.tpl-minimal .draw-tile i,.tpl-minimal.draw-standby .draw-tile i{font-weight:200;background:none;color:var(--tx);-webkit-text-fill-color:var(--tx);filter:none;text-shadow:none}
+.tpl-minimal.draw-winner .draw-tile i{font-weight:300;background:none;color:var(--c1);-webkit-text-fill-color:var(--c1);filter:drop-shadow(0 0 .08em var(--glow))}
+.tpl-neon.draw-winner .draw-tile,.tpl-minimal.draw-winner .draw-tile,.tpl-slot.draw-winner .draw-tile{animation:tilePop .75s cubic-bezier(.2,1.5,.4,1) both}
+.tpl-neon .draw-tile,.tpl-minimal .draw-tile{box-shadow:none!important;border-color:transparent}
+.tpl-slot .draw-tile{border:.03em solid var(--c1);box-shadow:inset 0 0 .2em rgba(0,0,0,.7),0 0 .3em var(--glow)}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}.confetti canvas{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity 1s}
+.draw-flash{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 52%,var(--c2) 0,var(--c1) 14%,transparent 52%);opacity:0;animation:drawFlash 1.9s ease-out forwards;mix-blend-mode:screen}
+@keyframes drawFlash{0%{opacity:0;transform:scale(.3)}18%{opacity:.9}100%{opacity:0;transform:scale(1.9)}}
 </style></head><body><main id="out" aria-live="polite"></main>
-<script src="/shared/timer-display.js?v=5"></script>
+<script src="/shared/timer-display.js?v=6"></script>
 <script>
 const out=document.getElementById('out');
 let drawSerial=0,timerView=null;
@@ -55,6 +84,26 @@ window.addEventListener('load',()=>{
   document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
  }
 });
+function celebrate(serial,mode){
+ if(mode==='nenhum')return;
+ if(mode==='brilho'){const f=document.createElement('div');f.className='draw-flash';out.append(f);setTimeout(()=>f.remove(),2100);return}
+ if(mode==='confete')return confettiDraw(serial);
+ celebrateDraw(serial);
+}
+function confettiDraw(serial){
+ if(serial!==drawSerial)return;
+ const layer=document.createElement('div');layer.className='confetti';layer.setAttribute('aria-hidden','true');const cv=document.createElement('canvas');layer.append(cv);out.append(layer);
+ const dpr=Math.min(2,window.devicePixelRatio||1),W=out.clientWidth,H=out.clientHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+ const ctx=cv.getContext('2d');if(!ctx){layer.remove();return}
+ const cs=getComputedStyle(out),c1=(cs.getPropertyValue('--c1')||'#c9a24a').trim(),c2=(cs.getPropertyValue('--c2')||'#f5e3a6').trim();
+ const pal=[c1,c2,'#ff6b6b','#ffd76b','#5cc8f5','#a78bfa','#34d399','#f472b6'],k=Math.min(W,H)/900,rnd=(a,b)=>a+Math.random()*(b-a);
+ const ps=[];for(let i=0;i<190;i++)ps.push({x:rnd(0,W),y:rnd(-H*.9,-10),vx:rnd(-1.2,1.2)*k,vy:rnd(2.2,5.2)*k,w:rnd(7,15)*k,h:rnd(4,9)*k,r:rnd(0,6.28),vr:rnd(-.2,.2),c:pal[(Math.random()*pal.length)|0],sw:rnd(.02,.06),ph:rnd(0,6.28)});
+ const t0=performance.now();
+ function frame(now){if(serial!==drawSerial||!layer.isConnected)return;const el=now-t0;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.scale(dpr,dpr);let alive=0;
+  ps.forEach(p=>{p.x+=p.vx+Math.sin(el*p.sw+p.ph)*1.1*k;p.y+=p.vy;p.r+=p.vr;if(p.y<H+30)alive++;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.scale(1,Math.cos(el*.006+p.ph));ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()});
+  if(alive&&el<9000)requestAnimationFrame(frame);else layer.remove()}
+ requestAnimationFrame(frame);
+}
 function celebrateDraw(serial){
  if(serial!==drawSerial)return;
  const layer=document.createElement('div');layer.className='fireworks';layer.setAttribute('aria-hidden','true');
@@ -96,10 +145,19 @@ function celebrateDraw(serial){
  }
  requestAnimationFrame(frame);
 }
-function drawDigits(text){const box=document.createElement('div');box.className='draw-number';drawSet(box,text);return box}
-function drawSet(box,text){const s=String(text);while(box.children.length<s.length){const t=document.createElement('span');t.className='draw-tile';t.append(document.createElement('i'));box.append(t)}while(box.children.length>s.length)box.lastChild.remove();[...s].forEach((ch,j)=>{box.children[j].firstChild.textContent=ch});box.setAttribute('aria-label',s)}
+const TPLS=['cartoes','bolas','neon','led','slot','minimal'],FXS=['suspense','cascata','contagem'],CELS=['fogos','confete','brilho','nenhum'];
+const pick=(v,list,def)=>list.includes(v)?v:def;
+function drawDigits(text,tpl){const box=document.createElement('div');tpl=pick(tpl,TPLS,'cartoes');box.className='draw-number tpl-'+tpl;box.dataset.tpl=tpl;drawSet(box,text);return box}
+function drawSet(box,text){
+ const s=String(text),slot=box.dataset.tpl==='slot';
+ while(box.children.length<s.length){const t=document.createElement('span');t.className='draw-tile';t.append(document.createElement('i'));
+  if(slot){const r=document.createElement('span');r.className='reel';for(let k=0;k<10;k++){const b=document.createElement('b');b.textContent=String(k);r.append(b)}t.append(r)}
+  box.append(t)}
+ while(box.children.length>s.length)box.lastChild.remove();
+ [...s].forEach((ch,j)=>{const t=box.children[j];t.firstChild.textContent=ch;if(slot){const dg=/^\d$/.test(ch);t.classList.toggle('nodigit',!dg);if(dg)t.style.setProperty('--d',ch)}});
+ box.setAttribute('aria-label',s)}
 function drawRandLike(n){const L=String(n).length;let r='';for(let i=0;i<L;i++)r+=String((i===0&&L>1)?1+Math.floor(Math.random()*9):Math.floor(Math.random()*10));return r}
-function paintTheme(id){const th=window.IASDTimerDisplay&&IASDTimerDisplay.themes[id];if(!th)return null;out.style.background=th.bg;out.style.setProperty('--c1',th.c1);out.style.setProperty('--c2',th.c2);out.style.setProperty('--glow',th.glow);out.style.setProperty('--tx',th.tx||'#ffffff');const L=!!th.tx;[['--ta',L?'rgba(255,255,255,.8)':'rgba(255,255,255,.1)'],['--tb',L?'rgba(255,255,255,.42)':'rgba(0,0,0,.24)'],['--tbg',L?'rgba(255,255,255,.3)':'rgba(8,12,30,.74)'],['--tsh',L?'rgba(40,30,80,.28)':'rgba(0,0,0,.55)'],['--d1',L?th.c2:'#fffbe6'],['--d2',L?th.c1:th.c2],['--d3',L?th.tx:th.c1]].forEach(a=>out.style.setProperty(a[0],a[1]));return th}
+function paintTheme(id){const th=window.IASDTimerDisplay&&IASDTimerDisplay.themes[id];if(!th)return null;out.style.background=th.bg;out.style.setProperty('--c1',th.c1);out.style.setProperty('--c2',th.c2);out.style.setProperty('--glow',th.glow);out.style.setProperty('--tx',th.tx||'#ffffff');if(th.font&&IASDTimerDisplay.fonts[th.font])out.style.setProperty('--tf',IASDTimerDisplay.fonts[th.font]);else out.style.removeProperty('--tf');{const dc=IASDTimerDisplay.deco(id);if(dc)out.prepend(dc)}const L=!!th.tx;[['--ta',L?'rgba(255,255,255,.8)':'rgba(255,255,255,.1)'],['--tb',L?'rgba(255,255,255,.42)':'rgba(0,0,0,.24)'],['--tbg',L?'rgba(255,255,255,.3)':'rgba(8,12,30,.74)'],['--tsh',L?'rgba(40,30,80,.28)':'rgba(0,0,0,.55)'],['--d1',L?th.c2:'#fffbe6'],['--d2',L?th.c1:th.c2],['--d3',L?th.tx:th.c1]].forEach(a=>out.style.setProperty(a[0],a[1]));return th}
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
 let gameLast=null,gameFrame=null;
 function gameShow(t){
@@ -118,7 +176,7 @@ function show(value){
  const t=typeof value==='string'?value:'';
  if(t.startsWith('IASD_GAME:'))return gameShow(t);
  gameFrame=null;out.style.background='';out.classList.remove('game-mode');
- ++drawSerial;out.style.background='';['--c1','--c2','--glow','--tx','--ta','--tb','--tbg','--tsh','--d1','--d2','--d3'].forEach(v=>out.style.removeProperty(v));if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
+ ++drawSerial;out.style.background='';['--c1','--c2','--glow','--tx','--ta','--tb','--tbg','--tsh','--d1','--d2','--d3','--tf'].forEach(v=>out.style.removeProperty(v));if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
  if(t.startsWith('IASD_TIMER:')){
   try{
    if(!window.IASDTimerDisplay)throw Error('timer');
@@ -144,7 +202,7 @@ function show(value){
    if(!Number.isSafeInteger(d.min)||!Number.isSafeInteger(d.max)||d.max<d.min||d.max-d.min>1000000)throw Error('Invalid range');
    paintTheme(d.theme);out.classList.add('draw-mode');
    const label=document.createElement('div');label.className='draw-label';label.textContent='SORTEIO';
-   const box=drawDigits('0');box.classList.add('draw-standby');out.append(label,box);
+   const box=drawDigits('0',d.tpl);box.classList.add('draw-standby');out.append(label,box);
   }catch(e){out.textContent='Não foi possível preparar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW_ANIM:')){
   try{
@@ -154,15 +212,20 @@ function show(value){
    const serial=++drawSerial,start=performance.now();
    out.classList.add('draw-mode');
    const label=document.createElement('div');label.className='draw-label';label.textContent='SORTEANDO';
-   const box=drawDigits(drawRandLike(d.target));box.classList.add('draw-rolling');
+   const box=drawDigits(drawRandLike(d.target),d.tpl);box.classList.add('draw-rolling');const fx=pick(d.fx,FXS,'suspense'),cel=pick(d.cel,CELS,'fogos'),tstr=String(d.target),Ln=tstr.length,ease=p=>1-Math.pow(1-p,3);
    out.append(label,box);
-   function roll(now){if(serial!==drawSerial)return;const elapsed=now-start;if(elapsed>=d.duration){drawSet(box,d.target);box.classList.remove('draw-rolling');label.textContent='NÚMERO SORTEADO';box.classList.add('draw-winner');celebrateDraw(serial);return}drawSet(box,drawRandLike(d.target));setTimeout(()=>requestAnimationFrame(roll),45+Math.pow(elapsed/d.duration,3)*300)}
+   function textAt(p){
+    if(fx==='cascata')return[...tstr].map((ch,i)=>p>=(i+1)/(Ln+1)?ch:String(Math.floor(Math.random()*10))).join('');
+    if(fx==='contagem')return String(Math.round(d.min+(d.target-d.min)*ease(p)));
+    return drawRandLike(d.target);
+   }
+   function roll(now){if(serial!==drawSerial)return;const elapsed=now-start;if(elapsed>=d.duration){drawSet(box,d.target);box.classList.remove('draw-rolling');label.textContent='NÚMERO SORTEADO';box.classList.add('draw-winner');celebrate(serial,cel);return}drawSet(box,textAt(elapsed/d.duration));setTimeout(()=>requestAnimationFrame(roll),fx==='contagem'?32:(fx==='cascata'?70:45+Math.pow(elapsed/d.duration,3)*300))}
    requestAnimationFrame(roll);
   }catch(e){out.textContent='Não foi possível iniciar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW:')){
   const parts=t.slice('IASD_DRAW:'.length).split('|'),value=parts[0].replace(/[^0-9-]/g,'').slice(0,9);paintTheme(parts[1]);
   out.classList.add('draw-mode');const label=document.createElement('div');label.className='draw-label';label.textContent='NÚMERO SORTEADO';
-  const box=drawDigits(value||'0');box.classList.add('draw-winner');out.append(label,box);celebrateDraw(drawSerial);
+  const box=drawDigits(value||'0',parts[2]);box.classList.add('draw-winner');out.append(label,box);celebrate(drawSerial,pick(parts[4],CELS,'fogos'));
  }else if(t.startsWith('IASD_YOUTUBE:')){
   try{
    const media=JSON.parse(t.slice('IASD_YOUTUBE:'.length));

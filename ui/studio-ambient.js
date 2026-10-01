@@ -21,8 +21,8 @@ function save(){wr(K.meta,meta);wr(K.pls,pls)}
 function setLib(ids){$('ambientLinks').value=ids.map(i=>'https://www.youtube.com/watch?v='+i).join('\n');saveYouTubeList('ambient')}
 const inflight=new Set();
 async function fetchTitle(id){if((meta[id]&&meta[id].title)||inflight.has(id))return;inflight.add(id);try{const r=await fetch('https://noembed.com/embed?url='+encodeURIComponent('https://www.youtube.com/watch?v='+id),{signal:AbortSignal.timeout(6000)});const j=await r.json();if(j&&j.title){meta[id]=Object.assign({},meta[id],{title:j.title});save();renderAll()}}catch(e){}finally{inflight.delete(id)}}
-function addId(id,t){if(!valid(id)){feedback('Link do YouTube inválido.');return}const ids=lib();if(!ids.includes(id)){ids.push(id);setLib(ids)}if(t){meta[id]=Object.assign({},meta[id],{title:t})}else fetchTitle(id);save();renderAll();feedback('Música adicionada à biblioteca.')}
-function removeId(id){setLib(lib().filter(x=>x!==id));if(plView)plView=plView.filter(x=>x!==id);if(sel===id)clearSel();save();renderAll()}
+function addId(id,t){if(!valid(id)){feedback('Link do YouTube inválido.');return}const ids=lib();const had=ids.includes(id);if(!had){ids.push(id);setLib(ids)}if(t){meta[id]=Object.assign({},meta[id],{title:t})}else fetchTitle(id);save();if(window.IASDLib&&!had)IASDLib.cloudAdd('ambient',{id,title:title(id)==='Música ambiente'?'':title(id)});renderAll();feedback(had?'Essa música já está na biblioteca.':'Música salva na biblioteca.')}
+function removeId(id){if(window.IASDLib)IASDLib.cloudDel('ambient',id);setLib(lib().filter(x=>x!==id));if(plView)plView=plView.filter(x=>x!==id);if(sel===id)clearSel();save();renderAll()}
 function setTag(id,t){meta[id]=Object.assign({},meta[id],{tag:t});save();renderAll()}
 function play(id){sel=id;selectedYouTube.ambient=id;youtubeEmbed(id,'ambientEmbed');renderSel();feedback('Música selecionada. Toque em Projetar no telão para enviar.')}
 function clearSel(){sel=null;selectedYouTube.ambient=null;const h=$('ambientEmbed');if(h)h.replaceChildren();renderSel()}
@@ -55,7 +55,7 @@ function renderSel(){const box=$('ambSel');if(!box)return;box.replaceChildren();
  if(!sel){box.classList.remove('has');const t=el('span','muted','Nenhuma música selecionada.');const a=el('button','mp-btn','🎲 Sortear');a.type='button';a.title='Escolhe sem repetir as anteriores desta rodada';a.onclick=()=>{randomAmbient();if(selectedYouTube.ambient){sel=selectedYouTube.ambient;renderSel();renderList()}};const b=el('button','mp-btn','↻ Reiniciar rodada');b.type='button';b.onclick=resetAmbientRound;box.append(t,a,b);return}
  box.classList.add('has');box.append(thumb(sel));const i=el('div','amb-info');i.append(el('small','','SELECIONADA'),el('b','',title(sel)));const go=el('button','mp-blue','Projetar no telão');go.type='button';go.onclick=()=>projectSelectedYouTube('ambient');const x=el('button','amb-more','✕');x.type='button';x.title='Limpar seleção';x.onclick=clearSel;box.append(i,go,x)}
 /* fila */
-function renderQueue(){const box=$('ambQueue');if(!box)return;box.replaceChildren();const queue=spList();
+function renderQueue(){if(window.stQueueRender)return window.stQueueRender();const box=$('ambQueue');if(!box)return;box.replaceChildren();const queue=spList();
  queue.forEach(id=>fetchTitle(id));
  const h=el('div','q-head');h.append(icon('queue'),el('h3','','Fila de reprodução · Músicas especiais'),el('span','q-count',queue.length+(queue.length===1?' item':' itens')),el('span','st-sp'));
  const sh=el('button','mp-btn');sh.type='button';sh.append(icon('shuffle'),document.createTextNode('Embaralhar'));sh.onclick=()=>{const l=spList();for(let i=l.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[l[i],l[j]]=[l[j],l[i]]}spSave(l);renderQueue()};
@@ -82,9 +82,15 @@ window.ambSavePlaylist=function(){const ids=visibleIds();if(!ids.length){feedbac
 window.ambToggleUrl=function(){const r=$('ambUrlRow');r.hidden=!r.hidden;if(!r.hidden)$('ambUrl').focus()};
 window.ambAddUrl=function(){const v=$('ambUrl').value.trim();const id=youtubeId(v);if(!id){feedback('Cole um link válido do YouTube.');return}addId(id);$('ambUrl').value='';$('ambUrlRow').hidden=true};
 window.ambYtSearch=async function(){const qv=$('ambYtQ').value.trim(),st=$('ambYtStatus'),box=$('ambYtRes');if(!qv){st.textContent='Digite o nome de uma música ou artista.';return}st.textContent='Pesquisando no YouTube…';box.replaceChildren();
- try{const res=await fetch('/api/youtube-search?q='+encodeURIComponent(qv));const data=await res.json();if(!res.ok)throw Error(data.error||'Falha na pesquisa');const items=Array.isArray(data.items)?data.items:[];if(!items.length){st.textContent='Nenhum vídeo encontrado.';return}st.textContent=items.length+' resultado(s).';
-  items.forEach(it=>{const r=el('div','amb-row');const im=el('img','amb-th');im.src=it.thumbnail||('https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg');im.alt='';im.loading='lazy';const inf=el('div','amb-info');const t=(typeof decodeYouTubeText==='function')?decodeYouTubeText(it.title):it.title;inf.append(el('b','',t),el('small','',(typeof decodeYouTubeText==='function')?decodeYouTubeText(it.channel):it.channel));const b=el('button','mp-blue','＋ Adicionar');b.type='button';b.onclick=()=>addId(it.id,t);r.append(im,inf,b);box.append(r)})}
- catch(e){st.textContent=e.message==='YOUTUBE_API_KEY_NOT_CONFIGURED'?'A pesquisa precisa da chave da API do YouTube configurada no Vercel.':('Não foi possível pesquisar: '+e.message)}};
+ try{const items=await IASDYouTube.search(qv,{music:true});if(!items.length){st.textContent='Nenhum vídeo encontrado.';return}st.textContent=items.length+' resultado(s). Toque em ▶ para ouvir e em Salvar para guardar na biblioteca.';ytItems=items;renderYtRes()}
+ catch(e){st.textContent=e.message}};
+let ytItems=[];
+function renderYtRes(){const box=$('ambYtRes');if(!box)return;box.replaceChildren();
+ ytItems.forEach(it=>{const saved=lib().includes(it.id);const r=el('div','amb-row'+(sel===it.id?' is-sel':''));const im=el('img','amb-th');im.src=it.thumb||('https://i.ytimg.com/vi/'+it.id+'/mqdefault.jpg');im.alt='';im.loading='lazy';
+  const inf=el('div','amb-info');const dur=it.duration?(Math.floor(it.duration/3600)?Math.floor(it.duration/3600)+':'+String(Math.floor(it.duration%3600/60)).padStart(2,'0'):Math.floor(it.duration/60))+':'+String(it.duration%60).padStart(2,'0'):'';inf.append(el('b','',it.title),el('small','',[it.channel,dur].filter(Boolean).join(' · ')));
+  const acts=el('div','vr-acts');const pl=el('button','amb-play');pl.type='button';pl.title='Ouvir / selecionar';pl.setAttribute('aria-label','Ouvir '+it.title);pl.append(icon('play'));pl.onclick=()=>{meta[it.id]=Object.assign({},meta[it.id],{title:it.title});save();sel=it.id;selectedYouTube.ambient=it.id;youtubeEmbed(it.id,'ambientEmbed');renderSel();renderYtRes();feedback('Música selecionada. Toque em Projetar no telão para enviar.')};
+  const sv=el('button',saved?'mp-btn is-on':'mp-btn');sv.type='button';sv.append(icon(saved?'starf':'star'),document.createTextNode(saved?'Na biblioteca':'Salvar na biblioteca'));sv.title=saved?'Já está na biblioteca':'Guardar na biblioteca de músicas ambientes';sv.onclick=()=>{if(!saved){addId(it.id,it.title);renderYtRes()}};
+  acts.append(pl,sv);r.append(im,inf,acts);box.append(r)})}
 function renderAll(){renderChips();renderList();renderSel();renderQueue();renderPl();if(typeof requestStudioHeight==='function')requestStudioHeight()}
 document.querySelectorAll('#ambTabs button').forEach(b=>b.onclick=()=>{pane=b.dataset.pane;document.querySelectorAll('#ambTabs button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});['lib','yt','col','pl'].forEach(p=>{const n=$('ambPane'+p[0].toUpperCase()+p.slice(1));if(n)n.hidden=p!==pane});if(typeof requestStudioHeight==='function')requestStudioHeight()});
 $('ambSearch').addEventListener('input',e=>{q=e.target.value;renderList()});
@@ -163,5 +169,6 @@ const PACK=[
 })();
 lib().forEach(fetchTitle);
 renderAll();
+if(window.IASDLib){IASDLib.cloudLoad('ambient').then(rows=>{if(!rows)return;const ids=lib();let ch=false;rows.forEach(r=>{if(!ids.includes(r.id)){ids.push(r.id);if(r.title)meta[r.id]=Object.assign({},meta[r.id],{title:r.title});ch=true}});if(ch){setLib(ids);save();renderAll()}ids.forEach(id=>{if(!rows.some(r=>r.id===id))IASDLib.cloudAdd('ambient',{id,title:(meta[id]&&meta[id].title)||''})})})}
 if(typeof renderSpecial==='function'){const _rs=window.renderSpecial;window.renderSpecial=function(){_rs.apply(this,arguments);renderQueue()}}
 })();
