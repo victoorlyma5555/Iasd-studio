@@ -82,7 +82,7 @@ function sideHTML(){
 }
 function barHTML(){
   const cur=S.cur();
-  return MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('');
+  return MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('')+`<button class="iu-bn-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}Menu</button>`;
 }
 
 /* ---------- topo ---------- */
@@ -424,7 +424,7 @@ function bind(){
       return;
     }
     const act=e.target.closest('[data-act]');
-    if(act&&act.closest('.iu-side,.iu-top,.iu-home')){
+    if(act&&act.closest('.iu-side,.iu-top,.iu-home,.iu-bn')){
       const a=act.dataset.act;
       if(a==='menu')document.body.classList.add('iu-open');
       else if(a==='back')g(()=>mobileGoBack());

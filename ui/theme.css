@@ -288,3 +288,6 @@ html[data-theme="light"] .vs-b{background:#edf1f9}
  html body.iu main{padding-left:calc(16px + env(safe-area-inset-left,0px))!important;padding-right:calc(16px + env(safe-area-inset-right,0px))!important}
  .iu-bn{padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px))}
 }
+
+/* Menu como último item da barra inferior (celular); o botão do topo some para não duplicar */
+@media (max-width:900px){html body.iu .iu-top .iu-menu{display:none}.iu-bn .iu-bn-menu{border-left:1px solid var(--iu-bd);border-radius:0 10px 10px 0;margin-left:4px;padding-left:4px;color:var(--iu-tx)}body.iu-open .iu-bn .iu-bn-menu{color:var(--iu-pr)}}
