@@ -63,6 +63,7 @@ function open(mode){
  lib().then(()=>{A().unlock();A().music('menu');S={mode,cfg:JSON.parse(JSON.stringify(DEF[mode])),daily:false};setup()}).catch(e=>alert('Não foi possível carregar o jogo. Verifique a conexão.\n'+e.message));
 }
 function setup(){
+ if(S.mode==='memory')return setupMemory();
  const g=GAMES[S.mode],c=S.cfg,en=E();let body='';
  const dayDone=dailyDone(S.mode);
  const daily='<div class="sg-daily '+(dayDone?'done':'')+'"><div><b>🏆 Desafio do dia</b><small>'+(dayDone?'Feito hoje: '+fmt(dayDone.score)+' pontos. Volte amanhã!':'Mesmas perguntas para todos. Uma tentativa por dia. Vale para o ranking.')+'</small></div><button class="sg-go gold" '+(dayDone?'disabled':'onclick="IASDSolo.startDaily(\''+S.mode+'\')"')+'>'+(dayDone?'Concluído ✓':'Jogar o desafio')+'</button></div>';
@@ -78,6 +79,35 @@ function setup(){
  if(S.mode==='memory')body='<div class="sg-opt"><h4>Tema</h4><div class="sg-chips">'+chips([{v:'',l:'Surpresa'}].concat(en.decks().map(x=>({v:x.t,l:x.emoji+' '+x.t}))),c.deck,'deck')+'</div></div>'+
   '<div class="sg-opt"><h4>Pares</h4><div class="sg-chips">'+chips([{v:6,l:'6 (fácil)'},{v:8,l:'8'},{v:10,l:'10'},{v:12,l:'12 (difícil)'}],c.pairs,'pairs')+'</div></div>';
  view(top(g.t,'Jogo livre: treine à vontade',g.c)+'<div class="sg-hero" style="--gc:'+g.c+'"><span class="sg-big">'+g.ic+'</span><div><h2>'+esc(g.t)+'</h2><p>'+esc(g.d)+'</p></div></div>'+daily+'<div class="sg-free"><h3>Jogo livre <small>não conta pontos no ranking</small></h3>'+body+'<button class="sg-go" onclick="IASDSolo.start()">▶ Começar</button></div>','sg-setup');
+}
+
+/* ---------- Memória Bíblica: tela de escolha (tema + dificuldade) ---------- */
+const MEM_ART={
+ 'Personagens e feitos':['🧔','#8a4412','#1b2552'],'Eventos e lugares':['🏛️','#6f4d1e','#1b2b5d'],'Livros da Bíblia e temas':['📖','#16356f','#0a1a3e'],
+ 'Discípulos e características':['👥','#7d3d14','#111b47'],'Mulheres da Bíblia':['👩','#80402c','#15244f'],'Casais da Bíblia':['💑','#8e3d24','#2b1a42'],
+ 'Parábolas de Jesus':['🌾','#745a18','#15244f'],'Profetas e mensagens':['📣','#15244f','#4b2b70'],'Pessoas curadas por Jesus':['🤲','#7d3d14','#15244f'],
+ 'Viagens de Paulo':['⛵','#0f4d72','#10244f'],'Apocalipse':['🐎','#8c1a1a','#3b0b0b'],'Símbolos e significados':['🦁','#7d4c10','#2b1709'],
+ 'Reis e feitos':['👑','#7d5c14','#1b1b42'],'Nomes de Jesus':['🌟','#8e4c10','#1b1131'],'O santuário':['⛺','#5d4c2c','#15244f'],
+ 'Criação e Éden':['🌿','#216e3c','#0c3c60'],'Lugares de Jesus':['⛰️','#6e4c2c','#1b2b62']
+};
+const MEM_LVL=[{p:6,t:'6 pares (Fácil)',d:'Ideal para iniciantes',c:'#22c55e'},{p:8,t:'8 pares (Médio)',d:'Equilíbrio perfeito',c:'#fbbf24'},{p:12,t:'12 pares (Difícil)',d:'Para quem já conhece bem',c:'#ef4444'}];
+const MEM_BIBLE='<svg viewBox="0 0 520 240" aria-hidden="true"><defs><radialGradient id="mg" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#fff4c2"/><stop offset=".25" stop-color="#ffc24a" stop-opacity=".95"/><stop offset=".7" stop-color="#f08a1c" stop-opacity=".25"/><stop offset="1" stop-color="#f08a1c" stop-opacity="0"/></radialGradient><linearGradient id="mp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6ecd2"/><stop offset="1" stop-color="#c9b58a"/></linearGradient><linearGradient id="mr" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd978" stop-opacity=".85"/><stop offset="1" stop-color="#ffd978" stop-opacity="0"/></linearGradient></defs><ellipse cx="260" cy="150" rx="250" ry="110" fill="url(#mg)"/><g fill="url(#mr)"><path d="M260 150 L120 0 L170 0z"/><path d="M260 150 L215 0 L250 0z"/><path d="M260 150 L270 0 L305 0z"/><path d="M260 150 L350 0 L400 0z"/></g><path d="M260 190 C205 158 120 150 52 168 L52 96 C122 78 207 90 260 126z" fill="url(#mp)"/><path d="M260 190 C315 158 400 150 468 168 L468 96 C398 78 313 90 260 126z" fill="url(#mp)"/><path d="M260 126 L260 192" stroke="#8a6a35" stroke-width="3"/><g stroke="#8a6a35" stroke-opacity=".45" stroke-width="2" fill="none"><path d="M78 112c40-8 95-4 160 20"/><path d="M78 130c40-8 95-4 160 20"/><path d="M78 148c40-8 95-4 160 20"/><path d="M442 112c-40-8-95-4-160 20"/><path d="M442 130c-40-8-95-4-160 20"/><path d="M442 148c-40-8-95-4-160 20"/></g></svg>';
+function memCard(d,sel,i){
+ const t=d?d.t:'Surpresa',art=d?(MEM_ART[d.t]||['✦','#27407a','#10204a']):['🧰','#0f3d42','#7a4a08'];
+ const sub=d?d.n+' pares':'Tema aleatório';
+ return '<button type="button" class="mm-th'+(sel?' on':'')+'" style="--a:'+art[1]+';--b:'+art[2]+'" onclick="IASDSolo.deck(\''+esc(d?d.t:'').replace(/'/g,"\\'")+'\')" aria-pressed="'+(sel?'true':'false')+'"><span class="art">'+art[0]+'</span><span class="ico">'+(d?esc(d.emoji||'✦'):'★')+'</span><b>'+esc(t)+'</b><small>'+sub+'</small><i class="go">'+(d?'→':'?')+'</i></button>';
+}
+function setupMemory(){
+ const g=GAMES.memory,c=S.cfg,en=E(),decks=en.decks(),dayDone=dailyDone('memory');
+ const cur=c.deck?decks.find(x=>x.t===c.deck):null;
+ const daily='<div class="mm-daily'+(dayDone?' done':'')+'"><div class="hd"><span class="cup">🏆</span><b>Desafio do dia</b></div><p>'+(dayDone?'Feito hoje: '+fmt(dayDone.score)+' pontos.<br>Volte amanhã!':'Mesmas perguntas para todos.<br>Uma tentativa por dia.<br>Vale para o ranking.')+'</p><button class="mm-gold" '+(dayDone?'disabled':'onclick="IASDSolo.startDaily(\'memory\')"')+'>'+(dayDone?'Concluído ✓':'Jogar o desafio <span>›</span>')+'</button></div>';
+ const themes=memCard(null,!c.deck,0)+decks.map((d,i)=>memCard(d,c.deck===d.t,i+1)).join('');
+ const lvl=MEM_LVL.map(l=>'<button type="button" class="mm-lv'+(c.pairs===l.p?' on':'')+'" style="--c:'+l.c+'" onclick="IASDSolo.pairs('+l.p+')"><i></i><span><b>'+l.t+'</b><small>'+l.d+'</small></span></button>').join('');
+ const n=c.pairs;
+ view('<div class="sg-top"><button class="sg-back" onclick="IASDSolo.back()"><span>←</span> Voltar aos jogos</button><span style="flex:1"></span><button class="sg-snd" onclick="IASDSolo.audioMenu(this)" aria-label="Som">'+sndIcon()+'</button></div>'+
+  '<section class="mm-hero"><div class="mm-bible">'+MEM_BIBLE+'</div><div class="mm-title"><span class="mm-tile">🎮</span><div><h2>Memória Bíblica</h2><p>Encontre os pares relacionados e teste seus conhecimentos sobre a Bíblia.</p></div></div>'+daily+'</section>'+
+  '<section class="mm-card"><div class="mm-h"><span class="mm-hi">▰</span><div><h3>Escolha o tema</h3><small>Selecione um tema para começar o jogo</small></div></div><div class="mm-grid">'+themes+'</div></section>'+
+  '<section class="mm-card mm-lvl"><div class="mm-h"><span class="mm-hi bars">▂▄▆</span><div><h3>Escolha o nível de dificuldade</h3><small>Mais pares deixam o jogo mais desafiador</small></div></div><div class="mm-lvs">'+lvl+'</div><button class="mm-start" onclick="IASDSolo.start()"><span class="pl">▶</span><span><b>Começar Jogo</b><small>Tema: '+esc(cur?cur.t:'Surpresa')+' • '+n+' pares</small></span></button></section>','sg-setup mm');
 }
 function set(k,v){S.cfg[k]=v;setup();A().sfx('tap')}
 const API={
