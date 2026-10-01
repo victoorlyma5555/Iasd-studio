@@ -282,3 +282,12 @@ body.st2 main{grid-template-rows:auto auto auto auto!important}
 #testimony .testimony-actions .danger{margin-left:auto}
 #testimony .testimony-actions button{min-height:40px}
 @media (max-width:560px){#testimony .testimony-actions .danger{margin-left:0;flex:1 1 100%}}
+/* Organização dos módulos: campos sem esticar, ações destrutivas afastadas */
+body.st2 main>.work.active>label{flex:0 0 auto;align-self:stretch}
+#special>label,#video>label{display:grid;gap:6px;flex:0 0 auto}
+#special>label input,#video>label input{height:auto;min-height:42px}
+body.st2 main>.work .row>.danger{margin-left:auto}
+@media (max-width:560px){body.st2 main>.work .row>.danger{margin-left:0}}
+body.st2 main>.work button{min-height:40px}
+@media (pointer:coarse){body.st2 main>.work button,body.st2 main>.work select,body.st2 main>.work input{min-height:44px}}
+body.st2 main>.work button:focus-visible,body.st2 main>.work input:focus-visible,body.st2 main>.work select:focus-visible,.tool:focus-visible,.studio-action:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
