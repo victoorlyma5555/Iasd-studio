@@ -738,7 +738,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=21" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=22" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');
