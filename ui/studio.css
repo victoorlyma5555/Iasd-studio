@@ -298,3 +298,5 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 @media (max-width:1000px){body.st2 main>.work{overflow:visible!important;max-height:none!important;height:auto!important}}
 .amb-more{align-self:center;margin:10px auto;min-height:44px}
 @media (max-width:1000px){.amb-list{overflow:visible;flex:none}}
+/* Desktop: painel do módulo mais alto para a lista/biblioteca ter espaço (rola só dentro do painel) */
+@media (min-width:1001px){body.st2 main>.work{min-height:720px!important}}
