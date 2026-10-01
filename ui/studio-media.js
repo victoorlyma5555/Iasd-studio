@@ -85,7 +85,7 @@ function renderQueue(){
  const box=$('ambQueue');if(!box)return;const kind=curKind();const queue=qlist(kind);box.replaceChildren();
  queue.forEach(ensureTitle);
  const hd=h('div','q-head');hd.append(ic('queue'),h('h3','','Fila de reprodução · '+QN[kind]),h('span','q-count',queue.length+(queue.length===1?' item':' itens')),h('span','st-sp'));
- hd.append(btn('Projetar próximo','mp-blue',()=>playNext(kind),'play','Seleciona o próximo vídeo da fila e envia ao telão'),btn('Embaralhar','mp-btn',()=>{const l=qlist(kind);for(let i=l.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[l[i],l[j]]=[l[j],l[i]]}qsave(kind,l)},'shuffle'),btn('Limpar','mp-btn',()=>{if(qlist(kind).length&&confirm('Limpar a fila de '+QN[kind]+'?'))qsave(kind,[])},'trash'));
+ hd.append(btn('Projetar próximo','mp-blue',()=>playNext(kind),'play','Seleciona o próximo vídeo da fila e envia ao telão'),btn('Embaralhar','mp-btn',()=>{const l=qlist(kind);for(let i=l.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[l[i],l[j]]=[l[j],l[i]]}qsave(kind,l)},'shuffle'),btn('Limpar','mp-btn',async ()=>{if(qlist(kind).length&&(await IASDDialog.confirm('Limpar a fila de '+QN[kind]+'?')))qsave(kind,[])},'trash'));
  box.append(hd);
  if(!queue.length){const e=h('div','q-empty');e.append(ic('queue'),h('b','','A fila de reprodução está vazia.'),h('small','','Use “＋ Fila” nos resultados da pesquisa ou na biblioteca para montar a sequência.'));box.append(e);return}
  queue.forEach((id,i)=>{const r=h('div','q-row'+(sel[kind]===id?' is-sel':''));r.draggable=true;
@@ -175,7 +175,7 @@ function renderSpGallery(){
  const items=lib('special').filter(x=>!q||titleOf(x.id,x.title).toLowerCase().includes(q));
  $('spGalN').textContent=String(lib('special').length);
  if(!items.length){const e=h('div','amb-empty');e.append(h('p','',lib('special').length?'Nada encontrado.':'A galeria está vazia. Pesquise uma música e toque em Salvar para guardá-la aqui.'));if(cloudNote)e.append(h('small','muted',cloudNote));box.append(e);return}
- items.forEach(it=>box.append(vrow('special',{...it,title:titleOf(it.id,it.title)},{extra:[btn('','amb-x',()=>{if(confirm('Remover da galeria?'))libDel('special',it.id)},'trash','Remover da galeria')]})));
+ items.forEach(it=>box.append(vrow('special',{...it,title:titleOf(it.id,it.title)},{extra:[btn('','amb-x',async ()=>{if((await IASDDialog.confirm('Remover da galeria?')))libDel('special',it.id)},'trash','Remover da galeria')]})));
 }
 window.addSpecial=function(select_){
  const id=youtubeId($('specialUrl').value||'');if(!id){toast('Cole um link válido do YouTube.');return}
@@ -224,7 +224,7 @@ function renderTsLib(){
   if(!it.builtin){
    const on=it.pool!==false;
    extra.push(btn(on?'No sorteio':'Fora',on?'mp-btn is-on':'mp-btn',()=>{const l=lib('testimony').find(x=>x.id===it.id);if(l){l.pool=!on;libSave('testimony');cloudPool('testimony',it.id,l.pool);renderAll()}},'dice','Escolha se este vídeo participa do sorteio'));
-   extra.push(btn('','amb-x',()=>{if(confirm('Remover da biblioteca?'))libDel('testimony',it.id)},'trash','Remover da biblioteca'));
+   extra.push(btn('','amb-x',async ()=>{if((await IASDDialog.confirm('Remover da biblioteca?')))libDel('testimony',it.id)},'trash','Remover da biblioteca'));
   }
   box.append(vrow('testimony',it,{extra,sub:it.sub}));
  });
@@ -296,15 +296,15 @@ function renderNowVideo(){
  head.append(row);v.hidden=false;act.append(actionsBar('video'));syncGrow();resize();
 }
 async function vlRename(it){
- const name=(prompt('Nome do vídeo:',it.title||'')||'').trim().slice(0,80);if(!name)return;
- const kindIn=(prompt('Categoria (1 = Dízimos e ofertas, 2 = Informativo, 3 = Vídeo especial):',String(KINDS.indexOf(vlKind(it))+1))||'').trim();
+ const name=((await IASDDialog.prompt('Nome do vídeo:',it.title||''))||'').trim().slice(0,80);if(!name)return;
+ const kindIn=((await IASDDialog.prompt('Categoria (1 = Dízimos e ofertas, 2 = Informativo, 3 = Vídeo especial):',String(KINDS.indexOf(vlKind(it))+1)))||'').trim();
  const kind=KINDS[(+kindIn||KINDS.indexOf(vlKind(it))+1)-1]||vlKind(it);
  try{const c=offeringCloud();let r=await c.from('iasd_offering_videos').update({title:name,kind}).eq('id',it.id);
   if(r.error){r=await c.from('iasd_offering_videos').update({title:name}).eq('id',it.id);if(r.error)throw r.error}
   toast('Vídeo atualizado.');await renderOfferings()}catch(e){toast('Não foi possível atualizar: '+e.message)}
 }
 async function vlDelete(it){
- if(!confirm('Excluir “'+it.title+'” da biblioteca compartilhada?'))return;
+ if(!(await IASDDialog.confirm('Excluir “'+it.title+'” da biblioteca compartilhada?')))return;
  try{const c=offeringCloud();const {error}=await c.from('iasd_offering_videos').delete().eq('id',it.id);if(error)throw error;
   const {error:se}=await c.storage.from(OFFER_BUCKET_).remove([it.storage_path]);
   if(vlSel&&vlSel.id===it.id){vlSel=null;renderNowVideo()}
@@ -344,7 +344,7 @@ window.saveOffering=window.vlSave;
 
 /* ===================== BÍBLIA DE PROJEÇÃO ===================== */
 window.biblePrev=function(){const v=$('verse').value.trim();if(!/^\d+$/.test(v)){toast('Para voltar, selecione um único versículo.');return}if(Number(v)<=1){toast('Este já é o primeiro versículo do capítulo.');return}$('verse').value=String(Number(v)-1);searchBible()};
-window.bibleRecentClear=function(){if(!bibleRecentList().length){toast('Não há passagens recentes.');return}if(!confirm('Apagar a lista de passagens recentes?'))return;try{localStorage.removeItem('iasd-studio-bible-recent')}catch(e){}bibleRecentRender();toast('Passagens recentes apagadas.')};
+window.bibleRecentClear=async function(){if(!bibleRecentList().length){toast('Não há passagens recentes.');return}if(!(await IASDDialog.confirm('Apagar a lista de passagens recentes?')))return;try{localStorage.removeItem('iasd-studio-bible-recent')}catch(e){}bibleRecentRender();toast('Passagens recentes apagadas.')};
 
 /* ---------- janela do módulo alinhada ao preview ---------- */
 function growNeeded(){

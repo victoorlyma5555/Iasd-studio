@@ -142,7 +142,7 @@ HANDLERS['pl-start']=()=>{planSave({start:todayKey(),done:[]});planUI.sel=0;body
 HANDLERS['pl-sel']=b=>{planUI.sel=+b.dataset.d;body(planHTML())};
 HANDLERS['pl-done']=()=>{const s=planState();if(!s)return;const d=planUI.sel||Math.min(365,Math.max(1,planDayNow(s)));const set=new Set(s.done||[]);set.has(d)?set.delete(d):set.add(d);s.done=[...set].sort((a,b)=>a-b);planSave(s);body(planHTML());toast(set.has(d)?'Dia '+d+' concluído 🙌':'Marcação removida')};
 HANDLERS['pl-read']=()=>{const s=planState();if(!s)return;const d=planUI.sel||Math.min(365,Math.max(1,planDayNow(s)));const f=planDay(d)[0];const books=G('bibleBooks');if(!f||!books)return;try{readerState.book=books[f[0]][1];readerState.chapter=f[1];saveReader();window.__rdGoto=null}catch(e){}close();go('Bíblia')};
-HANDLERS['pl-reset']=()=>{if(confirm('Recomeçar o plano do dia 1? Seu progresso atual será apagado.')){planSave({start:todayKey(),done:[]});planUI.sel=0;body(planHTML())}};
+HANDLERS['pl-reset']=async ()=>{if((await IASDDialog.confirm('Recomeçar o plano do dia 1? Seu progresso atual será apagado.'))){planSave({start:todayKey(),done:[]});planUI.sel=0;body(planHTML())}};
 
 /* ===================== LEMBRETE DIÁRIO ===================== */
 const RM_KEY='iasd-remind-v1';
@@ -249,7 +249,7 @@ HANDLERS['pr-login']=()=>{close();try{openAuthModal()}catch(e){}};
 HANDLERS['pr-send']=async()=>{if(!logged())return HANDLERS['pr-login']();const t=(sheetEl.querySelector('#pr-t').value||'').trim();if(t.length<3)return toast('Escreva o seu pedido');await prCall('iasd_prayer_add',{p_body:t,p_anonymous:!!sheetEl.querySelector('#pr-a').checked},'Pedido publicado 🙏');PR.draft='';const el=sheetEl?.querySelector('#pr-t');if(el)el.value=''};
 HANDLERS['pr-pray']=b=>prCall('iasd_prayer_toggle',{p_id:b.dataset.id});
 HANDLERS['pr-ans']=b=>prCall('iasd_prayer_answer',{p_id:b.dataset.id});
-HANDLERS['pr-del']=b=>{if(confirm('Apagar este pedido?'))prCall('iasd_prayer_delete',{p_id:b.dataset.id},'Pedido apagado')};
+HANDLERS['pr-del']=async b=>{if((await IASDDialog.confirm('Apagar este pedido?')))prCall('iasd_prayer_delete',{p_id:b.dataset.id},'Pedido apagado')};
 
 
 /* ===================== FAVORITOS (passagens) ===================== */

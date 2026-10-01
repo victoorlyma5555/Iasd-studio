@@ -959,7 +959,7 @@ function paintLobbyPlayers(ps,first){
  ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);(cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box).appendChild(d);if(!first)A().sfx('join')}});
 }
 async function start(){
- const ps=await players();if(!ps.length&&!confirm('Ninguém entrou ainda. Começar assim mesmo?'))return;
+ const ps=await players();if(!ps.length&&!(await IASDDialog.confirm('Ninguém entrou ainda. Começar assim mesmo?')))return;
  if(cfgOf(code()).teams){const tm={};ps.forEach(p=>tm[p.id]=teamTag(p.name)||'A');const cnt=k=>ps.filter(p=>tm[p.id]===k).length;for(let g=0;g<40&&Math.abs(cnt('A')-cnt('B'))>1;g++){const big=cnt('A')>cnt('B')?'A':'B',small=big==='A'?'B':'A',mv=ps.slice().reverse().find(p=>tm[p.id]===big);tm[mv.id]=small}S.tm=tm;HS.rw={A:0,B:0};HS.bonus={A:0,B:0};saveTm()}
  A().sfx('start');HS.prev={};ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});
  if(cfgOf(code()).teams){if(!await teamIntro(ps))return}
@@ -1257,10 +1257,10 @@ async function exit(){
  const done=S.phase==='final'||S.phase==='p-final';
  if(S.host){
   if(done)return leave();
-  if(!confirm('Encerrar a sala? Os jogadores serão desconectados e a partida termina.'))return;
+  if(!(await IASDDialog.confirm('Encerrar a sala? Os jogadores serão desconectados e a partida termina.')))return;
   await cancelRoom();
  }else{
-  if(!done&&!confirm('Sair da sala?'))return;
+  if(!done&&!(await IASDDialog.confirm('Sair da sala?')))return;
   leave();
  }
 }
@@ -1269,7 +1269,7 @@ async function telao(){
  if(localStorage.getItem('iasd-projetor-token')){
   try{await pjReq('/open');PJ.on=true;PJ.big=0;sent=true;snapSoon(true);
    toast('📽 Jogo enviado ao IASD Projetor');return}
-  catch(e){if(!/nopair|Failed to fetch|NetworkError|Load failed/i.test(e.message)){if(!confirm('IASD Projetor: '+e.message+'\n\nAbrir o telão numa janela do navegador?'))return}}
+  catch(e){if(!/nopair|Failed to fetch|NetworkError|Load failed/i.test(e.message)){if(!(await IASDDialog.confirm('IASD Projetor: '+e.message+'\n\nAbrir o telão numa janela do navegador?')))return}}
  }
  const w=window.open('/jogos?telao=1','iasd-telao','popup=yes,width=1280,height=720');
  if(!w){alert('O navegador bloqueou a janela. Permita pop-ups para o IASD APP e tente de novo.');return}

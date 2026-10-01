@@ -161,7 +161,7 @@ async function dup(id){
  if(x.error)return alert('Não foi possível duplicar: '+x.error.message);await load(true);afterChange();
 }
 async function del(id){
- const r=find(id);if(!r)return;if(!confirm('Excluir este registro?\n\n'+short(cfg().t(r)||id,80)+'\n\nNão dá para desfazer (faça um backup antes se precisar).'))return;
+ const r=find(id);if(!r)return;if(!(await IASDDialog.confirm('Excluir este registro?\n\n'+short(cfg().t(r)||id,80)+'\n\nNão dá para desfazer (faça um backup antes se precisar).')))return;
  await rm([id]);
 }
 async function rm(ids){
@@ -169,7 +169,7 @@ async function rm(ids){
  for(const id of ids){const r=find(id);if(!r)continue;const p=pk(r);const x=await d.from(c.k).delete().eq(p,r[p]).select();if(x.error){fail=x.error.message;break}if(!(x.data||[]).length){fail='Nada foi excluído (sem permissão). Rode docs/supabase-fundador-total.sql no Supabase.';break}}
  D.sel.clear();if(fail)alert(fail);await load(true);afterChange();
 }
-async function delSel(){if(!D.sel.size)return;if(!confirm('Excluir '+D.sel.size+' registro(s) de "'+cfg().n+'"?\n\nNão dá para desfazer.'))return;await rm([...D.sel])}
+async function delSel(){if(!D.sel.size)return;if(!(await IASDDialog.confirm('Excluir '+D.sel.size+' registro(s) de "'+cfg().n+'"?\n\nNão dá para desfazer.')))return;await rm([...D.sel])}
 async function move(id,dir){
  const c=cfg(),rows=(D.rows[c.k]||[]).slice(),i=rows.findIndex(r=>String(rid(r))===String(id)),j=i+dir;if(i<0||j<0||j>=rows.length)return;
  [rows[i],rows[j]]=[rows[j],rows[i]];

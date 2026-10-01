@@ -160,7 +160,7 @@ async function save(){
  assetFrames[slot]=fr;const reopen=C.reopen;C.reopen=false;closeCover();render();if(reopen&&CE)renderCE();
 }
 async function remove(){
- if(!C.slot||!confirm('Remover a imagem desta capa?'))return;const slot=C.slot;
+ if(!C.slot||!(await IASDDialog.confirm('Remover a imagem desta capa?')))return;const slot=C.slot;
  const r=await cloud.from('iasd_site_assets').delete().eq('slot',slot);if(r.error){$('cv-st').textContent=r.error.message;return}
  delete siteAssets[slot];closeCover();render();
 }
@@ -237,7 +237,7 @@ async function ceSave(){
  closeCarousel();render();
 }
 async function ceRemove(slot){
- if(!confirm('Remover esta imagem do carrossel?'))return;
+ if(!(await IASDDialog.confirm('Remover esta imagem do carrossel?')))return;
  const r=await cloud.from('iasd_site_assets').delete().eq('slot',slot);if(r.error)return alert(r.error.message);
  delete siteAssets[slot];CE.cfg.order=CE.cfg.order.filter(s=>s!==slot);CE.cfg.off=CE.cfg.off.filter(s=>s!==slot);renderCE();render();
 }

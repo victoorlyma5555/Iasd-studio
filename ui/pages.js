@@ -101,14 +101,14 @@ function alerts(){
 const alStaff=()=>typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.hasAssignedRole(cloudRole);
 const delBtn=x=>alStaff()?'<button type="button" class="pg-danger" style="margin-top:8px" onclick="IASDPages.alDel(\''+esc(x.id)+'\')">'+I('trash')+'Apagar este alerta</button>':'';
 async function alDel(id){
- if(!alStaff()||!confirm('Apagar este alerta?'))return;
+ if(!alStaff()||!(await IASDDialog.confirm('Apagar este alerta?')))return;
  const r=await cloud.from('iasd_sound_alerts').delete().eq('id',id).select();
  if(r.error)return alert('Não foi possível apagar: '+r.error.message);
  if(!(r.data||[]).length)return alert('Nada foi apagado. Falta permissão no servidor: rode docs/supabase-alertas-apagar.sql no Supabase.');
  refreshSoundAlertThread();
 }
 async function alDelAll(){
- if(!alStaff()||!confirm('Apagar TODOS os alertas? Não dá para desfazer.'))return;
+ if(!alStaff()||!(await IASDDialog.confirm('Apagar TODOS os alertas? Não dá para desfazer.')))return;
  const r=await cloud.from('iasd_sound_alerts').delete().not('id','is',null).select();
  if(r.error)return alert('Não foi possível apagar: '+r.error.message);
  if(!(r.data||[]).length)return alert('Nada foi apagado (não há alertas ou falta permissão). Se os alertas continuam aparecendo, rode docs/supabase-alertas-apagar.sql no Supabase.');
@@ -185,8 +185,8 @@ function games(){
 }
 async function resetRank(btn){
  if(cloudRole!=='founder')return;
- if(!confirm('Zerar o ranking de TODOS os participantes? Esta ação não pode ser desfeita.'))return;
- if(prompt('Para confirmar, digite ZERAR')?.trim().toUpperCase()!=='ZERAR')return;
+ if(!(await IASDDialog.confirm('Zerar o ranking de TODOS os participantes? Esta ação não pode ser desfeita.')))return;
+ if((await IASDDialog.prompt('Para confirmar, digite ZERAR'))?.trim().toUpperCase()!=='ZERAR')return;
  btn.disabled=true;
  const r=await cloud.rpc('iasd_reset_ranking');
  btn.disabled=false;
@@ -376,8 +376,8 @@ function schTeamAdd(raw){
 }
 function schTeamDel(i){schTeam.splice(i,1);schTeamPaint();schPrev()}
 function schPull(){const ta=document.getElementById('schedule-lines');if(ta)schPeopleFromText(ta.value).forEach(n=>schTeamAdd(n))}
-function schTpl(k){const ta=document.getElementById('schedule-lines');if(!ta||!SCH_TPL[k])return;if(ta.value.trim()&&!confirm('Substituir o texto atual pelo modelo?'))return;ta.value=SCH_TPL[k].join('\n');schPrev()}
-function schFromOld(id){const g=(cloudSchedules||[]).find(x=>x.id===id);const ta=document.getElementById('schedule-lines');if(!g||!ta)return;if(ta.value.trim()&&!confirm('Substituir o texto atual pelo cronograma copiado?'))return;ta.value=plain(g.items).join('\n');schTeam=teamOf(g.items);schTeamPaint();schPrev()}
+async function schTpl(k){const ta=document.getElementById('schedule-lines');if(!ta||!SCH_TPL[k])return;if(ta.value.trim()&&!(await IASDDialog.confirm('Substituir o texto atual pelo modelo?')))return;ta.value=SCH_TPL[k].join('\n');schPrev()}
+async function schFromOld(id){const g=(cloudSchedules||[]).find(x=>x.id===id);const ta=document.getElementById('schedule-lines');if(!g||!ta)return;if(ta.value.trim()&&!(await IASDDialog.confirm('Substituir o texto atual pelo cronograma copiado?')))return;ta.value=plain(g.items).join('\n');schTeam=teamOf(g.items);schTeamPaint();schPrev()}
 function schTeamGet(){const inp=document.getElementById('sf-person');if(inp&&inp.value.trim())schTeamAdd();return schTeam.slice()}
 function schedForm(g,isNew){
  const key=isNew?'new':g.id;
@@ -503,7 +503,7 @@ const AC={k:'all'};
 function acApply(){const g=document.getElementById('ac-grid');if(!g)return;const q=(document.querySelector('.pg-acervo .pg-search input')?.value||'').trim().toLowerCase(),sort=document.getElementById('ac-sort')?.value||'new';const cards=[...g.querySelectorAll('.ac-card')];cards.forEach(c=>{const okK=AC.k==='all'||(AC.k==='used'?c.dataset.used==='1':c.dataset.kind===AC.k);c.style.display=(okK&&(!q||c.dataset.name.includes(q)))?'':'none'});cards.sort((a,b)=>sort==='name'?a.dataset.name.localeCompare(b.dataset.name):sort==='old'?a.dataset.ts-b.dataset.ts:b.dataset.ts-a.dataset.ts).forEach(c=>g.appendChild(c))}
 function acFold(btn){AC.k=btn.dataset.k;document.querySelectorAll('.ac-fold').forEach(b=>b.classList.toggle('on',b===btn));acApply()}
 function acView(btn,mode){document.getElementById('ac-grid')?.classList.toggle('list',mode==='list');btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===btn))}
-function useAs(sel){const card=sel.closest('.ac-card');if(!sel.value)return;if(confirm('Usar este arquivo como banner de "'+sel.options[sel.selectedIndex].text+'"?'))setSiteAsset(sel.value,card.dataset.path);else sel.value=''}
+async function useAs(sel){const card=sel.closest('.ac-card');if(!sel.value)return;if((await IASDDialog.confirm('Usar este arquivo como banner de "'+sel.options[sel.selectedIndex].text+'"?')))setSiteAsset(sel.value,card.dataset.path);else sel.value=''}
 
 /* ====================== ESCALAS ====================== */
 ART.escalas=svg('<defs>'+defs('e1',[[0,'#0c1530'],[.6,'#2a2040'],[1,'#6a3a2a']])+'<radialGradient id="e2"><stop offset="0" stop-color="#ffd28a"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs><rect width="640" height="260" fill="url(#e1)"/><g opacity=".9"><rect x="120" y="20" width="60" height="140" rx="30" fill="#ffc979" opacity=".75"/><rect x="220" y="14" width="64" height="150" rx="32" fill="#ffd18a" opacity=".8"/><rect x="320" y="20" width="60" height="140" rx="30" fill="#ffc979" opacity=".7"/></g><circle cx="250" cy="90" r="160" fill="url(#e2)" opacity=".55"/><g fill="#0b0f22" opacity=".85"><rect x="100" y="0" width="6" height="170"/><rect x="200" y="0" width="6" height="170"/><rect x="300" y="0" width="6" height="170"/><rect x="400" y="0" width="6" height="170"/></g><rect y="190" width="640" height="70" fill="#2a1a16"/><path d="M0 190h640" stroke="#6a3f2c" stroke-width="3"/><g transform="translate(250 130)"><path d="M0 62l120-24 120 24v20L120 66 0 82z" fill="#8a5a36"/><path d="M0 62l120-24v-30L0 34z" fill="#f4e6c4" stroke="#8a6a3a" stroke-width="2"/><path d="M240 62l-120-24v-30l120 26z" fill="#efdcb2" stroke="#8a6a3a" stroke-width="2"/><g stroke="#b59a6a" stroke-width="1.3"><path d="M12 40l96-18M12 48l96-18M12 56l96-18M132 22l96 18M132 30l96 18M132 38l96 18"/></g></g>');
@@ -536,7 +536,7 @@ function esAdd(){const g=id=>document.getElementById(id);const d=g('es-d').value
  data.escalas.push(d+' — '+n+' — '+a+(t?' — '+t:''));localStorage.setItem('iasd-studio',JSON.stringify(data));
  const dt=parseEsc(data.escalas[data.escalas.length-1]).date;if(dt){ES.m=dt.getMonth();ES.y=dt.getFullYear();ES.anchor=dt}
  ES.area=(AREAS.find(x=>x[0].toLowerCase()===a.toLowerCase())||[a])[0];ES.status='all';esRender();const nn=g('es-n');if(nn)nn.focus()}
-function esDel(i){if(!confirm('Remover este escalado?'))return;data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
+async function esDel(i){if(!(await IASDDialog.confirm('Remover este escalado?')))return;data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
 function esExport(){const rows=escFiltered(escList()).filter(e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y).sort((a,b)=>a.date-b.date);const csv='Data;Horário;Nome;Área\n'+rows.map(e=>[isoOf(e.date),e.time,e.name,e.area].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='escalas-'+ES.y+'-'+pad(ES.m+1)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del?'<button class="es-x" onclick="IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
 function esBody(){

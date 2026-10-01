@@ -66,11 +66,11 @@ async function put(key,value){
 }
 function save(key){const v=document.getElementById('ue-v').value.trim();if(!v)return alert('O texto não pode ficar vazio. Use "Ocultar" para esconder.');put(key,v)}
 const hide=key=>put(key,'__hidden__'),reset=key=>put(key,null);
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
  if(!on||!allowed())return;
  if(e.target.closest('#ue-bar,#ue-ov,#inline-editor-root,.fdx,.fdx-ov'))return;
  const img=e.target.closest('#content img');
- if(img){e.preventDefault();e.stopPropagation();if(confirm('Imagens e banners são trocados no Acervo do Site. Abrir agora?')&&typeof go==='function')go('Acervo');return}
+ if(img){e.preventDefault();e.stopPropagation();if((await IASDDialog.confirm('Imagens e banners são trocados no Acervo do Site. Abrir agora?'))&&typeof go==='function')go('Acervo');return}
  const el=e.target.closest('#content [data-ue]');
  if(el){e.preventDefault();e.stopPropagation();open(el)}
 },true);

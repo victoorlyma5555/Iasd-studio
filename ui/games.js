@@ -45,8 +45,8 @@ function home(){
  if(window.IASDPages?.gameCards)st.innerHTML=IASDPages.gameCards();else if(typeof gameModeCards==='function')st.innerHTML=gameModeCards();
  document.getElementById('pg-games')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
-function back(){
- if(S&&S.playing&&S.i>0&&!S.over&&!confirm('Sair da partida agora? Seu progresso nesta partida será perdido.'))return;
+async function back(){
+ if(S&&S.playing&&S.i>0&&!S.over&&!(await IASDDialog.confirm('Sair da partida agora? Seu progresso nesta partida será perdido.')))return;
  A().sfx('click');home();
 }
 function burst(el,chars){
