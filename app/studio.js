@@ -277,3 +277,25 @@ document.addEventListener('wheel',e=>{
 },{passive:false});
 
 document.addEventListener('input',e=>{if(e.target&&(e.target.id==='min'||e.target.id==='max'))drawLeft()});drawLeft();
+
+/* Bíblia de projeção: campo único de referência + 0 vira 1 */
+function bibleNormalize(){
+ const c=$('chapter'),v=$('verse');if(!c||!v)return;
+ const n=parseInt(c.value,10);c.value=String(n>=1?n:1);
+ const txt=String(v.value||'').trim();
+ if(!txt){v.value='1';return}
+ const fixed=txt.split('-').slice(0,2).map(p=>{const k=parseInt(p,10);return Number.isFinite(k)?String(Math.max(1,k)):''}).filter(Boolean);
+ if(fixed.length===2&&Number(fixed[1])<Number(fixed[0]))fixed.reverse();
+ v.value=fixed.length===2&&fixed[0]===fixed[1]?fixed[0]:fixed.join('-')||'1';
+}
+(function(){const orig=searchBible;searchBible=async function(){bibleNormalize();return orig.apply(this,arguments)}})();
+['chapter','verse'].forEach(id=>{const el=$(id);if(el)el.addEventListener('change',bibleNormalize)});
+function bibleGoRef(){
+ const box=$('bibleRef'),res=$('bibleResult');const text=(box?.value||'').trim();
+ if(!text){box?.focus();return}
+ const r=window.IASDBibleRef?window.IASDBibleRef.parse(text,bibleBooks):null;
+ if(!r){res.textContent='Não reconheci “'+text+'”. Exemplos: João 3:16, Sl 23, 1 Co 13:4-7.';return}
+ $('book').value=r.book;$('chapter').value=String(r.chapter);$('verse').value=r.from?(r.to?r.from+'-'+r.to:String(r.from)):'1';
+ box.value=r.name+' '+r.chapter+(r.from?':'+r.from+(r.to?'-'+r.to:''):'');
+ searchBible();
+}

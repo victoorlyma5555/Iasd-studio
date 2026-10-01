@@ -74,11 +74,24 @@ const go=n=>"go('"+n+"')";
 const dt=v=>{const d=new Date(v);if(isNaN(d))return '';return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
 
 /* ====================== ALERTAS ====================== */
+function alTargetOptions(keep){
+ const P=window.IASDPresence,me=typeof cloudUser!=='undefined'&&cloudUser?cloudUser.id:'';
+ const rows=P?P.view().rows.filter(r=>!r.me&&r.uid!==me):[];
+ return '<option value="">Todos os sonoplastas</option>'+rows.map(r=>'<option value="'+esc(r.uid)+'" data-name="'+esc(r.name)+'"'+(keep===r.uid?' selected':'')+'>'+esc(r.name)+' · online desde '+esc(r.arrived)+'</option>').join('');
+}
+function alRefreshTargets(){
+ const sel=document.getElementById('founder-alert-target');if(!sel){return false}
+ const keep=sel.value;sel.innerHTML=alTargetOptions(keep);
+ if(keep&&sel.value!==keep){sel.value='';const n=document.getElementById('al-online');if(n)n.textContent='O sonoplasta escolhido saiu da lista; o envio voltou para “Todos”.'}
+ else{const n=document.getElementById('al-online'),c=sel.options.length-1;if(n)n.textContent=c?c+' sonoplasta'+(c===1?'':'s')+' online agora. Escolha um ou envie para todos.':'Nenhum sonoplasta visível online agora. O alerta vai para todos e chega quando abrirem o site.'}
+ return true;
+}
 function alerts(){
  const sched=(typeof cloudSchedules!=='undefined'?cloudSchedules:[]);
- setTimeout(()=>{refreshSoundAlertThread();if(!soundThreadTimer)soundThreadTimer=setInterval(refreshSoundAlertThread,15000)},0);
+ setTimeout(()=>{try{if(!window.__alPresHook&&window.IASDPresence){IASDPresence.onChange(alRefreshTargets);window.__alPresHook=1}}catch(e){}alRefreshTargets();refreshSoundAlertThread();if(!soundThreadTimer)soundThreadTimer=setInterval(refreshSoundAlertThread,15000)},0);
  return '<div class="pg pg-alertas">'+hero('alertas',{kick:'COMUNICAÇÃO RÁPIDA',title:'Alerta para o <em>Sonoplasta</em>',text:'Envie um aviso para aparecer no monitor principal do computador da igreja, sem substituir o conteúdo do telão.'})+
  '<div class="pg-cols al-cols"><section class="pg-card al-form"><h2 class="pg-h">'+I('bell','gold')+'Enviar alerta</h2>'+
+ '<div class="al-sched"><span>Enviar para</span><label class="pg-sel">'+I('users')+'<select id="founder-alert-target">'+alTargetOptions()+'</select></label><small id="al-online" class="al-online"></small></div>'+
  '<div class="al-sched"><span>Cronograma (opcional)</span><label class="pg-sel">'+I('cal')+'<select id="founder-alert-schedule"><option value="">Aviso geral</option>'+sched.map(g=>'<option value="'+esc(g.name)+'">'+esc(g.name)+'</option>').join('')+'</select></label></div>'+
  '<div class="al-ta">'+I('msg')+'<textarea id="founder-sound-alert" maxlength="500" rows="3" placeholder="Ex.: O próximo hino foi alterado. Prepare o hino 123." oninput="document.getElementById(\'al-count\').textContent=this.value.length+\'/500\'"></textarea><small id="al-count">0/500</small></div>'+
  '<div class="al-act"><button class="pg-gold" id="founder-send-alert" onclick="sendFounderSoundAlert()">'+I('send')+'Enviar alerta ao sonoplasta</button><button class="pg-ghost" onclick="var t=document.getElementById(\'founder-sound-alert\');t.value=\'\';document.getElementById(\'al-count\').textContent=\'0/500\'">'+I('trash')+'Limpar mensagem</button></div></section>'+
@@ -108,7 +121,7 @@ function alertRows(rows,sound){
   const replied=!!x.reply_message;
   const reply=replied?'<div class="al-reply-b"><b>'+I('left')+esc(x.replied_by_name||'Sonoplastia')+'</b><small>'+esc(typeof soundAgo==='function'?soundAgo(x.replied_at):'')+'</small><div>'+esc(x.reply_message)+'</div></div>':(sound?'':'<div class="al-wait">Aguardando resposta da sonoplastia…</div>');
   const panel=sound?'<div class="al-panel" hidden><div class="al-quick">'+quick.map((t,k)=>'<button type="button" data-alert-reply="'+esc(x.id)+'" data-quick="'+k+'">'+esc(t)+'</button>').join('')+'</div><div class="al-write"><input type="text" maxlength="300" placeholder="Escrever resposta…" data-alert-input="'+esc(x.id)+'"><button type="button" class="pg-blue" data-alert-reply="'+esc(x.id)+'" data-send="1">Responder</button></div>'+delBtn(x)+'</div>':'<div class="al-panel" hidden><button type="button" class="pg-ghost" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.dataset.t);this.textContent=\'Copiado\'" data-t="'+esc(x.message)+'">'+I('copy')+'Copiar mensagem</button>'+delBtn(x)+'</div>';
-  return '<article class="al-row"><span class="al-ico '+(replied?'ok':(i%2?'blue':'ok'))+'">'+I('send')+'</span><div class="al-main"><b>'+esc(x.message)+'</b><small>'+esc(x.sender_name||'Equipe')+' <i>•</i> '+esc(dt(x.created_at))+(x.schedule_name?' <i>✦</i> '+esc(x.schedule_name):' <i>✦</i> Aviso geral')+'</small>'+reply+'</div><span class="al-chip '+(replied?'replied':'')+'">'+I('check')+(replied?'Respondido':'Enviado')+'</span><button class="al-more" type="button" aria-label="Mais ações" onclick="var p=this.closest(\'.al-row\').querySelector(\'.al-panel\');p.hidden=!p.hidden">'+I('more')+'</button>'+panel+'</article>';
+  return '<article class="al-row"><span class="al-ico '+(replied?'ok':(i%2?'blue':'ok'))+'">'+I('send')+'</span><div class="al-main"><b>'+esc(x.message)+'</b><small>'+esc(x.sender_name||'Equipe')+' <i>•</i> '+esc(dt(x.created_at))+(alertScheduleOf(x)?' <i>✦</i> '+esc(alertScheduleOf(x)):' <i>✦</i> Aviso geral')+(alertTargetOf(x)?' <i>✦</i> Para '+esc(alertTargetOf(x).name):'')+'</small>'+reply+'</div><span class="al-chip '+(replied?'replied':'')+'">'+I('check')+(replied?'Respondido':'Enviado')+'</span><button class="al-more" type="button" aria-label="Mais ações" onclick="var p=this.closest(\'.al-row\').querySelector(\'.al-panel\');p.hidden=!p.hidden">'+I('more')+'</button>'+panel+'</article>';
  }).join('');
 }
 
@@ -196,7 +209,15 @@ function rdVersionLabel(){const t=(readerState.translation||'nvi').toUpperCase()
 function rdSet(name,chapter,verses){
  const key=readerState.book+'|'+chapter;
  if(RD.key!==key){RD.key=key;RD.from=0;RD.to=0;RD.sel=new Set()}
+ const go=window.__rdGoto;let jumped=false;
+ if(go&&go.book===readerState.book&&Number(go.chapter)===Number(chapter)){
+  const last=verses.length?verses[verses.length-1].verse:1;
+  let f=Math.min(Math.max(1,go.from||1),last),t=go.to?Math.min(Math.max(f,go.to),last):0;
+  if(go.from){RD.from=f;RD.to=t===f?0:t;RD.sel=new Set();for(let n=f;n<=(t||f);n++)RD.sel.add(n);jumped=true}
+  window.__rdGoto=null;
+ }
  RD.name=name;RD.chapter=chapter;RD.verses=verses;rdPaint();
+ if(jumped)setTimeout(()=>document.getElementById('reader-text')?.scrollIntoView({block:'start',behavior:'smooth'}),60);
 }
 function rdVisible(){return RD.from?RD.verses.filter(v=>v.verse>=RD.from&&v.verse<=(RD.to||RD.from)):RD.verses}
 function rdPaint(){
@@ -214,6 +235,14 @@ function rdRange(){
  RD.from=f;RD.to=f&&t0>=f?t0:0;if(t0&&t0<f){RD.to=0}
  RD.sel=new Set();rdPaint();
  if(f)document.getElementById('reader-text')?.scrollTo?.({top:0});
+}
+function rdGoRef(inp){
+ const msg=document.getElementById('bb-ref-msg'),text=(inp&&inp.value||'').trim();if(!text)return;
+ const r=window.IASDBibleRef&&IASDBibleRef.parse(text,bibleBooks);
+ if(!r){if(msg)msg.textContent='Não reconheci “'+text+'”. Exemplos: João 3:16, Sl 23, 1 Co 13:4-7.';return}
+ const idx=bibleBooks.findIndex(x=>x[1]===r.book),max=bibleChapterCounts[idx]||150,chapter=Math.min(r.chapter,max);
+ window.__rdGoto={book:r.book,chapter,from:r.from,to:r.to};
+ readerGoto(r.book,chapter);
 }
 function rdAll(){RD.from=0;RD.to=0;rdPaint()}
 function rdSelRef(){const a=[...RD.sel].sort((x,y)=>x-y);if(!a.length)return '';const parts=[];let s=a[0],p=a[0];for(let i=1;i<=a.length;i++){if(a[i]===p+1){p=a[i];continue}parts.push(s===p?String(s):s+'-'+p);s=a[i];p=a[i]}return RD.name+' '+RD.chapter+':'+parts.join(',')}
@@ -246,6 +275,7 @@ function bible(){
  const v=VOTD[new Date().getDate()%VOTD.length];
  const fav=(readerState.bookmarks||[]).includes(readerState.book+'|'+readerState.chapter);
  return '<div class="pg pg-biblia '+(readerState.theme==='light'?'reader-light':'')+'" id="personal-reader">'+hero('biblia',{kick:'SUA BÍBLIA • LEITURA PESSOAL',title:'Um momento com a <em class="big">PALAVRA</em>',text:'Leia nos cultos, em casa ou onde estiver. Seu último capítulo e seus favoritos ficam salvos neste aparelho.',quote:['Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.','Salmos 119:105']})+
+ '<section class="pg-card bb-find"><label><span>Ir para a passagem</span><div class="pg-sel">'+I('search')+'<input id="bb-ref" type="search" autocomplete="off" placeholder="Ex.: João 3:16 · Sl 23 · 1 Co 13:4-7" onkeydown="if(event.key===\'Enter\'){event.preventDefault();IASDPages.rdGoRef(this)}"></div></label><button class="pg-ghost strong" onclick="IASDPages.rdGoRef(document.getElementById(\'bb-ref\'))">Ir</button><small id="bb-ref-msg" role="status"></small></section>'+
  '<section class="pg-card bb-bar"><label><span>Tradução</span><div class="pg-sel">'+I('book')+'<select id="reader-translation" onchange="readerTranslation(this.value)">'+tr.map(([k,l])=>'<option value="'+k+'" '+(cur===k?'selected':'')+'>'+l+'</option>').join('')+'</select></div></label><label><span>Livro</span><div class="pg-sel">'+I('book')+'<select id="reader-book" onchange="readerSelectBook(this.value)">'+options+'</select></div></label><label><span>Capítulo</span><div class="pg-sel">'+I('list')+'<select id="reader-chapter" onchange="readerOpen(this.value)">'+chapters+'</select></div></label><div class="bb-tools"><button class="pg-ghost sq" onclick="readerFont(-1)" title="Diminuir letra">A−</button><button class="pg-ghost sq" onclick="readerFont(1)" title="Aumentar letra">A+</button><button class="pg-ghost" onclick="readerTheme()" title="Alternar tema">'+(readerState.theme==='light'?'☾ Escuro':'☀ Claro')+'</button><button class="pg-ghost" onclick="readerBookmark()" title="Salvar capítulo">'+I('star')+'Salvar</button></div></section>'+
  '<div class="pg-card bb-nav"><button class="pg-ghost strong" onclick="readerMove(-1)">'+I('left')+'Anterior</button><span id="reader-ref">'+esc(name)+' '+readerState.chapter+'</span><button class="pg-ghost strong" onclick="readerMove(1)">Próximo'+I('right')+'</button></div>'+
  '<div class="pg-card bb-verses"><div class="bv-l"><b>'+I('list')+'Versículos</b><small>Escolha um trecho ou toque nos versículos para selecioná-los.</small></div><label>De<div class="pg-sel"><select id="rd-from" onchange="IASDPages.rdRange()"><option value="0">Todos</option></select></div></label><label>Até<div class="pg-sel"><select id="rd-to" onchange="IASDPages.rdRange()" disabled><option value="0">—</option></select></div></label><button class="pg-ghost" onclick="IASDPages.rdAll()">Capítulo inteiro</button></div>'+
@@ -513,5 +543,5 @@ function esBody(){
  return filter+chips+'<div class="es-grid">'+cal+side+'</div>'+add;
 }
 
-window.IASDPages={lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

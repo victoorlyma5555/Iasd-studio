@@ -75,11 +75,18 @@ async function alertFetchPending(initial=false){
  const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at,created_by').order('created_at',{ascending:false}).limit(20);
  if(error){alertLastError=error.message;alertBroadcastStatus();console.warn('Alertas independentes:',error.message);return}
  const items=(data||[]).reverse();
- if(initial){items.forEach(x=>{alertSeen.add(x.id);storeAlert(x)});return}
+ if(initial){items.forEach(x=>{alertSeen.add(x.id);const t=alertTarget(x);if(!t||!alertAccount||t.uid===alertAccount.id)storeAlert(alertClean(x))});return}
  for(const item of items)receiveDirectAlert(item);
 }
+// Alerta individual: o destinatário vai marcado em schedule_name (\u2063@@uid|Nome\u2063). Quem não é o destino ignora.
+const ALERT_TARGET_RE=/\u2063@@([0-9a-f-]{36})\|([^\u2063]*)\u2063/;
+function alertTarget(item){const x=ALERT_TARGET_RE.exec(String(item&&item.schedule_name||''));return x?{uid:x[1],name:x[2]}:null}
+function alertClean(item){return {...item,schedule_name:String(item&&item.schedule_name||'').replace(ALERT_TARGET_RE,'').trim()}}
 function receiveDirectAlert(item){
  if(!item?.id||alertSeen.has(item.id))return;
+ const target=alertTarget(item);
+ if(target&&alertAccount&&target.uid!==alertAccount.id){alertSeen.add(item.id);return}
+ item=alertClean(item);
  alertSeen.add(item.id);
  if(alertSeen.size>300)alertSeen=new Set([...alertSeen].slice(-150));
  lastAlertId=item.id;

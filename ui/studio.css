@@ -300,3 +300,7 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 @media (max-width:1000px){.amb-list{overflow:visible;flex:none}}
 /* Desktop: painel do módulo mais alto para a lista/biblioteca ter espaço (rola só dentro do painel) */
 @media (min-width:1001px){body.st2 main>.work{min-height:720px!important}}
+
+.bb-find{display:flex;gap:8px;align-items:center}
+.bb-find input{flex:1;min-width:0}
+.bb-find button{flex:none;min-height:42px}

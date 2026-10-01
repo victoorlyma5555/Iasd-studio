@@ -39,7 +39,7 @@ const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=
 const $=id=>document.getElementById(id);
 
 /* ---------- ícones ---------- */
-const P={down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3',menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
+const P={eye:'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',eyeoff:'M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.7 6.7C3.9 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 004.3-1M9.9 9.9a3 3 0 004.2 4.2',down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3',menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
@@ -92,7 +92,7 @@ function topHTML(){
 <div class="iu-title" id="iu-title"></div>
 <div class="iu-search" role="search">${ic('search',18)}<input id="iu-q" placeholder="Pesquisar no IASD APP..." aria-label="Pesquisar no IASD APP" autocomplete="off"><kbd>Ctrl + K</kbd><div class="iu-sr" id="iu-sr" hidden></div></div>
 <div class="iu-sp"></div>
-<button class="iu-ib" id="iu-theme" data-act="theme"></button>
+<button class="iu-ib" id="iu-vis" data-act="vis" hidden></button><button class="iu-ib" id="iu-theme" data-act="theme"></button>
 <button class="iu-ib" id="iu-bell" data-go="Alertas" aria-label="Alertar sonoplastia" title="Alertar sonoplastia" hidden>${ic('bell',19)}</button>
 <button class="iu-me" id="iu-me" data-act="account" aria-label="Minha conta"></button>`;
 }
@@ -108,6 +108,16 @@ function accountHTML(){
     if(src)av=`<img src="${E(src)}" style="width:100%;height:100%;object-fit:cover;${E(st)}" alt="">`;
   }
   return `<span class="iu-av">${av}</span><div><b>${E(name)}</b><small>${E(g(()=>roleLabel())||'')}</small></div>`;
+}
+function visIcon(){
+  const b=$('iu-vis');if(!b)return;
+  b.hidden=!S.founder();
+  const on=g(()=>IASDPresence.isVisible());
+  b.innerHTML=ic(on?'eye':'eyeoff',19);
+  b.setAttribute('aria-pressed',String(!on));
+  b.title=on?'Você está visível para os sonoplastas. Clique para ficar invisível.':'Você está invisível. Clique para aparecer nas listas.';
+  b.setAttribute('aria-label',on?'Visível — clique para ficar invisível':'Invisível — clique para ficar visível');
+  b.classList.toggle('iu-off',!on);
 }
 function themeIcon(){
   const dark=document.documentElement.getAttribute('data-theme')==='dark';
@@ -210,8 +220,21 @@ function projInner(){
 <div class="iu-pv">${g(()=>IASDMedia.img('home_projector'))||''}${imageOf('home_projector')?'':ic('monitor',40)}${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_projector">✎ Editar imagem</button>':''}</div>
 <div class="iu-inf"><div>${ic('clock',15)}Última conexão: <b>${E(fmtLast(lastSeen()))}</b></div><div>${ic('monitor',15)}Monitor detectado: <b>${E(monitors)}</b></div><div>${ic('user',15)}Usuário: <b>${E(name||'—')}</b></div></div>
 <button class="iu-btn p" data-go="Projeção">${ic('play',16)}Abrir Studio de Projeção${ic('chev',16)}</button>
-${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div>`:''}`;
+${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div><div class="iu-pres" id="iu-pres">${presInner()}</div>`:''}`;
 }
+function presInner(){
+  const P=window.IASDPresence;if(!P)return '';
+  const v=P.view(),day=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
+  const row=r=>`<li class="iu-pr ${r.tag}"><span class="iu-av">${E((r.name||'?').trim().charAt(0).toUpperCase())}</span><div class="iu-pt"><b>${E(r.name)}${r.me?' <em>(você)</em>':''}</b><small>Chegou ${E(r.arrived)} · online há ${E(r.online)} · ${E(r.device||'')}${r.projetor==='ok'?' · Projetor conectado':''}</small></div><span class="iu-tg ${r.tag}">${E(r.label)}</span></li>`;
+  const ab=a=>`<li class="iu-pr abs"><span class="iu-av">${E((a.name||'?').charAt(0).toUpperCase())}</span><div class="iu-pt"><b>${E(a.name)}</b><small>Escalado${a.time?' às '+E(a.time):''} · ainda não entrou</small></div><span class="iu-tg abs">Ausente</span></li>`;
+  const empty=!v.rows.length&&!v.absent.length;
+  return `<div class="iu-prh"><b>${ic('users',16)}Sonoplastas em serviço <span class="iu-cnt">${v.total}</span></b><small>${E(day)}</small></div>
+<label class="iu-sw" title="Quando desligado, os outros sonoplastas não veem você nesta lista"><input type="checkbox" data-act="pres-toggle" ${v.visible?'checked':''}><span class="iu-sl"></span><span>Aparecer na lista de presença</span></label>
+${v.subscribed?'':'<p class="iu-pn">Conectando ao serviço de presença…</p>'}
+<ul class="iu-prl">${v.rows.map(row).join('')}${v.absent.map(ab).join('')}${empty&&v.subscribed?'<li class="iu-pe">Ninguém na lista agora. Quem ativar “Aparecer na lista” será mostrado aqui.</li>':''}</ul>
+<p class="iu-pn">A escala vem do cadastro em Escalas deste aparelho (área Sonoplastia ou Projeção).</p>`;
+}
+function updatePres(){const el=$('iu-pres');if(el)el.innerHTML=presInner()}
 function updateProj(){const el=$('iu-proj');if(el)el.innerHTML=projInner()}
 async function checkProjector(){
   if(proj.busy)return;
@@ -257,7 +280,7 @@ function loadPassage(){
 }
 function passageInner(){
   const long=passage.text.length>150;
-  return `<div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q${long?' class="long"':''}>${E(passage.text)}</q><small>${E(passage.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ler capítulo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
+  return `<div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q${long?' class="long"':''}>${E(passage.text)}</q><small>${E(passage.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ver versículo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
 }
 function passageStyle(){return bgImage('home_passage','linear-gradient(180deg,rgba(8,16,38,.25),rgba(8,16,38,.82))')}
 function updatePassage(){const el=$('iu-passage');if(el){el.innerHTML=passageInner();el.setAttribute('style',passageStyle())}}
@@ -406,6 +429,8 @@ function bind(){
       if(a==='menu')document.body.classList.add('iu-open');
       else if(a==='back')g(()=>mobileGoBack());
       else if(a==='theme')g(()=>toggleTheme());
+      else if(a==='vis'){g(()=>IASDPresence.setVisible(!IASDPresence.isVisible()));visIcon();updatePres()}
+      else if(a==='pres-toggle'){g(()=>IASDPresence.setVisible(!!act.checked));visIcon()}
       else if(a==='account')g(()=>toggleAccountMenu());
       else if(a==='newtab'){document.body.classList.remove('iu-open');g(()=>newTab())}
       else if(a==='banner')g(()=>editHomeCarousel());
@@ -416,7 +441,7 @@ function bind(){
       else if(a==='signup')g(()=>openAuthModal(true));
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
       else if(a==='passage'){
-        g(()=>{readerState.book=passage.book;readerState.chapter=passage.chapter;saveReader()});
+        g(()=>{readerState.book=passage.book;readerState.chapter=passage.chapter;window.__rdGoto={book:passage.book,chapter:Number(passage.chapter),from:Number(passage.verse)||1,to:0};saveReader()});
         g(()=>go('Bíblia'));
       }
       return;
@@ -442,7 +467,8 @@ function refresh(){
   const me=$('iu-me');if(me)me.innerHTML=accountHTML();
   const t=$('iu-title');if(t)t.textContent=titleOf(cur);
   const bell=$('iu-bell');if(bell)bell.hidden=!S.assigned();
-  themeIcon();
+  themeIcon();visIcon();
+  g(()=>(S.sound()||S.assigned())?IASDPresence.ensure():IASDPresence.stop());
   if(cur==='Painel'&&S.sound()&&g(()=>companionToken)&&Date.now()-proj.checkedAt>20000&&!proj.busy)checkProjector();
 }
 api.afterRender=function(){
@@ -462,5 +488,7 @@ api.fail=function(e){
   setTimeout(()=>g(()=>render()),0);
   return '';
 };
+api.projState=()=>proj.state;
+g(()=>IASDPresence.onChange(()=>{if(S.cur()==='Painel')updatePres()}));
 window.IASDUI=api;
 })();
