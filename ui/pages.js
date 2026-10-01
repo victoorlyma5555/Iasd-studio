@@ -248,7 +248,7 @@ function rdAll(){RD.from=0;RD.to=0;rdPaint()}
 function rdSelRef(){const a=[...RD.sel].sort((x,y)=>x-y);if(!a.length)return '';const parts=[];let s=a[0],p=a[0];for(let i=1;i<=a.length;i++){if(a[i]===p+1){p=a[i];continue}parts.push(s===p?String(s):s+'-'+p);s=a[i];p=a[i]}return RD.name+' '+RD.chapter+':'+parts.join(',')}
 function rdSelText(){const a=[...RD.sel].sort((x,y)=>x-y);return a.map(n=>RD.verses.find(v=>v.verse===n)).filter(Boolean).map(v=>v.text.trim()).join(' ')}
 function rdQuote(){return '“'+rdSelText()+'” — '+rdSelRef()+' ('+rdVersionLabel()+')'}
-function rdBar(){
+function rdBar(){document.getElementById('rd-bar')?.remove();return;
  let bar=document.getElementById('rd-bar');const n=RD.sel.size;
  const host=document.querySelector('.bb-main');if(!host)return;
  if(!n){bar?.remove();return}
