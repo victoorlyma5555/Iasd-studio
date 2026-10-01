@@ -145,7 +145,7 @@ function select(kind,id){
 function vrow(kind,it,o){
  o=o||{};const id=it.id;const r=h('div','amb-row'+(sel[kind]===id?' is-sel':''));
  const th=thumb(id);if(it.thumb&&!/ytimg/.test(it.thumb))th.src=it.thumb;
- const inf=h('div','amb-info');inf.append(h('b','',it.title||titleOf(id)),h('small','',[it.channel,fmtDur(it.duration),o.sub].filter(Boolean).join(' · ')||'YouTube'));
+ const inf=h('div','amb-info');inf.append(h('b','',it.title||titleOf(id)),h('small','',([it.channel,fmtDur(it.duration),o.sub].filter(Boolean).join(' · ')||'YouTube')+' · pode ter anúncio'));
  const acts=h('div','vr-acts');
  acts.append(btn('','amb-play',()=>select(kind,id),'play','Selecionar para projetar'));
  if(!o.noQueue)acts.append(btn(queueHas(kind,id)?'Na fila':'Fila',queueHas(kind,id)?'mp-btn is-on':'mp-btn',()=>{if(it.title)setTitle(id,it.title);qadd(kind,id)},queueHas(kind,id)?'check':'plus','Adicionar à fila de reprodução'));
