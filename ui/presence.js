@@ -10,8 +10,10 @@ const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const pad=n=>String(n).padStart(2,'0');
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 const hm=ms=>{const d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())};
-function visible(){try{return localStorage.getItem(VKEY)!=='0'}catch(e){return true}}
-function setVisible(v){try{localStorage.setItem(VKEY,v?'1':'0')}catch(e){}if(v)track();else untrack();notify()}
+const isFounder=()=>g(()=>cloudRole)==='founder';
+/* Só o fundador pode ficar invisível; sonoplastas sempre aparecem (não há escolha para eles). */
+function visible(){if(!isFounder())return true;try{return localStorage.getItem(VKEY)!=='0'}catch(e){return true}}
+function setVisible(v){if(!isFounder())return;try{localStorage.setItem(VKEY,v?'1':'0')}catch(e){}if(v)track();else untrack();notify()}
 /* 1ª vez que a pessoa ficou visível hoje, neste aparelho: é o "bateu o horário". */
 function arrivalToday(){
   const day=todayISO();
@@ -52,7 +54,7 @@ function sync(){
 function notify(){st.listeners.forEach(f=>{try{f()}catch(e){}})}
 function ensure(){
   const cl=g(()=>cloud),user=g(()=>cloudUser);
-  if(!cl||!user||!(g(()=>canUseSound())||g(()=>hasAssignedRole()))){stop();return}
+  if(!cl||!user||!g(()=>canUseSound())){stop();return}
   if(st.ch&&st.uid===user.id)return;
   stop();st.uid=user.id;
   try{
@@ -84,5 +86,5 @@ function view(){
   const absent=esc.filter(e=>!rows.some(r=>sameName(e.name,r.name))).map(e=>({name:e.name,time:e.time}));
   return {rows,absent,subscribed:st.subscribed,visible:visible(),total:rows.length,day};
 }
-window.IASDPresence={ensure,stop,view,setVisible,isVisible:visible,onChange:f=>{st.listeners.add(f);return()=>st.listeners.delete(f)}};
+window.IASDPresence={isFounder,ensure,stop,view,setVisible,isVisible:visible,onChange:f=>{st.listeners.add(f);return()=>st.listeners.delete(f)}};
 })();

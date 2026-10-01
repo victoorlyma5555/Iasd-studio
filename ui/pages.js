@@ -76,14 +76,14 @@ const dt=v=>{const d=new Date(v);if(isNaN(d))return '';return d.toLocaleDateStri
 /* ====================== ALERTAS ====================== */
 function alTargetOptions(keep){
  const P=window.IASDPresence,me=typeof cloudUser!=='undefined'&&cloudUser?cloudUser.id:'';
- const rows=P?P.view().rows.filter(r=>!r.me&&r.uid!==me):[];
+ const rows=P&&P.isFounder()?P.view().rows.filter(r=>!r.me&&r.uid!==me):[];
  return '<option value="">Todos os sonoplastas</option>'+rows.map(r=>'<option value="'+esc(r.uid)+'" data-name="'+esc(r.name)+'"'+(keep===r.uid?' selected':'')+'>'+esc(r.name)+' · online desde '+esc(r.arrived)+'</option>').join('');
 }
 function alRefreshTargets(){
  const sel=document.getElementById('founder-alert-target');if(!sel){return false}
  const keep=sel.value;sel.innerHTML=alTargetOptions(keep);
  if(keep&&sel.value!==keep){sel.value='';const n=document.getElementById('al-online');if(n)n.textContent='O sonoplasta escolhido saiu da lista; o envio voltou para “Todos”.'}
- else{const n=document.getElementById('al-online'),c=sel.options.length-1;if(n)n.textContent=c?c+' sonoplasta'+(c===1?'':'s')+' online agora. Escolha um ou envie para todos.':'Nenhum sonoplasta visível online agora. O alerta vai para todos e chega quando abrirem o site.'}
+ else{const n=document.getElementById('al-online'),c=sel.options.length-1;if(n)n.textContent=!(window.IASDPresence&&IASDPresence.isFounder())?'O alerta vai para todos os sonoplastas.':c?c+' sonoplasta'+(c===1?'':'s')+' online agora. Escolha um ou envie para todos.':'Nenhum sonoplasta online agora. O alerta vai para todos e chega quando abrirem o site.'}
  return true;
 }
 function alerts(){

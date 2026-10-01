@@ -223,16 +223,16 @@ function projInner(){
 ${sound?`<div class="iu-two"><button class="iu-btn" data-act="projtest"${proj.busy?' disabled':''}>${ic('link',16)}Testar conexão</button><button class="iu-btn" data-act="projpair" title="Informar o código de pareamento do IASD Projetor">${ic('gear',16)}Parear projetor</button></div><div class="iu-pres" id="iu-pres">${presInner()}</div>`:''}`;
 }
 function presInner(){
-  const P=window.IASDPresence;if(!P)return '';
+  const P=window.IASDPresence;if(!P)return '';const fd=P.isFounder();
   const v=P.view(),day=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'});
-  const row=r=>`<li class="iu-pr ${r.tag}"><span class="iu-av">${E((r.name||'?').trim().charAt(0).toUpperCase())}</span><div class="iu-pt"><b>${E(r.name)}${r.me?' <em>(você)</em>':''}</b><small>Chegou ${E(r.arrived)} · online há ${E(r.online)} · ${E(r.device||'')}${r.projetor==='ok'?' · Projetor conectado':''}</small></div><span class="iu-tg ${r.tag}">${E(r.label)}</span></li>`;
+  const row=r=>`<li class="iu-pr ${r.tag}"><span class="iu-av">${E((r.name||'?').trim().charAt(0).toUpperCase())}</span><div class="iu-pt"><b>${E(r.name)}${r.me?' <em>(você)</em>':''}</b><small>Chegou ${E(r.arrived)} · online há ${E(r.online)} · ${E(r.device||'')}${r.projetor==='ok'?' · Projetor conectado':''}</small></div>${fd?`<span class="iu-tg ${r.tag}">${E(r.label)}</span>`:''}</li>`;
   const ab=a=>`<li class="iu-pr abs"><span class="iu-av">${E((a.name||'?').charAt(0).toUpperCase())}</span><div class="iu-pt"><b>${E(a.name)}</b><small>Escalado${a.time?' às '+E(a.time):''} · ainda não entrou</small></div><span class="iu-tg abs">Ausente</span></li>`;
   const empty=!v.rows.length&&!v.absent.length;
   return `<div class="iu-prh"><b>${ic('users',16)}Sonoplastas em serviço <span class="iu-cnt">${v.total}</span></b><small>${E(day)}</small></div>
-<label class="iu-sw" title="Quando desligado, os outros sonoplastas não veem você nesta lista"><input type="checkbox" data-act="pres-toggle" ${v.visible?'checked':''}><span class="iu-sl"></span><span>Aparecer na lista de presença</span></label>
+${fd?`<p class="iu-pn">${v.visible?'Você aparece para os sonoplastas.':'Você está invisível (botão de olho no topo).'} Atrasos e ausências só aparecem para você.</p>`:''}
 ${v.subscribed?'':'<p class="iu-pn">Conectando ao serviço de presença…</p>'}
-<ul class="iu-prl">${v.rows.map(row).join('')}${v.absent.map(ab).join('')}${empty&&v.subscribed?'<li class="iu-pe">Ninguém na lista agora. Quem ativar “Aparecer na lista” será mostrado aqui.</li>':''}</ul>
-<p class="iu-pn">A escala vem do cadastro em Escalas deste aparelho (área Sonoplastia ou Projeção).</p>`;
+<ul class="iu-prl">${v.rows.map(row).join('')}${fd?v.absent.map(ab).join(''):''}${(fd?empty:!v.rows.length)&&v.subscribed?'<li class="iu-pe">Ninguém online agora.</li>':''}</ul>
+${fd?'<p class="iu-pn">A escala vem do cadastro em Escalas deste aparelho (área Sonoplastia ou Projeção).</p>':''}`;
 }
 function updatePres(){const el=$('iu-pres');if(el)el.innerHTML=presInner()}
 function updateProj(){const el=$('iu-proj');if(el)el.innerHTML=projInner()}
@@ -468,7 +468,7 @@ function refresh(){
   const t=$('iu-title');if(t)t.textContent=titleOf(cur);
   const bell=$('iu-bell');if(bell)bell.hidden=!S.assigned();
   themeIcon();visIcon();
-  g(()=>(S.sound()||S.assigned())?IASDPresence.ensure():IASDPresence.stop());
+  g(()=>S.sound()?IASDPresence.ensure():IASDPresence.stop());
   if(cur==='Painel'&&S.sound()&&g(()=>companionToken)&&Date.now()-proj.checkedAt>20000&&!proj.busy)checkProjector();
 }
 api.afterRender=function(){
