@@ -359,10 +359,17 @@ function paintReveals(){
 function leave(silent){
  const R=S.room;if(!R)return;stopVoice(true);FX('reset');
  try{R.ch.untrack();cloud().removeChannel(R.ch)}catch(e){}
- document.body.classList.remove('es-fxon','es-host');
+ document.body.classList.remove('es-fxon','es-host','es-susp');
  S.room=null;if(silent!==true)clearRoom();applyLock();paintBar();paintDock();paintChat();if(!silent){toast('Você saiu da sala.');paint()}
 }
-function backToRoom(){S.view='lesson';paint()}
+function backToRoom(){const R=S.room;if(R&&R.mode==='study'&&lesson())S.view='lesson';
+ if(!$('es-root')&&typeof go==='function'){go('Estudo');return}paint()}
+/* Ao sair do módulo do estudo a sala fica suspensa: câmera, microfone, som e telas da sala param até a pessoa voltar. */
+function suspSync(){const R=S.room;if(!R)return;const s=!$('es-root');if(!!R.susp===s)return;R.susp=s;document.body.classList.toggle('es-susp',s);
+ if(s){stopMic();stopCam();applyAudio();toast('Sala suspensa. Câmera e microfone foram desligados.')}
+ else{applyAudio();toast('Você voltou à sala. Ligue o microfone e a câmera se quiser.')}
+ track();paintBar();paintDock();paintHost();paintChat()}
+setInterval(suspSync,300);
 function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;track();paintBar()}
 function react(e){const R=S.room;if(!R||(R.lock.r&&!R.host))return;send('rx',{e,name:myName()});floatReact(e,'Você');R.rxOpen=false;paintBar()}
 function floatReact(e,name){const d=document.createElement('div');d.className='es-fl';d.innerHTML=esc(e)+'<small>'+esc(name||'')+'</small>';d.style.left=(20+Math.random()*60)+'%';document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
@@ -372,6 +379,7 @@ function paintBar(){
  let bar=$('es-bar');const R=S.room;
  if(!R){if(bar)bar.remove();paintHost();paintChat();return}
  if(!bar){bar=document.createElement('div');bar.id='es-bar';bar.className='es-bar';document.body.appendChild(bar)}
+ if(R.susp){bar.innerHTML='<div class="es-bar-in es-bar-susp"><span class="es-sp"><b>⏸ Sala '+esc(R.code)+' suspensa</b><small>Câmera, microfone e som desligados enquanto você está fora do estudo</small></span><button class="es-bt es-go" onclick="IASDEstudo.backToRoom()">Voltar à sala</button><button class="es-bt danger" onclick="IASDEstudo.leaveAsk()">Sair</button></div>';return}
  const v=R.voice||{},peers=Object.values(R.peers),n=peers.length+1;
  const names=[{id:R.me,name:myName()+' (você)',hand:R.hand,mic:v.mic,cam:v.cam,host:R.host,self:true,away:isAway()}].concat(peers);
  const rxOff=R.lock.r&&!R.host,chOff=R.mode==='lobby';
@@ -409,7 +417,7 @@ const AUDIO_C={echoCancellation:{ideal:true},noiseSuppression:{ideal:true},autoG
 const VIDEO_C={width:{ideal:640},height:{ideal:480},frameRate:{ideal:24},facingMode:'user'};
 function ensureVoice(){
  const R=S.room;if(!R)return null;
- if(!R.voice){const V=R.voice={ready:false,mic:false,cam:false,aTrack:null,vTrack:null,pcs:{},tiles:{}};
+ if(!R.voice){const V=R.voice={ready:false,mic:false,cam:false,aTrack:null,vTrack:null,pcs:{},tiles:{},aud:{},an:{}};
   loadTurn().then(()=>{V.ready=true;if(S.room&&S.room.voice===V){syncVoicePeers();paintDock()}})}
  return R.voice}
 function syncVoicePeers(){const R=S.room,V=R&&R.voice;if(!V||!V.ready)return;Object.keys(R.peers).forEach(id=>{if(R.peers[id].voice&&!V.pcs[id])mkPeer(id)})}
@@ -422,7 +430,7 @@ function mkPeer(id){
  pc.onnegotiationneeded=async()=>{try{pc.mk=true;await pc.setLocalDescription();sig(id,'desc',pc.localDescription)}catch(e){console.warn(e)}finally{pc.mk=false}};
  pc.onicecandidate=e=>{if(e.candidate)sig(id,'ice',e.candidate)};
  pc.ontrack=e=>{const ms=V.tiles[id]||(V.tiles[id]=new MediaStream());if(!ms.getTracks().includes(e.track))ms.addTrack(e.track);
-  e.track.onmute=e.track.onunmute=()=>paintDock();paintDock()};
+  attachAudio(id);e.track.onmute=e.track.onunmute=()=>paintDock();paintDock()};
  pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'){try{pc.restartIce()}catch(e){}}paintDock()};
  return pc;
 }
@@ -439,10 +447,11 @@ async function onSig(m){
   }else if(m.k==='ice'){try{await pc.addIceCandidate(m.d)}catch(e){if(!pc.ignore)console.warn(e)}}
  }catch(e){console.warn('sinalização',e)}
 }
-function closePeer(id){const V=S.room&&S.room.voice;if(!V)return;const pc=V.pcs[id];if(pc){try{pc.close()}catch(e){}delete V.pcs[id]}delete V.tiles[id];paintDock()}
+function closePeer(id){const V=S.room&&S.room.voice;if(!V)return;const pc=V.pcs[id];if(pc){try{pc.close()}catch(e){}delete V.pcs[id]}delete V.tiles[id];dropAudio(id);paintDock()}
 function stopVoice(silent){
  const R=S.room;if(!R||!R.voice)return;const V=R.voice;
  Object.keys(V.pcs).forEach(id=>{try{V.pcs[id].close()}catch(e){}});
+ Object.keys(V.aud).forEach(dropAudio);Object.keys(V.an).forEach(id=>dropLevel(id));
  [V.aTrack,V.vTrack].forEach(t=>{try{t&&t.stop()}catch(e){}});
  R.voice=null;if(silent!==true){track();paintBar();paintDock()}
 }
@@ -453,11 +462,12 @@ async function toggleMic(){
  let st;try{st=await navigator.mediaDevices.getUserMedia({audio:AUDIO_C})}catch(e){toast('Permita o microfone nas configurações do navegador para falar.');return}
  const t=st.getAudioTracks()[0];V.aTrack=t;V.mic=true;t.onended=()=>{if(V.aTrack===t)stopMic()};
  Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(t).catch(()=>{}));
+ actx();watchLevel('me',new MediaStream([t]));
  toast('Microfone ligado. Toque de novo para desligar.');track();paintBar();paintDock();refreshLobby();
 }
 function stopMic(){
  const V=S.room&&S.room.voice;if(!V||!V.mic)return;V.mic=false;const t=V.aTrack;V.aTrack=null;
- Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(null).catch(()=>{}));if(t)t.stop();
+ Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(null).catch(()=>{}));if(t)t.stop();dropLevel('me');
  track();paintBar();paintDock();refreshLobby();
 }
 function muteMic(){const V=S.room&&S.room.voice;if(V&&V.mic){stopMic();toast('O dirigente pediu silêncio. Seu microfone foi desligado.')}}
@@ -475,6 +485,28 @@ function stopCam(){
  Object.values(V.pcs).forEach(pc=>pc.vT.sender.replaceTrack(null).catch(()=>{}));if(t)t.stop();
  track();paintBar();paintDock();refreshLobby();
 }
+/* Som da sala: um <audio> por pessoa, fixo e separado das bolinhas de vídeo (as bolinhas são redesenhadas toda hora e cortavam o som) */
+let AC=null;
+function actx(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume().catch(()=>{})}catch(e){}return AC}
+function audBox(){let b=$('es-audio');if(!b){b=document.createElement('div');b.id='es-audio';b.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';document.body.appendChild(b)}return b}
+function attachAudio(id){const R=S.room,V=R&&R.voice;if(!V)return;const ms=V.tiles[id];if(!ms)return;
+ let a=V.aud[id];if(!a){a=V.aud[id]=document.createElement('audio');a.autoplay=true;a.setAttribute('playsinline','');a.dataset.p=id;audBox().appendChild(a)}
+ if(a.srcObject!==ms)a.srcObject=ms;applyAudio(id);watchLevel(id,ms)}
+function applyAudio(id){const R=S.room,V=R&&R.voice;if(!V)return;
+ (id?[id]:Object.keys(V.aud)).forEach(i=>{const a=V.aud[i];if(!a)return;a.muted=!!(R.vmute[i]||R.susp);a.volume=1;
+  const p=a.play();if(p&&p.catch)p.catch(()=>{if(!R.needTap){R.needTap=true;toast('Toque na tela para ativar o som da sala.')}})})}
+function dropAudio(id){const V=S.room&&S.room.voice;if(!V)return;const a=V.aud[id];if(a){try{a.pause();a.srcObject=null;a.remove()}catch(e){}delete V.aud[id]}dropLevel(id)}
+function watchLevel(id,ms){const V=S.room&&S.room.voice;if(!V)return;const n=ms.getAudioTracks().length;const old=V.an[id];if(old&&old.ms===ms&&old.n===n)return;
+ const c=actx();if(!c||!n)return;dropLevel(id);
+ try{const src=c.createMediaStreamSource(ms),an=c.createAnalyser();an.fftSize=256;src.connect(an);V.an[id]={ms,src,an,n,buf:new Uint8Array(an.fftSize),on:false}}catch(e){}}
+function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.remove('talk'))}
+setInterval(()=>{const R=S.room,V=R&&R.voice;if(!V)return;Object.keys(V.an).forEach(id=>{const o=V.an[id];try{o.an.getByteTimeDomainData(o.buf)}catch(e){return}
+ let m=0;for(let i=0;i<o.buf.length;i++){const d=Math.abs(o.buf[i]-128);if(d>m)m=d}const on=m>9&&!R.susp;
+ if(on!==o.on){o.on=on;document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.toggle('talk',on))}})},180);
+function unlockAudio(){const R=S.room,V=R&&R.voice;try{if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}catch(e){}
+ if(V){if(Object.values(V.aud).some(a=>a.paused)){R.needTap=false;applyAudio()}}
+ document.querySelectorAll('.es-tile video').forEach(v=>{if(v.paused&&v.play)v.play().catch(()=>{})})}
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true,capture:true}));
 function startVoice(){ensureVoice();syncVoicePeers()}
 function paintDock(){
  let dock=$('es-dock');const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';
@@ -489,22 +521,20 @@ function paintDock(){
  let box;
  if(lobby){if(dock)dock.remove();box=lg}
  else{if(!dock){dock=document.createElement('div');dock.id='es-dock';dock.className='es-dock';document.body.appendChild(dock)}box=dock}
- const tile=(id,name,mic,cam,self,host)=>'<div class="es-tile'+(cam?' cam':'')+'" data-t="'+id+'"><video autoplay playsinline '+(self?'muted':'')+'></video><span class="es-av">'+esc((name||'?').charAt(0).toUpperCase())+'</span>'
-  +(cam?'<i class="es-live">AO VIVO</i>':'')
+ const tile=(id,name,mic,cam,self,host)=>'<div class="es-tile'+(cam?' cam':'')+'" data-t="'+id+'"><div class="es-pic"><video autoplay playsinline muted></video><span class="es-av">'+esc((name||'?').charAt(0).toUpperCase())+'</span>'
   +(self?'':'<span class="es-tc"><button type="button" data-a="m" title="Silenciar só no seu aparelho" aria-label="Silenciar esta pessoa">'+(R.vmute[id]?'🔇':'🔈')+'</button><button type="button" data-a="v" title="Ocultar o vídeo" aria-label="Ocultar vídeo desta pessoa">'+(R.vhide[id]?'👁':'🙈')+'</button></span>')
-  +'<small>'+esc(name||'?')+(host?' · dirigente':'')+(mic?' 🎙':'')+(!mic&&!cam&&lobby?' · só assistindo':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'&&V.pcs[id].connectionState!=='new'?' ⏳':'')+'</small></div>';
+  +'</div><small class="es-nm">'+((cam||mic)?'<i class="es-dot" title="Ao vivo" aria-label="Ao vivo"></i>':'')+'<span class="es-nt">'+esc(name||'?')+(host?' · dirigente':'')+(!mic&&!cam&&lobby?' · só assistindo':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'&&V.pcs[id].connectionState!=='new'?' ⏳':'')+'</span></small></div>';
  const myMs=()=>V&&V.vTrack?new MediaStream([V.vTrack]):null;
  box.innerHTML=((lobby||mine)?tile('me',myName()+' (você)',V&&V.mic,V&&V.cam,true,R.host):'')+ids.map(id=>tile(id,R.peers[id].name,R.peers[id].mic,R.peers[id].cam,false,R.peers[id].host)).join('');
  box.querySelectorAll('.es-tile').forEach(el=>{const id=el.dataset.t,v=el.querySelector('video');
   el.onclick=e=>{const b=e.target.closest('button');if(b){e.stopPropagation();if(b.dataset.a==='m')muteFrom(id);else hideFrom(id);return}el.classList.toggle('zoom')};
   const ms=id==='me'?myMs():(V&&V.tiles[id]);
   if(ms){v.srcObject=ms;const live=ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);el.classList.toggle('vid',live&&!(id!=='me'&&R.vhide[id]))}
-  if(id!=='me'){v.muted=!!R.vmute[id];const pl=v.play&&v.play();if(pl&&pl.catch)pl.catch(()=>{R.needTap=true})}});
+  if(V&&V.an[id]&&V.an[id].on)el.classList.add('talk');const pl=v.play&&v.play();if(pl&&pl.catch)pl.catch(()=>{})});
 }
 function refreshLobby(){if(S.room&&S.room.mode==='lobby')paint()}
-function muteFrom(id){const R=S.room;if(!R)return;R.vmute[id]=!R.vmute[id];paintDock();paintBar()}
+function muteFrom(id){const R=S.room;if(!R)return;R.vmute[id]=!R.vmute[id];applyAudio(id);paintDock();paintBar()}
 function hideFrom(id){const R=S.room;if(!R)return;R.vhide[id]=!R.vhide[id];paintDock()}
-document.addEventListener('pointerdown',()=>{const R=S.room;if(R&&R.needTap){R.needTap=false;document.querySelectorAll('.es-tile video').forEach(v=>{v.play&&v.play().catch(()=>{})})}},{passive:true});
 
 /* ---------- bate-papo antes do estudo + painel do dirigente ---------- */
 function lobbyHTML(){

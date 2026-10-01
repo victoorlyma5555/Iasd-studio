@@ -48,7 +48,9 @@ async function signInWithGoogle(){
  authBusy=true;
  const feedback=$('auth-feedback');
  try{
-  const redirectTo=window.location.origin+window.location.pathname;
+  /* Google sempre mantém a conta: apaga a marca de "não lembrar" que derrubava a sessão ao voltar do Google; volta sempre pela raiz, que é o endereço liberado no Supabase */
+  try{localStorage.removeItem('iasd-noremember');sessionStorage.setItem('iasd-alive','1')}catch(e){}
+  const redirectTo=window.location.origin+'/';
   await window.IASDCloudService.signInWithGoogle(redirectTo);
  }catch(e){authBusy=false;if(feedback){feedback.className='auth-error';feedback.textContent=e.message||'Não foi possível entrar com o Google.'}}
 }

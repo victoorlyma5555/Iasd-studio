@@ -206,7 +206,7 @@ function watch(){
  window.iasdCloud.auth.onAuthStateChange((ev,ss)=>{
   if(ev==='PASSWORD_RECOVERY')setTimeout(newPass,0);
   if(ss&&(ev==='INITIAL_SESSION'||ev==='SIGNED_IN')){try{
-   if(localStorage.getItem('iasd-noremember')==='1'&&!sessionStorage.getItem('iasd-alive')){localStorage.removeItem('iasd-noremember');localStorage.removeItem('iasd-auth-backup');setTimeout(()=>window.iasdCloud.auth.signOut(),0)}
+   if(localStorage.getItem('iasd-noremember')==='1'&&!sessionStorage.getItem('iasd-alive')&&!/access_token=|[?&]code=/.test(location.hash+location.search)){localStorage.removeItem('iasd-noremember');localStorage.removeItem('iasd-auth-backup');setTimeout(()=>window.iasdCloud.auth.signOut(),0)}
    sessionStorage.setItem('iasd-alive','1')}catch(e){}}
  });
 }
