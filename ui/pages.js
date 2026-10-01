@@ -599,9 +599,11 @@ const PF_BADGES=[
  ['30 dias de Palavra','30 dias do plano de leitura','🕊️','#0ea5e9','#0c3b5e',c=>c.plan>=30],
  ['Um quarto da Bíblia','Leu 25% do plano (91 dias)','🏔️','#8b5cf6','#3b1c7a',c=>c.plan>=91]
 ];
+const pfAllB=()=>PF_BADGES.concat((window.IASDStudyMe&&IASDStudyMe.SEALS)||[]);
+function pfStudy(){try{return window.IASDStudyMe?IASDStudyMe.counts():{ans:0,les:0,tro:0,rooms:0,won:0}}catch(e){return {ans:0,les:0,tro:0,rooms:0,won:0}}}
 function pfCtx(){const m=pfMe(),r=m.row||{};const total=Number(r.total_answers||0),ok=Number(r.correct_answers||0);
  let plan=0;try{plan=window.IASDExtras?.planStats().done||0}catch(e){}
- return {plan,score:Number(r.score||0),pos:m.pos,streak:pfStreak(),played:Number(r.games_played||0)||(Number(r.score||0)>0||pfStreak()?1:0),total,acc:total?Math.round(ok*100/total):0}}
+ return {...pfStudy(),plan,score:Number(r.score||0),pos:m.pos,streak:pfStreak(),played:Number(r.games_played||0)||(Number(r.score||0)>0||pfStreak()?1:0),total,acc:total?Math.round(ok*100/total):0}}
 function pfBadge(b,on){return '<div class="pf-bd'+(on?'':' off')+'" title="'+esc(b[1])+'"><span class="pf-hex" style="--c1:'+b[3]+';--c2:'+b[4]+'"><i>'+(on?b[2]:'🔒')+'</i></span><b>'+esc(b[0])+'</b><small>'+esc(b[1])+'</small></div>'}
 function pfRankRows(){
  const me=pfMe();let rows=[];
@@ -624,12 +626,12 @@ function pfNext(c){
 }
 function profile(){
  const c=pfCtx(),lvl=Math.max(1,Math.floor(c.score/500)+1),into=c.score%500,left=500-into;
- const un=PF_BADGES.filter(b=>b[5](c)),lk=PF_BADGES.filter(b=>!b[5](c));
+ const AB=pfAllB(),un=AB.filter(b=>b[5](c)),lk=AB.filter(b=>!b[5](c));
  const p=(typeof myProfile!=='undefined'&&myProfile)||{};
  const cover=p.cover_path?'<img src="'+esc(profileMediaUrl(p.cover_path))+'" style="'+profileImageStyle('cover')+'" alt="Foto de capa">':'';
  const role=typeof roleLabel==='function'?roleLabel():'';
  const nx=pfNext(c);
- const showAll=PF.all?PF_BADGES:un.slice(0,3).concat(un.length<3?lk.slice(0,3-un.length):[]);
+ const showAll=PF.all?AB:un.slice(0,3).concat(un.length<3?lk.slice(0,3-un.length):[]);
  return '<div class="pg pg-perfil">'+
  '<section class="pf-hero"><div class="pf-cover">'+cover+'<button class="pf-pen" onclick="editProfileMedia(\'cover\')" aria-label="Editar capa">'+I('pen')+'</button></div>'+
  '<div class="pf-id"><div class="pf-avatar"><div class="pf-ai">'+profileAvatarMarkup()+'</div><button class="pf-pen sm" onclick="editProfileMedia(\'avatar\')" aria-label="Editar foto">'+I('pen')+'</button></div>'+
@@ -640,15 +642,26 @@ function profile(){
  '<div class="pf-st"><div>'+I('chart','blue')+'<span><b>'+(c.pos?c.pos+'º':'—')+'</b><small>Posição</small></span></div><div><span class="pf-fire">🔥</span><span><b>'+c.streak+' '+(c.streak===1?'dia':'dias')+'</b><small>Sequência</small></span></div><div>'+I('star','gold')+'<span><b>'+un.length+'</b><small>Conquistas</small></span></div></div></section>'+
  '<section class="pg-card pf-rank"><div class="pf-rh"><span class="pf-tr">'+I('trophy','gold')+'</span><div><h3>Ranking do site</h3><small>Sua evolução na comunidade.</small></div><div class="pf-seg" role="tablist"><button class="'+(PF.scope==='week'?'on':'')+'" onclick="IASDPages.pfScope(\'week\')">Semanal</button><button class="'+(PF.scope==='all'?'on':'')+'" onclick="IASDPages.pfScope(\'all\')">Geral</button></div></div><div id="pf-rows">'+pfRankRows()+'</div><button class="pf-link" onclick="go(\'Jogo\')">Ver ranking completo '+I('right')+'</button></section>'+
  '<section class="pg-card pf-ach"><div class="pf-ah"><span>'+I('star','gold')+'</span><div><h3>Minhas conquistas</h3><small>Medalhas que mostram a sua dedicação.</small></div><button class="pf-link inl" onclick="IASDPages.pfAll()">'+(PF.all?'Ver menos':'Ver todas')+' '+I('right')+'</button></div><div class="pf-bds">'+showAll.map(b=>pfBadge(b,b[5](c))).join('')+'</div></section>'+
+ pfStudySec(c)+
  '<section class="pg-card pf-nx"><span class="pf-tg">🎯</span><div><h3>Seu próximo passo</h3><small>'+esc(nx[1])+'</small></div><button class="pg-gold" onclick="go(\''+nx[3]+'\')">'+esc(nx[2])+' '+I('right')+'</button></section>'+
  '<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
 }
+function pfStudySec(c){
+ const M=window.IASDStudyMe;if(!M)return '';const cs=M.view();
+ const tro=c.tro?'<div class="pf-bds" style="margin-top:10px">'+pfBadge(M.SEALS[M.SEALS.length-1],true)+'</div>':'';
+ const list=cs.length?'<div class="pf-sl">'+cs.map(k=>{const ls=Object.keys(k.lessons).sort((a,b)=>a-b),dn=ls.filter(i=>k.lessons[i].d).length;
+  return '<details class="pf-sc"><summary><span>'+(k.trophy?'🏆 ':'📖 ')+esc(k.title||'Estudo')+'</span><small>'+dn+(k.total?' de '+k.total:'')+' lições</small></summary><div class="pf-ls">'+ls.map(i=>{const l=k.lessons[i],as=Object.values(l.a||{});
+   return '<details><summary>'+(l.d?'✔ ':'')+esc(l.t||('Lição '+(+i+1)))+' <small>· '+as.length+' resposta(s)</small></summary>'+(as.length?as.map(a=>'<p class="pf-qa"><b>'+esc(a.q)+'</b><span>'+esc(a.a)+'</span></p>').join(''):'<p class="pf-qa"><span>Sem respostas guardadas.</span></p>')+'</details>'}).join('')+'</div></details>'}).join('')+'</div>'
+  :'<p class="pg-empty">Suas respostas e lições concluídas da Sala de Estudo aparecem aqui.</p>';
+ return '<section class="pg-card pf-study"><div class="pf-ah"><span>📖</span><div><h3>Meu estudo</h3><small>'+c.ans+' resposta(s) · '+c.les+' lição(ões) concluída(s)</small></div><button class="pf-link inl" onclick="go(\'Estudo\')">Abrir '+I('right')+'</button></div>'+tro+list+'</section>'}
 function pfRepaint(){if(typeof current!=='undefined'&&current==='Perfil'&&document.querySelector('.pg-perfil')&&typeof render==='function')render()}
 function pfScope(sc){PF.scope=sc;if(sc==='week'&&typeof dailyLoad==='function')dailyLoad('week',true).then(pfRepaint);pfRepaint()}
 function pfAll(){PF.all=!PF.all;pfRepaint()}
 function pfLoad(){
+ try{if(window.IASDStudyMe)IASDStudyMe.loadOnce().then(f=>{if(f)pfRepaint()})}catch(e){}
  try{if(typeof loadGameRanking==='function')loadGameRanking();if(typeof dailyLoad==='function'&&typeof DR!=='undefined'&&!DR.loaded.week)Promise.resolve(dailyLoad('week')).then(pfRepaint)}catch(e){}
 }
 
+try{window.addEventListener('iasd-study-me',()=>pfRepaint())}catch(e){}
 window.IASDPages={hlApply,rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

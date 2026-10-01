@@ -364,6 +364,7 @@ function showResult(res){
  if(res.type==='cloud'){const mid=$('fx-live')||document.querySelector('.fx-wordbox');const mx=Math.max(1,...(res.words||[]).map(w=>w.n));
   if(mid)mid.outerHTML='<div class="fx-cloud">'+(res.words||[]).map((w,i)=>'<span style="--h:'+hue(w.w)+';--s:'+(1+.9*w.n/mx).toFixed(2)+';--d:'+(i*.07)+'s">'+esc(w.w)+(w.n>1?'<sup>'+w.n+'</sup>':'')+'</span>').join('')+'</div>'}
  const ok=mine&&mine.ok,scored=res.type!=='cloud';
+ if(ok&&scored&&!res.__c){res.__c=1;try{window.IASDStudyMe&&IASDStudyMe.stat('won')}catch(e){}}
  const win=res.ppl.filter(a=>a.ok),lose=res.ppl.filter(a=>scored&&!a.ok);
  let msg;
  if(!scored)msg='<div class="fx-verdict">'+res.ppl.filter(a=>a.w).length+' palavra(s) enviada(s)</div>';

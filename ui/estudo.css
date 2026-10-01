@@ -378,3 +378,35 @@ body.es-host .es-dock{right:14px}body.es-host .es-chat{right:14px}
 
 .es-scope{display:flex;align-items:center;gap:6px;margin:10px 0 8px;flex-wrap:wrap}.es-scope span{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-right:2px}
 .es-scope button{height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--iu-bd);background:var(--iu-sf2);color:var(--iu-tx);font:inherit;font-weight:700;font-size:13px}.es-scope button.on{background:var(--iu-gd);border-color:var(--iu-gd);color:#2a1c00}
+
+/* v6: enviar resposta, explicação pronta, convite para guardar */
+.es-sendbar{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.es-sendbar small{color:var(--es-mu);font-size:12.5px}
+.es-send{border:0;border-radius:999px;padding:10px 20px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#2a1a00;background:linear-gradient(135deg,#ffd37a,#f0b44c);box-shadow:0 4px 14px rgba(240,180,76,.28);min-height:42px}
+.es-send:disabled{opacity:.45;cursor:default;box-shadow:none}
+.es-sendbar[data-st=ok] .es-send{background:rgba(52,199,89,.16);color:#2fbf62;box-shadow:none;border:1px solid rgba(52,199,89,.4)}
+.es-exb{background:rgba(240,180,76,.14)!important;color:var(--es-gd)!important;border:1px solid rgba(240,180,76,.4)!important}
+.es-expw,.sm-ask{position:fixed;inset:0;z-index:100000;background:rgba(5,12,24,.66);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.es-expb{width:min(560px,100%);max-height:88vh;display:flex;flex-direction:column;border-radius:20px;background:var(--iu-sf,#10243d);color:var(--es-tx,#fff);border:1px solid var(--es-bd,rgba(255,255,255,.14));box-shadow:0 24px 70px rgba(0,0,0,.5);overflow:hidden}
+.es-exph{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--es-bd,rgba(255,255,255,.12));font-size:16px}
+.es-expx{border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer;min-width:40px;min-height:40px}
+.es-expc{padding:14px 18px;overflow:auto;line-height:1.55;font-size:15px}
+.es-expc h4{margin:16px 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--es-gd,#f0b44c)}
+.es-expc p{margin:0}
+.eg-q{font-weight:800;font-size:16px;padding:10px 12px;border-radius:12px;background:rgba(240,180,76,.1);border:1px solid rgba(240,180,76,.28)}
+.eg-ul{margin:0;padding-left:20px}.eg-ul li{margin:3px 0}
+.eg-refs{display:flex;flex-wrap:wrap;gap:6px}.eg-refs span{padding:5px 10px;border-radius:999px;background:var(--es-sf2,rgba(255,255,255,.07));font-size:13px}
+.eg-cr{display:block;margin-top:6px;color:var(--es-mu);font-size:12px}
+.es-expf{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--es-bd,rgba(255,255,255,.12))}
+.sm-box{width:min(420px,100%);border-radius:22px;padding:24px 20px;text-align:center;background:var(--iu-sf,#10243d);color:var(--es-tx,#fff);border:1px solid var(--es-bd,rgba(255,255,255,.14));box-shadow:0 24px 70px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
+.sm-box h3{margin:0;font-size:20px}.sm-box p{margin:0;line-height:1.5;color:var(--es-mu,#9fb4cc)}.sm-ic{font-size:46px}
+.sm-no{border:0;background:transparent;color:var(--es-mu,#9fb4cc);font:inherit;padding:10px;cursor:pointer}
+/* perfil: Meu estudo */
+.pf-study h3{margin:0}.pf-sl{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.pf-sc{border:1px solid var(--iu-bd,rgba(255,255,255,.12));border-radius:14px;padding:10px 12px;background:var(--iu-sf2,rgba(255,255,255,.04))}
+.pf-sc>summary{cursor:pointer;font-weight:800;list-style:none;display:flex;justify-content:space-between;gap:8px}
+.pf-sc small{color:var(--iu-mu,#9fb4cc);font-weight:500}
+.pf-ls{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.pf-ls details{border-top:1px solid var(--iu-bd,rgba(255,255,255,.1));padding-top:6px}
+.pf-ls summary{cursor:pointer;font-weight:700}
+.pf-qa{margin:6px 0 0;font-size:14px;line-height:1.45}.pf-qa b{display:block}.pf-qa span{white-space:pre-wrap;color:var(--iu-mu,#9fb4cc)}

@@ -159,7 +159,7 @@ function syOpen(){
  }catch(e){SY.ch=null;SY.on=false}
 }
 function syClose(){
- clearInterval(SY.hb);clearInterval(SY.pingT);clearTimeout(SY.tm);
+ clearInterval(SY.hb);clearInterval(SY.pingT);clearTimeout(SY.tm);clearTimeout(SY.helloT);clearTimeout(SY.pqT);SY.helloT=SY.pqT=0;SY.pq=[];
  try{if(SY.ch&&window.iasdCloud?.removeChannel)window.iasdCloud.removeChannel(SY.ch)}catch(e){}
  SY.ch=null;SY.on=false;SY.last=null;SY.seq=0;SY.lastMsg=0;SY.off=0;SY.rtt=1e9;
 }
@@ -172,19 +172,20 @@ function syPhase(status,q,at){
 }
 function syRecv(m){
  if(S.host){
-  if(m.t==='ping')sySend({t:'pong',id:m.id,c0:m.c0,h:Date.now()});
-  else if(m.t==='hello'&&SY.last)sySend({...SY.last,hb:1});
+  if(m.t==='ping'){SY.pq=SY.pq||[];if(SY.pq.length<120)SY.pq.push({id:m.id,c0:m.c0,hr:Date.now()});
+   if(!SY.pqT)SY.pqT=setTimeout(()=>{SY.pqT=0;const l=SY.pq.splice(0,80);if(l.length)sySend({t:'pong',l,h:Date.now()});if(SY.pq.length&&!SY.pqT)SY.pqT=setTimeout(()=>{SY.pqT=0;const l2=SY.pq.splice(0,80);if(l2.length)sySend({t:'pong',l:l2,h:Date.now()})},250)},250)}
+  else if(m.t==='hello'&&SY.last){if(!SY.helloT)SY.helloT=setTimeout(()=>{SY.helloT=0;if(SY.last)sySend({...SY.last,hb:1})},500+Math.random()*500)}
   return}
  SY.lastMsg=Date.now();
- if(m.t==='pong'){if(m.id!==SY.pid)return;const c1=Date.now(),rtt=c1-m.c0;if(rtt<SY.rtt){SY.rtt=rtt;SY.off=m.h+rtt/2-c1}}
+ if(m.t==='pong'){const e=m.l?m.l.find(x=>x.id===SY.pid):(m.id===SY.pid?{c0:m.c0,hr:m.h}:null);if(!e)return;const c1=Date.now(),rtt=(c1-e.c0)-(m.h-e.hr);if(rtt<SY.rtt){SY.rtt=rtt;SY.off=((e.hr-e.c0)+(m.h-c1))/2}}
  else if(m.t==='phase')syPhaseIn(m);
  else if(m.t==='tt')PS.tt=m.tt;
  else if(m.t==='vs'){S.tm=m.tm||S.tm;phoneVs()}
  else if(m.t==='closed')closedScreen();
 }
 function syPing(){
- let n=0;const go=()=>{SY.pid=Math.random().toString(36).slice(2);sySend({t:'ping',id:SY.pid,c0:Date.now()});if(++n<6)setTimeout(go,250)};
- go();clearInterval(SY.pingT);SY.pingT=setInterval(()=>{SY.rtt=1e9;n=0;go()},25000);
+ let n=0;const go=()=>{SY.pid=Math.random().toString(36).slice(2);sySend({t:'ping',id:SY.pid,c0:Date.now()});if(++n<4)setTimeout(go,300+Math.random()*200)};
+ go();clearInterval(SY.pingT);SY.pingT=setInterval(()=>{SY.rtt=1e9;n=0;go()},50000+Math.random()*20000);
 }
 /* jogador: aplica a fase no instante T (convertido para o relógio do próprio aparelho) */
 function syPhaseIn(m){
@@ -1187,11 +1188,12 @@ async function phoneReveal(i){
  clearTimers();const q=deckFor(code())[i],mine=PS.pickFor===i?PS.lastPick:-1,ok=mine===q.ans;
  screen('<div class="lg2-phone"><div class="lg2-res '+(ok?'':'bad')+'"><div class="big">'+(ok?'🎉':mine<0?'⏰':'😅')+'</div><h2>'+(ok?'Acertou!':mine<0?'Tempo esgotado':'Quase!')+'</h2><div class="pts" id="lg-pts">'+(ok?'calculando…':'')+'</div><p class="lg2-sub">Resposta certa: <b>'+esc(q.a)+'</b></p><div id="lg-rank" class="lg2-pill" style="visibility:hidden"></div><div id="lg-team" class="tm-ln"></div></div></div>','');
  A().sfx(ok?'correct':'wrong');if(navigator.vibrate)navigator.vibrate(ok?[60,40,60]:200);if(ok)confetti(1800);
- for(const wait of [1300,1600]){
+ for(const wait of [1300+Math.random()*1500,1600+Math.random()*800]){
   await new Promise(r=>setTimeout(r,wait/speed()));if(S.phase!=='p-reveal'||PS.revealFor!==i)return;
   try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score),me=ps.find(p=>p.id===S.player.id);
    if(me){const d=me.score-PS.lastScore;const pts=$('lg-pts');if(pts)pts.textContent=d>0?'+'+fmt(d)+' pontos':(ok?'':'+0');PS.cur=me.score;if(cfgOf(code()).teams){const R=teamResult(ps),el=$('lg-team'),m=teamOf(S.player),o=m==='A'?'B':'A';if(el)el.innerHTML=teamBadge(m)+' <b>'+fmt_(R.t[m].pts)+'</b> × <b>'+fmt_(R.t[o].pts)+'</b> '+TEAMS[o].e+(R.fmt===2&&PS.tt?'<br><small>🪢 rodadas: '+R.rw[m]+' × '+R.rw[o]+'</small>':'')}
     const pos=ps.findIndex(p=>p.id===S.player.id)+1,r=$('lg-rank');if(r){r.style.visibility='visible';r.textContent=pos+'º lugar · '+fmt(me.score)+' pts'+(pos>1?' · faltam '+fmt(ps[pos-2].score-me.score+1)+' p/ subir':'')}}}catch(e){}
+  if(PS.cur!=null&&(!ok||PS.cur>PS.lastScore))break;
  }
  PS.lastScore=PS.cur??PS.lastScore;
 }
@@ -1219,7 +1221,9 @@ async function tick(){
   }else if(old!==now||(S.room.status==='reveal'&&S.phase==='p-question'))playerView();
  }catch(e){}finally{tickBusy=0}
 }
-function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1000/Math.min(3,speed()))}
+/* consulta ao servidor: o apresentador a cada ~1 s; os celulares só espaçadamente (com sorteio, para não baterem todos juntos) quando o tempo real está saudável */
+const pollGap=()=>{const sp=Math.min(3,speed());if(S.host)return 1000/sp;return syHealthy()?4500+Math.random()*2500:(1100+Math.random()*900)/sp};
+function poll(){clearTimeout(S.poll);const run=()=>{if(!S.room&&!S.poll)return;tick();S.poll=setTimeout(run,pollGap())};S.poll=setTimeout(run,pollGap())}
 function closeAll(){clearInterval(S.poll);clearTimers();syClose();S.poll=null;$('lg2-menu')?.remove();$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');try{A().music(null);A().stopAll&&A().stopAll()}catch(e){}}
 function leave(){bcSend({t:'end'});if(PJ.on){PJ.on=false;PJ.next='';pjFlush()}TL=false;closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
 function fullscreen(){const el=$('lg2');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
