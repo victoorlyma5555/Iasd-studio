@@ -856,7 +856,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lg2 .lg2-awards{flex-direction:column;gap:8px}
 .lg2 .lg2-row{flex-direction:column;width:100%}.lg2 .lg2-row .lg2-btn{width:100%}
 }
-@media (prefers-reduced-motion:reduce){.lg2 *{animation-duration:.01s!important}}
+
 `;document.head.appendChild(s);
  if(!document.getElementById('lg2-font')){const l=document.createElement('link');l.id='lg2-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap';document.head.appendChild(l)}
 }

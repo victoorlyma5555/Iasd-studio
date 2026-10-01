@@ -56,7 +56,7 @@ const DECO_CSS=`
 .iasd-deco[data-pat="embers"]{background:radial-gradient(2px 2px at 20% 80%,#ffb347,transparent),radial-gradient(2px 2px at 45% 90%,#ff7a1a,transparent),radial-gradient(3px 3px at 70% 85%,#ffd27a,transparent),radial-gradient(2px 2px at 88% 95%,#ff9a3c,transparent),radial-gradient(2px 2px at 8% 95%,#ffb347,transparent),radial-gradient(2px 2px at 56% 100%,#ffd27a,transparent);animation:decoRise 5s linear infinite}
 @keyframes decoRise{from{transform:translateY(10%);opacity:1}to{transform:translateY(-70%);opacity:0}}
 .iasd-deco[data-pat="rays"]{background:repeating-conic-gradient(from 0deg at 50% 112%,color-mix(in srgb,var(--c1,#ffd978) 24%,transparent) 0 5deg,transparent 5deg 13deg);-webkit-mask-image:radial-gradient(ellipse at 50% 100%,#000,transparent 75%);mask-image:radial-gradient(ellipse at 50% 100%,#000,transparent 75%);animation:decoBreath 6s ease-in-out infinite alternate}
-@media (prefers-reduced-motion:reduce){.iasd-deco,.iasd-deco:after{animation:none!important}}`;
+`;
 const CSS_FX=`
 .iasd-tm{font-family:var(--tf,Inter,system-ui,Arial,sans-serif)}
 .iasd-tm>svg,.iasd-tm>.tmx{position:relative;z-index:1}
@@ -98,7 +98,7 @@ const CSS_FX=`
 .iasd-tm.an-tremor.alert .time,.iasd-tm.an-tremor.done .time,.iasd-tm.an-tremor.alert .time2,.iasd-tm.an-tremor.done .time2,.iasd-tm.an-tremor.alert .card2,.iasd-tm.an-tremor.done .card2{animation:tmShake .12s linear infinite!important}
 @keyframes tmShake{0%{transform:translate(0,0)}25%{transform:translate(1cqh,-.7cqh)}50%{transform:translate(-.9cqh,.8cqh)}75%{transform:translate(.7cqh,.5cqh)}100%{transform:translate(0,0)}}
 .iasd-tm.an-nenhuma *,.iasd-tm.an-nenhuma:after{animation:none!important;transition:none!important}
-@media (prefers-reduced-motion:reduce){.iasd-tm .card2 i{animation:none!important}}`;
+`;
 function deco(themeId){const t=THEMES[themeId];if(!t||!t.pat)return null;if(!document.getElementById('iasd-deco-css')){const st=document.createElement('style');st.id='iasd-deco-css';st.textContent=DECO_CSS;document.head.appendChild(st)}const d=document.createElement('div');d.className='iasd-deco';d.dataset.pat=t.pat;d.setAttribute('aria-hidden','true');return d}
 const LAYOUTS={ring:'Anel',digital:'Digital',cards:'Cartões',bar:'Barra',minimal:'Minimalista'};
 const ANIMS={suave:'Suave',pulso:'Pulso',neon:'Neon',tremor:'Tremor',nenhuma:'Sem animação'};
@@ -139,7 +139,7 @@ ${Object.keys(THEMES).map(k=>{const t=THEMES[k];return`.iasd-tm[data-theme="${k}
 .iasd-tm .qr b{display:block;margin-top:1.1cqh;font-size:1.75cqh;letter-spacing:.18em;font-weight:800;text-transform:uppercase;line-height:1.25}
 .iasd-tm .qr small{display:block;margin-top:.5cqh;font-size:1.45cqh;font-weight:600;opacity:.7;line-height:1.3}
 @media (max-aspect-ratio:1/1){.iasd-tm .qr{width:26cqw;right:3cqw;bottom:3cqw}.iasd-tm .qr b{font-size:2cqw}.iasd-tm .qr small{font-size:1.7cqw}}
-@media (prefers-reduced-motion:reduce){.iasd-tm *{animation:none!important}}`;
+`;
 /* Bip de fim: três toques curtos. Só toca quando o tempo ACABA de zerar com o cronômetro rodando. */
 let audioCtx=null;
 function beepEnd(){
