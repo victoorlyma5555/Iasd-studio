@@ -11,7 +11,9 @@ const $=id=>document.getElementById(id);
 const toast=m=>{try{IASDPages.toast(m)}catch(e){}let t=$('bb-toast');if(!t){t=document.createElement('div');t.id='bb-toast';t.className='bb-toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2400)};
 const OVDD=['A Bíblia Sagrada','A Beleza da Criação Divina','A Origem do Mal','O Plano da Salvação','Fé, Arrependimento e Confissão','Sinais da Volta de Cristo','A Volta de Cristo','O Milênio','A Verdade Sobre a Morte','A Nova Terra','Salvação pela Graça','O Santuário de Deus','O Juízo','As Leis na Bíblia','A Lei Moral','O Mandamento Esquecido','Do Sábado para o Domingo','Princípios de Saúde','O Dom de Profecia','O Dízimo','Ofertar, um Ato de Adoração','Como Identificar a Igreja Verdadeira','Porque Devo Ser Batizado','Princípios da Vida Cristã','Educação Cristã','A Vida no Espírito','Um Ministério para Todos'];
 const LS_PROG='iasd-study-prog-',SEED_OLD=['Jesus e as Sagradas Escrituras','Jesus e o amor divino','Jesus e a restauração do bem','Jesus e a oração','Jesus e a salvação','Jesus e a intercessão','Jesus e o destino do mundo','Jesus e a vida eterna','Jesus e o juízo','Jesus e a lei de Deus','Jesus e o sábado','Jesus e a igreja','Jesus e o crescimento espiritual','Jesus e a fidelidade','Jesus e o batismo','Jesus e o estilo de vida cristão','Jesus e a missão da igreja','Jesus e o dom de profecia','Jesus e o Espírito Santo','Jesus e a nova terra'];
-const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}].concat(window.IASD_TURN||[])});
+let TURN_DYN=null;
+const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}].concat(TURN_DYN||[],window.IASD_TURN||[]),iceCandidatePoolSize:4});
+async function loadTurn(){if(TURN_DYN)return;try{const c=new AbortController(),t=setTimeout(()=>c.abort(),4500);const r=await fetch('/api/turn',{signal:c.signal,cache:'no-store'});clearTimeout(t);if(r.ok){const j=await r.json();if(Array.isArray(j.iceServers))TURN_DYN=j.iceServers}}catch(e){}}
 
 const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{}};
 const course=()=>(S.courses||[]).find(c=>c.id===S.cid)||null;
@@ -70,16 +72,17 @@ async function verseHtml(ref){
   return pick.map(v=>'<p><sup>'+v.verse+'</sup> '+esc(String(v.text).trim())+'</p>').join('');
  }catch(e){return '<em>Não foi possível carregar agora.</em>'}
 }
-async function verseText(ref){const h=await verseHtml(ref);return h.replace(/<sup>(\d+)<\/sup>/g,'$1 ').replace(/<\/p>/g,' ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim()}
 
 /* ---------- páginas ---------- */
 const I=n=>{try{return IASDUI.icon?IASDUI.icon(n):''}catch(e){return ''}};
 function page(){
  return '<div class="pg es" id="es-root"><div class="pg-card pg-empty">Carregando…</div></div>';
 }
-function after(){if(!isF()){paint();paintBar();paintDock();return}if(S.courses===null)load();else paint();paintBar();paintDock()}
+function after(){if(!isF()){paint();paintBar();paintDock();tryResume();return}if(S.courses===null)load().then(tryResume);else{paint();tryResume()}paintBar();paintDock()}
 function paint(){
  const root=$('es-root');if(!root)return;
+ {const cc=$('es-chat');if(cc&&cc.parentNode!==document.body){document.body.appendChild(cc);cc.classList.remove('inline')}}
+ if(S.room&&S.room.mode==='lobby'){root.innerHTML=lobbyHTML();paintChat();paintDock();return}
  if(!isF()){root.innerHTML=(S.view==='lesson'&&S.room&&lessonSrc())?lessonHTML():guestHTML();afterPaint();return}
  if(S.err&&!(S.courses||[]).length){root.innerHTML='<div class="pg-card"><h2>Sala de Estudo</h2><p class="es-err">'+esc(S.err)+'</p><button class="pg-gold" onclick="IASDEstudo.reload()">Tentar de novo</button></div>';return}
  if(S.view==='lesson'&&lessonSrc())root.innerHTML=lessonHTML();
@@ -136,7 +139,7 @@ function lessonHTML(){
  let h='<div class="es-top"><button class="pg-ghost" onclick="IASDEstudo.'+(R&&!R.host?'home':'course')+'()">‹ '+(R&&!R.host?'Sair da lição':'Lições')+'</button>'
   +(host&&!R?'<button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(S.edit?'✔ Concluir':'✎ Editar lição')+'</button>':'')
   +(R?'<span class="es-badge">'+(R.host?'Você conduz':(R.follow?'Seguindo o dirigente':'Leitura livre'))+'</span>':'')
-  +(R&&!R.host?'<button class="pg-ghost" onclick="IASDEstudo.toggleFollow()">'+(R.follow?'Parar de seguir':'Seguir o dirigente')+'</button>':'')+'</div>';
+  +(R&&!R.host&&!(R.lock&&R.lock.f)?'<button class="pg-ghost" onclick="IASDEstudo.toggleFollow()">'+(R.follow?'Parar de seguir':'Seguir o dirigente')+'</button>':'')+'</div>';
  h+='<div class="pg-card es-lesson"><span class="es-kick">LIÇÃO '+(li+1)+'</span>'+(editing?'<input class="es-in es-title" value="'+esc(L.title)+'" oninput="IASDEstudo.setLessonTitle(this.value)">':'<h2 class="es-h">'+esc(L.title)+'</h2>');
  if(!L.blocks.length&&!editing)h+='<p class="muted">Esta lição ainda não tem conteúdo.'+(host?' Toque em “Editar lição” e cole o texto, as perguntas e os versículos.':'')+'</p>';
  h+='<div class="es-blocks">'+L.blocks.map((b,i)=>blockHTML(b,i,li,P,editing)).join('')+'</div>';
@@ -164,7 +167,7 @@ function blockHTML(b,i,li,P,editing){
  const R=S.room,cur=R&&R.bi===i,host=!R||R.host;
  let ctl;
  if(editing)ctl=gl(b,i);
- else{ctl='<span class="es-bctl">';if(R&&R.host)ctl+='<button onclick="IASDEstudo.setPos('+i+')" title="Levar a turma para cá">▶ Aqui</button>';if(host)ctl+='<button onclick="IASDEstudo.project('+i+')" title="Projetar no telão">📺</button>';ctl+='</span>'}
+ else{ctl='<span class="es-bctl">';if(R&&R.host)ctl+='<button onclick="IASDEstudo.setPos('+i+')" title="Levar a turma para cá">▶ Aqui</button>';ctl+='</span>'}
  const cls='es-b es-'+b.t+(cur?' es-cur':'');
  if(b.t==='q'){
   const chips=(b.refs||[]).length?'<div class="es-chips">'+b.refs.map((r,ri)=>'<button class="es-chip'+(S.openV[li+':'+b.id+':'+ri]?' on':'')+'" onclick="IASDEstudo.toggleVerse(\''+li+':'+b.id+':'+ri+'\',\''+esc(r).replace(/'/g,'')+'\')">📖 '+esc(r)+'</button>').join('')+'</div>'+b.refs.map((r,ri)=>'<div class="es-vt" data-vk="'+li+':'+b.id+':'+ri+'"></div>').join(''):'';
@@ -251,11 +254,12 @@ function bulk(){
  });
  flush();saveCourse(true);paint();toast('Conteúdo adicionado.')}
 async function toggleVerse(key,ref,remote){
- const R=S.room,isH=!R||R.host;
+ const R=S.room;
+ if(R&&!R.host&&!remote&&R.lock&&R.lock.v){toast('O dirigente travou os versículos. Você vê os que ele abrir.');return}
  const q=()=>document.querySelector('.es-vt[data-vk="'+key+'"]');
  if(S.openV[key]){delete S.openV[key];if(q())q().innerHTML='';if(R&&R.host&&!remote)send('vo',{key,ref,open:false});markChips();return}
  if(q())q().innerHTML='<em>Carregando…</em>';
- const h=await verseHtml(ref)+(isH?'<button class="es-pj" onclick="IASDEstudo.projectRef(\''+ref.replace(/'/g,'')+'\')">📺 Projetar este versículo</button>':'');
+ const h=await verseHtml(ref);
  S.openV[key]=h;if(q())q().innerHTML=h;markChips();
  if(R&&R.host&&!remote)send('vo',{key,ref,open:true});
 }
@@ -272,31 +276,31 @@ function toggleCheck(bid,k){
  const L=lessonSrc(),li=L.li!=null?L.li:S.li,P=lp(li);let a=(P.a[bid]||'').split(',').filter(x=>x!=='');
  a=a.includes(String(k))?a.filter(x=>x!==String(k)):a.concat(String(k));P.a[bid]=a.join(',');saveProg()}
 
-/* ---------- projetar no telão ---------- */
-function sendTelao(title,text){try{if(typeof sendProjection!=='function')throw 0;sendProjection('IASD_TEXT:'+JSON.stringify({title,text}));toast('Enviado ao telão.')}catch(e){toast('Abra o Studio de Projeção para projetar.')}}
-async function project(i){
- const L=lessonSrc();const b=L&&L.blocks[i];if(!b)return;
- let title='Estudo bíblico',text='';
- if(b.t==='q'){title='Pergunta';text=b.text+(b.opts?'\n\n'+b.opts.map(o=>'• '+o).join('\n'):'')}
- else if(b.t==='v'){title=b.ref;text=await verseText(b.ref)}
- else if(b.t==='note'){title=b.h||'';text=b.text}
- else if(b.t==='check'||b.t==='list'){title=b.h||'';text=(b.items||[]).join('\n')}
- else text=b.text;
- sendTelao(title,text);
-}
-async function projectRef(ref){sendTelao(ref,await verseText(ref))}
-
 /* ---------- sala ao vivo ---------- */
 function mkCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=A[Math.floor(Math.random()*A.length)];return s}
 function send(ev,payload){const R=S.room;if(!R||!R.ch)return;try{R.ch.send({type:'broadcast',event:ev,payload})}catch(e){}}
-async function startRoom(code,host){
+const RK='iasd-study-room',SAVE_H=12*3600e3;
+function saveRoom(){const R=S.room;if(!R)return;try{localStorage.setItem(RK,JSON.stringify({code:R.code,host:R.host,me:R.me,cid:S.cid,li:S.li,mode:R.mode,lock:R.lock,ts:Date.now()}))}catch(e){}}
+function clearRoom(){try{localStorage.removeItem(RK)}catch(e){}}
+function applyLock(){const R=S.room;document.body.classList.toggle('es-lk-v',!!(R&&!R.host&&R.lock&&R.lock.v))}
+async function startRoom(code,host,opts){
+ opts=opts||{};
  const c=cloud();if(!c){toast('Sem conexão com o servidor.');return false}
- if(S.room)leave(true);
- const me=rid();
- const R=S.room={code,host,me,peers:{},bi:-1,rev:{},ans:{},lesson:null,follow:true,hand:false,voice:null,ch:null,reacts:[]};
+ if(S.room&&!opts.snap)leave(true);
+ const me=opts.me||rid();
+ const R=S.room={code,host,me,peers:{},bi:-1,rev:{},ans:{},lesson:null,follow:true,hand:false,voice:null,ch:null,reacts:[],mode:'study',lock:{v:true,f:false},vmute:{},hostOpen:false,chat:[],unread:0,chatOpen:false};
+ if(opts.snap)Object.assign(R,{lesson:opts.snap.lesson,bi:opts.snap.bi,rev:opts.snap.rev,ans:opts.snap.ans,mode:opts.snap.mode,lock:opts.snap.lock,hand:opts.snap.hand,follow:opts.snap.follow,voice:opts.snap.voice,vmute:opts.snap.vmute||{},hostOpen:opts.snap.hostOpen,chat:opts.snap.chat||[],unread:opts.snap.unread||0,chatOpen:opts.snap.chatOpen});
+ if(opts.saved){if(opts.saved.mode)R.mode=opts.saved.mode;if(opts.saved.lock)R.lock=opts.saved.lock}
+ applyLock();
  const ch=R.ch=c.channel('study:'+code,{config:{broadcast:{self:false},presence:{key:me}}});
- ch.on('broadcast',{event:'hello'},({payload})=>{if(R.host)pushLesson(true)});
- ch.on('broadcast',{event:'st'},({payload})=>{if(R.host)return;R.lesson=payload.lesson;R.bi=payload.bi;R.rev=payload.rev||{};if(R.follow){S.view='lesson';paint()}else paintBar()});
+ ch.on('broadcast',{event:'hello'},({payload})=>{if(R.host){pushLesson(true);send('md',{mode:R.mode});send('lk',R.lock);if(R.chat.length)send('chh',{l:R.chat.slice(-30)})}});
+ ch.on('broadcast',{event:'chat'},({payload})=>addChat(payload,false));
+ ch.on('broadcast',{event:'chh'},({payload})=>{if(R.host||R.chat.length||!Array.isArray(payload.l))return;payload.l.forEach(m=>addChat(m,true));paintChat()});
+ ch.on('broadcast',{event:'md'},({payload})=>{if(R.host)return;R.mode=payload.mode==='lobby'?'lobby':'study';if(R.mode==='lobby')R.unread=0;
+  if(R.mode==='study'&&R.lesson&&R.follow)S.view='lesson';paint();paintBar();paintDock()});
+ ch.on('broadcast',{event:'lk'},({payload})=>{if(R.host)return;R.lock={v:!!payload.v,f:!!payload.f};applyLock();
+  if(R.lock.f&&!R.follow){R.follow=true;if(R.mode==='study'&&R.lesson){S.view='lesson'}paint();markCur(true)}else paint();paintBar()});
+ ch.on('broadcast',{event:'st'},({payload})=>{if(R.host)return;R.lesson=payload.lesson;R.bi=payload.bi;R.rev=payload.rev||{};if(R.mode==='lobby'){paintBar();return}if(R.follow){S.view='lesson';paint()}else paintBar()});
  ch.on('broadcast',{event:'pos'},({payload})=>{if(R.host)return;R.bi=payload.bi;markCur(true)});
  ch.on('broadcast',{event:'rev'},({payload})=>{R.rev[payload.bid]=payload.on;if(payload.on)shareAnswer(payload.bid);paintReveals()});
  ch.on('broadcast',{event:'ans'},({payload})=>{(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};paintReveals()});
@@ -306,13 +310,14 @@ async function startRoom(code,host){
  ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&st[k][0])R.peers[k]=st[k][0]});
   Object.keys(R.voice?R.voice.pcs:{}).forEach(id=>{if(!R.peers[id])closePeer(id)});
   paintBar();paintDock();if(R.voice)syncVoicePeers()});
+ let first=true;
  await new Promise(res=>ch.subscribe(async st=>{
-  if(st==='SUBSCRIBED'){await track();res()}
-  if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){toast('Não foi possível conectar à sala.');res()}
+  if(st==='SUBSCRIBED'){await track();if(first){first=false;res()}else afterRejoin()}
+  else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){if(first){first=false;toast('Não foi possível conectar à sala.');res()}else scheduleRejoin()}
  }));
  if(!host)send('hello',{id:me});
- else{S.view='lesson'}
- paint();paintBar();paintDock();return true
+ else{if(!opts.snap)S.view='lesson';pushLesson(true);send('md',{mode:R.mode});send('lk',R.lock)}
+ saveRoom();paint();paintBar();paintDock();return true
 }
 async function track(){const R=S.room;if(!R||!R.ch)return;try{await R.ch.track({id:R.me,name:myName(),host:R.host,hand:R.hand,voice:!!R.voice,mic:R.voice?R.voice.mic:false,cam:R.voice?R.voice.cam:false})}catch(e){}}
 function createRoom(){if(!course()&&!(S.courses||[]).length){toast('Crie um curso antes.');return}
@@ -320,11 +325,11 @@ function createRoom(){if(!course()&&!(S.courses||[]).length){toast('Crie um curs
 async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4){toast('Digite o código da sala.');return}
  if(!isF()){const g=$('es-gname'),n=((g&&g.value)||'').trim();if(!n&&!guestName()){toast('Escreva seu nome.');return}if(n){try{localStorage.setItem(GN,n)}catch(e){}}}
  await startRoom(v,false);if(S.room)toast('Aguardando o dirigente…')}
-function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();if(!l)return;R.lesson={li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev})}
+function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();if(!l)return;R.lesson={li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev});saveRoom()}
 function setPos(i){const R=S.room;if(!R||!R.host)return;R.bi=i;send('pos',{bi:i});markCur(false)}
 function markCur(scroll){const R=S.room;if(!R)return;document.querySelectorAll('.es-b').forEach(el=>el.classList.toggle('es-cur',R.bi===+el.dataset.bi));
  if(scroll&&R.follow){const el=document.querySelector('.es-b.es-cur');if(el)el.scrollIntoView({block:'center',behavior:'smooth'})}}
-function toggleFollow(){const R=S.room;if(!R||R.host)return;R.follow=!R.follow;paint();if(R.follow)markCur(true)}
+function toggleFollow(){const R=S.room;if(!R||R.host)return;if(R.lock&&R.lock.f){toast('O dirigente travou a lição para todos.');return}R.follow=!R.follow;paint();if(R.follow)markCur(true)}
 function myAnswer(bid){const L=lessonSrc();if(!L)return '';const li=L.li!=null?L.li:S.li;return ((S.prog[li]||{}).a||{})[bid]||''}
 function shareAnswer(bid){const R=S.room;if(!R)return;const text=myAnswer(bid);if(!text.trim())return;(R.ans[bid]=R.ans[bid]||{})[R.me]={name:myName(),text};send('ans',{bid,id:R.me,name:myName(),text})}
 function revealToggle(bid){const R=S.room;if(!R||!R.host)return;R.rev[bid]=!R.rev[bid];send('rev',{bid,on:R.rev[bid]});if(R.rev[bid])shareAnswer(bid);paintReveals()}
@@ -341,7 +346,7 @@ function paintReveals(){
 function leave(silent){
  const R=S.room;if(!R)return;stopVoice(true);
  try{R.ch.untrack();cloud().removeChannel(R.ch)}catch(e){}
- S.room=null;paintBar();paintDock();if(!silent){toast('Você saiu da sala.');paint()}
+ S.room=null;if(silent!==true)clearRoom();applyLock();paintBar();paintDock();paintChat();if(!silent){toast('Você saiu da sala.');paint()}
 }
 function backToRoom(){S.view='lesson';paint()}
 function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;track();paintBar()}
@@ -353,29 +358,33 @@ function copyInvite(){const R=S.room;if(!R)return;const t='Entre na Sala de Estu
 /* barra da sala (fixa) */
 function paintBar(){
  let bar=$('es-bar');const R=S.room;
- if(!R){if(bar)bar.remove();return}
+ if(!R){if(bar)bar.remove();paintHost();return}
  if(!bar){bar=document.createElement('div');bar.id='es-bar';bar.className='es-bar';document.body.appendChild(bar)}
  const peers=Object.values(R.peers),n=peers.length+1,v=R.voice;
- const names=[{name:myName()+' (você)',hand:R.hand,voice:!!v,mic:v&&v.mic,host:R.host}].concat(peers);
+ const names=[{name:myName()+' (você)',hand:R.hand,voice:!!v,mic:v&&v.mic,host:R.host,self:true}].concat(peers);
  bar.innerHTML='<div class="es-bar-in"><button class="es-pill" onclick="IASDEstudo.togglePanel()" aria-label="Participantes"><b>'+esc(R.code)+'</b><span>👥 '+n+'</span></button>'
   +'<button class="es-bt'+(v?' on':'')+'" onclick="IASDEstudo.'+(v?'stopVoice':'startVoice')+'()">'+(v?'📞 Sair da voz':'🎙 Entrar na voz')+'</button>'
-  +(v?'<button class="es-bt'+(v.mic?'':' off')+'" onclick="IASDEstudo.toggleMic()">'+(v.mic?'🎙':'🔇')+'</button><button class="es-bt'+(v.cam?' on':'')+'" onclick="IASDEstudo.toggleCam()">'+(v.cam?'📷':'🚫')+'</button>':'')
+  +(v?'<button class="es-bt'+(v.mic?'':' off')+'" onclick="IASDEstudo.toggleMic()">'+(v.mic?'🎙':'🔇')+'</button><button class="es-bt es-cam'+(v.cam?' on':' off')+'" onclick="IASDEstudo.toggleCam()" aria-label="'+(v.cam?'Desligar câmera':'Ligar câmera')+'">📷</button>':'')
   +'<button class="es-bt'+(R.hand?' on':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="Levantar a mão">✋</button>'
+  +(R.mode==='lobby'?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" aria-label="Chat">💬'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
   +'<span class="es-rx">'+['🙏','👍','❤️','😮'].map(e=>'<button onclick="IASDEstudo.react(\''+e+'\')">'+e+'</button>').join('')+'</span>'
   +'<button class="es-bt" onclick="IASDEstudo.copyInvite()" aria-label="Copiar convite">🔗</button>'
   +'<button class="es-bt danger" onclick="IASDEstudo.leaveAsk()">Sair</button></div>'
-  +'<div class="es-panel" id="es-panel" hidden>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.voice?(p.mic?' 🎙':' 🔇'):'')+(p.cam?' 📷':'')+'</div>').join('')+'</div>';
+  +'<div class="es-panel" id="es-panel" hidden>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.voice?(p.mic?' 🎙':' 🔇'):'')+(p.cam?' 📷':'')+(!p.self&&p.voice&&v?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho (evita microfonia)">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'</div>';
+ paintHost();paintChat();
 }
 function togglePanel(){const p=$('es-panel');if(p)p.hidden=!p.hidden}
 async function leaveAsk(){if(await IASDDialog.confirm('Sair da sala de estudo?'))leave()}
 
 /* ---------- voz e vídeo (WebRTC em malha; sinalização pelo canal da sala) ---------- */
 async function startVoice(){
+
  const R=S.room;if(!R||R.voice)return;
+ await loadTurn();if(S.room!==R||R.voice)return;
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Este navegador não permite microfone (use HTTPS).');return}
- let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}catch(e){toast('Permita o microfone para entrar na voz.');return}
+ let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:{ideal:true},noiseSuppression:{ideal:true},autoGainControl:{ideal:true},channelCount:{ideal:1}}})}catch(e){toast('Permita o microfone para entrar na voz.');return}
  R.voice={stream,mic:true,cam:false,pcs:{},tiles:{},camTrack:null};
- await track();syncVoicePeers();paintBar();paintDock();toast('Você entrou na voz.');
+ await track();syncVoicePeers();paintBar();paintDock();toast('Você entrou na voz. Se houver outra pessoa na mesma sala, use fone de ouvido para não dar microfonia.');refreshLobby();
 }
 function syncVoicePeers(){const R=S.room;if(!R||!R.voice)return;Object.keys(R.peers).forEach(id=>{if(R.peers[id].voice&&!R.voice.pcs[id])mkPeer(id)})}
 function mkPeer(id){
@@ -387,7 +396,7 @@ function mkPeer(id){
  pc.onicecandidate=e=>{if(e.candidate)sig(id,'ice',e.candidate)};
  pc.ontrack=e=>{const ms=e.streams[0]||new MediaStream([e.track]);V.tiles[id]=ms;
   ms.onaddtrack=ms.onremovetrack=()=>paintDock();e.track.onmute=e.track.onunmute=()=>paintDock();paintDock()};
- pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState))paintDock()};
+ pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'){try{pc.restartIce()}catch(e){}}paintDock()};
  return pc;
 }
 function sig(to,k,d){send('sig',{to,from:S.room.me,k,d:JSON.parse(JSON.stringify(d))})}
@@ -408,28 +417,139 @@ function stopVoice(silent){
  const R=S.room;if(!R||!R.voice)return;const V=R.voice;
  Object.keys(V.pcs).forEach(id=>{try{V.pcs[id].close()}catch(e){}});
  V.stream.getTracks().forEach(t=>t.stop());if(V.camTrack)V.camTrack.stop();
- R.voice=null;track();paintBar();paintDock();if(silent!==true)toast('Você saiu da voz.');
+ R.voice=null;track();paintBar();paintDock();if(silent!==true){toast('Você saiu da voz.');refreshLobby()}
 }
-function toggleMic(){const V=S.room&&S.room.voice;if(!V)return;V.mic=!V.mic;V.stream.getAudioTracks().forEach(t=>t.enabled=V.mic);track();paintBar();paintDock()}
+function toggleMic(){const V=S.room&&S.room.voice;if(!V)return;V.mic=!V.mic;V.stream.getAudioTracks().forEach(t=>t.enabled=V.mic);track();paintBar();paintDock();refreshLobby()}
 async function toggleCam(){
  const R=S.room,V=R&&R.voice;if(!V)return;
- if(V.cam){V.cam=false;const t=V.camTrack;V.camTrack=null;Object.values(V.pcs).forEach(pc=>{pc.getSenders().forEach(s=>{if(s.track===t)try{pc.removeTrack(s)}catch(e){}})});if(t)t.stop();track();paintBar();paintDock();return}
+ if(V.cam){V.cam=false;const t=V.camTrack;V.camTrack=null;Object.values(V.pcs).forEach(pc=>{pc.getSenders().forEach(s=>{if(s.track===t)try{pc.removeTrack(s)}catch(e){}})});if(t)t.stop();track();paintBar();paintDock();refreshLobby();return}
  let vs;try{vs=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:'user'}})}catch(e){toast('Permita a câmera para ligar o vídeo.');return}
- const t=vs.getVideoTracks()[0];V.camTrack=t;V.cam=true;Object.values(V.pcs).forEach(pc=>pc.addTrack(t,V.stream));track();paintBar();paintDock();
+ const t=vs.getVideoTracks()[0];V.camTrack=t;V.cam=true;Object.values(V.pcs).forEach(pc=>pc.addTrack(t,V.stream));track();paintBar();paintDock();refreshLobby();
 }
 function paintDock(){
- let dock=$('es-dock');const R=S.room,V=R&&R.voice;
- document.body.classList.toggle('es-dk',!!V);
- if(!V){if(dock)dock.remove();return}
- if(!dock){dock=document.createElement('div');dock.id='es-dock';dock.className='es-dock';document.body.appendChild(dock)}
- const ids=Object.keys(R.peers).filter(id=>R.peers[id].voice);
- const tile=(id,name,ms,mic,self)=>{const hasV=ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);
-  return '<div class="es-tile'+(hasV?' vid':'')+'" data-t="'+id+'"><video autoplay playsinline '+(self?'muted':'')+'></video><span class="es-av">'+esc((name||'?').charAt(0).toUpperCase())+'</span><small>'+esc(name||'?')+(mic===false?' 🔇':'')+'</small></div>'};
- dock.innerHTML=tile('me',myName(),V.camTrack?new MediaStream([V.camTrack]):null,V.mic,true)+ids.map(id=>tile(id,R.peers[id].name,V.tiles[id],R.peers[id].mic,false)).join('');
- dock.querySelectorAll('.es-tile').forEach(el=>{const id=el.dataset.t,v=el.querySelector('video');
-  const ms=id==='me'?(V.camTrack?new MediaStream([V.camTrack]):null):V.tiles[id];if(ms)v.srcObject=ms;
-  if(id!=='me')v.play&&v.play().catch(()=>{})});
+ let dock=$('es-dock');const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';
+ document.body.classList.toggle('es-dk',!!V&&!lobby);
+ const lg=lobby?$('es-lgrid'):null;
+ if(lobby&&!lg){if(dock)dock.remove();return}
+ if(!lobby&&!V){if(dock)dock.remove();return}
+ let box;
+ if(lobby){if(dock)dock.remove();box=lg}
+ else{if(!dock){dock=document.createElement('div');dock.id='es-dock';dock.className='es-dock';document.body.appendChild(dock)}box=dock}
+ const ids=lobby?Object.keys(R.peers):Object.keys(R.peers).filter(id=>R.peers[id].voice);
+ const tile=(id,name,mic,self,host)=>'<div class="es-tile" data-t="'+id+'"><video autoplay playsinline '+(self?'muted':'')+'></video><span class="es-av">'+esc((name||'?').charAt(0).toUpperCase())+'</span><small>'+esc(name||'?')+(host?' · dirigente':'')+(mic===false?' 🔇':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'?' ⏳':'')+'</small></div>';
+ const myMs=()=>V&&V.camTrack?new MediaStream([V.camTrack]):null;
+ box.innerHTML=tile('me',myName()+' (você)',V?V.mic:undefined,true,R.host)+ids.map(id=>tile(id,R.peers[id].name,R.peers[id].voice?R.peers[id].mic:undefined,false,R.peers[id].host)).join('');
+ box.querySelectorAll('.es-tile').forEach(el=>{const id=el.dataset.t,v=el.querySelector('video');el.onclick=()=>el.classList.toggle('zoom');
+  const ms=id==='me'?myMs():(V&&V.tiles[id]);
+  if(ms){v.srcObject=ms;const live=ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);el.classList.toggle('vid',live)}
+  if(id!=='me'){v.muted=!!R.vmute[id];v.play&&v.play().catch(()=>{})}});
 }
+function refreshLobby(){if(S.room&&S.room.mode==='lobby')paint()}
+function muteFrom(id){const R=S.room;if(!R)return;R.vmute[id]=!R.vmute[id];paintDock();paintBar()}
+
+/* ---------- bate-papo antes do estudo + painel do dirigente ---------- */
+function lobbyHTML(){
+ const R=S.room,host=R.host,V=R.voice;
+ return '<div class="es-hero"><div><span class="es-kick">ANTES DO ESTUDO</span><h1>Bate-papo da <em>turma</em></h1><p>Liguem câmera e microfone e conversem um pouco. Quando o dirigente iniciar, todos vão juntos para a lição.</p></div></div>'
+  +'<div class="pg-card"><div id="es-lgrid" class="es-lgrid"></div>'
+  +'<div class="es-row es-lrow2">'+(V?'<button class="pg-ghost" onclick="IASDEstudo.toggleMic()">'+(V.mic?'🎙 Microfone ligado':'🔇 Microfone desligado')+'</button><button class="pg-ghost" onclick="IASDEstudo.toggleCam()">'+(V.cam?'📷 Câmera ligada':'📷 Câmera desligada')+'</button>':'<button class="pg-gold" onclick="IASDEstudo.joinChat()">🎙 Entrar com voz e câmera</button>')
+  +(host?'<button class="pg-gold" onclick="IASDEstudo.setMode(\'study\')">▶ Iniciar o estudo para todos</button>':'<small class="es-note">Aguardando o dirigente iniciar o estudo…</small>')+'</div>'
+  +'<small class="es-note">Dica: se duas pessoas estiverem no mesmo ambiente, usem fone de ouvido para não dar microfonia.</small></div><div id="es-lchat"></div>';
+}
+async function joinChat(){await startVoice();const R=S.room;if(R&&R.voice&&!R.voice.cam)await toggleCam()}
+function setMode(m){const R=S.room;if(!R||!R.host)return;R.mode=m==='lobby'?'lobby':'study';if(R.mode==='lobby')R.unread=0;
+ if(R.mode==='study'&&lesson())S.view='lesson';
+ send('md',{mode:R.mode});if(R.mode==='study')pushLesson(true);saveRoom();paint();paintBar();paintDock();
+ toast(R.mode==='lobby'?'Todos foram para o bate-papo.':'Todos foram para o estudo.')}
+function setLock(k,on){const R=S.room;if(!R||!R.host)return;R.lock[k]=!!on;send('lk',R.lock);saveRoom();paintHost()}
+function toggleHost(){const R=S.room;if(!R||!R.host)return;R.hostOpen=!R.hostOpen;paintHost()}
+function paintHost(){
+ const R=S.room;let tab=$('es-htab'),dr=$('es-hdr');
+ document.body.classList.toggle('es-host',!!(R&&R.host));
+ if(!R||!R.host){if(tab)tab.remove();if(dr)dr.remove();return}
+ if(!tab){tab=document.createElement('button');tab.id='es-htab';tab.type='button';tab.className='es-htab';tab.setAttribute('aria-label','Painel do dirigente');tab.onclick=()=>toggleHost();document.body.appendChild(tab)}
+ tab.innerHTML='<span aria-hidden="true">⚙</span><b>Controles</b>';tab.classList.toggle('on',!!R.hostOpen);
+ if(!dr){dr=document.createElement('aside');dr.id='es-hdr';dr.className='es-hdr';dr.setAttribute('aria-label','Painel do dirigente');document.body.appendChild(dr)}
+ dr.classList.toggle('on',!!R.hostOpen);
+ const lobby=R.mode==='lobby',L=R.lock,n=Object.keys(R.peers).length;
+ const sw=(t,d,on,k)=>'<label class="es-sw"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" '+(on?'checked':'')+' onchange="IASDEstudo.setLock(\''+k+'\',this.checked)"></label>';
+ dr.innerHTML='<div class="es-hh"><b>Painel do dirigente</b><button type="button" onclick="IASDEstudo.toggleHost()" aria-label="Fechar">✕</button></div>'
+  +'<section><h4>Momento da sala</h4><p>'+(lobby?'Todos estão no bate-papo com as câmeras.':'Todos estão no estudo.')+' · '+(n+1)+' na sala</p>'
+  +(lobby?'<button type="button" class="pg-gold es-wide" onclick="IASDEstudo.setMode(\'study\')">▶ Iniciar o estudo para todos</button>':'<button type="button" class="pg-ghost es-wide" onclick="IASDEstudo.setMode(\'lobby\')">💬 Abrir bate-papo com câmeras</button>')+'</section>'
+  +'<section><h4>Controle dos alunos</h4>'+sw('Travar versículos','Os alunos só veem os versículos que você abrir.',L.v,'v')+sw('Travar a lição','Os alunos ficam onde você estiver, sem leitura livre.',L.f,'f')+'</section>'
+  +'<section><h4>Sala</h4><button type="button" class="pg-ghost es-wide" onclick="IASDEstudo.copyInvite()">🔗 Copiar convite</button></section>';
+}
+
+/* ---------- chat da sala ---------- */
+function addChat(m,quiet){
+ const R=S.room;if(!R||!m||!m.text)return;
+ const msg={id:String(m.id||'').slice(0,12),name:String(m.name||'?').slice(0,40),text:String(m.text).slice(0,500),t:+m.t||Date.now()};
+ if(R.chat.some(x=>x.t===msg.t&&x.id===msg.id&&x.text===msg.text))return;
+ R.chat.push(msg);if(R.chat.length>200)R.chat.shift();
+ if(!quiet&&msg.id!==R.me&&!R.chatOpen){R.unread++;paintBar()}
+ chatList();
+}
+function sendChat(e){
+ if(e)e.preventDefault();const R=S.room,i=$('es-chi');if(!R||!i)return false;
+ const text=i.value.trim();if(!text)return false;i.value='';
+ const m={id:R.me,name:myName(),text:text.slice(0,500),t:Date.now()};
+ addChat(m,true);send('chat',m);i.focus();return false;
+}
+function chatList(){
+ const R=S.room,l=$('es-cl');if(!R||!l)return;
+ const near=l.scrollHeight-l.scrollTop-l.clientHeight<60;
+ l.innerHTML=R.chat.length?R.chat.map(m=>'<div class="es-cm2'+(m.id===R.me?' me':'')+'"><b>'+esc(m.id===R.me?'Você':m.name)+'</b><span>'+esc(m.text)+'</span></div>').join(''):'<p class="es-note">Ninguém escreveu ainda. Diga um oi!</p>';
+ if(near||R.chat[R.chat.length-1]&&R.chat[R.chat.length-1].id===R.me)l.scrollTop=l.scrollHeight;
+}
+function toggleChat(){const R=S.room;if(!R)return;R.chatOpen=!R.chatOpen;if(R.chatOpen)R.unread=0;paintBar();if(R.chatOpen)setTimeout(()=>{const i=$('es-chi');if(i&&!/iPhone|Android/i.test(navigator.userAgent))i.focus();const l=$('es-cl');if(l)l.scrollTop=l.scrollHeight},50)}
+function paintChat(){
+ const R=S.room;let c=$('es-chat');
+ if(!R){if(c)c.remove();return}
+ if(!c){c=document.createElement('section');c.id='es-chat';c.className='es-chat';c.setAttribute('aria-label','Chat da sala');
+  c.innerHTML='<div class="es-hh"><b>💬 Chat da sala</b><button type="button" onclick="IASDEstudo.toggleChat()" aria-label="Fechar">✕</button></div><div class="es-cl" id="es-cl"></div><form class="es-cf" onsubmit="return IASDEstudo.sendChat(event)"><input id="es-chi" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem…"><button class="pg-gold" type="submit">Enviar</button></form>';
+  document.body.appendChild(c);chatList()}
+ const lobby=R.mode==='lobby',slot=lobby?$('es-lchat'):null;
+ if(slot){if(c.parentNode!==slot){slot.appendChild(c);chatList()}c.classList.add('inline','on');R.unread=0}
+ else{if(c.parentNode!==document.body){document.body.appendChild(c);chatList()}c.classList.remove('inline');c.classList.toggle('on',!!R.chatOpen&&!lobby)}
+}
+
+/* ---------- reconexão ---------- */
+let rjT=null;
+function scheduleRejoin(){clearTimeout(rjT);rjT=setTimeout(()=>{const R=S.room;if(R&&R.ch&&R.ch.state!=='joined')hardReconnect()},2500)}
+function afterRejoin(){
+ const R=S.room;if(!R)return;
+ if(R.host){pushLesson(true);send('md',{mode:R.mode});send('lk',R.lock)}else send('hello',{id:R.me});
+ syncVoicePeers();paintBar();paintDock();
+}
+async function hardReconnect(){
+ const R=S.room;if(!R||R.reconnecting)return;R.reconnecting=true;
+ const snap={lesson:R.lesson,bi:R.bi,rev:R.rev,ans:R.ans,mode:R.mode,lock:R.lock,hand:R.hand,follow:R.follow,voice:R.voice,vmute:R.vmute,hostOpen:R.hostOpen,chat:R.chat,unread:R.unread,chatOpen:R.chatOpen};
+ try{R.ch.untrack();cloud().removeChannel(R.ch)}catch(e){}
+ try{await startRoom(R.code,R.host,{me:R.me,snap})}catch(e){console.warn('reconexão',e)}
+ if(S.room)S.room.reconnecting=false;
+}
+function voiceHealth(){
+ const R=S.room,V=R&&R.voice;if(!V)return;
+ if(V.stream.getAudioTracks().every(t=>t.readyState==='ended')){stopVoice(true);toast('Sua voz caiu. Toque em “Entrar na voz” para voltar.');return}
+ Object.keys(V.pcs).forEach(id=>{const pc=V.pcs[id];if(['failed','closed'].includes(pc.connectionState)){closePeer(id)}});
+ syncVoicePeers();
+}
+function tryResume(){
+ if(S.room||S.resumed)return;S.resumed=true;
+ let r=null;try{r=JSON.parse(localStorage.getItem(RK)||'null')}catch(e){}
+ if(!r||!r.code||Date.now()-(r.ts||0)>SAVE_H)return;
+ const uc=urlCode();if(uc&&uc!==r.code)return;
+ if(r.host){
+  if(!isF())return;const c=(S.courses||[]).find(x=>x.id===r.cid);if(!c)return;
+  S.cid=c.id;S.li=Math.min(r.li||0,Math.max(0,c.lessons.length-1));
+  loadProg().then(()=>startRoom(r.code,true,{me:r.me,saved:r})).then(ok=>{if(ok){S.view=(S.room&&S.room.mode==='lobby')?S.view:'lesson';paint();toast('Você voltou para a sala '+r.code+'.')}});
+ }else{
+  startRoom(r.code,false,{me:r.me}).then(ok=>{if(ok){paint();toast('Você voltou para a sala '+r.code+'.')}});
+ }
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;const R=S.room;if(!R)return;if(R.ch&&R.ch.state!=='joined')hardReconnect();else{afterRejoin();voiceHealth()}});
+window.addEventListener('online',()=>{const R=S.room;if(R&&R.ch&&R.ch.state!=='joined')hardReconnect()});
+setInterval(()=>{const R=S.room;if(R&&R.ch&&R.ch.state!=='joined'&&!R.reconnecting&&document.visibilityState==='visible')hardReconnect()},8000);
 
 
 /* ---------- importar lições (arquivo .json do próprio fundador) ---------- */
@@ -453,5 +573,5 @@ async function importFile(inp){
  c.lessons=out;if(j.description)c.description=String(j.description).slice(0,400);
  saveCourse(true);S.edit=false;paint();toast('Importado: '+out.length+' lições.')}
 
-window.IASDEstudo={importPick,importFile,setOpt,toggleCheck,projectRef,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,project,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,startVoice,stopVoice,toggleMic,toggleCam};
+window.IASDEstudo={importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,joinChat,setMode,setLock,toggleHost,toggleChat,sendChat,startVoice,stopVoice,toggleMic,toggleCam};
 })();
