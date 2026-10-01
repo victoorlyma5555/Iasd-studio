@@ -164,7 +164,7 @@ function parseItems(items){
   const f=g(()=>parseSchedule);
   return (items||[]).filter(x=>!String(x).startsWith('@@equipe ')).map(x=>f?f(x):{time:'•',title:String(x),person:''});
 }
-const sched={expanded:false,LIMIT:5};
+const sched={expanded:false,LIMIT:3};
 function scheduleInner(){
   const today=new Date().toLocaleDateString('en-CA');
   const featured=S.schedules().find(x=>x.date===today)||null;
@@ -385,6 +385,13 @@ function planSub(){try{const t=window.IASDExtras&&IASDExtras.planToday();if(t)re
 function extrasHTML(){
   return `<section class="iu-pan iu-extras"><div class="iu-ph">${ic('star',20)}<h2>Para a comunidade</h2></div><div class="iu-qg">${EXTRAS.map(([k,em,t,sub0,c1,c2])=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button class="iu-q iu-ex" style="background:linear-gradient(135deg,${c1},${c2})" data-act="ex" data-ex="${k}"><span class="iu-em">${em}</span><span><b>${E(t)}</b><small>${E(sub)}</small></span></button>`}).join('')}</div></section>`;
 }
+/* Equipe: bloco só para quem tem cargo; recolhido no celular para não ocupar a tela inicial */
+function teamOpen(){try{const v=localStorage.getItem('iasd-ui-team-open');if(v!==null)return v==='1'}catch(e){}return window.innerWidth>900}
+function teamHTML(){
+  if(!S.sound())return '';
+  const open=teamOpen();
+  return `<section class="iu-team"><button class="iu-team-h" data-act="team-toggle" aria-expanded="${open}">${ic('monitor',22)}<span><b>Equipe · IASD Projetor</b><small>Projetor, sonoplastas em serviço e conexão</small></span><i id="iu-team-ch">${ic(open?'up':'down',18)}</i></button><div class="iu-team-b" id="iu-team-b"${open?'':' hidden'}><section class="iu-pan" id="iu-proj">${projInner()}</section></div></section>`;
+}
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
   if(!items.length)return '';
@@ -397,7 +404,7 @@ function bannerHTML(){
 }
 api.home=function(){
   try{
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}${sched.expanded?' exp':''}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${rankHTML()}${extrasHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-grid two${sched.expanded?' exp':''}">${scheduleHTML()}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${rankHTML()}${extrasHTML()}${teamHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -457,6 +464,7 @@ function bind(){
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
       else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
       else if(a==='projtest')checkProjector();
+      else if(a==='team-toggle'){const body=$('iu-team-b');if(body){const open=body.hidden;body.hidden=!open;try{localStorage.setItem('iasd-ui-team-open',open?'1':'0')}catch(e){}const ch=$('iu-team-ch');if(ch)ch.innerHTML=ic(open?'up':'down',18);act.setAttribute('aria-expanded',open)}}
       else if(a==='sched-toggle'){sched.expanded=!sched.expanded;updateSchedule()}
       else if(a==='signup')g(()=>openAuthModal(true));
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
