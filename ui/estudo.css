@@ -421,3 +421,6 @@ body.es-host .es-dock{right:14px}body.es-host .es-chat{right:14px}
 .eg-d p{font-weight:700;font-size:16px;line-height:1.45}
 .es-expc h4{color:var(--iu-gd,#b97d12)}
 html[data-theme="light"] .es-expc h4{color:#a8690a}
+
+.es-sendbar[data-v=ok] small{color:#1f9d4d;font-weight:700}.es-sendbar[data-v=part] small{color:#b7791f;font-weight:700}.es-sendbar[data-v=no] small{color:#d64545;font-weight:700}
+.es-sendbar[data-v=no] .es-send,.es-sendbar[data-v=part] .es-send{background:linear-gradient(135deg,#ffd37a,#f0b44c);color:#2a1a00;border:0}

@@ -81,5 +81,34 @@ function explain(b,lt){
  const share=(dr+'\n\n'+(b.guide||(t&&t[3])||'')).slice(0,900);
  return {html:h,share,refs,topic:t?t[1]:''};
 }
-window.IASDGuia={explain,pick};
+
+/* ---------- correção automática: certo / quase / ainda não ---------- */
+const SW=new Set('que com para uma como mais pois por seu sua suas seus dos das nos nas num numa ele ela eles elas isso isto esse essa este esta são ser foi era está estão tem têm ter não sim mas ou nem já também muito pela pelo pelos pelas sobre entre quando onde qual quais cada todo toda todos todas tudo nada ainda assim então porque quem tua teu vós nós vos nos'.split(' ').map(x=>x.normalize('NFD').replace(/[̀-ͯ]/g,'')));
+const nrm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const KEEP=new Set(['luz','paz','fe','sol','mal','bem']);
+function toks(t){return (nrm(t).match(/[a-z]+/g)||[]).filter(w=>(w.length>=4||KEEP.has(w))&&!SW.has(w))}
+const stem=w=>w.length>6?w.slice(0,6):w.length>4?w.slice(0,5):w;
+function lev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const m=[];for(let i=0;i<=a.length;i++){m[i]=[i];for(let j=1;j<=b.length;j++)m[i][j]=i?0:j}
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return m[a.length][b.length]}
+const same=(x,y)=>x===y||(x.length>=5&&y.length>=5&&lev(x,y)<=1);
+function grade(b,raw){
+ raw=String(raw==null?'':raw);
+ if(b.opts&&b.keys&&(b.kind==='vf'||b.kind==='x')){
+  if(b.kind==='x'){const i=+raw;if(raw===''||isNaN(i))return null;const ok=b.keys[i]==='X';return ok?{r:'ok',msg:'✅ Certo! Essa é a alternativa correta.'}:{r:'no',msg:'❌ Ainda não. Releia o texto bíblico e tente outra alternativa.'}}
+  const a=raw.split(','),tot=b.opts.length;let hit=0,ans=0;b.opts.forEach((o,i)=>{const v=(a[i]||'').trim();if(v)ans++;if(v&&v===String(b.keys[i]).trim())hit++});
+  if(!ans)return null;if(hit===tot)return {r:'ok',msg:'✅ Certo! Todas as afirmações estão corretas.'};
+  return hit>=Math.ceil(tot/2)?{r:'part',msg:'🟡 Quase! Você acertou '+hit+' de '+tot+'. Revise as outras e envie de novo.'}:{r:'no',msg:'❌ Ainda não: '+hit+' de '+tot+' corretas. Releia o texto e tente de novo.'};
+ }
+ if(!b.guide)return null;
+ const ref=firstSent(b.guide,360),T=[...new Map(toks(ref).map(w=>[stem(w),w])).entries()];
+ const S=toks(raw).map(stem);
+ if(!T.length)return null;
+ if(S.length<2){const h1=T.some(([st])=>S.some(x=>same(x,st)));return h1?{r:'part',msg:'🟡 Está no caminho. Explique um pouco mais, com suas palavras.'}:{r:'no',msg:'❌ Escreva um pouco mais para eu conferir, com suas próprias palavras.'}}
+ let use=T;if(use.length>14)use=use.slice().sort((x,y)=>y[1].length-x[1].length).slice(0,14);
+ const hit=use.filter(([st])=>S.some(x=>same(x,st))),miss=use.filter(u=>!hit.includes(u)),cov=hit.length/use.length;
+ if(cov>=.4||hit.length>=4)return {r:'ok',msg:'✅ Certo! Sua resposta está de acordo com o estudo.'};
+ if(hit.length>=2||cov>=.18)return {r:'part',msg:'🟡 Está no caminho. Tente incluir também: '+miss.sort((x,y)=>y[1].length-x[1].length).slice(0,3).map(m=>m[1]).join(', ')+'.'};
+ return {r:'no',msg:'❌ Ainda não. Releia o texto bíblico indicado e tente de novo.'};
+}
+window.IASDGuia={explain,pick,grade};
 })();

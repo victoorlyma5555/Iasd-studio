@@ -15,7 +15,7 @@ let TURN_DYN=null;
 const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}].concat(TURN_DYN||[],window.IASD_TURN||[]),iceCandidatePoolSize:4});
 async function loadTurn(){if(TURN_DYN)return;try{const c=new AbortController(),t=setTimeout(()=>c.abort(),4500);const r=await fetch('/api/turn',{signal:c.signal,cache:'no-store'});clearTimeout(t);if(r.ok){const j=await r.json();if(Array.isArray(j.iceServers))TURN_DYN=j.iceServers}}catch(e){}}
 
-const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{},sent:{}};
+const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{},sent:{},verdict:{}};
 const course=()=>(S.courses||[]).find(c=>c.id===S.cid)||null;
 const GN='iasd-study-guest-name';
 const guestName=()=>{try{return (localStorage.getItem(GN)||'').trim()}catch(e){return ''}};
@@ -201,7 +201,8 @@ function sendState(b,P){
  const sent=(S.sent[b.id]);return sent===undefined?'new':(sent===t?'ok':'chg')}
 function sendBar(b,P){
  const st=sendState(b,P),R=S.room,lbl=R?'Enviar':'Salvar no perfil';
- return '<div class="es-sendbar" data-sb="'+esc(b.id)+'" data-st="'+st+'"><button class="es-send" onclick="IASDEstudo.sendAns(\''+esc(b.id)+'\')"'+(st==='empty'?' disabled':'')+'>'+(st==='ok'?'✔ ':'➤ ')+(st==='ok'?(R?'Enviado':'Salvo'):(st==='chg'?(R?'Enviar de novo':'Salvar de novo'):lbl))+'</button><small>'+(st==='empty'?'Escreva ou escolha sua resposta.':st==='ok'?(R?'O dirigente já pode ver.':'Guardado no seu perfil.'):st==='chg'?'Você mudou a resposta.':(R?'O dirigente só vê quando você envia.':'Guarde no seu perfil.'))+'</small></div>'}
+ const vd=st==='ok'&&S.verdict[b.id]?S.verdict[b.id].r:'';
+ return '<div class="es-sendbar" data-sb="'+esc(b.id)+'" data-st="'+st+'" data-v="'+vd+'"><button class="es-send" onclick="IASDEstudo.sendAns(\''+esc(b.id)+'\')"'+(st==='empty'?' disabled':'')+'>'+(st==='ok'?'✔ ':'➤ ')+(st==='ok'?(R?'Enviado':'Salvo'):(st==='chg'?(R?'Enviar de novo':'Salvar de novo'):lbl))+'</button><small>'+(st==='empty'?'Escreva ou escolha sua resposta.':st==='ok'?(S.verdict[b.id]?S.verdict[b.id].msg:(R?'O dirigente já pode ver.':'Guardado no seu perfil.')):st==='chg'?'Você mudou a resposta.':(R?'O dirigente só vê quando você envia.':'Guarde no seu perfil.'))+'</small></div>'}
 function paintSend(bid){
  const L=lessonSrc();if(!L)return;const li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;
  document.querySelectorAll('[data-sb="'+bid+'"]').forEach(el=>{el.outerHTML=sendBar(b,lp(li))})}
@@ -221,11 +222,18 @@ function explain(bid){
 function showExp(p){const old=$('es-exp');if(old)old.remove();const el=document.createElement('div');el.id='es-exp';el.className='es-expw';
  el.innerHTML='<div class="es-expb"><div class="es-exph"><b>💡 Explicação do dirigente</b><button class="es-expx" aria-label="Fechar">✕</button></div><div class="es-expc"><div class="eg-q">'+esc(p.q||'')+'</div><p>'+esc(p.t||'').replace(/\n/g,'<br>')+'</p>'+((p.r||[]).length?'<div class="eg-refs">'+p.r.map(r=>'<span>📖 '+esc(r)+'</span>').join('')+'</div>':'')+'</div><div class="es-expf"><button class="pg-ghost" data-a="x">Fechar</button></div></div>';
  el.addEventListener('click',e=>{if(e.target===el||e.target.classList.contains('es-expx')||(e.target.dataset&&e.target.dataset.a==='x'))el.remove()});document.body.appendChild(el)}
+function markMe(li,bid,r){try{const ci=courseInfo();window.IASDStudyMe&&IASDStudyMe.mark(ci.id,li,bid,r)}catch(e){}}
+/* o dirigente (que tem a resposta-guia) corrige o que chega e devolve o resultado só para quem enviou */
+function gradeIncoming(m){
+ const R=S.room;if(!R||!R.host||!window.IASDGuia)return;const L=lessonSrc();const b=L&&L.blocks.find(x=>x.id===m.bid);if(!b)return;
+ const g=IASDGuia.grade(b,m.raw!=null?m.raw:m.text);if(g)send('gr',{to:m.id,bid:m.bid,r:g.r,msg:g.msg})}
 function sendAns(bid){
  const L=lessonSrc();if(!L)return;const li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;
  const t=curAns(b,lp(li));if(!String(t).replace(/[,\s]/g,'')){toast('Escreva ou escolha sua resposta primeiro.');return}
  const R=S.room;
- if(R){(R.ans[bid]=R.ans[bid]||{})[R.me]={name:myName(),text:t};send('ans',{bid,id:R.me,name:myName(),text:t})}
+ if(R){(R.ans[bid]=R.ans[bid]||{})[R.me]={name:myName(),text:t};send('ans',{bid,id:R.me,name:myName(),text:t,raw:(lp(li).a||{})[bid]||''})}
+ delete S.verdict[bid];
+ if(!R||R.host){try{const g=window.IASDGuia&&IASDGuia.grade(b,(lp(li).a||{})[bid]||'');if(g){S.verdict[bid]=g;markMe(li,bid,g.r)}}catch(e){}}
  S.sent[bid]=t;saveToMe(li,b,t);paintSend(bid);if(R)paintReveals();
  toast(R?'Resposta enviada ✔':(window.IASDStudyMe&&IASDStudyMe.isGuest()?'Resposta guardada neste aparelho.':'Resposta salva no seu perfil ✔'))}
 function editorHTML(){
@@ -358,7 +366,8 @@ async function startRoom(code,host,opts){
  ch.on('broadcast',{event:'st'},({payload})=>{if(R.host)return;R.lesson=payload.lesson||null;R.bi=payload.bi;R.rev=payload.rev||{};if(payload.course)R.course=payload.course;if(R.mode==='lobby'){paintBar();return}if(!R.lesson){paint();paintBar();return}if(R.follow){S.view='lesson';paint()}else paintBar()});
  ch.on('broadcast',{event:'pos'},({payload})=>{if(R.host)return;R.bi=payload.bi;markCur(true)});
  ch.on('broadcast',{event:'rev'},({payload})=>{R.rev[payload.bid]=payload.on;FX('stage',payload);paintReveals()});
- ch.on('broadcast',{event:'ans'},({payload})=>{(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};FX('ans',payload);paintReveals()});
+ ch.on('broadcast',{event:'gr'},({payload})=>{if(payload.to!==me)return;S.verdict[payload.bid]={r:payload.r,msg:payload.msg};const L=lessonSrc();markMe(L&&L.li!=null?L.li:S.li,payload.bid,payload.r);paintSend(payload.bid)});
+ ch.on('broadcast',{event:'ans'},({payload})=>{if(R.host)gradeIncoming(payload);(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};FX('ans',payload);paintReveals()});
  ch.on('broadcast',{event:'exp'},({payload})=>{if(!R.host)showExp(payload)});
  ch.on('broadcast',{event:'vo'},async({payload})=>{if(R.host||!R.follow)return;if(!!S.openV[payload.key]!==!!payload.open)await toggleVerse(payload.key,payload.ref,true)});
  ['chs','cha','chr','chx','hl','brk','call','mute','end'].forEach(ev=>ch.on('broadcast',{event:ev},({payload})=>FX(ev,payload)));

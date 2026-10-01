@@ -46,6 +46,7 @@ function lesson(c,li,title){const l=c.lessons[li]=c.lessons[li]||{t:title||'',d:
 function rec(cid,ctitle,total,li,ltitle,bid,q,a){
  if(!String(a||'').trim())return;const c=course(cid,ctitle,total),l=lesson(c,li,ltitle);l.a[bid]={q:String(q||'').slice(0,300),a:String(a).slice(0,1500),ts:Date.now()};save();
 }
+function mark(cid,li,bid,r){const d=cur(),c=d.courses[cid||'sala'],l=c&&c.lessons[li],a=l&&l.a[bid];if(a){a.r=r;save()}}
 function done(cid,ctitle,total,li,ltitle,on){
  const c=course(cid,ctitle,total),l=lesson(c,li,ltitle);l.d=on?Date.now():0;
  const n=Object.values(c.lessons).filter(x=>x.d).length;let trophy=false;
@@ -93,6 +94,6 @@ const SEALS=[
 function view(){ // para a seção "Meu estudo" no perfil
  const d=cur();return Object.keys(d.courses).map(k=>({id:k,...d.courses[k]})).filter(c=>Object.keys(c.lessons).length||c.trophy);
 }
-window.IASDStudyMe={load,loadOnce,rec,done,stat,counts,finish,isGuest,has,SEALS,view,get:cur};
+window.IASDStudyMe={mark,load,loadOnce,rec,done,stat,counts,finish,isGuest,has,SEALS,view,get:cur};
 try{window.addEventListener('iasd-auth',()=>{D=null;key='';loadedFor='';loadOnce().then(()=>{try{window.dispatchEvent(new Event('iasd-study-me'))}catch(e){}})})}catch(e){}
 })();
