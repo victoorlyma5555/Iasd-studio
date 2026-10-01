@@ -46,7 +46,7 @@ const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="no
 const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
 function mainPages(){return MAIN.filter(x=>x[0]!=='Projeção'||S.sound())}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
-const TITLES={Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+const TITLES={Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
   if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
   return TITLES[cur]||cur;
@@ -57,6 +57,7 @@ function searchable(){
   if(S.sound()){out.push({id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
   if(S.sound())out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'});
   out.push({id:'Perfil',icon:'user',label:'Meu perfil'});
+  if(S.founder())out.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
   if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
   return out;
@@ -73,7 +74,7 @@ function sideHTML(){
   if(S.assigned())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
   if(S.manage()){
     h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
-    if(S.founder())h+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
+    if(S.founder())h+=navBtn('Estudo',ic('book',19),'Sala de Estudo',cur)+navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
     h+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
     h+=`<button class="iu-nav" data-act="newtab">${ic('plus',19)}<span>Criar aba</span></button>`;
   }

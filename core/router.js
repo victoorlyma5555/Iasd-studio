@@ -14,6 +14,7 @@ const routes={
   'Palavra em Cena':'/jograis',
   'Jogo':'/jogos',
   'Hinário':'/hinario',
+  'Estudo':'/estudo',
   'Fundador':'/admin',
   'Acervo':'/admin/acervo',
   'Perfil':'/perfil',
