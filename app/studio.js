@@ -3,11 +3,17 @@ let selectedTool='',nextContent='',bibleResult=null,lastDraw=null,rolling=false,
 function call(name,...args){try{const p=window.parent;if(p===window||typeof p[name]!=='function')throw Error('Abra o Studio pela aba Projeção do IASD APP.');return p[name](...args)}catch(e){feedback(e.message);return null}}
 function feedback(s){$('feedback').textContent=s}
 function toggleTestimonyDrawer(mode){const d=$('testimonyDrawer');const open=mode&&(!d.classList.contains('open')||d.dataset.mode!==mode);d.classList.toggle('open',!!open);d.dataset.mode=open?mode:'';$('testimonyManage').classList.toggle('hide',mode!=='manage'||!open);$('testimonyImport').classList.toggle('hide',mode!=='import'||!open);$('testimonyDrawerTitle').textContent=mode==='import'?'Importar vídeo do computador':'Gerenciar vídeos adicionais';requestStudioHeight()}
-function closeTestimonyProjection(){const player=$('testimonyPlayer');if(player)player.pause();project('');$('testimonyEmbed').replaceChildren();selectedYouTube.testimony=null;$('testimonyChosen').textContent='Vídeo fechado. Escolha outro quando desejar.';feedback('Vídeo encerrado no telão.')}
+async function closeTestimonyProjection(){
+ const player=$('testimonyPlayer');if(player)try{player.pause()}catch(e){}
+ let stage='';try{stage=localStorage.getItem('iasd-stage')||''}catch(e){}
+ try{await window.parent.closePreparedYoutube?.()}catch(e){feedback('Não foi possível fechar o vídeo no IASD Projetor: '+(e.message||e));return}
+ if(stage.startsWith('IASD_LOCAL_MEDIA:'))call('stopProjection');
+ $('testimonyEmbed').replaceChildren();$('testimonyPrivate')?.classList.add('hide');selectedYouTube.testimony=null;
+ $('testimonyChosen').textContent='Vídeo fechado. Escolha outro quando desejar.';feedback('Vídeo fechado: o player e o áudio foram encerrados no Projetor.')}
 
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='iasd-studio-error')feedback(e.data.message)});
-function closeScreen(){call('stopProjection');try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Comando para fechar o telão enviado.')}
-function blackScreen(){project('');feedback('Tela preta enviada ao telão.')}
+function closeScreen(){call('stopProjection');$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
 function addSpecial(){const id=youtubeId($('specialUrl').value);if(!id){feedback('Insira um link válido do YouTube.');return}addSpecialId(id);$('specialUrl').value=''}
@@ -173,7 +179,7 @@ const PROVAI_E_VEDE_LIBRARY=[
 function youtubeId(url){try{const u=new URL(url.trim());const h=u.hostname.toLowerCase();let id='';if(h==='youtu.be'||h==='www.youtu.be')id=u.pathname.slice(1).split('/')[0];else if(['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(h)){id=u.searchParams.get('v')||u.pathname.split('/')[2]||''}return /^[a-zA-Z0-9_-]{11}$/.test(id)?id:null}catch{return null}}
 function youtubeList(kind){const extra=($((kind==='ambient'?'ambientLinks':'testimonyLinks')).value||'').split(/\n/).map(youtubeId).filter(Boolean);return [...new Set(kind==='testimony'?[...PROVAI_E_VEDE_LIBRARY.map(v=>v.id),...extra]:extra)]}
 function saveYouTubeList(kind){const ids=youtubeList(kind);localStorage.setItem('iasd-youtube-'+kind,ids.join('\n'));feedback(ids.length+' vídeos disponíveis para '+(kind==='ambient'?'música ambiente':'Provai e Vede')+'.')}
-async function closePrivateYoutube(){for(const kind of ['ambient','testimony','offering','special']){$(kind+'Embed')?.replaceChildren();$(kind+'Private')?.classList.add('hide')}try{await window.parent.closePreparedYoutube?.()}catch(e){console.warn(e)}feedback('Prévia fechada.')}
+async function closePrivateYoutube(){for(const kind of ['ambient','testimony','offering','special']){$(kind+'Embed')?.replaceChildren();$(kind+'Private')?.classList.add('hide')}try{await window.parent.closePreparedYoutube?.()}catch(e){console.warn(e)}feedback('Vídeo do YouTube fechado (prévia e telão).')}
 function youtubeEmbed(id,target){const host=$(target);host.replaceChildren();const frame=document.createElement('iframe');frame.className='youtube-player';frame.src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0';frame.title='Reprodutor do YouTube';frame.allow='accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;fullscreen';frame.allowFullscreen=true;host.append(frame)}
 const selectedYouTube={testimony:null,ambient:null,offering:null,special:null};
 async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');await window.parent.prepareYoutubePreview(id);await window.parent.projectPreparedYoutube();feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
