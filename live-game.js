@@ -904,6 +904,7 @@ async function join(){
   if(!p?.length)return alert('Sala não encontrada ou a partida já começou.');
   S.player=p[0];const rooms=await rpc('live_room_state',{p_room:S.player.room_id});if(!rooms?.length)throw Error('room_state_missing');
   S.room=rooms[0];S.host=false;PS={answered:-1,lastScore:0,sawQ:-1,revealFor:-1};
+  try{window.IASDLivePresence?.log('player',nm,c)}catch(e){}
   A().sfx('join');localStorage.setItem('iasd_live_player',JSON.stringify({room:S.room.id,player:S.player.id,token:S.player.player_token}));
   deckFor(code());playerView();poll();syOpen();
  }catch(e){console.error('IASDLive join:',e);alert('Não foi possível entrar na sala. Confira o código e tente novamente.')}
@@ -915,6 +916,7 @@ async function create(){
   const r=await rpc('live_create_room',{p_code:c});if(!r?.length)throw Error('room_not_created');
   S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};S.tm=null;try{localStorage.removeItem('iasd_live_tm')}catch(e){}
   localStorage.setItem('iasd_live_host',JSON.stringify({id:S.room.id,token:S.room.host_token,code:c}));
+  try{window.IASDLivePresence?.log('host','Anfitrião',c)}catch(e){}
   deckFor(c);A().sfx('join');lobby();poll();syOpen();
  }catch(e){console.error('IASDLive create room:',e);alert('Não foi possível criar a sala. Tente novamente.')}
 }
