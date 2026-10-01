@@ -14,6 +14,25 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const speed=()=>Number(window.__LG_SPEED)||1;
 const fmt=n=>Number(n||0).toLocaleString('pt-BR');
 const A=()=>window.IASDGameAudio||new Proxy({},{get:()=>()=>{}});
+/* ---------- telão: 2ª janela que espelha a tela do apresentador (mesmo navegador) ---------- */
+const BC=('BroadcastChannel' in window)?new BroadcastChannel('iasd-live-telao'):null;
+let snapT=null;
+function snapSend(){if(!BC)return;const b=document.querySelector('#lg2 .lg2-body');if(!b)return;try{BC.postMessage({t:'snap',sid:S.sid,cls:b.className,style:b.getAttribute('style')||'',html:b.innerHTML})}catch(e){}}
+function snapSoon(now){if(!BC||!S.host)return;if(now){clearTimeout(snapT);snapT=null;return snapSend()}if(snapT)return;snapT=setTimeout(()=>{snapT=null;snapSend()},120)}
+function bcSend(m){if(BC&&S.host)try{BC.postMessage(m)}catch(e){}}
+if(BC)BC.onmessage=e=>{if(e.data?.t==='hello'&&S.host)snapSoon(true)};
+/* atualiza só o que mudou (não reinicia as animações) */
+function syncNode(a,b){
+ const ac=Array.from(a.childNodes),bc=Array.from(b.childNodes);
+ for(let i=0;i<bc.length;i++){const x=ac[i],y=bc[i];
+  if(!x){a.appendChild(y.cloneNode(true));continue}
+  if(x.nodeType!==y.nodeType||x.nodeName!==y.nodeName){a.replaceChild(y.cloneNode(true),x);continue}
+  if(y.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;continue}
+  Array.from(x.attributes).forEach(at=>{if(!y.hasAttribute(at.name))x.removeAttribute(at.name)});
+  Array.from(y.attributes).forEach(at=>{if(x.getAttribute(at.name)!==at.value)x.setAttribute(at.name,at.value)});
+  syncNode(x,y)}
+ while(a.childNodes.length>bc.length)a.removeChild(a.lastChild);
+}
 
 /* ---------- bibliotecas (carregadas só quando precisa) ---------- */
 let libP=null;
@@ -103,10 +122,11 @@ function splitName(n){const m=/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_
 const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+'">'+esc(splitName(n).av)+'</span>';
 
 /* ---------- casca da tela ---------- */
-function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');reconnect()}return r}
+function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
 function screen(html,cls,opts){
  css();const r=root();
- r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic" onclick="IASDLive.close()" aria-label="Fechar">✕</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+(A().state?.().sfx||A().state?.().music?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
+ r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">✕</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+(A().state?.().sfx||A().state?.().music?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
+ S.sid=(S.sid||0)+1;snapSoon(true);
 }
 function sndMenu(btn){
  $('lg2-menu')?.remove();const st=A().state();const m=document.createElement('div');m.id='lg2-menu';m.className='lg2-menu';
@@ -118,6 +138,7 @@ function sndMenu(btn){
  setTimeout(()=>document.addEventListener('click',function h(ev){if(!m.contains(ev.target)&&ev.target!==btn){m.remove();document.removeEventListener('click',h)}}),0);
 }
 function confetti(ms=5200){
+ bcSend({t:'confetti',ms});
  const c=document.createElement('canvas');c.className='lg2-confetti';document.body.appendChild(c);const x=c.getContext('2d');
  const W=c.width=innerWidth,Hh=c.height=innerHeight,cols=['#f5b73a','#38bdf8','#fb7185','#34d399','#a78bfa','#fff'];
  const ps=Array.from({length:150},()=>({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)]}));
@@ -129,6 +150,7 @@ function floatPts(text,el){if(!el)return;const s=document.createElement('b');s.c
 function css(){
  if($('live-game-css'))return;const s=document.createElement('style');s.id='live-game-css';s.textContent=`
 html.lg2-open{overflow:hidden}
+.lg2.telao .lg2-btn,.lg2.telao .lg2-autobar{display:none!important}.lg2.telao .lg2-body{pointer-events:none}
 .lg2{position:fixed;inset:0;z-index:9999;color:#f4f7ff;font-family:Inter,system-ui,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% -10%,#3b2c8f 0%,transparent 60%),radial-gradient(1000px 700px at 100% 110%,#8a5a12 0%,transparent 60%),linear-gradient(160deg,#0a1130,#0f1c4d 55%,#080d24);overflow:hidden}
 .lg2 *{box-sizing:border-box}.lg2 button{font:inherit;color:inherit;cursor:pointer}
 .lg2-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
@@ -254,6 +276,36 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lg2-tbar{width:100%;height:10px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}.lg2-tbar i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#facc15,#ef4444);transition:width .12s linear}
 @media (max-width:860px){.lg2-lobby{grid-template-columns:minmax(0,1fr)}.lg2-ans{grid-template-columns:1fr}.lg2-lane{grid-template-columns:1.8em 2em minmax(60px,110px) minmax(0,1fr) auto}}
 @media (max-width:560px){.lg2-ans.two{grid-template-columns:1fr 1fr}}
+/* telão / computador: tudo bem maior para ler e escanear de longe */
+@media (min-width:900px){
+.lg2-pill{font-size:clamp(14px,1.9vw,34px);padding:.4em .9em}
+.lg2-btn{font-size:clamp(18px,2.2vw,36px);padding:.7em 1.4em}
+.lg2-hero{font-size:clamp(40px,7.4vw,130px)}.lg2-sub{font-size:clamp(17px,2.5vw,44px);max-width:70ch}
+.lg2-center{width:min(1700px,100%)}
+.lg2-lobby{grid-template-columns:minmax(320px,46vw) minmax(0,1fr);width:min(1800px,100%);gap:clamp(24px,4vw,80px)}
+.lg2-join{padding:clamp(18px,2.2vw,44px);gap:clamp(10px,1.4vw,26px);border-radius:34px}
+.lg2-join small{font-size:clamp(14px,1.6vw,30px)}
+.lg2-code{font-size:clamp(52px,min(6.2vw,11vh),130px)}
+.lg2-qr{width:min(30vw,44vh,600px);min-width:220px;padding:clamp(10px,1.2vw,22px);border-radius:24px}
+.lg2-lobby h2{font-size:clamp(28px,4.2vw,84px)!important}
+.lg2-pp{font-size:clamp(17px,2.7vw,48px);padding:.4em 1em .4em .4em}
+.lg2-intro .e{font-size:clamp(120px,24vw,420px)}.lg2-intro h1{font-size:clamp(44px,9vw,170px)}.lg2-intro p{font-size:clamp(20px,3.2vw,58px)}
+.lg2-ring{width:clamp(80px,11vw,210px)}.lg2-ring b{font-size:clamp(30px,4.8vw,94px)}
+.lg2-count{font-size:clamp(16px,2.5vw,44px)}.lg2-dots i{width:clamp(13px,1.3vw,26px);height:clamp(13px,1.3vw,26px)}
+.lg2-qcard h2{font-size:clamp(26px,5vw,104px)}.lg2-qcard .ref{font-size:clamp(14px,1.6vw,30px)}
+.lg2-clues p{font-size:clamp(19px,3.3vw,64px)}
+.lg2-a{font-size:clamp(20px,3.2vw,64px);min-height:clamp(80px,16vh,230px)}
+.lg2-flash .one{font-size:clamp(110px,22vw,420px)}.lg2-flash .grid{font-size:clamp(60px,11vw,220px)}
+.lg2-ansbar{font-size:clamp(22px,3.8vw,76px)}
+.lg2-board{width:min(1700px,100%)}
+.lg2-lane{padding:clamp(10px,1.1vw,20px) clamp(16px,1.6vw,30px);gap:clamp(12px,1.4vw,26px)}
+.lg2-lane .rk,.lg2-lane .sc{font-size:clamp(19px,3.2vw,60px)}.lg2-lane .nm{font-size:clamp(17px,2.9vw,54px)}
+.lg2-lane .tk{height:clamp(16px,1.4vw,28px)}.lg2-lane .dl{font-size:clamp(14px,1.5vw,28px)}.lg2-lane .bd em{font-size:clamp(13px,1.4vw,26px)}
+.lg2-pod{width:min(1500px,100%)}.lg2-pod .nm{font-size:clamp(18px,3vw,56px)}.lg2-pod .pt{font-size:clamp(15px,1.8vw,34px)}
+.lg2-pod .bar{font-size:clamp(40px,7vw,130px)}.lg2-pod .crown{font-size:clamp(40px,6vw,110px)}
+.lg2-awards div{font-size:clamp(15px,1.8vw,34px)}
+.lg2-av.big{font-size:clamp(40px,6.4vw,120px)}
+}
 @media (prefers-reduced-motion:reduce){.lg2 *{animation-duration:.01s!important}}
 `;document.head.appendChild(s);
 }
@@ -261,7 +313,9 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 /* ---------- início ---------- */
 async function home(){
  try{await libs()}catch(e){alert('Não foi possível carregar o Jogo Coletivo. Verifique a conexão.');return}
- A().unlock();S.host=false;
+ A().unlock();
+ if(!S.room&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player'))&&await reconnect(2))return;
+ S.host=false;
  screen('<div class="lg2-center"><span class="lg2-pill">🎮 JOGO COLETIVO</span><h1 class="lg2-hero">Desafio Bíblico Ao Vivo</h1><p class="lg2-sub">Projete no telão e jogue com todos pelo celular. Vários jogos, pontos, sequências e um pódio final.</p><div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.setup()">📺 Criar sala no telão</button><button class="lg2-btn" onclick="IASDLive.joinForm()">📱 Entrar com código</button></div><small class="lg2-sub">'+fmt(window.IASDGameEngine.stats().total)+'+ perguntas e desafios para sortear.</small></div>','');
  A().music('menu');
 }
@@ -305,7 +359,7 @@ async function lobby(){
  const ps=await players();const {mode,total}=cfgOf(code());
  const link=location.origin+'/jogos?game='+code();
  const qr='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data='+encodeURIComponent(link);
- screen('<div class="lg2-lobby"><div class="lg2-join"><span class="lg2-pill">'+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</span><small style="opacity:.75">Abra o IASD APP no celular e digite o código:</small><div class="lg2-code">'+esc(code())+'</div><img class="lg2-qr" alt="QR Code para entrar" src="'+qr+'"><small style="opacity:.75">ou escaneie o QR Code</small></div><div style="display:grid;gap:16px;justify-items:center;text-align:center"><h2 style="font-size:clamp(22px,3.4vw,40px)"><span id="lg-player-count">'+ps.length+'</span> jogador(es) na sala</h2><div class="lg2-ppl" id="lg-player-list"></div><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button></div></div>','');
+ screen('<div class="lg2-lobby"><div class="lg2-join"><span class="lg2-pill">'+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</span><small style="opacity:.75">Abra o IASD APP no celular e digite o código:</small><div class="lg2-code">'+esc(code())+'</div><img class="lg2-qr" alt="QR Code para entrar" src="'+qr+'"><small style="opacity:.75">ou escaneie o QR Code</small></div><div style="display:grid;gap:16px;justify-items:center;text-align:center"><h2 style="font-size:clamp(22px,3.4vw,40px)"><span id="lg-player-count">'+ps.length+'</span> jogador(es) na sala</h2><div class="lg2-ppl" id="lg-player-list"></div><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button><button class="lg2-btn" onclick="IASDLive.telao()">📽 Projetar no telão</button><button class="lg2-btn" onclick="IASDLive.exit()">✕ Cancelar sala</button></div></div>','');
  paintLobbyPlayers(ps,true);
 }
 function paintLobbyPlayers(ps,first){
@@ -417,12 +471,14 @@ async function finalPodium(){
   '<div class="lg2-pod">'+top3.map((p,k)=>p?'<div class="s '+cls[k]+'">'+(cls[k]==='p1'?'<span class="crown">👑</span>':'')+avatarHTML(p.name,'big')+'<div class="nm">'+esc(splitName(p.name).name)+'</div><div class="pt">'+fmt(p.score)+' pts</div><div class="bar">'+pos[k]+'</div></div>':'<div class="s '+cls[k]+'"></div>').join('')+'</div>'+
   '<div class="lg2-awards">'+(bestStreak&&HS.best[bestStreak.id]>=2?'<div>🔥 Sequência de fogo<small>'+esc(splitName(bestStreak.name).name)+' · '+HS.best[bestStreak.id]+' seguidas</small></div>':'')+(mostOk&&HS.correct[mostOk.id]?'<div>🎯 Mais acertos<small>'+esc(splitName(mostOk.name).name)+' · '+HS.correct[mostOk.id]+' de '+total+'</small></div>':'')+'</div>'+
   (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,12).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
-  '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.close()">Encerrar</button></div></div>','');
+  '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','');
 }
 /* ---------- JOGADOR (celular) ---------- */
 async function playerView(){
  const st=S.room.status,i=qi();
- if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone"><span class="lg2-pill">🎉 VOCÊ ENTROU!</span><div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div></div>','')}
+ if(st==='finished'&&(i>=cfgOf(code()).total||(i===0&&PS.sawQ<0))){clearTimers();S.phase='p-final';try{localStorage.removeItem('iasd_live_player')}catch(e){}
+  return screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">🚪</div><h2>Sala encerrada</h2><p class="lg2-sub">O apresentador encerrou esta sala.</p><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Voltar</button></div></div>','')}
+ if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone"><span class="lg2-pill">🎉 VOCÊ ENTROU!</span><div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div><button class="lg2-btn" onclick="IASDLive.exit()">Sair da sala</button></div>','')}
  if(st==='question'){
   if(PS.sawQ===i&&S.phase==='p-question')return;
   if(PS.answered===i){S.phase='p-sent';return sentScreen()}
@@ -450,7 +506,7 @@ async function answer(i){
  if(PS.answered===qi())return;const ix=qi();PS.answered=ix;
  document.querySelectorAll('#lg-ans .lg2-a').forEach(b=>{b.disabled=true;if(+b.dataset.i!==i&&b.dataset.i!==undefined)b.classList.add('no')});
  A().sfx('sent');
- try{const s=JSON.parse(localStorage.getItem('iasd_live_player')||'null');await rpc('live_submit_answer',{p_room:S.room.id,p_player:S.player.id,p_token:s?.token,p_question:ix,p_answer:i});PS.lastPick=i;PS.pickFor=ix}catch(e){console.warn(e)}
+ try{const s=JSON.parse(localStorage.getItem('iasd_live_player')||'null');await rpc('live_submit_answer',{p_room:S.room.id,p_player:S.player.id,p_token:s?.token,p_question:ix,p_answer:i});PS.lastPick=i;PS.pickFor=ix;try{localStorage.setItem('iasd_live_ans',JSON.stringify({room:S.room.id,q:ix,pick:i}))}catch(e){}}catch(e){console.warn(e)}
  clearInterval(S.clock);sentScreen();
 }
 async function phoneReveal(i){
@@ -490,24 +546,77 @@ async function tick(){
 }
 function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1500/Math.min(3,speed()))}
 function closeAll(){clearInterval(S.poll);clearTimers();S.poll=null;$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');A().music(null)}
-function leave(){closeAll();if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
+function leave(){bcSend({t:'end'});closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
 function fullscreen(){const el=$('lg2');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
-async function reconnect(){
+let recBusy=false;
+async function reconnect(tries=3,wanted){
+ if(recBusy)return false;recBusy=true;
  try{
-  await libs();
-  const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');
-  if(h?.id){const rr=await rpc('live_room_state',{p_room:h.id});if(rr.length&&rr[0].status!=='finished'){S.room=rr[0];S.host=true;HS.prev={};poll();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return}}
-  const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');
-  if(p?.room&&p?.player){const rr=await rpc('live_room_state',{p_room:p.room}),pp=await rpc('live_room_players',{p_room:p.room}),me=pp.find(x=>x.id===p.player);
-   if(rr.length&&me&&rr[0].status!=='finished'){S.room=rr[0];S.player={...me,player_token:p.token};S.host=false;PS={answered:-1,lastScore:Number(me.score)||0,sawQ:-1,revealFor:-1};deckFor(code());poll();playerView()}}
- }catch(e){}
+  for(let a=0;a<tries;a++){
+   try{
+    await libs();
+    const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');
+    if(h?.id){const rr=await rpc('live_room_state',{p_room:h.id});
+     if(rr.length&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.host=true;HS.prev={};poll();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return true}
+     if(!rr.length||rr[0].status==='finished')localStorage.removeItem('iasd_live_host')}
+    const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');
+    if(p?.room&&p?.player){const rr=await rpc('live_room_state',{p_room:p.room}),pp=await rpc('live_room_players',{p_room:p.room}),me=pp.find(x=>x.id===p.player);
+     if(rr.length&&me&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.player={...me,player_token:p.token};S.host=false;PS={answered:-1,lastScore:Number(me.score)||0,sawQ:-1,revealFor:-1};
+      try{const an=JSON.parse(localStorage.getItem('iasd_live_ans')||'null');if(an&&an.room===S.room.id){PS.answered=an.q;PS.pickFor=an.q;PS.lastPick=an.pick}}catch(e){}
+      deckFor(code());poll();playerView();return true}
+     if(!rr.length||!me||rr[0].status==='finished')localStorage.removeItem('iasd_live_player')}
+    return false
+   }catch(e){await new Promise(r=>setTimeout(r,1500))}
+  }
+  return false
+ }finally{recBusy=false}
+}
+/* sair / encerrar */
+async function cancelRoom(){
+ const total=cfgOf(code()).total;
+ try{await patchRoom({status:'finished',current_question:total})}catch(e){try{await patchRoom({status:'finished'})}catch(e2){console.warn(e2)}}
+ leave();
+}
+async function exit(){
+ if(!S.room){closeAll();return}
+ const done=S.phase==='final'||S.phase==='p-final';
+ if(S.host){
+  if(done)return leave();
+  if(!confirm('Encerrar a sala? Os jogadores serão desconectados e a partida termina.'))return;
+  await cancelRoom();
+ }else{
+  if(!done&&!confirm('Sair da sala?'))return;
+  leave();
+ }
+}
+function telao(){
+ const w=window.open('/jogos?telao=1','iasd-telao','popup=yes,width=1280,height=720');
+ if(!w){alert('O navegador bloqueou a janela. Permita pop-ups para o IASD APP e tente de novo.');return}
+ setTimeout(()=>snapSoon(true),1200);
+}
+/* janela do telão: só mostra o que o apresentador está vendo */
+function telaoMode(){
+ css();document.documentElement.classList.add('lg2-open');
+ const r=document.createElement('div');r.id='lg2';r.className='lg2 telao';document.body.appendChild(r);
+ const wait='<div class="lg2-center"><span class="lg2-pill">📺 TELÃO</span><h1 class="lg2-hero">Aguardando o apresentador…</h1><p class="lg2-sub">Crie a sala na outra janela e use o botão 📽 Projetar no telão.</p></div>';
+ r.innerHTML='<div class="lg2-bg">'+'<i></i>'.repeat(8)+'</div><div class="lg2-chrome"><span class="lg2-sp"></span><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia (F11)">⛶</button></div><div class="lg2-body" id="lg-mirror">'+wait+'</div>';
+ const body=()=>document.getElementById('lg-mirror');let sid=-1,got=false;
+ if(!BC){body().innerHTML='<div class="lg2-center"><h1 class="lg2-hero" style="font-size:40px">Este navegador não permite espelhar o telão.</h1></div>';return}
+ BC.onmessage=e=>{const m=e.data||{},b=body();if(!b)return;
+  if(m.t==='snap'){got=true;b.className=m.cls;b.setAttribute('style',m.style);if(m.sid!==sid){sid=m.sid;b.innerHTML=m.html}else{const t=document.createElement('div');t.innerHTML=m.html;syncNode(b,t)}}
+  else if(m.t==='confetti')confetti(m.ms);
+  else if(m.t==='end'){got=false;sid=-1;b.className='lg2-body';b.removeAttribute('style');b.innerHTML=wait}};
+ const hello=()=>{if(!got)BC.postMessage({t:'hello'})};hello();setInterval(hello,2500);
+ document.addEventListener('dblclick',fullscreen);
 }
 function install(){
- const gameCode=new URLSearchParams(location.search).get('game');
- if(gameCode){setTimeout(async()=>{await home();joinForm(gameCode)},300)}
- else if(location.pathname==='/jogos'&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player')))root();
+ const qs=new URLSearchParams(location.search);
+ if(qs.get('telao'))return telaoMode();
+ const gameCode=qs.get('game');
+ if(gameCode){setTimeout(async()=>{if(await reconnect(1,gameCode))return;await home();joinForm(gameCode)},300)}
+ else if(location.pathname==='/jogos'&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player')))reconnect();
 }
-const API={home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,fullscreen,sndMenu,
+const API={home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
  sound:new Proxy({},{get:(_,k)=>()=>{try{window.IASDGameAudio?.sfx(k)}catch(e){}}}),
  _state:()=>({S,HS,PS}),_deck:c=>deckFor(c)};
 window.IASDLive=API;
