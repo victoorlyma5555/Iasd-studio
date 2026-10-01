@@ -264,15 +264,15 @@ function bookName(id){return (g(()=>bibleBooks.find(x=>x[1]===id))||[])[0]||id}
 function passageCacheKey(){return 'iasd-ui-passage:'+todayKey()+':'+'nvi'}
 function loadPassage(){
   const [book,chapter,verse]=dailyRef();
-  passage.book=book;passage.chapter=chapter;passage.verse=verse;passage.ref=bookName(book)+' '+chapter+':'+verse+' (NVI)';
-  try{const c=JSON.parse(localStorage.getItem(passageCacheKey())||'null');if(c&&c.text){passage.text=c.text;passage.loaded=true;return Promise.resolve()}}catch(e){}
+  const apply=()=>{passage.book=book;passage.chapter=chapter;passage.verse=verse;passage.ref=bookName(book)+' '+chapter+':'+verse+' (NVI)'};
+  try{const c=JSON.parse(localStorage.getItem(passageCacheKey())||'null');if(c&&c.text){apply();passage.text=c.text;passage.loaded=true;return Promise.resolve()}}catch(e){}
   if(passage.fetching)return passage.fetching;
   passage.fetching=(async()=>{
     try{
       const verses=await fetchBibleChapter(book,chapter,'nvi');
       const v=(verses||[]).find(x=>Number(x.verse)===verse);
       const text=v&&String(v.text||'').replace(/\s+/g,' ').trim();
-      if(text){passage.text='“'+text+'”';passage.loaded=true;try{localStorage.setItem(passageCacheKey(),JSON.stringify({text:passage.text}))}catch(e){}}
+      if(text){apply();passage.text='“'+text+'”';passage.loaded=true;try{localStorage.setItem(passageCacheKey(),JSON.stringify({text:passage.text}))}catch(e){}}
     }catch(e){console.warn('[IASD UI] passagem do dia indisponível, usando texto padrão',e)}
     passage.fetching=null;updatePassage();
   })();
