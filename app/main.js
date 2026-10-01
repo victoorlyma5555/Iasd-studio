@@ -629,6 +629,7 @@ async function resetInlineText(key){if(!contentEditAllowed()||siteTextBusy)retur
 function applyTheme(mode){
  const dark=mode==='dark';
  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+ try{const sf=document.getElementById('iasd-studio-frame');if(sf&&sf.contentWindow)sf.contentWindow.postMessage({type:'iasd-theme',mode:dark?'dark':'light'},location.origin)}catch(e){}
  const btn=document.getElementById('theme-toggle');
  const icon=document.getElementById('theme-icon');
  const label=document.getElementById('theme-label');
@@ -734,7 +735,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=16" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=17" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');

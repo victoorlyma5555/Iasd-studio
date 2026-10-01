@@ -1,0 +1,70 @@
+/* Studio de Projeção — tema claro (mesma paleta do claro da página inicial: ui/theme.css) */
+html[data-theme="light"]:has(body.st2),html[data-theme="light"] body.st2{background:transparent!important;color-scheme:light}
+html[data-theme="light"] body.st2{--bg:#e4ebf7;--sf:#ffffff;--sf2:#edf1f9;--sf3:#e3eaf6;--bd:#b4c3dc;--bd2:#8ea5cc;--tx:#0f1c3a;--mu:#51617f;--pr:#2563eb;--am:#c77d0a;--rd:#dc2626;--gr:#16a34a;color:var(--tx)}
+html[data-theme="light"] body.st2 h1,html[data-theme="light"] body.st2 h2,html[data-theme="light"] body.st2 h3,html[data-theme="light"] body.st2 b,html[data-theme="light"] body.st2 strong{color:var(--tx)}
+html[data-theme="light"] body.st2 .muted,html[data-theme="light"] body.st2 small,html[data-theme="light"] body.st2 label{color:var(--mu)}
+/* faixa de título e cartões */
+html[data-theme="light"] .st-banner{background:linear-gradient(120deg,#cfe3ff,#eaf2ff 55%,#ffe1c2)!important;border-color:var(--bd)!important;box-shadow:0 2px 10px rgba(20,40,90,.10)}
+html[data-theme="light"] .st-bn-art{opacity:.35}
+html[data-theme="light"] .st-bn-art::after{background:linear-gradient(90deg,rgba(255,255,255,.85) 0%,rgba(255,255,255,.55) 40%,rgba(255,255,255,0) 100%)!important}
+html[data-theme="light"] .st-title b,html[data-theme="light"] .st-bn-txt b{color:#0f1c3a}
+html[data-theme="light"] .st-bn-txt small,html[data-theme="light"] .st-bn-txt p{color:#33466b}
+html[data-theme="light"] .st-hp{color:#2563eb}
+html[data-theme="light"] .st-proj{background:rgba(255,255,255,.78)!important;border-color:var(--bd)!important}
+html[data-theme="light"] .st-pill,html[data-theme="light"] button.st-pill,html[data-theme="light"] .st-sq{background:#fff!important;color:#1b2a4d!important;border-color:var(--bd)!important}
+html[data-theme="light"] .st-pill.is-black{background:#1e293b!important;color:#e2e8f0!important}
+/* abas dos módulos */
+html[data-theme="light"] body.st2 .tool{background:#fff!important;color:#1b2a4d!important;border-color:var(--bd)!important;box-shadow:0 1px 4px rgba(20,40,90,.08)}
+html[data-theme="light"] body.st2 .tool:hover{background:var(--sf2)!important}
+html[data-theme="light"] body.st2 .tool.active{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#2563eb!important;color:#fff!important;box-shadow:0 4px 14px rgba(37,99,235,.30)!important}
+/* painéis */
+html[data-theme="light"] body.st2 main>.work,html[data-theme="light"] .st-left,html[data-theme="light"] body.st2 .panel{background:#fff!important;border-color:var(--bd)!important;box-shadow:0 2px 10px rgba(20,40,90,.10)!important;color:var(--tx)}
+html[data-theme="light"] body.st2 .panel.compact{background:var(--sf2)!important;box-shadow:none!important}
+html[data-theme="light"] .st-left{background:#fff!important}
+html[data-theme="light"] .mp-tt p,html[data-theme="light"] .mp-tt small{color:var(--mu)}
+html[data-theme="light"] .mp-ic{color:#2563eb}
+/* campos */
+html[data-theme="light"] body.st2 :where(input,select,textarea),html[data-theme="light"] .amb-in,html[data-theme="light"] body.st2 .tm-read{background:#f5f8fe!important;color:var(--tx)!important;border-color:var(--bd)!important}
+html[data-theme="light"] body.st2 input::placeholder,html[data-theme="light"] body.st2 textarea::placeholder{color:#7a89a8}
+html[data-theme="light"] .amb-in{color:var(--mu)!important}
+html[data-theme="light"] body.st2 select option{background:#fff;color:#0f1c3a}
+/* botões */
+html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn),
+html[data-theme="light"] .mp-btn,html[data-theme="light"] .seg button:not(.on),html[data-theme="light"] .amb-chips button:not(.on),html[data-theme="light"] .small-action,html[data-theme="light"] .amb-more{background:#fff!important;color:#1b2a4d!important;border:1px solid var(--bd)!important;box-shadow:0 1px 3px rgba(20,40,90,.06)}
+html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn):hover,html[data-theme="light"] .mp-btn:hover{background:var(--sf2)!important}
+html[data-theme="light"] body.st2 button.danger,html[data-theme="light"] body.st2 .danger{background:#fff1f2!important;border-color:#f3a4ab!important;color:#b4182a!important}
+html[data-theme="light"] body.st2 button.primary,html[data-theme="light"] body.st2 .primary,html[data-theme="light"] .mp-blue,html[data-theme="light"] .seg button.on,html[data-theme="light"] .amb-chips button.on{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#2563eb!important;color:#fff!important}
+html[data-theme="light"] .amb-play{background:#2563eb!important;color:#fff!important}
+html[data-theme="light"] .amb-x{color:#51617f}html[data-theme="light"] .amb-x:hover{background:var(--sf2)}
+html[data-theme="light"] body.st2 .tool svg,html[data-theme="light"] body.st2 .tool:not(.active) .ti{color:#2563eb}
+/* listas */
+html[data-theme="light"] .amb-row{border-top-color:#dbe4f2}
+html[data-theme="light"] .amb-row.is-sel{background:#e6efff}
+html[data-theme="light"] .amb-th{background:#dbe6fb}
+html[data-theme="light"] .amb-info small{color:var(--mu)}
+html[data-theme="light"] .amb-sel{background:#f5f8fe;border-color:var(--bd)}
+html[data-theme="light"] .amb-sel.has{background:#e6efff;border-color:#2563eb}
+html[data-theme="light"] .amb-sel.has .amb-info small{color:#2563eb}
+html[data-theme="light"] .amb-menu{background:#fff;border-color:var(--bd);box-shadow:0 12px 32px rgba(20,40,90,.22)}
+html[data-theme="light"] .amb-menu button:hover{background:var(--sf2)!important}
+html[data-theme="light"] .amb-menu button.danger{color:#b4182a!important;background:transparent!important;border:0!important}
+html[data-theme="light"] .q-count{background:#e6efff;border-color:var(--bd);color:#1d4ed8}
+html[data-theme="light"] .q-row.over{background:#e6efff}
+html[data-theme="light"] .testimony-drawer,html[data-theme="light"] .drawer-heading{background:#fff;color:var(--tx);border-color:var(--bd)}
+html[data-theme="light"] #testimony #testimonyEmbed{background:#eef3fb;border-color:#9fb3d6}
+html[data-theme="light"] #testimony #testimonyEmbed:empty::before{color:#51617f}
+/* telão (prévia) continua escuro: é uma tela real */
+html[data-theme="light"] .st-left .preview .screen{border-color:#2563eb;box-shadow:0 4px 18px rgba(37,99,235,.20)}
+html[data-theme="light"] .dr-stage{background:radial-gradient(ellipse at 50% 20%,#dfe8ff,#c9d8f7 72%)!important;color:#0f1c3a}
+/* foco e rolagem */
+html[data-theme="light"] body.st2 button:focus-visible,html[data-theme="light"] body.st2 input:focus-visible,html[data-theme="light"] body.st2 select:focus-visible{outline-color:#2563eb}
+html[data-theme="light"] body.st2 main>.work{scrollbar-color:#9fb3d6 transparent}
+html[data-theme="light"] .st-empty b,html[data-theme="light"] .st-empty strong,html[data-theme="light"] .st-empty h2{color:#f1f5ff!important}
+html[data-theme="light"] .st-empty p,html[data-theme="light"] .st-empty small{color:#9fb0d8!important}
+html[data-theme="light"] body.st2 .tool.active svg,html[data-theme="light"] body.st2 .tool.active .ti{color:#fff!important}
+html[data-theme="light"] body.st2 .tm-presets button.on{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#2563eb!important;color:#fff!important}
+html[data-theme="light"] .cf-tag{color:#1d4ed8!important}
+html[data-theme="light"] .cf-link{color:#1d4ed8!important;font-weight:600}
+html[data-theme="light"] .cf-card,html[data-theme="light"] .cf-sec{color:var(--tx)}
+html[data-theme="light"] .cf-card p,html[data-theme="light"] .cf-body p,html[data-theme="light"] .cf-card span{color:#3a4a6b}
+html[data-theme="light"] .cf-card{background:#f3f7fd}
