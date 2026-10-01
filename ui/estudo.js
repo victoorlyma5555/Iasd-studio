@@ -9,7 +9,8 @@ const isF=()=>{try{return !!user()&&cloudRole==='founder'}catch(e){return false}
 const rid=()=>Math.random().toString(36).slice(2,9);
 const $=id=>document.getElementById(id);
 const toast=m=>{try{IASDPages.toast(m)}catch(e){}let t=$('bb-toast');if(!t){t=document.createElement('div');t.id='bb-toast';t.className='bb-toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2400)};
-const LS_PROG='iasd-study-prog-',SEED=['Jesus e as Sagradas Escrituras','Jesus e o amor divino','Jesus e a restauração do bem','Jesus e a oração','Jesus e a salvação','Jesus e a intercessão','Jesus e o destino do mundo','Jesus e a vida eterna','Jesus e o juízo','Jesus e a lei de Deus','Jesus e o sábado','Jesus e a igreja','Jesus e o crescimento espiritual','Jesus e a fidelidade','Jesus e o batismo','Jesus e o estilo de vida cristão','Jesus e a missão da igreja','Jesus e o dom de profecia','Jesus e o Espírito Santo','Jesus e a nova terra'];
+const OVDD=['A Bíblia Sagrada','A Beleza da Criação Divina','A Origem do Mal','O Plano da Salvação','Fé, Arrependimento e Confissão','Sinais da Volta de Cristo','A Volta de Cristo','O Milênio','A Verdade Sobre a Morte','A Nova Terra','Salvação pela Graça','O Santuário de Deus','O Juízo','As Leis na Bíblia','A Lei Moral','O Mandamento Esquecido','Do Sábado para o Domingo','Princípios de Saúde','O Dom de Profecia','O Dízimo','Ofertar, um Ato de Adoração','Como Identificar a Igreja Verdadeira','Porque Devo Ser Batizado','Princípios da Vida Cristã','Educação Cristã','A Vida no Espírito','Um Ministério para Todos'];
+const LS_PROG='iasd-study-prog-',SEED_OLD=['Jesus e as Sagradas Escrituras','Jesus e o amor divino','Jesus e a restauração do bem','Jesus e a oração','Jesus e a salvação','Jesus e a intercessão','Jesus e o destino do mundo','Jesus e a vida eterna','Jesus e o juízo','Jesus e a lei de Deus','Jesus e o sábado','Jesus e a igreja','Jesus e o crescimento espiritual','Jesus e a fidelidade','Jesus e o batismo','Jesus e o estilo de vida cristão','Jesus e a missão da igreja','Jesus e o dom de profecia','Jesus e o Espírito Santo','Jesus e a nova terra'];
 const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}].concat(window.IASD_TURN||[])});
 
 const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{}};
@@ -22,9 +23,12 @@ async function load(){
  const c=cloud();if(!c||!isF())return;
  try{
   let r=await c.from('iasd_study_courses').select('*').order('created_at');if(r.error)throw r.error;
-  if(!r.data.length){
-   const seed={title:'Jesus Restaurador da Vida',description:'Estudo bíblico em 20 lições (títulos editáveis — cole o conteúdo de cada lição para montar perguntas e versículos).',lessons:SEED.map(t=>({title:t,blocks:[]}))};
-   const ins=await c.from('iasd_study_courses').insert(seed).select();if(ins.error)throw ins.error;r={data:ins.data};
+  let seeded='';try{seeded=localStorage.getItem('iasd-study-seed')||''}catch(e){}
+  if(!r.data.some(x=>x.title==='Ouvindo a Voz de Deus')&&!/ovdd/.test(seeded)){
+   const seed={title:'Ouvindo a Voz de Deus',description:'Estudo bíblico em 27 lições (títulos do kit oficial da IASD). Cole o conteúdo de cada lição em “Editar lição” para montar perguntas e versículos.',lessons:OVDD.map(t=>({title:t,blocks:[]}))};
+   const ins=await c.from('iasd_study_courses').insert(seed).select();if(ins.error)throw ins.error;
+   try{localStorage.setItem('iasd-study-seed',seeded+'ovdd')}catch(e){}
+   r={data:[ins.data[0]].concat(r.data)};
   }
   S.courses=r.data;S.err='';
   if(S.cid&&!course())S.cid=null;
