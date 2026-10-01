@@ -539,3 +539,12 @@ html[data-theme="dark"] .pf-link{color:#7db0ff}
 
 /* Bíblia no celular: uma rolagem só (a do site). O texto não prende mais o dedo numa caixa com rolagem própria. */
 @media (max-width:900px){.bb-main>.bb-paper{max-height:none!important;overflow:visible!important;overscroll-behavior:auto}}
+
+/* Bíblia: nav com estrela de favorito e atalho da lista */
+.bb-nav .pg-ghost.sq{min-width:46px;width:46px;padding:0;justify-content:center;position:relative;flex:none}
+.bb-nav{gap:6px}.bb-nav #reader-ref{flex:1;text-align:center;min-width:0}
+.bb-nav .fav.on{border-color:#f5b73a;background:rgba(245,183,58,.16)}.bb-nav .fav.on svg{fill:#f5b73a;color:#f5b73a}
+.bb-nav .favs i{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#2563eb;color:#fff;font:700 12px/20px Inter,sans-serif;font-style:normal;text-align:center}
+.bb-nav .favs i[hidden]{display:none}
+.bb-grid .bb-wide{grid-column:1/-1}
+.bb-toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:70;background:#0b1226;color:#fff;border:1px solid #2b3c66;padding:10px 16px;border-radius:12px;font-size:14px;transition:.2s;max-width:90vw;text-align:center}.bb-toast.on{opacity:1;transform:translate(-50%,0)}

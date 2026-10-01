@@ -248,9 +248,69 @@ HANDLERS['pr-pray']=b=>prCall('iasd_prayer_toggle',{p_id:b.dataset.id});
 HANDLERS['pr-ans']=b=>prCall('iasd_prayer_answer',{p_id:b.dataset.id});
 HANDLERS['pr-del']=b=>{if(confirm('Apagar este pedido?'))prCall('iasd_prayer_delete',{p_id:b.dataset.id},'Pedido apagado')};
 
+
+/* ===================== FAVORITOS (passagens) ===================== */
+const FAV_KEY='iasd-favs-v2';
+const bookName=id=>{try{return (bibleBooks.find(b=>b[1]===id)||[])[0]||id}catch(e){return id}};
+const trLabel=t=>({acf:'ACF',aa:'AA',nvi:'NVI',almeida:'ALM',kjv:'KJV',web:'WEB'})[t]||String(t||'').toUpperCase();
+const favKey=p=>[p.book,p.chapter,p.from||0,p.to||0,p.tr].join('|');
+function favs(){
+ let a=LS.get(FAV_KEY,null);
+ if(a===null){ // migra os capítulos salvos no esquema antigo, uma única vez
+  a=[];try{(readerState.bookmarks||[]).forEach(k=>{const [b,c]=String(k).split('|');if(b&&c)a.push({id:[b,+c,0,0,readerState.translation||'nvi'].join('|'),book:b,chapter:+c,from:0,to:0,tr:readerState.translation||'nvi',text:'',t:Date.now()-a.length})})}catch(e){}
+  LS.set(FAV_KEY,a);
+ }
+ return a;
+}
+let favTimer=null;
+function favPush(a){
+ if(!logged()||typeof cloud==='undefined')return;clearTimeout(favTimer);
+ favTimer=setTimeout(()=>{try{cloud.auth.updateUser({data:{iasd_favs:a.slice(0,40).map(f=>[f.book,f.chapter,f.from,f.to,f.tr,f.t].join('|'))}})}catch(e){}},1500);
+}
+function favPut(a){LS.set(FAV_KEY,a);favPush(a)}
+function favPull(){
+ try{const m=cloudUser?.user_metadata?.iasd_favs;if(!Array.isArray(m)||!m.length)return false;
+  const a=favs(),have=new Set(a.map(f=>f.id));let ch=false;
+  m.forEach(r=>{const [book,chapter,from,to,tr,t]=String(r).split('|');const id=[book,+chapter,+from,+to,tr].join('|');if(book&&!have.has(id)){a.push({id,book,chapter:+chapter,from:+from,to:+to,tr,text:'',t:+t||Date.now()});ch=true}});
+  if(ch)LS.set(FAV_KEY,a);return ch}catch(e){return false}
+}
+const favHas=p=>!!p&&!!p.chapter&&favs().some(f=>f.id===favKey(p));
+function favToggle(p){
+ const a=favs(),k=favKey(p),i=a.findIndex(f=>f.id===k);
+ if(i>=0){a.splice(i,1);favPut(a);return false}
+ a.unshift({id:k,book:p.book,chapter:p.chapter,from:p.from||0,to:p.to||0,tr:p.tr,text:String(p.text||'').slice(0,400),t:Date.now()});
+ favPut(a.slice(0,200));return true;
+}
+const favCount=()=>{try{return favs().length}catch(e){return 0}};
+const favRef=f=>bookName(f.book)+' '+f.chapter+(f.from?':'+f.from+(f.to&&f.to!==f.from?'-'+f.to:''):'');
+const FV={q:''};
+const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function favHTML(){
+ const q=fold(FV.q),all=favs().slice().sort((a,b)=>b.t-a.t);
+ const list=q?all.filter(f=>fold(favRef(f)+' '+f.text).includes(q)):all;
+ const head='<label class="fv-s"><input id="fv-q" data-in="fv-q" type="search" placeholder="Buscar nos favoritos…" value="'+esc(FV.q)+'" aria-label="Buscar nos favoritos"></label>';
+ if(!all.length)return '<div class="fv-empty"><div class="pl-emoji">⭐</div><h4>Nenhum favorito ainda</h4><p>Na Bíblia, toque nos versículos que você quer guardar e depois toque na estrela ★ ao lado do capítulo. Sem selecionar nada, a estrela guarda o capítulo.</p></div>';
+ return head+(list.length?'<div class="fv-list">'+list.map(f=>'<article class="fv-it"><div class="fv-h"><b>'+esc(favRef(f))+'</b><span class="fv-tr">'+esc(trLabel(f.tr))+'</span></div><p>'+(f.text?esc(f.text):'<i>Toque em “Abrir” para ler a passagem.</i>')+'</p><div class="fv-a"><button class="fv-open" data-ex="fv-open" data-id="'+esc(f.id)+'">Abrir</button><button data-ex="fv-share" data-id="'+esc(f.id)+'">Compartilhar</button><button data-ex="fv-copy" data-id="'+esc(f.id)+'">Copiar</button><button class="del" data-ex="fv-del" data-id="'+esc(f.id)+'" aria-label="Remover dos favoritos">Remover</button></div></article>').join('')+'</div>':'<p class="pg-empty">Nada encontrado para “'+esc(FV.q)+'”.</p>');
+}
+async function favFill(){
+ const a=favs();let ch=false;
+ for(const f of a.filter(x=>!x.text).slice(0,8)){
+  try{const vs=await fetchBibleChapter(f.book,f.chapter,f.tr);const sel=f.from?vs.filter(v=>v.verse>=f.from&&v.verse<=(f.to||f.from)):vs.slice(0,2);f.text=sel.map(v=>v.text.trim()).join(' ').slice(0,400);ch=true}catch(e){}
+ }
+ if(ch){LS.set(FAV_KEY,a);if(sheetEl&&sheetEl.querySelector('.fv-list'))body(favHTML())}
+}
+function openFavs(){FV.q='';favPull();sheet('Meus favoritos','Passagens que você guardou.',favHTML(),'ex-fv');favFill()}
+INPUTS['fv-q']=t=>{FV.q=t.value;const pos=t.selectionStart;body(favHTML());const n=sheetEl.querySelector('#fv-q');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}};
+const favById=id=>favs().find(f=>f.id===id);
+HANDLERS['fv-open']=b=>{const f=favById(b.dataset.id);if(!f)return;try{readerState.book=f.book;readerState.chapter=f.chapter;readerState.translation=f.tr;window.__rdGoto=f.from?{book:f.book,chapter:f.chapter,from:f.from,to:f.to||0}:null;saveReader()}catch(e){}close();if(typeof current!=='undefined'&&current==='Bíblia'){render();readerLoad()}else go('Bíblia')};
+HANDLERS['fv-share']=b=>{const f=favById(b.dataset.id);if(!f)return;if(!f.text)return toast('Abra a passagem primeiro para carregar o texto.');window.IASDVerseShare.open({text:f.text,ref:favRef(f),ver:trLabel(f.tr)})};
+HANDLERS['fv-copy']=async b=>{const f=favById(b.dataset.id);if(!f)return;if(!f.text)return toast('Abra a passagem primeiro para carregar o texto.');try{await navigator.clipboard.writeText('“'+f.text+'” — '+favRef(f)+' ('+trLabel(f.tr)+')');toast('Texto copiado ✓')}catch(e){toast('Não foi possível copiar')}};
+HANDLERS['fv-del']=b=>{const a=favs().filter(f=>f.id!==b.dataset.id);favPut(a);body(favHTML());try{IASDPages.favRefresh()}catch(e){}toast('Removido dos favoritos')};
+
 /* ===================== API ===================== */
-const OPEN={champ:openChampions,plan:openPlan,remind:openRemind,cards:openCards,prayer:openPrayers};
-window.IASDExtras={open:k=>{try{(OPEN[k]||(()=>{}))()}catch(e){console.warn('[extras]',e)}},planStats,remindTick,close};
+const OPEN={champ:openChampions,plan:openPlan,remind:openRemind,cards:openCards,prayer:openPrayers,fav:openFavs};
+function planToday(){const s=planState();if(!s||!s.start)return null;const d=Math.min(365,Math.max(1,planDayNow(s)));return {day:d,label:planLabel(planDay(d)),done:(s.done||[]).includes(d)}}
+window.IASDExtras={favHas,favToggle,favCount,planToday,open:k=>{try{(OPEN[k]||(()=>{}))()}catch(e){console.warn('[extras]',e)}},planStats,remindTick,close};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)remindTick()});
 setTimeout(remindTick,4000);
 })();

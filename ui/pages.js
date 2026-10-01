@@ -219,6 +219,26 @@ function rdSet(name,chapter,verses){
  RD.name=name;RD.chapter=chapter;RD.verses=verses;rdPaint();
  if(jumped)setTimeout(()=>document.getElementById('reader-text')?.scrollIntoView({block:'start',behavior:'smooth'}),60);
 }
+function rdPassage(){
+ const a=[...RD.sel].sort((x,y)=>x-y);let from=0,to=0;
+ if(a.length){from=a[0];to=a[a.length-1]}else if(RD.from){from=RD.from;to=RD.to||RD.from}
+ const vs=from?RD.verses.filter(v=>v.verse>=from&&v.verse<=to):RD.verses.slice(0,2);
+ return {book:readerState.book,name:RD.name,chapter:RD.chapter,from,to:to===from?0:to,tr:readerState.translation||'nvi',text:vs.map(v=>v.text.trim()).join(' ')};
+}
+function rdPassRef(p){return p.name+' '+p.chapter+(p.from?':'+p.from+(p.to&&p.to!==p.from?'-'+p.to:''):'')}
+function bbToast(m){let t=document.getElementById('bb-toast');if(!t){t=document.createElement('div');t.id='bb-toast';t.className='bb-toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.classList.add('on');clearTimeout(bbToast.t);bbToast.t=setTimeout(()=>t.classList.remove('on'),2200)}
+function favRefresh(){
+ const b=document.getElementById('bb-fav');if(!b||!window.IASDExtras)return;
+ const on=IASDExtras.favHas(rdPassage());b.classList.toggle('on',!!on);b.setAttribute('aria-pressed',on?'true':'false');
+ const n=IASDExtras.favCount(),c=document.getElementById('bb-favn');if(c){c.textContent=n?String(n):'';c.hidden=!n}
+}
+function favToggle(){
+ if(!window.IASDExtras)return;const p=rdPassage();if(!p.chapter)return;
+ const on=IASDExtras.favToggle(p);favRefresh();
+ bbToast(on?'★ '+rdPassRef(p)+' salvo nos favoritos':'Removido dos favoritos');
+}
+function share(){const p=rdPassage();if(!p.from){bbToast('Toque nos versículos que quer compartilhar (ou use De/Até).');return}window.IASDVerseShare.open({text:p.text,ref:rdPassRef(p),ver:rdVersionLabel()})}
+function copyQuick(btn){const p=rdPassage();if(p.from){navigator.clipboard?.writeText('“'+p.text+'” — '+rdPassRef(p)+' ('+rdVersionLabel()+')').then(()=>bbToast('Texto copiado ✓'));return}readerCopy()}
 function rdVisible(){return RD.from?RD.verses.filter(v=>v.verse>=RD.from&&v.verse<=(RD.to||RD.from)):RD.verses}
 function rdPaint(){
  const el=document.getElementById('reader-text');if(!el)return;
@@ -228,7 +248,7 @@ function rdPaint(){
  if(f&&t){const max=RD.verses.length,opts=(sel)=>Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'"'+(sel===i+1?' selected':'')+'>'+(i+1)+'</option>').join('');
   f.innerHTML='<option value="0">Todos</option>'+opts(RD.from);t.innerHTML='<option value="0">—</option>'+opts(RD.to);t.disabled=!RD.from}
  const ref=document.getElementById('reader-ref');if(ref)ref.textContent=RD.name+' '+RD.chapter+(RD.from?':'+RD.from+(RD.to&&RD.to!==RD.from?'-'+RD.to:''):'');
- rdBar();
+ rdBar();favRefresh();
 }
 function rdRange(){
  const f=+document.getElementById('rd-from').value,t0=+document.getElementById('rd-to').value;
@@ -257,7 +277,7 @@ function rdBar(){document.getElementById('rd-bar')?.remove();return;
  if(!bar){bar=document.createElement('div');bar.id='rd-bar';bar.className='rd-bar';document.body.appendChild(bar)}
  bar.innerHTML=html;
 }
-function rdToggle(v){if(RD.sel.has(v))RD.sel.delete(v);else RD.sel.add(v);document.querySelector('#reader-text .reader-verse[data-v="'+v+'"]')?.classList.toggle('sel',RD.sel.has(v));rdBar()}
+function rdToggle(v){if(RD.sel.has(v))RD.sel.delete(v);else RD.sel.add(v);document.querySelector('#reader-text .reader-verse[data-v="'+v+'"]')?.classList.toggle('sel',RD.sel.has(v));rdBar();favRefresh()}
 function rdClear(){RD.sel=new Set();rdPaint()}
 function rdCopy(btn){navigator.clipboard?.writeText(rdQuote()).then(()=>{if(btn){const o=btn.innerHTML;btn.textContent='Copiado ✓';setTimeout(()=>btn.innerHTML=o,1400)}})}
 function rdShare(){const t=rdQuote();if(navigator.share)navigator.share({title:rdSelRef(),text:t,url:location.origin+'/biblia'}).catch(()=>{});else rdCopy()}
@@ -272,21 +292,15 @@ function bible(){
  const chapters=Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'" '+(i+1===Number(readerState.chapter)?'selected':'')+'>'+(i+1)+'</option>').join('');
  const tr=[['acf','ACF — Almeida Corrigida e Fiel'],['aa','AA — Almeida Revisada'],['nvi','NVI — Nova Versão Internacional'],['almeida','ALM — Almeida 1911'],['kjv','KJV — King James (inglês)'],['web','WEB — World English Bible (inglês)']];
  const cur=readerState.translation||'almeida';
- const v=VOTD[new Date().getDate()%VOTD.length];
- const fav=(readerState.bookmarks||[]).includes(readerState.book+'|'+readerState.chapter);
  return '<div class="pg pg-biblia '+(readerState.theme==='light'?'reader-light':'')+'" id="personal-reader">'+hero('biblia',{kick:'SUA BÍBLIA • LEITURA PESSOAL',title:'Um momento com a <em class="big">PALAVRA</em>',text:'Leia nos cultos, em casa ou onde estiver. Seu último capítulo e seus favoritos ficam salvos neste aparelho.',quote:['Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.','Salmos 119:105']})+
  '<section class="pg-card bb-find"><label><span class="sr">Ir para a passagem</span><div class="pg-sel">'+I('search')+'<input id="bb-ref" aria-label="Ir para a passagem" type="search" autocomplete="off" placeholder="Ex.: João 3:16 · Sl 23 · 1 Co 13:4-7" onkeydown="if(event.key===\'Enter\'){event.preventDefault();IASDPages.rdGoRef(this)}"></div></label><button class="pg-ghost strong" onclick="IASDPages.rdGoRef(document.getElementById(\'bb-ref\'))">Ir</button><small id="bb-ref-msg" role="status"></small></section>'+
- '<section class="pg-card bb-bar"><label class="f-tr"><span>Tradução</span><div class="pg-sel">'+I('book')+'<select id="reader-translation" onchange="readerTranslation(this.value)">'+tr.map(([k,l])=>'<option value="'+k+'" '+(cur===k?'selected':'')+'>'+l+'</option>').join('')+'</select></div></label><label class="f-bk"><span>Livro</span><div class="pg-sel">'+I('book')+'<select id="reader-book" onchange="readerSelectBook(this.value)">'+options+'</select></div></label><label class="f-ch"><span>Cap.</span><div class="pg-sel">'+I('list')+'<select id="reader-chapter" onchange="readerOpen(this.value)">'+chapters+'</select></div></label><div class="bb-tools"><button class="pg-ghost sq" onclick="readerFont(-1)" title="Diminuir letra" aria-label="Diminuir letra">A−</button><button class="pg-ghost sq" onclick="readerFont(1)" title="Aumentar letra" aria-label="Aumentar letra">A+</button><button class="pg-ghost" onclick="readerTheme()" title="Alternar tema" aria-label="Alternar tema">'+(readerState.theme==='light'?'☾':'☀')+'</button><button class="pg-ghost" onclick="readerBookmark()" title="Salvar capítulo" aria-label="Salvar capítulo">'+I('star')+'</button></div></section>'+
- '<div class="pg-card bb-nav"><button class="pg-ghost strong" onclick="readerMove(-1)" aria-label="Capítulo anterior">'+I('left')+'<em>Anterior</em></button><span id="reader-ref">'+esc(name)+' '+readerState.chapter+'</span><button class="pg-ghost strong" onclick="readerMove(1)" aria-label="Próximo capítulo"><em>Próximo</em>'+I('right')+'</button></div>'+
+ '<section class="pg-card bb-bar"><label class="f-tr"><span>Tradução</span><div class="pg-sel">'+I('book')+'<select id="reader-translation" onchange="readerTranslation(this.value)">'+tr.map(([k,l])=>'<option value="'+k+'" '+(cur===k?'selected':'')+'>'+l+'</option>').join('')+'</select></div></label><label class="f-bk"><span>Livro</span><div class="pg-sel">'+I('book')+'<select id="reader-book" onchange="readerSelectBook(this.value)">'+options+'</select></div></label><label class="f-ch"><span>Cap.</span><div class="pg-sel">'+I('list')+'<select id="reader-chapter" onchange="readerOpen(this.value)">'+chapters+'</select></div></label><div class="bb-tools"><button class="pg-ghost sq" onclick="readerFont(-1)" title="Diminuir letra" aria-label="Diminuir letra">A−</button><button class="pg-ghost sq" onclick="readerFont(1)" title="Aumentar letra" aria-label="Aumentar letra">A+</button><button class="pg-ghost" onclick="readerTheme()" title="Alternar tema" aria-label="Alternar tema">'+(readerState.theme==='light'?'☾':'☀')+'</button></div></section>'+
+ '<div class="pg-card bb-nav"><button class="pg-ghost strong" onclick="readerMove(-1)" aria-label="Capítulo anterior">'+I('left')+'<em>Anterior</em></button><span id="reader-ref">'+esc(name)+' '+readerState.chapter+'</span><button class="pg-ghost sq fav" id="bb-fav" onclick="IASDPages.favToggle()" aria-label="Favoritar esta passagem" title="Favoritar">'+I('star')+'</button><button class="pg-ghost sq favs" onclick="IASDExtras.open(\'fav\')" aria-label="Meus favoritos" title="Meus favoritos">'+I('list')+'<i id="bb-favn"></i></button><button class="pg-ghost strong" onclick="readerMove(1)" aria-label="Próximo capítulo"><em>Próximo</em>'+I('right')+'</button></div>'+
  '<div class="pg-card bb-verses"><div class="bv-l"><b>'+I('list')+'Versículos</b></div><label>De<div class="pg-sel"><select id="rd-from" onchange="IASDPages.rdRange()"><option value="0">Todos</option></select></div></label><label>Até<div class="pg-sel"><select id="rd-to" onchange="IASDPages.rdRange()" disabled><option value="0">—</option></select></div></label><button class="pg-ghost" onclick="IASDPages.rdAll()">Inteiro</button></div>'+
  '<div class="bb-main"><article class="pg-card bb-paper reader-paper" id="reader-text" aria-live="polite"><p>Carregando capítulo…</p></article><aside class="bb-side">'+
- '<div class="pg-card bb-cur"><span class="bb-cur-i">'+I('book')+'</span><div><b>Leitura atual</b><small id="bb-cur">'+esc(name)+' '+readerState.chapter+'</small></div><button class="bb-bm '+(fav?'on':'')+'" onclick="readerBookmark();this.classList.toggle(\'on\')" title="Favoritar">'+I('star')+'</button></div>'+
- '<div class="pg-card bb-quick"><h3>'+I('star','gold')+'Ações rápidas</h3><div class="bb-grid"><button onclick="readerBookmark()">'+I('star','gold')+'Adicionar favorito</button><button onclick="IASDPages.share()">'+I('share')+'Compartilhar</button><button onclick="readerCopy()">'+I('doc')+'Copiar texto</button><button onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button></div><button class="bb-favs" onclick="readerShowBookmarks()">'+I('list')+'Meus favoritos</button><div class="reader-saved" id="reader-saved" hidden></div></div>'+
- '<div class="pg-card bb-plan"><span class="bb-cur-i blue">'+I('cal')+'</span><div><b>Planos de leitura</b><small>Acompanhe sua leitura diária da Bíblia</small></div><em>em breve</em></div>'+
- '<button class="pg-card bb-votd" data-votd="go" onclick="readerGoto('+JSON.stringify(v[1]).replace(/"/g,'&quot;')+','+v[2]+')"><b data-votd="text">“'+esc(v[3])+'”</b><small data-votd="ref">'+esc(v[4])+'</small></button></aside></div>'+
+ '<div class="pg-card bb-quick"><h3>'+I('star','gold')+'Ações rápidas</h3><div class="bb-grid"><button onclick="IASDPages.share()">'+I('share')+'Compartilhar</button><button onclick="IASDPages.copyQuick(this)">'+I('doc')+'Copiar texto</button><button class="bb-wide" onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button></div></div></aside></div>'+
  '<p class="reader-source">Tradução Almeida em português, consultada online. A disponibilidade dos capítulos depende da fonte externa e da conexão. Não há projeção nesta área.</p></div>';
 }
-function share(){const t=(document.getElementById('reader-ref')?.textContent||'Bíblia')+' — IASD APP',u=location.href;if(navigator.share)navigator.share({title:t,text:t,url:u}).catch(()=>{});else if(navigator.clipboard){navigator.clipboard.writeText(t+' '+u);const b=document.querySelector('.bb-grid button:nth-child(2)');if(b)b.lastChild.textContent='Link copiado'}}
 function listen(btn){const s=window.speechSynthesis;if(!s)return;if(s.speaking){s.cancel();btn.lastChild.textContent='Ouvir capítulo';return}const t=(document.getElementById('reader-text')?.innerText||'').trim();if(!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=/^(kjv|web)$/.test(readerState.translation)?'en-US':'pt-BR';u.onend=()=>{btn.lastChild.textContent='Ouvir capítulo'};s.speak(u);btn.lastChild.textContent='Parar leitura'}
 
 /* ====================== CRONOGRAMAS ====================== */
@@ -619,5 +633,5 @@ function pfLoad(){
  try{if(typeof loadGameRanking==='function')loadGameRanking();if(typeof dailyLoad==='function'&&typeof DR!=='undefined'&&!DR.loaded.week)Promise.resolve(dailyLoad('week')).then(pfRepaint)}catch(e){}
 }
 
-window.IASDPages={profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

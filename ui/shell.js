@@ -375,14 +375,15 @@ function rankHTML(){
   return `<section class="iu-rank"><div class="iu-pan iu-rank-main"><div class="iu-ph">${ic('users',22)}<div class="iu-rk-tt"><h2>Nossa comunidade em destaque</h2><small class="iu-sub">Quem aprende junto vai mais longe.</small></div><span class="iu-scope" id="iu-rank-scope">${ic('calendar',14)}${rank.scope==='week'?'Nesta semana':'Geral'}</span></div><div id="iu-rank-body">${rankBody()}</div></div></section>`;
 }
 const EXTRAS=[
- ['plan','📖','Plano de leitura','Bíblia em 1 ano','#0f766e','#134e4a'],
+ ['plan','📖','Plano de leitura','__PLAN__','#0f766e','#134e4a'],
  ['remind','🔔','Lembrete diário','Versículo do dia','#1d4ed8','#312e81'],
  ['prayer','🙏','Pedidos de oração','Orar uns pelos outros','#7c3aed','#4c1d95'],
  ['cards','🎉','Cartão de parabéns','Aniversários e datas','#db2777','#7c2d6b'],
  ['champ','🏆','Campeões','Pódio do Domingo Jovem','#b45309','#7c2d12']
 ];
+function planSub(){try{const t=window.IASDExtras&&IASDExtras.planToday();if(t)return (t.done?'✓ ':'')+'Dia '+t.day+' · '+t.label}catch(e){}return 'Bíblia em 1 ano'}
 function extrasHTML(){
-  return `<section class="iu-pan iu-extras"><div class="iu-ph">${ic('star',20)}<h2>Para a comunidade</h2></div><div class="iu-qg">${EXTRAS.map(([k,em,t,sub,c1,c2])=>`<button class="iu-q iu-ex" style="background:linear-gradient(135deg,${c1},${c2})" data-act="ex" data-ex="${k}"><span class="iu-em">${em}</span><span><b>${E(t)}</b><small>${E(sub)}</small></span></button>`).join('')}</div></section>`;
+  return `<section class="iu-pan iu-extras"><div class="iu-ph">${ic('star',20)}<h2>Para a comunidade</h2></div><div class="iu-qg">${EXTRAS.map(([k,em,t,sub0,c1,c2])=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button class="iu-q iu-ex" style="background:linear-gradient(135deg,${c1},${c2})" data-act="ex" data-ex="${k}"><span class="iu-em">${em}</span><span><b>${E(t)}</b><small>${E(sub)}</small></span></button>`}).join('')}</div></section>`;
 }
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
