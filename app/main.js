@@ -229,7 +229,7 @@ async function companionRequest(route,payload,token=companionToken){
 }
 async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{targetAddressSpace:'loopback',headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
-async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');return companionRequest('/youtube/project')}
+async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');const tr=window.IASDTr&&IASDTr.get();return companionRequest('/youtube/project',{ms:tr&&tr.type!=='none'?tr.ms:0})}
 async function closePreparedYoutube(){if(!companionToken)return;return companionRequest('/youtube/close')}
 async function controlPreparedYoutube(action){if(!companionToken)return;return companionRequest('/youtube/control',{action})}
 async function pairCompanion(){
