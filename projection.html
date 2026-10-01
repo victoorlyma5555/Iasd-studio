@@ -72,7 +72,7 @@ body{background:#080e19}
 .draw-flash{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 52%,var(--c2) 0,var(--c1) 14%,transparent 52%);opacity:0;animation:drawFlash 1.9s ease-out forwards;mix-blend-mode:screen}
 @keyframes drawFlash{0%{opacity:0;transform:scale(.3)}18%{opacity:.9}100%{opacity:0;transform:scale(1.9)}}
 </style></head><body><main id="out" aria-live="polite"></main>
-<script src="/shared/timer-display.js?v=6"></script>
+<script src="/shared/timer-display.js?v=7"></script>
 <script>
 const out=document.getElementById('out');
 let drawSerial=0,timerView=null;
@@ -172,9 +172,17 @@ function gameShow(t){
  try{gameFrame.contentWindow&&gameFrame.contentWindow.postMessage(m,location.origin)}catch(e){}
 }
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.t==='lg-hello'&&gameFrame&&e.source===gameFrame.contentWindow&&gameLast)try{gameFrame.contentWindow.postMessage(gameLast,location.origin)}catch(_){}});
+function drawStyle(t){
+ let m;try{m=JSON.parse(t.slice('IASD_DRAW_STYLE:'.length))}catch(e){return}
+ const box=out.querySelector('.draw-number');if(!box)return;
+ if(m.fx&&FXS.includes(m.fx))out.dataset.fx=m.fx;
+ if(m.cel&&CELS.includes(m.cel))out.dataset.cel=m.cel;
+ if(m.tpl&&TPLS.includes(m.tpl)&&m.tpl!==box.dataset.tpl){const txt=box.getAttribute('aria-label')||'0';TPLS.forEach(x=>box.classList.remove('tpl-'+x));box.classList.add('tpl-'+m.tpl);box.dataset.tpl=m.tpl;box.replaceChildren();drawSet(box,txt)}
+}
 function show(value){
  const t=typeof value==='string'?value:'';
  if(t.startsWith('IASD_GAME:'))return gameShow(t);
+ if(t.startsWith('IASD_DRAW_STYLE:'))return drawStyle(t);
  gameFrame=null;out.style.background='';out.classList.remove('game-mode');
  ++drawSerial;out.style.background='';['--c1','--c2','--glow','--tx','--ta','--tb','--tbg','--tsh','--d1','--d2','--d3','--tf'].forEach(v=>out.style.removeProperty(v));if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
  if(t.startsWith('IASD_TIMER:')){
@@ -212,14 +220,15 @@ function show(value){
    const serial=++drawSerial,start=performance.now();
    out.classList.add('draw-mode');
    const label=document.createElement('div');label.className='draw-label';label.textContent='SORTEANDO';
-   const box=drawDigits(drawRandLike(d.target),d.tpl);box.classList.add('draw-rolling');const fx=pick(d.fx,FXS,'suspense'),cel=pick(d.cel,CELS,'fogos'),tstr=String(d.target),Ln=tstr.length,ease=p=>1-Math.pow(1-p,3);
+   const box=drawDigits(drawRandLike(d.target),d.tpl);box.classList.add('draw-rolling');out.dataset.fx=pick(d.fx,FXS,'suspense');out.dataset.cel=pick(d.cel,CELS,'fogos');const fxNow=()=>out.dataset.fx||'suspense',celNow=()=>out.dataset.cel||'fogos',tstr=String(d.target),Ln=tstr.length,ease=p=>1-Math.pow(1-p,3);
    out.append(label,box);
    function textAt(p){
+    const fx=fxNow();
     if(fx==='cascata')return[...tstr].map((ch,i)=>p>=(i+1)/(Ln+1)?ch:String(Math.floor(Math.random()*10))).join('');
     if(fx==='contagem')return String(Math.round(d.min+(d.target-d.min)*ease(p)));
     return drawRandLike(d.target);
    }
-   function roll(now){if(serial!==drawSerial)return;const elapsed=now-start;if(elapsed>=d.duration){drawSet(box,d.target);box.classList.remove('draw-rolling');label.textContent='NÚMERO SORTEADO';box.classList.add('draw-winner');celebrate(serial,cel);return}drawSet(box,textAt(elapsed/d.duration));setTimeout(()=>requestAnimationFrame(roll),fx==='contagem'?32:(fx==='cascata'?70:45+Math.pow(elapsed/d.duration,3)*300))}
+   function roll(now){if(serial!==drawSerial)return;const elapsed=now-start;if(elapsed>=d.duration){drawSet(box,d.target);box.classList.remove('draw-rolling');label.textContent='NÚMERO SORTEADO';box.classList.add('draw-winner');celebrate(serial,celNow());return}drawSet(box,textAt(elapsed/d.duration));setTimeout(()=>requestAnimationFrame(roll),fxNow()==='contagem'?32:(fxNow()==='cascata'?70:45+Math.pow(elapsed/d.duration,3)*300))}
    requestAnimationFrame(roll);
   }catch(e){out.textContent='Não foi possível iniciar o sorteio.'}
  }else if(t.startsWith('IASD_DRAW:')){

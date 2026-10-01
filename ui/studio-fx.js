@@ -21,7 +21,7 @@ const _thMount=window.thMount;
 window.thMount=function(){
  const box=$('thPrev');if(!box)return;
  if(typeof thView!=='undefined'&&thView)thView.stop();
- thView=TD.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'paused',remaining:2100,theme:tmTheme,layout:tmLayout,anim:tmAnim});
+ thView=TD.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmTheme,layout:tmLayout,anim:tmAnim});
 };
 function refreshTimer(){try{tmSync()}catch(e){}try{thMount()}catch(e){}}
 chips('tmLayouts',Object.entries(TD.layouts),()=>tmLayout,k=>{tmLayout=k;lsSet('iasd-timer-layout',k);refreshTimer()});
@@ -29,7 +29,7 @@ chips('tmAnims',Object.entries(TD.anims),()=>tmAnim,k=>{tmAnim=k;lsSet('iasd-tim
 
 /* ---------- Sorteador: modelo, animação e comemoração ---------- */
 const TPLS=[['cartoes','Cartões'],['bolas','Bolas de bingo'],['neon','Neon'],['led','LED'],['slot','Slot'],['minimal','Minimalista']];
-const FXS=[['suspense','Suspense'],['cascata','Dígito a dígito'],['contagem','Contagem']];
+const FXS=[['suspense','Suspense'],['cascata','Dígito a dígito'],['contagem','Contagem (1 → número)']];
 const CELS=[['fogos','Fogos'],['confete','Confete'],['brilho','Brilho'],['nenhum','Nenhuma']];
 const DS={tpl:lsGet('iasd-draw-tpl','cartoes'),fx:lsGet('iasd-draw-fx','suspense'),cel:lsGet('iasd-draw-cel','fogos')};
 if(!TPLS.some(x=>x[0]===DS.tpl))DS.tpl='cartoes';if(!FXS.some(x=>x[0]===DS.fx))DS.fx='suspense';if(!CELS.some(x=>x[0]===DS.cel))DS.cel='fogos';
@@ -42,9 +42,20 @@ window.stThemed=function(c){
  return o;
 };
 function redraw(){try{stRethemeLive()}catch(e){}}
-chips('drTpl',TPLS,()=>DS.tpl,k=>{DS.tpl=k;lsSet('iasd-draw-tpl',k);redraw();drawPreviewStyle()});
-chips('drFx',FXS,()=>DS.fx,k=>{DS.fx=k;lsSet('iasd-draw-fx',k)});
-chips('drCel',CELS,()=>DS.cel,k=>{DS.cel=k;lsSet('iasd-draw-cel',k)});
+/* muda o estilo ao vivo: durante o sorteio troca na hora; com número já na tela, redesenha com o novo estilo */
+function liveStyle(){
+ let on=false;try{on=typeof rolling!=='undefined'&&rolling}catch(e){}
+ if(on){const m='IASD_DRAW_STYLE:'+JSON.stringify({tpl:DS.tpl,fx:DS.fx,cel:DS.cel});try{call('project',m)}catch(e){}try{mirrorProjection(m)}catch(e){}}
+ else{
+  let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
+  let ld=null;try{ld=typeof lastDraw!=='undefined'?lastDraw:null}catch(e){}
+  if(st.startsWith('IASD_DRAW_ANIM:')&&ld!==null){try{project('IASD_DRAW:'+ld)}catch(e){}}
+  else redraw();
+ }
+}
+chips('drTpl',TPLS,()=>DS.tpl,k=>{DS.tpl=k;lsSet('iasd-draw-tpl',k);liveStyle();drawPreviewStyle()});
+chips('drFx',FXS,()=>DS.fx,k=>{DS.fx=k;lsSet('iasd-draw-fx',k);liveStyle()});
+chips('drCel',CELS,()=>DS.cel,k=>{DS.cel=k;lsSet('iasd-draw-cel',k);liveStyle()});
 /* o visor do painel imita o modelo escolhido */
 function drawPreviewStyle(){const o=$('drawNumber');if(!o)return;o.dataset.tpl=DS.tpl}
 drawPreviewStyle();

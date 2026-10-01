@@ -75,3 +75,19 @@ body[data-tool=testimony] .st-queue{display:block}
 .fx-chips button{height:34px;padding:0 14px!important;border-radius:99px!important;background:#0c1a36!important;border:1px solid var(--bd)!important;color:#dbe5fb!important;font-size:13px;font-weight:600!important}
 .fx-chips button.on{background:linear-gradient(180deg,#3574f3,#1e4fd0)!important;border-color:#5b93ff!important;color:#fff!important}
 .dr-style{display:grid;gap:10px}
+/* biblioteca de vídeos: cartões sempre do mesmo tamanho (a miniatura não deforma o cartão) */
+.vl-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))!important;align-items:start}
+.vl-card{overflow:hidden;width:100%;box-sizing:border-box}
+.vl-thumb{width:100%;box-sizing:border-box}
+.vl-thumb video,.vl-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.vl-acts{min-width:0}.vl-acts .mp-blue{min-width:0;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* celular: nada fora do lugar */
+.pj-actions{width:100%;min-width:0;box-sizing:border-box}
+.mm-now,.amb-sel{min-width:0;max-width:100%;box-sizing:border-box}
+@media (max-width:700px){
+ .pj-actions button{white-space:normal!important;line-height:1.15;font-size:12px!important;height:auto!important;min-height:46px;padding:4px 6px!important;text-align:center;min-width:0}
+ .pj-actions .ti{display:none!important}
+ .amb-sel{flex-wrap:wrap}.amb-sel button{min-width:0}
+ .seg.s3 button{font-size:12px;padding:8px 4px;white-space:normal;line-height:1.15}.seg.s3 .cnt{display:none}
+}
+.vl-card{grid-template-columns:minmax(0,1fr)}.vl-info{min-width:0}.vl-info b,.vl-info small{display:block;max-width:100%}

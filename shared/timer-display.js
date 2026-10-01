@@ -86,13 +86,17 @@ const CSS_FX=`
 .iasd-tm .tmx.min2 .trk2{height:.7cqh;width:min(60cqw,120cqh)}
 .iasd-tm .tmx.min2 .ttl2{font-weight:500;font-size:3.4cqh}
 .iasd-tm.is-thin .time,.iasd-tm.is-thin .time2{font-weight:300}
-.iasd-tm.an-pulso.run .time,.iasd-tm.an-pulso.run .time2{animation:tmBeat 1s ease-in-out infinite}
-.iasd-tm.an-pulso .time,.iasd-tm.an-pulso .time2,.iasd-tm.an-tremor .time{transform-box:fill-box;transform-origin:center}
-@keyframes tmBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
-.iasd-tm.an-neon .time,.iasd-tm.an-neon .time2,.iasd-tm.an-neon .arc,.iasd-tm.an-neon .arc2{animation:tmNeon 2.6s ease-in-out infinite}
-@keyframes tmNeon{0%,100%{filter:drop-shadow(0 0 1.2cqh var(--c2))}45%{filter:drop-shadow(0 0 3.4cqh var(--c1))}50%{filter:drop-shadow(0 0 .4cqh var(--c2))}55%{filter:drop-shadow(0 0 3cqh var(--c1))}}
-.iasd-tm.an-tremor.alert .time,.iasd-tm.an-tremor.done .time,.iasd-tm.an-tremor.alert .time2,.iasd-tm.an-tremor.done .time2,.iasd-tm.an-tremor.alert .card2,.iasd-tm.an-tremor.done .card2{animation:tmShake .14s linear infinite!important}
-@keyframes tmShake{0%{transform:translate(0,0)}25%{transform:translate(.6cqh,-.4cqh)}50%{transform:translate(-.5cqh,.5cqh)}75%{transform:translate(.4cqh,.3cqh)}100%{transform:translate(0,0)}}
+.iasd-tm.an-pulso .time,.iasd-tm.an-pulso .time2,.iasd-tm.an-pulso .card2,.iasd-tm.an-tremor .time,.iasd-tm.an-tremor .time2,.iasd-tm.an-tremor .card2{transform-box:fill-box;transform-origin:center}
+.iasd-tm.an-suave.run .time,.iasd-tm.an-suave.run .time2,.iasd-tm.an-suave.run .card2{animation:tmBreath 4s ease-in-out infinite}
+@keyframes tmBreath{0%,100%{opacity:1}50%{opacity:.82}}
+.iasd-tm.an-pulso.run .time,.iasd-tm.an-pulso.run .time2,.iasd-tm.an-pulso.run .card2{animation:tmBeat 1s ease-in-out infinite}
+@keyframes tmBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.iasd-tm.an-neon .time,.iasd-tm.an-neon .time2,.iasd-tm.an-neon .arc,.iasd-tm.an-neon .arc2,.iasd-tm.an-neon .card2{animation:tmNeon 2.2s ease-in-out infinite}
+@keyframes tmNeon{0%,100%{filter:drop-shadow(0 0 .8cqh var(--c2)) brightness(1)}45%{filter:drop-shadow(0 0 4cqh var(--c1)) brightness(1.25)}50%{filter:drop-shadow(0 0 .2cqh var(--c2)) brightness(.85)}55%{filter:drop-shadow(0 0 3.6cqh var(--c1)) brightness(1.2)}}
+.iasd-tm.an-tremor.run .time,.iasd-tm.an-tremor.run .time2,.iasd-tm.an-tremor.run .card2{animation:tmJitter .22s linear infinite}
+@keyframes tmJitter{0%{transform:translate(0,0)}25%{transform:translate(.35cqh,-.25cqh)}50%{transform:translate(-.3cqh,.3cqh)}75%{transform:translate(.25cqh,.2cqh)}100%{transform:translate(0,0)}}
+.iasd-tm.an-tremor.alert .time,.iasd-tm.an-tremor.done .time,.iasd-tm.an-tremor.alert .time2,.iasd-tm.an-tremor.done .time2,.iasd-tm.an-tremor.alert .card2,.iasd-tm.an-tremor.done .card2{animation:tmShake .12s linear infinite!important}
+@keyframes tmShake{0%{transform:translate(0,0)}25%{transform:translate(1cqh,-.7cqh)}50%{transform:translate(-.9cqh,.8cqh)}75%{transform:translate(.7cqh,.5cqh)}100%{transform:translate(0,0)}}
 .iasd-tm.an-nenhuma *,.iasd-tm.an-nenhuma:after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){.iasd-tm .card2 i{animation:none!important}}`;
 function deco(themeId){const t=THEMES[themeId];if(!t||!t.pat)return null;if(!document.getElementById('iasd-deco-css')){const st=document.createElement('style');st.id='iasd-deco-css';st.textContent=DECO_CSS;document.head.appendChild(st)}const d=document.createElement('div');d.className='iasd-deco';d.dataset.pat=t.pat;d.setAttribute('aria-hidden','true');return d}

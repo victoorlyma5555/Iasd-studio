@@ -47,7 +47,7 @@ function tmQrToggle(){tmQr=!tmQr;try{localStorage.setItem('iasd-timer-qr',tmQr?'
 function tmOnScreen(){return(localStorage.getItem('iasd-stage')||'').startsWith('IASD_TIMER:')}
 function tmSend(){project('IASD_TIMER:'+JSON.stringify(tmPayload()))}
 function tmSync(){if(tmOnScreen())tmSend()}
-let thView=null;function thMount(){const box=$('thPrev');if(!box||!window.IASDTimerDisplay)return;if(thView)thView.stop();thView=IASDTimerDisplay.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'paused',remaining:2100,theme:tmTheme})}
+let thView=null;function thMount(){const box=$('thPrev');if(!box||!window.IASDTimerDisplay)return;if(thView)thView.stop();thView=IASDTimerDisplay.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmTheme})}
 function tmPickTheme(id){tmTheme=id;thMount();try{localStorage.setItem('iasd-timer-theme',id)}catch(e){}tmSync();tmRender();stRethemeLive()}
 function stRethemeLive(){const st=localStorage.getItem('iasd-stage')||'';if(st.startsWith('IASD_BIBLE:')||st.startsWith('IASD_DRAW_READY:')||st.startsWith('IASD_DRAW:')){const base=st.startsWith('IASD_DRAW:')?'IASD_DRAW:'+st.slice(10).split('|')[0]:st;project(base)}}
 function tmShow(){tmSend()}
