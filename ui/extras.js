@@ -120,6 +120,9 @@ function planStats(){
  const done=new Set(s.done||[]);let n=planDayNow(s),streak=0;if(!done.has(n))n--;while(n>=1&&done.has(n)){streak++;n--}
  return {done:done.size,streak,started:true};
 }
+const PLAN_BADGES=[['Primeiro dia','1 dia lido','🌱',d=>d.done>=1],['3 dias seguidos','Sequência de 3 dias','🔥',d=>d.best>=3],['Semana com a Palavra','7 dias seguidos','📖',d=>d.best>=7],['Constante','30 dias seguidos','⭐',d=>d.best>=30],['Meio caminho','Metade do plano lida','⛰️',d=>d.done>=183],['Cem dias','100 dias lidos','💯',d=>d.done>=100],['Bíblia completa','365 dias lidos','👑',d=>d.done>=365]];
+function planBest(set){const a=[...set].sort((x,y)=>x-y);let best=0,run=0,prev=-9;a.forEach(d=>{run=d===prev+1?run+1:1;prev=d;if(run>best)best=run});return best}
+function planBadgesHTML(done,st){const d={done:done.size,best:Math.max(st.streak,planBest(done))};return '<div class="pl-badges" aria-label="Selos do plano">'+PLAN_BADGES.map(b=>{const on=b[3](d);return '<span class="pl-bd'+(on?' on':'')+'" title="'+esc(b[1])+'"><i>'+(on?b[2]:'🔒')+'</i><b>'+esc(b[0])+'</b></span>'}).join('')+'</div>'}
 const planUI={sel:0};
 function planHTML(){
  const s=planState();
@@ -129,7 +132,7 @@ function planHTML(){
  const pct=Math.round(done.size*100/365);
  let cells='';for(let d=1;d<=365;d++){const c=done.has(d)?'ok':(d<today?'late':(d===today?'now':''));cells+='<button class="pl-d '+c+(d===sel?' sel':'')+'" data-ex="pl-sel" data-d="'+d+'" aria-label="Dia '+d+(done.has(d)?' lido':'')+'"></button>'}
  return '<div class="pl-stats"><div><b>'+done.size+'</b><small>dias lidos</small></div><div><b>'+pct+'%</b><small>da Bíblia</small></div><div><b>'+st.streak+'</b><small>'+(st.streak===1?'dia seguido':'dias seguidos')+'</small></div></div>'+
- '<div class="pl-bar"><i style="width:'+pct+'%"></i></div>'+
+ '<div class="pl-bar"><i style="width:'+pct+'%"></i></div>'+planBadgesHTML(done,st)+
  '<div class="pl-today"><small>'+(sel===today?'Hoje · ':'')+'Dia '+sel+' de 365</small><h4>'+esc(lbl)+'</h4><p>'+list.length+' capítulo'+(list.length===1?'':'s')+'</p><div class="ex-acts two"><button class="vs-b" data-ex="pl-read"><b>Ler agora</b><small>abrir na Bíblia</small></button><button class="vs-b '+(isDone?'':'wa')+'" data-ex="pl-done"><b>'+(isDone?'✓ Lido (desfazer)':'Marcar como lido')+'</b><small>dia '+sel+'</small></button></div></div>'+
  '<div class="pl-grid" aria-label="Calendário do plano">'+cells+'</div><div class="pl-leg"><i class="ok"></i>lido<i class="now"></i>hoje<i class="late"></i>atrasado</div>'+
  '<button class="pl-reset" data-ex="pl-reset">Recomeçar o plano</button>';
