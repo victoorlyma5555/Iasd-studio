@@ -263,14 +263,14 @@ function projectionPreviewLabel(t){
  if(t.startsWith('IASD_LOCAL_MEDIA:'))return 'Mídia em projeção';
  return t;
 }
-function sendProjection(t){
+function sendProjection(t,opts){
  data.stage=t;
  localStorage.setItem('iasd-studio',JSON.stringify(data));
  localStorage.setItem('iasd-stage',t);
  if($('stage'))$('stage').textContent=projectionPreviewLabel(t);
  if(channel)try{channel.postMessage(t)}catch(e){console.warn('Canal de projeção',e)}
  if(canReachProjection())try{projectionWindow.postMessage({type:'iasd-project',content:t},location.origin)}catch(e){console.warn('Janela de projeção',e)}
- if(companionToken&&(!t.startsWith('IASD_LOCAL_MEDIA:')||t.includes('http://127.0.0.1:38741/media/')||t.includes('https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-offering-videos/'))){void (async()=>{try{if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))await companionRequest('/open');await companionRequest('/project',{content:t.startsWith('IASD_DRAW:')?t.slice('IASD_DRAW:'.length):t});if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))projectionFeedback('Mídia enviada ao aplicativo. Se não aparecer, verifique se esta versão do IASD Projetor suporta vídeo do YouTube ou arquivos locais.')}catch(e){projectionFeedback('IASD Projetor: '+e.message,true);const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-studio-error',message:'Falha no aplicativo de projeção: '+e.message},location.origin)}})()}
+ if(!(opts&&opts.localOnly)&&companionToken&&(!t.startsWith('IASD_LOCAL_MEDIA:')||t.includes('http://127.0.0.1:38741/media/')||t.includes('https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-offering-videos/'))){void (async()=>{try{if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))await companionRequest('/open');await companionRequest('/project',{content:t.startsWith('IASD_DRAW:')?t.slice('IASD_DRAW:'.length):t});if(t.startsWith('IASD_YOUTUBE:')||t.startsWith('IASD_LOCAL_MEDIA:'))projectionFeedback('Mídia enviada ao aplicativo. Se não aparecer, verifique se esta versão do IASD Projetor suporta vídeo do YouTube ou arquivos locais.')}catch(e){projectionFeedback('IASD Projetor: '+e.message,true);const frame=document.getElementById('iasd-studio-frame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-studio-error',message:'Falha no aplicativo de projeção: '+e.message},location.origin)}})()}
 }
 
 function projectionMonitorPopup(message,allowProceed=false){
@@ -316,7 +316,9 @@ function project(t){
  void guardedProjection(async()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao IASD Projetor.');});
 }
 function stopProjection(){
- sendProjection('');
+ // Fechar projeção: só atualiza o estado local e pede o fechamento real. Nunca envia conteúdo vazio
+ // ao aplicativo (isso recriaria a janela do telão em preto logo após fechá-la).
+ sendProjection('',{localOnly:true});
  if(canReachProjection())projectionWindow.close();
  if(companionToken)void companionRequest('/close').catch(e=>projectionFeedback(e.message,true));
  projectionWindow=null;
@@ -732,7 +734,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=12" class="projection-studio-frame" scrolling="yes" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=13" class="projection-studio-frame" scrolling="yes" loading="eager"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');

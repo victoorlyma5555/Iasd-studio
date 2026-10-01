@@ -379,6 +379,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   if(typeof data.content!=='string'||data.content.length>50000){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
    const content=data.content;
+   if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}
    // Novo conteúdo substitui o vídeo do telão (sem áudio residual); conteúdo vazio = tela preta.
    if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){if(content==='')await blackoutYoutube();else closeYoutube()}
    showProjector();
