@@ -290,4 +290,4 @@ html[data-theme="light"] .vs-b{background:#edf1f9}
 }
 
 /* Menu como último item da barra inferior (celular); o botão do topo some para não duplicar */
-@media (max-width:900px){html body.iu .iu-top .iu-menu{display:none}.iu-bn .iu-bn-menu{border-left:1px solid var(--iu-bd);border-radius:0 10px 10px 0;margin-left:4px;padding-left:4px;color:var(--iu-tx)}body.iu-open .iu-bn .iu-bn-menu{color:var(--iu-pr)}}
+@media (max-width:900px){html body.iu .iu-top .iu-menu{display:none}.iu-bn .iu-bn-menu{border-right:1px solid var(--iu-bd);border-radius:10px 0 0 10px;margin-right:4px;padding-right:4px;color:var(--iu-tx)}body.iu-open .iu-bn .iu-bn-menu{color:var(--iu-pr)}}

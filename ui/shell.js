@@ -82,7 +82,7 @@ function sideHTML(){
 }
 function barHTML(){
   const cur=S.cur();
-  return MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('')+`<button class="iu-bn-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}Menu</button>`;
+  return `<button class="iu-bn-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}Menu</button>`+MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('');
 }
 
 /* ---------- topo ---------- */
