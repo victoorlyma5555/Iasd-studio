@@ -39,7 +39,7 @@ const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=
 const $=id=>document.getElementById(id);
 
 /* ---------- ícones ---------- */
-const P={chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',share:'M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',eye:'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',eyeoff:'M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.7 6.7C3.9 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 004.3-1M9.9 9.9a3 3 0 004.2 4.2',down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3',menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
+const P={close:'M6 6l12 12M18 6L6 18',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',share:'M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6zM8.6 13.5l6.8 4M15.4 6.5l-6.8 4',eye:'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',eyeoff:'M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.7 6.7C3.9 8.5 2 12 2 12s3.6 7 10 7a9.7 9.7 0 004.3-1M9.9 9.9a3 3 0 004.2 4.2',down:'M6 9l6 6 6-6',up:'M6 15l6-6 6 6',trophy:'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3',menu:'M3 6h18M3 12h18M3 18h18',back:'M15 6l-6 6 6 6',home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',calendar:'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',users:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.5',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM20 16a3 3 0 11-6 0 3 3 0 016 0z',book:'M2 4h7a3 3 0 013 3v14a2 2 0 00-2-2H2zM22 4h-7a3 3 0 00-3 3v14a2 2 0 012-2h8z',game:'M6 12h4M8 10v4M15 13h.01M18 11h.01M6 5h12a4 4 0 014 4l1 7a3 3 0 01-5 2l-2-2H8l-2 2a3 3 0 01-5-2l1-7a4 4 0 014-4z',star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',film:'M3 4h18v16H3zM3 9h18M8 4l-2 5M14 4l-2 5',crown:'M3 8l4 4 5-7 5 7 4-4-2 11H5z',folder:'M3 6h6l2 2h10v13H3z',plus:'M12 5v14M5 12h14',search:'M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3',bell:'M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4',moon:'M21 13A9 9 0 1111 3a7 7 0 0010 10z',sun:'M12 16a4 4 0 100-8 4 4 0 000 8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',chev:'M9 6l6 6-6 6',play:'M6 4l14 8-14 8z',link:'M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1',monitor:'M3 4h18v12H3zM8 20h8M12 16v4',clock:'M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3-6 8-6s8 2 8 6',bolt:'M13 2L4 14h7l-1 8 9-12h-7z',dice:'M4 4h16v16H4zM9 9h.01M15 9h.01M9 15h.01M15 15h.01M12 12h.01',horn:'M3 10v4h4l8 5V5L7 10zM19 9a4 4 0 010 6',gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2'};
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
@@ -369,6 +369,7 @@ function updateRank(){
   const a=$('iu-rank-body'),b=$('iu-rank-cta');
   if(a)a.innerHTML=rankBody();
   const sc=$('iu-rank-scope');if(sc)sc.lastChild.textContent=rank.scope==='week'?'Nesta semana':'Geral';
+  const sdt=$('iu-sd-t');if(sdt&&sideTab.open==='destaques')sdt.textContent=rank.scope==='week'?'Destaques da semana':'Destaques da comunidade';
 }
 function rankHTML(){
   loadRanking();
@@ -392,6 +393,31 @@ function teamHTML(){
   const open=teamOpen();
   return `<section class="iu-team"><button class="iu-team-h" data-act="team-toggle" aria-expanded="${open}">${ic('monitor',22)}<span><b>Equipe · IASD Projetor</b><small>Projetor, sonoplastas em serviço e conexão</small></span><i id="iu-team-ch">${ic(open?'up':'down',18)}</i></button><div class="iu-team-b" id="iu-team-b"${open?'':' hidden'}><section class="iu-pan" id="iu-proj">${projInner()}</section></div></section>`;
 }
+/* Abas laterais: botão fixo na borda da tela; um toque abre o painel, outro toque fecha (sem arrastar).
+   Para acrescentar outra aba (ex.: versículo do dia), basta incluir uma linha em SIDE_TABS. */
+const SIDE_TABS=[
+  {id:'destaques',icon:'trophy',label:'Destaques',title:'Destaques da comunidade',body:()=>{loadRanking();return `<div class="iu-st-scope" id="iu-rank-scope">${ic('calendar',14)}${rank.scope==='week'?'Nesta semana':'Geral'}</div><div id="iu-rank-body">${rankBody()}</div>`}}
+];
+const sideTab={open:null};
+function sideTabsHTML(){
+  return `<aside class="iu-sidetabs" aria-label="Painéis laterais">${SIDE_TABS.map(t=>`<button class="iu-stab" data-act="tab-open" data-tab="${t.id}" aria-label="${E(t.title)}" aria-expanded="false">${ic(t.icon,20)}<span>${E(t.label)}</span></button>`).join('')}</aside><div class="iu-sd-bk" data-act="tab-close" hidden></div><section class="iu-sd" id="iu-sd" role="dialog" aria-modal="true" aria-labelledby="iu-sd-t" hidden><div class="iu-sd-h"><h2 id="iu-sd-t"></h2><button class="iu-ib" data-act="tab-close" aria-label="Fechar">${ic('close',18)}</button></div><div class="iu-sd-b" id="iu-sd-b"></div></section>`;
+}
+function openSideTab(id){
+  const t=SIDE_TABS.find(x=>x.id===id),sd=$('iu-sd');if(!t||!sd)return;
+  sideTab.open=id;
+  $('iu-sd-t').textContent=(id==='destaques'&&rank.scope==='week')?'Destaques da semana':t.title;$('iu-sd-b').innerHTML=t.body();
+  sd.hidden=false;document.querySelector('.iu-sd-bk').hidden=false;
+  document.querySelectorAll('.iu-stab').forEach(b=>{b.hidden=true});
+  requestAnimationFrame(()=>sd.classList.add('on'));
+  const x=sd.querySelector('.iu-ib');if(x)try{x.focus({preventScroll:true})}catch(e){}
+}
+function closeSideTab(){
+  const sd=$('iu-sd');if(!sd||sd.hidden)return;
+  sideTab.open=null;sd.classList.remove('on');
+  document.querySelector('.iu-sd-bk')?.setAttribute('hidden','');
+  document.querySelectorAll('.iu-stab').forEach(b=>{b.hidden=false});
+  setTimeout(()=>{if(!sideTab.open)sd.hidden=true},220);
+}
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
   if(!items.length)return '';
@@ -404,7 +430,7 @@ function bannerHTML(){
 }
 api.home=function(){
   try{
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-grid two${sched.expanded?' exp':''}">${scheduleHTML()}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${rankHTML()}${extrasHTML()}${teamHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-grid two${sched.expanded?' exp':''}">${scheduleHTML()}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${extrasHTML()}${teamHTML()}${sideTabsHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -444,7 +470,7 @@ function bind(){
     const goEl=e.target.closest('[data-go]');
     if(goEl&&goEl.closest('.iu-side,.iu-top,.iu-bn,.iu-home')){
       e.preventDefault();
-      document.body.classList.remove('iu-open');
+      document.body.classList.remove('iu-open');closeSideTab();
       const q=$('iu-q'),sr=$('iu-sr');if(sr){sr.hidden=true}if(q&&goEl.closest('.iu-sr'))q.value='';
       g(()=>go(goEl.dataset.go));
       return;
@@ -464,6 +490,8 @@ function bind(){
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
       else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
       else if(a==='projtest')checkProjector();
+      else if(a==='tab-open')openSideTab(act.dataset.tab);
+      else if(a==='tab-close')closeSideTab();
       else if(a==='team-toggle'){const body=$('iu-team-b');if(body){const open=body.hidden;body.hidden=!open;try{localStorage.setItem('iasd-ui-team-open',open?'1':'0')}catch(e){}const ch=$('iu-team-ch');if(ch)ch.innerHTML=ic(open?'up':'down',18);act.setAttribute('aria-expanded',open)}}
       else if(a==='sched-toggle'){sched.expanded=!sched.expanded;updateSchedule()}
       else if(a==='signup')g(()=>openAuthModal(true));
@@ -482,7 +510,7 @@ function bind(){
   document.addEventListener('keydown',e=>{
     if(!api.enabled||!mounted)return;
     if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();const q=$('iu-q');if(q){q.focus();q.select()}}
-    if(e.key==='Escape'){const sr=$('iu-sr');if(sr)sr.hidden=true;document.body.classList.remove('iu-open')}
+    if(e.key==='Escape'){closeSideTab();const sr=$('iu-sr');if(sr)sr.hidden=true;document.body.classList.remove('iu-open')}
     if(e.key==='Enter'&&e.target.id==='iu-q'){const first=document.querySelector('#iu-sr button');if(first)first.click()}
   });
   new MutationObserver(themeIcon).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

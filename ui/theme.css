@@ -408,3 +408,19 @@ html[data-theme="light"] .vs-gc{background:#fff;color:#0f1c3a}
  .iu-feat{padding:12px}.iu-feat-av .iu-rav,.iu-feat-av .iu-rav.big{width:62px;height:62px;font-size:22px;border-width:3px}.iu-feat-tx b{font-size:19px}.iu-feat-tx small{font-size:14px}.iu-feat-pl{display:none}
  .iu-rk-tt .iu-sub{display:none}
 }
+
+/* Aba lateral (um toque abre, um toque fecha) */
+.iu-sidetabs{position:fixed;right:0;top:42%;z-index:40;display:flex;flex-direction:column;gap:8px}
+.iu-stab{display:flex;flex-direction:column;align-items:center;gap:8px;width:36px;padding:12px 0;border:1px solid rgba(245,183,58,.55);border-right:0;border-radius:14px 0 0 14px;background:linear-gradient(180deg,#f5b73a,#e08a12);color:#1b1608;font:inherit;font-weight:800;cursor:pointer;box-shadow:-4px 6px 18px rgba(0,0,0,.35)}
+.iu-stab[hidden]{display:none}
+.iu-stab span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12.5px;letter-spacing:.04em}
+.iu-stab:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.iu-sd-bk{position:fixed;inset:0;z-index:70;background:rgba(3,8,20,.55)}.iu-sd-bk[hidden]{display:none}
+.iu-sd{position:fixed;top:0;right:0;bottom:0;z-index:71;width:min(94vw,420px);display:flex;flex-direction:column;background:var(--iu-bg,#0a1226);color:var(--iu-tx,#fff);border-left:1px solid var(--iu-bd,#2b3c66);box-shadow:-16px 0 50px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .2s ease;padding-top:env(safe-area-inset-top,0px)}
+.iu-sd.on{transform:none}.iu-sd[hidden]{display:none}
+.iu-sd-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--iu-bd,#2b3c66)}
+.iu-sd-h h2{margin:0;flex:1;font-size:19px}
+.iu-sd-b{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;align-content:start}
+.iu-st-scope{justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;border:1px solid var(--iu-bd,#2b3c66);color:var(--iu-mu,#9fb0d0)}
+@media (max-width:900px){.iu-sidetabs{top:38%}.iu-sd{width:min(92vw,400px)}}
+@media (prefers-reduced-motion:reduce){.iu-sd{transition:none}}
