@@ -173,7 +173,7 @@ function blockHTML(b,i,li,P,editing){
  const R=S.room,cur=R&&R.bi===i,host=!R||R.host;
  let ctl;
  if(editing)ctl=gl(b,i);
- else{ctl='<span class="es-bctl">';if(R&&R.host){ctl+='<button onclick="IASDEstudo.setPos('+i+')" title="Levar a turma para cá">▶ Aqui</button>';if(b.t==='q')ctl+='<button onclick="IASDEstudo.challenge(\'auto\','+i+')" title="Soltar um desafio sobre esta pergunta">🎯</button>'}ctl+='</span>'}
+ else{ctl='<span class="es-bctl">';if(R&&R.host){ctl+='<button onclick="IASDEstudo.setPos('+i+')" title="Levar a turma para cá">▶ Levar a turma</button>';if(b.t==='q')ctl+='<button onclick="IASDEstudo.challenge(\'auto\','+i+')" title="Soltar um desafio sobre esta pergunta">🎯 Desafio</button>'}ctl+='</span>'}
  const cls='es-b es-'+b.t+(cur?' es-cur':'');
  if(b.t==='q'){
   const chips=(b.refs||[]).length?'<div class="es-chips">'+b.refs.map((r,ri)=>'<button class="es-chip'+(S.openV[li+':'+b.id+':'+ri]?' on':'')+'" onclick="IASDEstudo.toggleVerse(\''+li+':'+b.id+':'+ri+'\',\''+esc(r).replace(/'/g,'')+'\')">📖 '+esc(r)+'</button>').join('')+'</div>'+b.refs.map((r,ri)=>'<div class="es-vt" data-vk="'+li+':'+b.id+':'+ri+'"></div>').join(''):'';
@@ -315,7 +315,8 @@ async function startRoom(code,host,opts){
  ['chs','cha','chr','chx','hl','brk','call','mute','end'].forEach(ev=>ch.on('broadcast',{event:ev},({payload})=>FX(ev,payload)));
  ch.on('broadcast',{event:'rx'},({payload})=>floatReact(payload.e,payload.name));
  ch.on('broadcast',{event:'sig'},({payload})=>{if(payload.to===me)onSig(payload)});
- ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&st[k][0])R.peers[k]=st[k][0]});
+ ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState(),prev=R.peers;R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&st[k][0])R.peers[k]=st[k][0]});
+  Object.keys(R.peers).forEach(k=>{const p=R.peers[k];if(p.host)R.hostSeen=true;if(p.hand&&!(prev[k]&&prev[k].hand))handFx(p.name||'Alguém',false)});
   Object.keys(R.voice?R.voice.pcs:{}).forEach(id=>{if(!R.peers[id])closePeer(id)});
   paintBar();paintDock();syncVoicePeers()});
  let first=true;
@@ -362,37 +363,51 @@ function leave(silent){
  document.body.classList.remove('es-fxon','es-host','es-susp');
  S.room=null;if(silent!==true)clearRoom();applyLock();paintBar();paintDock();paintChat();if(!silent){toast('Você saiu da sala.');paint()}
 }
-function backToRoom(){const R=S.room;if(R&&R.mode==='study'&&lesson())S.view='lesson';
- if(!$('es-root')&&typeof go==='function'){go('Estudo');return}paint()}
-/* Ao sair do módulo do estudo a sala fica suspensa: câmera, microfone, som e telas da sala param até a pessoa voltar. */
-function suspSync(){const R=S.room;if(!R)return;const s=!$('es-root');if(!!R.susp===s)return;R.susp=s;document.body.classList.toggle('es-susp',s);
- if(s){stopMic();stopCam();applyAudio();toast('Sala suspensa. Câmera e microfone foram desligados.')}
- else{applyAudio();toast('Você voltou à sala. Ligue o microfone e a câmera se quiser.')}
- track();paintBar();paintDock();paintHost();paintChat()}
-setInterval(suspSync,300);
-function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;track();paintBar()}
+function backToRoom(){const R=S.room;
+ if(!R){S.resumed=false;if(typeof go==='function')go('Estudo');return}
+ if(R.mode==='study'&&lesson())S.view='lesson';paint()}
+/* Sala suspensa: ao sair do módulo do estudo a pessoa SAI da conexão (sem câmera, microfone, vídeo nem dados da sala).
+   O código da sala fica guardado por 12 h, então dá para voltar depois, até fechando e abrindo o navegador. */
+function parkRec(){let r=null;try{r=JSON.parse(localStorage.getItem(RK)||'null')}catch(e){}return r&&r.code&&Date.now()-(r.ts||0)<=SAVE_H?r:null}
+function bar0(b){return b}
+function parkBar(){
+ let bar=$('es-bar');const r=(!S.room&&!$('es-root'))?parkRec():null;
+ if(!r){if(bar&&bar.dataset.park)bar.remove();return}
+ if(!bar){bar=document.createElement('div');bar.id='es-bar';bar.className='es-bar';document.body.appendChild(bar)}
+ if(bar.dataset.park===r.code)return;bar.dataset.park=r.code;
+ bar.innerHTML='<div class="es-bar-in es-bar-susp"><span class="es-sp"><b>⏸ Sala '+esc(r.code)+' suspensa</b><small>Sem câmera, microfone e dados. Toque para reconectar quando quiser.</small></span><button class="es-bt es-go" onclick="IASDEstudo.backToRoom()">Voltar à sala</button><button class="es-bt danger" onclick="IASDEstudo.leaveParked()">Sair</button></div>'}
+async function leaveParked(){const r=parkRec();if(!r){parkBar();return}
+ if(await IASDDialog.confirm('Sair de vez da sala '+r.code+'?',{title:'Sair da sala',ok:'Sair',danger:true})){clearRoom();const b=$('es-bar');if(b)b.remove();toast('Você saiu da sala.')}}
+function parkRoom(){const R=S.room;if(!R||R.reconnecting||R.parking)return;R.parking=true;saveRoom();leave(true);S.resumed=false;
+ toast('Sala suspensa: câmera, microfone e dados desligados. Use “Voltar à sala” para reconectar.')}
+function suspSync(){if(S.room){if(!$('es-root'))parkRoom();return}parkBar()}
+setInterval(suspSync,300);setTimeout(suspSync,500);
+function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;if(R.hand)handFx('Você',true);track();paintBar();refreshLobby()}
+function handFx(name,self){document.querySelectorAll('.es-handfx').forEach(e=>e.remove());const d=document.createElement('div');d.className='es-handfx'+(self?' me':'');d.setAttribute('role','status');
+ d.innerHTML='<span class="eh-hand" aria-hidden="true">✋</span><b>'+esc(name)+(self?' levantou a mão':' levantou a mão')+'</b>';document.body.appendChild(d);
+ try{window.IASDEstudoFX&&IASDEstudoFX.sfx&&IASDEstudoFX.sfx.pop()}catch(e){}setTimeout(()=>d.remove(),4200)}
 function react(e){const R=S.room;if(!R||(R.lock.r&&!R.host))return;send('rx',{e,name:myName()});floatReact(e,'Você');R.rxOpen=false;paintBar()}
 function floatReact(e,name){const d=document.createElement('div');d.className='es-fl';d.innerHTML=esc(e)+'<small>'+esc(name||'')+'</small>';d.style.left=(20+Math.random()*60)+'%';document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
 
 /* barra da sala (fixa) */
 function paintBar(){
  let bar=$('es-bar');const R=S.room;
- if(!R){if(bar)bar.remove();paintHost();paintChat();return}
+ if(!R){if(bar)bar.remove();parkBar();paintHost();paintChat();return}
  if(!bar){bar=document.createElement('div');bar.id='es-bar';bar.className='es-bar';document.body.appendChild(bar)}
- if(R.susp){bar.innerHTML='<div class="es-bar-in es-bar-susp"><span class="es-sp"><b>⏸ Sala '+esc(R.code)+' suspensa</b><small>Câmera, microfone e som desligados enquanto você está fora do estudo</small></span><button class="es-bt es-go" onclick="IASDEstudo.backToRoom()">Voltar à sala</button><button class="es-bt danger" onclick="IASDEstudo.leaveAsk()">Sair</button></div>';return}
+ delete bar.dataset.park;
  const v=R.voice||{},peers=Object.values(R.peers),n=peers.length+1;
  const names=[{id:R.me,name:myName()+' (você)',hand:R.hand,mic:v.mic,cam:v.cam,host:R.host,self:true,away:isAway()}].concat(peers);
  const rxOff=R.lock.r&&!R.host,chOff=R.mode==='lobby';
  bar.innerHTML='<div class="es-bar-in"><button class="es-pill" onclick="IASDEstudo.togglePanel()" aria-label="Participantes"><b>'+esc(R.code)+'</b><span>👥 '+n+'</span></button>'
   +'<button class="es-bt es-mic'+(v.mic?' on':' off')+'" onclick="IASDEstudo.toggleMic()" aria-label="'+(v.mic?'Desligar microfone':'Ligar microfone')+'">🎙</button>'
   +'<button class="es-bt es-cam'+(v.cam?' on':' off')+'" onclick="IASDEstudo.toggleCam()" aria-label="'+(v.cam?'Desligar câmera':'Ligar câmera')+'">📷</button>'
-  +'<button class="es-bt'+(R.hand?' on':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="Levantar a mão">✋</button>'
+  +(R.host?'':'<button class="es-bt es-hb'+(R.hand?' on hup':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="'+(R.hand?'Baixar a mão':'Levantar a mão')+'" title="'+(R.hand?'Baixar a mão':'Levantar a mão')+'">✋</button>')
   +(chOff?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" aria-label="Chat">💬'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
   +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" aria-label="Reações">😊</button>')
-  +'<button class="es-bt danger" onclick="IASDEstudo.leaveAsk()">Sair</button></div>'
+  +(R.host?'<button class="es-bt es-gear'+(R.hostOpen?' on':'')+'" onclick="IASDEstudo.toggleHost()" aria-label="Painel do dirigente" title="Painel do dirigente">⚙</button>':'')+'</div>'
   +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react(\''+e+'\')">'+e+'</button>').join('')+'</div>':'')
   +'<div class="es-panel" id="es-panel" '+(R.listOpen?'':'hidden')+'>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.mic?' 🎙':'')+(p.cam?' 📷':'')+(p.away?' <small class="es-aw">fora da lição</small>':'')
-   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'</div>';
+   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
  paintHost();paintChat();paintAway();
 }
 function togglePanel(){const R=S.room;if(!R)return;R.listOpen=!R.listOpen;const p=$('es-panel');if(p)p.hidden=!R.listOpen}
@@ -404,7 +419,7 @@ function isAway(){return document.hidden||!$('es-root')}
 function paintAway(){
  const R=S.room,el=$('es-away');if(!el||!R)return;
  const h=Object.values(R.peers).find(p=>p.host);
- const away=!R.host&&h&&h.away;el.hidden=!away;el.textContent=away?'⏸ Dirigente fora da lição':'';
+ const away=!R.host&&((h&&h.away)||(!h&&R.hostSeen));el.hidden=!away;el.textContent=away?(h?'⏸ Dirigente fora da lição':'⏸ Dirigente fora da sala por um momento'):'';
 }
 async function endRoom(){const R=S.room;if(!R||!R.host)return;
  if(!R.endAsked&&!(await IASDDialog.confirm('Encerrar a sala para todos? Os participantes serão avisados.',{title:'Encerrar sala',ok:'Encerrar sala',danger:true})))return;
@@ -508,7 +523,7 @@ function unlockAudio(){const R=S.room,V=R&&R.voice;try{if(AC&&AC.state==='suspen
  document.querySelectorAll('.es-tile video').forEach(v=>{if(v.paused&&v.play)v.play().catch(()=>{})})}
 ['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true,capture:true}));
 function startVoice(){ensureVoice();syncVoicePeers()}
-function paintDock(){
+function paintDock0(){
  let dock=$('es-dock');const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';
  if(!R){if(dock)dock.remove();document.body.classList.remove('es-dk');return}
  const mine=!!V&&(V.mic||V.cam);
@@ -521,13 +536,24 @@ function paintDock(){
  let box;
  if(lobby){if(dock)dock.remove();box=lg}
  else{if(!dock){dock=document.createElement('div');dock.id='es-dock';dock.className='es-dock';document.body.appendChild(dock)}box=dock}
- const tile=(id,name,mic,cam,self,host)=>'<div class="es-tile'+(cam?' cam':'')+'" data-t="'+id+'"><div class="es-pic"><video autoplay playsinline muted></video><span class="es-av">'+esc((name||'?').charAt(0).toUpperCase())+'</span>'
+ box.innerHTML=((lobby||mine)?tileHTML('me',myName()+' (você)',V&&V.mic,V&&V.cam,true,R.host):'')+ids.map(id=>tileHTML(id,R.peers[id].name,R.peers[id].mic,R.peers[id].cam,false,R.peers[id].host)).join('');
+ bindTiles(box);
+}
+function tileHTML(id,name,mic,cam,self,host){const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';return '<div class="es-tile'+(cam?' cam':'')+'" data-t="'+id+'"><div class="es-pic"><video autoplay playsinline muted></video><span class="es-av" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="4.3"/><path d="M3.4 21.5c.5-4.8 4.2-7.3 8.6-7.3s8.1 2.5 8.6 7.3z"/></svg></span>'
   +(self?'':'<span class="es-tc"><button type="button" data-a="m" title="Silenciar só no seu aparelho" aria-label="Silenciar esta pessoa">'+(R.vmute[id]?'🔇':'🔈')+'</button><button type="button" data-a="v" title="Ocultar o vídeo" aria-label="Ocultar vídeo desta pessoa">'+(R.vhide[id]?'👁':'🙈')+'</button></span>')
-  +'</div><small class="es-nm">'+((cam||mic)?'<i class="es-dot" title="Ao vivo" aria-label="Ao vivo"></i>':'')+'<span class="es-nt">'+esc(name||'?')+(host?' · dirigente':'')+(!mic&&!cam&&lobby?' · só assistindo':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'&&V.pcs[id].connectionState!=='new'?' ⏳':'')+'</span></small></div>';
- const myMs=()=>V&&V.vTrack?new MediaStream([V.vTrack]):null;
- box.innerHTML=((lobby||mine)?tile('me',myName()+' (você)',V&&V.mic,V&&V.cam,true,R.host):'')+ids.map(id=>tile(id,R.peers[id].name,R.peers[id].mic,R.peers[id].cam,false,R.peers[id].host)).join('');
+  +'</div><small class="es-nm">'+((cam||mic)?'<i class="es-dot" title="Ao vivo" aria-label="Ao vivo"></i>':'')+'<span class="es-nt">'+esc(name||'?')+(host?' · dirigente':'')+(!mic&&!cam&&lobby?' · só assistindo':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'&&V.pcs[id].connectionState!=='new'?' ⏳':'')+'</span></small></div>'}
+function openGal(){const R=S.room;if(!R||R.mode==='lobby')return;R.gal=true;paintGal()}
+function closeGal(){const R=S.room;if(R)R.gal=false;paintGal()}
+function paintGal(){const R=S.room,V=R&&R.voice;let g=$('es-gal');
+ if(!R||!R.gal||R.mode==='lobby'){if(g)g.remove();return}
+ if(!g){g=document.createElement('div');g.id='es-gal';g.className='es-gal';g.onclick=e=>{if(e.target===g||e.target.closest('.es-gx'))closeGal()};document.body.appendChild(g)}
+ const all=[tileHTML('me',myName()+' (você)',V&&V.mic,V&&V.cam,true,R.host)].concat(Object.keys(R.peers).map(id=>tileHTML(id,R.peers[id].name,R.peers[id].mic,R.peers[id].cam,false,R.peers[id].host)));
+ g.innerHTML='<div class="es-gh"><b>Pessoas na sala · '+all.length+'</b><button type="button" class="es-gx" aria-label="Fechar">✕</button></div><div class="es-gg">'+all.join('')+'</div>';
+ bindTiles(g)}
+function paintDock(){paintDock0();paintGal()}
+function bindTiles(box){const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby',root0=box,gal0=$('es-gal');const myMs=()=>V&&V.vTrack?new MediaStream([V.vTrack]):null;
  box.querySelectorAll('.es-tile').forEach(el=>{const id=el.dataset.t,v=el.querySelector('video');
-  el.onclick=e=>{const b=e.target.closest('button');if(b){e.stopPropagation();if(b.dataset.a==='m')muteFrom(id);else hideFrom(id);return}el.classList.toggle('zoom')};
+  el.onclick=e=>{const b=e.target.closest('button');if(b){e.stopPropagation();if(b.dataset.a==='m')muteFrom(id);else hideFrom(id);return}if(!lobby&&root0!==gal0)openGal()};
   const ms=id==='me'?myMs():(V&&V.tiles[id]);
   if(ms){v.srcObject=ms;const live=ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);el.classList.toggle('vid',live&&!(id!=='me'&&R.vhide[id]))}
   if(V&&V.an[id]&&V.an[id].on)el.classList.add('talk');const pl=v.play&&v.play();if(pl&&pl.catch)pl.catch(()=>{})});
@@ -544,7 +570,7 @@ function lobbyHTML(){
   +'<div id="es-lgrid" class="es-lgrid"></div>'
   +'<div class="es-calls"><button type="button" class="es-call'+(V.mic?' on':'')+'" onclick="IASDEstudo.toggleMic()"><i>🎙</i><span>Microfone</span><small>'+(V.mic?'Ligado':'Desligado')+'</small></button>'
   +'<button type="button" class="es-call'+(V.cam?' on':'')+'" onclick="IASDEstudo.toggleCam()"><i>📷</i><span>Câmera</span><small>'+(V.cam?'Ligada':'Desligada')+'</small></button>'
-  +'<button type="button" class="es-call'+(R.hand?' on':'')+'" onclick="IASDEstudo.toggleHand()"><i>✋</i><span>Pedir a palavra</span><small>'+(R.hand?'Mão levantada':'Levantar a mão')+'</small></button></div>'
+  +'<button type="button" class="es-call'+(R.hand?' on hup':'')+'" onclick="IASDEstudo.toggleHand()"><i>✋</i><span>Pedir a palavra</span><small>'+(R.hand?'Mão levantada':'Levantar a mão')+'</small></button></div>'
   +(host?'<button type="button" class="pg-gold es-wide" onclick="IASDEstudo.setMode(\'study\')">▶ Iniciar o estudo para todos</button>':'<p class="es-note es-wait">Aguardando o dirigente iniciar o estudo…</p>')
   +'</div><div id="es-lchat"></div>';
 }
@@ -553,13 +579,15 @@ function setMode(m){const R=S.room;if(!R||!R.host)return;R.mode=m==='lobby'?'lob
  send('md',{mode:R.mode});if(R.mode==='study')pushLesson(true);saveRoom();paint();paintBar();paintDock();
  toast(R.mode==='lobby'?'Todos foram para o bate-papo.':'Todos voltaram ao estudo.')}
 function setLock(k,on){const R=S.room;if(!R||!R.host)return;R.lock[k]=!!on;send('lk',R.lock);saveRoom();paintHost();paintBar()}
-function toggleHost(){const R=S.room;if(!R||!R.host)return;R.hostOpen=!R.hostOpen;R.chOpen=false;paintHost()}
+function toggleHost(){const R=S.room;if(!R||!R.host)return;R.hostOpen=!R.hostOpen;R.chOpen=false;paintBar()}
 function curQ(){const R=S.room;if(!R||R.bi<0)return null;const L=lessonSrc();const b=L&&L.blocks[R.bi];return b&&b.t==='q'?b:null}
 function challenge(kind,bi){const R=S.room;if(!R||!R.host)return;
  if(bi!=null)setPos(bi);
- if(R.bi<0||!curQ()){toast('Toque em “▶ Aqui” na pergunta que a turma está estudando.');return}
- R.hostOpen=false;R.chOpen=false;paintHost();window.IASDEstudoFX&&IASDEstudoFX.launch(R.bi,kind||'auto')}
-function revealCur(){const R=S.room;if(!R||!R.host)return;const b=curQ();if(!b){toast('Toque em “▶ Aqui” na pergunta que a turma está estudando.');return}R.hostOpen=false;paintHost();revealToggle(b.id)}
+ const sc=R.chScope||(curQ()?'q':'tema'),free=sc==='tema'||['quiz','who','ord','cloud','vf','auto'].includes(kind||'auto');
+ if(!free&&(R.bi<0||!curQ())){toast('Toque em “▶ Levar a turma” na pergunta que a turma está estudando.');return}
+ R.hostOpen=false;R.chOpen=false;paintHost();window.IASDEstudoFX&&IASDEstudoFX.launch(R.bi,kind||'auto',sc)}
+function revealCur(){const R=S.room;if(!R||!R.host)return;const b=curQ();if(!b){toast('Toque em “▶ Levar a turma” na pergunta que a turma está estudando.');return}R.hostOpen=false;paintHost();revealToggle(b.id)}
+function setScope(v){const R=S.room;if(!R)return;R.chScope=v==='tema'?'tema':'q';paintHost()}
 function setChooser(){const R=S.room;if(!R)return;R.chOpen=!R.chOpen;paintHost()}
 function breakGo(secs){const R=S.room;if(!R||!R.host)return;R.hostOpen=false;paintHost();FX('breakgo',{secs})}
 function muteAll(){const R=S.room;if(!R||!R.host)return;send('mute',{});toast('Pedi silêncio a todos. Quem estava com o microfone aberto foi silenciado.')}
@@ -574,18 +602,17 @@ function paintHost(){
  const R=S.room;let tab=$('es-htab'),ov=$('es-hdr');
  document.body.classList.toggle('es-host',!!(R&&R.host));
  if(!R||!R.host){if(tab)tab.remove();if(ov)ov.remove();return}
- if(!tab){tab=document.createElement('button');tab.id='es-htab';tab.type='button';tab.className='es-htab';tab.setAttribute('aria-label','Painel do dirigente');tab.onclick=()=>toggleHost();document.body.appendChild(tab)}
- tab.innerHTML='<span aria-hidden="true">⚙</span><b>Controles</b>';tab.classList.toggle('on',!!R.hostOpen);
+ if(tab)tab.remove();
  if(!R.hostOpen){if(ov)ov.remove();return}
- const lobby=R.mode==='lobby',L=R.lock,peers=Object.entries(R.peers),hands=peers.filter(([id,p])=>p.hand),q=curQ();
+ const lobby=R.mode==='lobby',L=R.lock,peers=Object.entries(R.peers),hands=peers.filter(([id,p])=>p.hand),q=curQ(),sc0=R.chScope||(q?'q':'tema');
  const sw=(t,d,on,k)=>'<label class="es-sw"><span><b>'+t+'</b><small>'+d+'</small></span><input type="checkbox" '+(on?'checked':'')+' onchange="IASDEstudo.setLock(\''+k+'\',this.checked)"></label>';
  const tile=(ic,t,fn,cls)=>'<button type="button" class="es-pt'+(cls?' '+cls:'')+'" onclick="'+fn+'"><i>'+ic+'</i><span>'+t+'</span></button>';
  const html='<div class="es-pop" role="dialog" aria-modal="true" aria-label="Painel do dirigente">'
   +'<div class="es-ph"><b>Painel do dirigente</b><button type="button" onclick="IASDEstudo.toggleHost()" aria-label="Fechar">✕</button></div>'
   +'<section><h4>Momento da sala · '+(peers.length+1)+' pessoa'+(peers.length?'s':'')+'</h4><div class="es-ptg">'+tile('💬','Bate-papo com câmeras','IASDEstudo.setMode(\'lobby\')',lobby?'on':'')+tile('📖','Estudo da lição','IASDEstudo.setMode(\'study\')',lobby?'':'on')+'</div></section>'
-  +'<section><h4>Atividades</h4><p class="es-pq">'+(q?'Pergunta atual: <b>'+esc(q.text.length>90?q.text.slice(0,90)+'…':q.text)+'</b>':'Toque em “▶ Aqui” numa pergunta da lição para ligar as atividades a ela.')+'</p>'
+  +'<section><h4>Atividades</h4><p class="es-pq">'+(q?'Pergunta atual: <b>'+esc(q.text.length>90?q.text.slice(0,90)+'…':q.text)+'</b>':'Toque em “▶ Levar a turma” numa pergunta da lição para ligar as atividades a ela.')+'</p>'
   +'<div class="es-ptg">'+tile('🎯','Soltar desafio','IASDEstudo.setChooser()',R.chOpen?'on':'')+tile('🎬','Revelar respostas','IASDEstudo.revealCur()')+tile('☕','Intervalo 5 min','IASDEstudo.breakGo(300)')+tile('☕','Intervalo 10 min','IASDEstudo.breakGo(600)')+'</div>'
-  +(R.chOpen?'<div class="es-pchips"><button type="button" onclick="IASDEstudo.challenge(\'auto\')">🎲 Surpresa</button><button type="button" onclick="IASDEstudo.challenge(\'verso\')">✍️ Completar o versículo</button><button type="button" onclick="IASDEstudo.challenge(\'ref\')">📍 Qual é a referência?</button><button type="button" onclick="IASDEstudo.challenge(\'vf\')">✔✖ Verdadeiro ou falso</button></div>':'')+'</section>'
+  +(R.chOpen?'<div class="es-scope"><span>Sobre</span><button type="button" class="'+(sc0==='tema'?'':'on')+'" onclick="IASDEstudo.setScope(\'q\')">Esta pergunta</button><button type="button" class="'+(sc0==='tema'?'on':'')+'" onclick="IASDEstudo.setScope(\'tema\')">Tema da lição</button></div><div class="es-pchips">'+[['auto','🎲','Surpresa'],['verso','✍️','Completar o versículo'],['ref','📍','Qual é a referência?'],['vf','✔✖','Verdadeiro ou falso'],['quiz','🧠','Quiz bíblico'],['who','🕵️','Quem sou eu?'],['ord','🔢','Colocar na ordem'],['cloud','☁️','Nuvem de palavras']].map(a=>'<button type="button" onclick="IASDEstudo.challenge(\''+a[0]+'\')"><i>'+a[1]+'</i>'+a[2]+'</button>').join('')+'</div>':'')+'</section>'
   +'<section><h4>Controle dos alunos</h4>'+sw('Travar versículos','Só veem os versículos que você abrir.',L.v,'v')+sw('Travar a lição','Ficam onde você estiver, sem leitura livre.',L.f,'f')+sw('Pausar o chat','Só você escreve no chat.',L.c,'c')+sw('Pausar as reações','Esconde o botão de reações.',L.r,'r')
   +'<div class="es-ptg">'+tile('🔇','Pedir silêncio a todos','IASDEstudo.muteAll()')+'</div></section>'
   +'<section><h4>Mãos levantadas</h4>'+(hands.length?hands.map(([id,p])=>'<div class="es-hand"><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b><button type="button" onclick="IASDEstudo.callPeer(\''+id+'\')">🙋 Chamar</button></div>').join(''):'<p class="es-note">Ninguém pediu a palavra.</p>')+'</section>'
@@ -691,6 +718,6 @@ async function importFile(inp){
  c.lessons=out;if(j.description)c.description=String(j.description).slice(0,400);
  saveCourse(true);S.edit=false;paint();toast('Importado: '+out.length+' lições.')}
 
-window.IASDEstudo={importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom};
-window.IASDEstudoCore={S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
+window.IASDEstudo={importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
+window.IASDEstudoCore={stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
 })();

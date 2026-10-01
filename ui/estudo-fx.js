@@ -32,10 +32,157 @@ const SFX={
 function setMuted(m){muted=!!m;try{localStorage.setItem('iasd-study-sfx',muted?'0':'1')}catch(e){}document.querySelectorAll('.fx-snd').forEach(b=>{b.textContent=muted?'🔇':'🔊'})}
 const sndBtn=()=>'<button type="button" class="fx-snd" onclick="IASDEstudoFX.toggleSound()" aria-label="Som">'+(muted?'🔇':'🔊')+'</button>';
 
+/* ---------- banco de perguntas (linguagem simples, texto curto) ---------- */
+/* [pergunta, certa, errada1, errada2, errada3, palavras-chave para combinar com a lição] */
+const QZ_RAW=[
+['Em quantos dias Deus criou o mundo antes de descansar?','Seis','Três','Sete','Dez','criacao genesis sabado descans'],
+['O que Deus criou no primeiro dia?','A luz','As plantas','Os animais','O sol','criacao genesis luz'],
+['Como se chamava o jardim onde Adão e Eva viveram?','Éden','Getsêmani','Betânia','Canaã','adao eva eden genesis pecado'],
+['Quem construiu a arca?','Noé','Moisés','Abraão','Jonas','noe arca diluvio'],
+['Que sinal Deus deu a Noé depois do dilúvio?','O arco-íris','Uma estrela','Uma nuvem de fogo','Um trovão','noe diluvio alianca promessa'],
+['Quem era o pai de Isaque?','Abraão','Jacó','Noé','Davi','abraao isaque fe'],
+['Quantos filhos teve Jacó?','Doze','Sete','Dez','Quatorze','jaco israel tribos'],
+['Quem foi vendido pelos irmãos e depois governou o Egito?','José','Benjamim','Rúben','Moisés','jose egito perdao'],
+['Quem liderou o povo de Israel para fora do Egito?','Moisés','Josué','Davi','Elias','moises egito exodo libertacao'],
+['Quantos mandamentos Deus deu no monte Sinai?','Dez','Sete','Doze','Cinco','mandamento lei sinai moises obedi'],
+['Que alimento Deus enviava do céu no deserto?','Maná','Figos','Arroz','Azeitonas','mana deserto exodo provisao'],
+['Qual dia da semana é o sábado?','O sétimo','O primeiro','O sexto','O quarto','sabado descans mandamento'],
+['Quem derrotou o gigante Golias?','Davi','Sansão','Saul','Jônatas','davi golias coragem'],
+['Que cidade teve os muros derrubados depois que o povo marchou ao redor?','Jericó','Belém','Nazaré','Babilônia','jerico josue fe'],
+['Quem era conhecido pela grande força?','Sansão','Gideão','Samuel','Elias','sansao forca'],
+['Qual rei pediu sabedoria a Deus?','Salomão','Saul','Acabe','Herodes','salomao sabedoria proverbios'],
+['Quem construiu o templo em Jerusalém?','Salomão','Davi','Esdras','Neemias','templo salomao'],
+['Onde Daniel foi lançado por não deixar de orar?','Na cova dos leões','Na fornalha','Num poço seco','Na prisão do Egito','daniel oracao leoes fidelidade'],
+['Quem foi engolido por um grande peixe?','Jonas','Elias','Eliseu','Jeremias','jonas obediencia ninive'],
+['Quem foi levado ao céu num redemoinho?','Elias','Isaías','Eliseu','Amós','elias profeta ceu'],
+['Em que cidade Jesus nasceu?','Belém','Nazaré','Jerusalém','Cafarnaum','jesus nascimento natal belem'],
+['Quem batizou Jesus?','João Batista','Pedro','Paulo','Tiago','batismo jesus joao'],
+['Quantos discípulos Jesus escolheu para andar com ele?','Doze','Sete','Dez','Setenta','discipulo apostolo jesus'],
+['Qual foi o primeiro milagre de Jesus no Evangelho de João?','Água em vinho','Curar um cego','Multiplicar os pães','Andar sobre as águas','milagre jesus joao cana'],
+['Jesus ressuscitou em qual dia, segundo as Escrituras?','Ao terceiro dia','Ao sétimo dia','Ao décimo dia','Ao quadragésimo dia','ressurrei cruz pascoa jesus morte'],
+['Qual discípulo negou Jesus três vezes?','Pedro','João','Tomé','André','pedro negacao perdao'],
+['Qual discípulo só acreditou depois de ver as marcas nas mãos de Jesus?','Tomé','Filipe','Mateus','Judas','tome duvida fe ressurrei'],
+['Quem traiu Jesus por trinta moedas de prata?','Judas','Pedro','Tomé','Barnabé','judas traicao'],
+['Qual oração Jesus ensinou aos discípulos?','Pai Nosso','Salmo 23','Cântico de Maria','Credo','oracao pai nosso orar'],
+['Qual é o maior mandamento, segundo Jesus?','Amar a Deus de todo o coração','Dar o dízimo','Jejuar toda semana','Ir ao templo todo dia','mandamento amor deus'],
+['Em qual livro está a história do bom samaritano?','Lucas','Mateus','João','Atos','samaritano proximo amor lucas'],
+['Quem foi o apóstolo que escreveu várias cartas aos gentios?','Paulo','Pedro','João','Tiago','paulo carta apostolo'],
+['Qual é o último livro da Bíblia?','Apocalipse','Judas','Atos','Hebreus','biblia livro apocalipse volta fim'],
+['Qual é o primeiro livro da Bíblia?','Gênesis','Êxodo','Salmos','Mateus','biblia livro genesis comeco'],
+['Quantos livros tem a Bíblia?','66','39','73','27','biblia livros escrituras'],
+['Quantos livros tem o Novo Testamento?','27','39','24','66','biblia novo testamento'],
+['Quantos livros tem o Antigo Testamento?','39','27','46','66','biblia antigo testamento'],
+['Qual livro da Bíblia tem mais capítulos?','Salmos','Isaías','Gênesis','Jó','biblia salmos'],
+['Qual é o menor capítulo da Bíblia?','Salmo 117','Salmo 23','Salmo 1','João 3','biblia salmos'],
+['Em qual livro está “O Senhor é o meu pastor”?','Salmos','Provérbios','Isaías','Eclesiastes','pastor salmo cuidado'],
+['Qual é o primeiro fruto do Espírito citado em Gálatas 5?','Amor','Alegria','Paz','Fé','espirito santo fruto amor'],
+['Segundo Efésios 2:8, somos salvos pela…','Graça','Sorte','Lei','Tradição','salvacao graca fe efesios'],
+['Segundo João 3:16, o que Deus deu ao mundo?','Seu Filho único','Um profeta','Um anjo','Um rei','salvacao amor jesus joao'],
+['Quem escreveu a maior parte dos Salmos?','Davi','Moisés','Salomão','Asafe','salmos davi'],
+['Quem escreveu o Apocalipse?','João','Paulo','Pedro','Lucas','apocalipse joao'],
+['Josué 1:9 diz: “Seja forte e…”','Corajoso','Rápido','Rico','Sábio','coragem josue forca medo'],
+['Qual era o nome da mãe de Jesus?','Maria','Isabel','Marta','Ana','jesus maria nascimento'],
+['Qual ave levou um ramo de oliveira a Noé?','Pomba','Corvo','Águia','Andorinha','noe arca diluvio'],
+['Em que tipo de árvore Zaqueu subiu para ver Jesus?','Sicômoro','Palmeira','Oliveira','Cedro','zaqueu jesus arrependimento'],
+['Qual apóstolo era cobrador de impostos?','Mateus','Pedro','João','Tiago','mateus apostolo'],
+['Qual profeta enfrentou os profetas de Baal no monte Carmelo?','Elias','Eliseu','Isaías','Jeremias','elias fogo profeta'],
+['Qual rainha salvou o seu povo na Pérsia?','Ester','Rute','Débora','Sara','ester coragem povo'],
+['Quantos dias e noites choveu no dilúvio?','Quarenta','Sete','Cem','Trinta','diluvio noe'],
+['Quantos anos Israel andou no deserto?','Quarenta','Dez','Setenta','Doze','deserto exodo israel'],
+['Quem foi o primeiro homem criado por Deus?','Adão','Abel','Noé','Enoque','adao criacao genesis'],
+['Quem foi o primeiro mártir cristão?','Estêvão','Tiago','Paulo','Pedro','martir atos igreja'],
+['Em qual ilha João recebeu o Apocalipse?','Patmos','Creta','Chipre','Malta','apocalipse joao'],
+['“Eu sou o ___, a verdade e a vida.”','Caminho','Pão','Pastor','Cordeiro','jesus verdade caminho joao'],
+['A Palavra de Deus é lâmpada para os meus…','Pés','Olhos','Dias','Braços','palavra biblia lampada salmo luz guia'],
+['Quem foi o rei que Deus ungiu depois de Saul?','Davi','Salomão','Roboão','Josafá','davi rei saul'],
+['Em qual rio Jesus foi batizado?','Jordão','Nilo','Eufrates','Tigre','batismo jordao jesus']
+];
+const VF_RAW=[
+['A Bíblia tem 66 livros.',1,'biblia livros'],
+['O Novo Testamento vem antes do Antigo na Bíblia.',0,'biblia testamento'],
+['Noé construiu a arca por ordem de Deus.',1,'noe arca'],
+['Moisés recebeu os Dez Mandamentos no monte Sinai.',1,'moises mandamento'],
+['Jesus nasceu em Belém.',1,'jesus nascimento'],
+['Jesus escolheu doze discípulos.',1,'jesus discipulo'],
+['Paulo foi um dos doze discípulos originais.',0,'paulo discipulo'],
+['Daniel foi lançado na cova dos leões.',1,'daniel leoes'],
+['Jonas foi engolido por um grande peixe.',1,'jonas'],
+['Deus descansou no sétimo dia da criação.',1,'criacao sabado'],
+['O livro de Salmos fica no Novo Testamento.',0,'salmos biblia'],
+['O Apocalipse é o último livro da Bíblia.',1,'apocalipse biblia'],
+['Jesus ressuscitou ao terceiro dia.',1,'ressurrei jesus'],
+['Pedro negou Jesus três vezes.',1,'pedro negacao'],
+['Deus criou o sol e a lua no primeiro dia.',0,'criacao genesis'],
+['Mateus, Marcos, Lucas e João são os quatro Evangelhos.',1,'evangelho jesus'],
+['A Bíblia foi escrita por cerca de 40 autores ao longo de 1.600 anos.',1,'biblia autores escrituras'],
+['Paulo escreveu o Evangelho de Lucas.',0,'paulo lucas'],
+['Jesus ensinou a amar até os inimigos.',1,'amor jesus'],
+['Segundo a Bíblia, somos salvos pelas nossas boas obras.',0,'salvacao graca obras'],
+['O sábado é o sétimo dia da semana.',1,'sabado mandamento'],
+['O dilúvio teve quarenta dias e quarenta noites de chuva.',1,'diluvio noe'],
+['Elias foi levado ao céu sem passar pela morte.',1,'elias'],
+['Zaqueu era pescador.',0,'zaqueu'],
+['Davi enfrentou Golias com uma funda e uma pedra.',1,'davi golias'],
+['A Bíblia diz que toda a Escritura é inspirada por Deus.',1,'biblia escrituras inspir']
+];
+const WHO_RAW=[
+['Davi',['Fui pastor de ovelhas.','Escrevi muitos salmos.','Fui rei de Israel.','Derrotei o gigante Golias.'],['Saul','Salomão','Samuel'],'davi rei salmos'],
+['Noé',['Vivi numa época de muita maldade.','Deus me pediu para construir um barco enorme.','Levei animais de todas as espécies comigo.','Vi um arco-íris depois do dilúvio.'],['Abraão','Moisés','Jó'],'noe arca diluvio'],
+['Moisés',['Nasci escravo, mas fui criado num palácio.','Deus falou comigo numa sarça que queimava sem se consumir.','Recebi os Dez Mandamentos.','Conduzi o povo para fora do Egito.'],['Josué','Arão','José'],'moises egito exodo mandamento'],
+['Daniel',['Fui levado para a Babilônia ainda jovem.','Interpretava sonhos de reis.','Não deixei de orar, mesmo sendo proibido.','Passei uma noite entre leões famintos.'],['Ezequiel','Jeremias','Neemias'],'daniel leoes oracao'],
+['Pedro',['Eu era pescador.','Jesus me chamou para ser pescador de pessoas.','Caminhei sobre as águas por alguns passos.','Neguei Jesus três vezes, mas fui perdoado.'],['André','João','Tiago'],'pedro apostolo negacao'],
+['Maria',['Eu era jovem e morava em Nazaré.','Um anjo me visitou com uma notícia especial.','Visitei minha prima Isabel.','Sou a mãe de Jesus.'],['Marta','Ana','Isabel'],'maria jesus nascimento'],
+['Paulo',['Antes eu perseguia os cristãos.','Encontrei Jesus numa luz no caminho de Damasco.','Viajei por muitas cidades falando do Evangelho.','Escrevi várias cartas do Novo Testamento.'],['Pedro','Barnabé','Timóteo'],'paulo carta apostolo'],
+['José do Egito',['Meu pai me deu uma túnica colorida.','Fui vendido pelos meus irmãos.','Expliquei os sonhos do faraó.','Tornei-me governador do Egito.'],['Benjamim','Judá','Rúben'],'jose egito perdao'],
+['Jonas',['Fugi de barco para não obedecer a Deus.','Uma tempestade veio por minha causa.','Fiquei três dias dentro de um grande peixe.','Depois preguei em Nínive.'],['Elias','Oseias','Amós'],'jonas obediencia'],
+['Ester',['Fui escolhida rainha da Pérsia.','Era judia, mas no começo escondi isso.','Jejuei e pedi que meu povo jejuasse.','Salvei meu povo da destruição.'],['Rute','Débora','Sara'],'ester coragem'],
+['Zaqueu',['Eu era pequeno de estatura.','Era chefe dos cobradores de impostos.','Subi numa árvore para ver Jesus.','Jesus jantou na minha casa.'],['Mateus','Nicodemos','Bartimeu'],'zaqueu jesus'],
+['Elias',['Fui profeta no tempo do rei Acabe.','Fui alimentado por corvos.','Fiz descer fogo do céu no monte Carmelo.','Fui levado ao céu num redemoinho.'],['Eliseu','Isaías','Samuel'],'elias fogo profeta']
+];
+const ORD_RAW=[
+['Ordem da criação',['Luz','Plantas','Sol, lua e estrelas','Seres humanos'],'criacao genesis'],
+['Os quatro Evangelhos, na ordem da Bíblia',['Mateus','Marcos','Lucas','João'],'evangelho biblia'],
+['Os cinco primeiros livros da Bíblia',['Gênesis','Êxodo','Levítico','Números','Deuteronômio'],'biblia livros moises'],
+['Do mais antigo ao mais recente',['Adão e Eva','Noé','Abraão','Moisés','Davi'],'biblia historia'],
+['A vida de Jesus',['Nascimento','Batismo','Crucificação','Ressurreição','Ascensão'],'jesus vida cruz'],
+['A história de José do Egito',['Túnica colorida','Vendido pelos irmãos','Prisão no Egito','Governador do Egito'],'jose egito'],
+['A história de Jonas',['Foge de barco','Tempestade','Dentro do grande peixe','Prega em Nínive'],'jonas'],
+['O caminho de Israel',['Escravidão no Egito','Travessia do mar Vermelho','Dez Mandamentos','Chegada a Canaã'],'exodo moises israel']
+];
+const CLOUD_RAW=[
+['Uma palavra que lembra o amor de Deus.','amor deus'],
+['Uma palavra que descreve a Bíblia para você.','biblia palavra escrituras'],
+['Uma palavra que você sente ao orar.','oracao orar'],
+['Uma palavra que resume o que Jesus fez por nós.','jesus salvacao cruz'],
+['Uma palavra para agradecer a Deus hoje.','gratidao'],
+['Uma palavra que Deus fala ao seu coração hoje.','coracao'],
+['Uma palavra que mostra como Deus cuida de você.','cuidado deus']
+];
+const withId=(a,p)=>a.map((x,i)=>({id:p+i,x}));
+const QZ=withId(QZ_RAW,'q').map(({id,x})=>({id,q:x[0],o:x.slice(1,5),k:x[5].split(' ')}));
+const VFB=withId(VF_RAW,'v').map(({id,x})=>({id,s:x[0],v:!!x[1],k:x[2].split(' ')}));
+const WHOB=withId(WHO_RAW,'w').map(({id,x})=>({id,a:x[0],h:x[1],d:x[2],k:x[3].split(' ')}));
+const ORDB=withId(ORD_RAW,'o').map(({id,x})=>({id,t:x[0],s:x[1],k:x[2].split(' ')}));
+const CLB=withId(CLOUD_RAW,'c').map(({id,x})=>({id,p:x[0],k:x[1].split(' ')}));
+
 /* ---------- desafio por questão ---------- */
 const STOP=new Set(['porque','sendo','entre','sobre','quando','assim','ainda','nosso','nossa','vossa','dessa','desse','aquele','aquela','todos','todas','também','portanto','contudo','mesmo','depois','antes','onde','qual','quais','pois','como','muito','todo','toda','seus','suas','esse','essa','isto','aquilo','cujo','cuja']);
 const words=t=>(t.match(/[A-Za-zÀ-ÿ]{5,}/g)||[]).filter(w=>!STOP.has(w.toLowerCase()));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const norm=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const clip=(t,n)=>{t=String(t||'').trim();if(t.length<=n)return t;const c=t.slice(0,n),i=c.lastIndexOf(' ');return (i>n*.6?c.slice(0,i):c)+'…'};
+function around(t,mark,n){if(t.length<=n)return t;const i=t.indexOf(mark);let a=Math.max(0,i-Math.floor(n/2)),z=Math.min(t.length,a+n);a=Math.max(0,z-n);
+ if(a>0){const s=t.indexOf(' ',a);if(s>-1&&s<i)a=s+1}
+ if(z<t.length){const s=t.lastIndexOf(' ',z);if(s>i+mark.length)z=s}
+ return (a>0?'… ':'')+t.slice(a,z)+(z<t.length?' …':'')}
+F.used=new Set();
+const lessonRefs=L=>[...new Set(((L&&L.blocks)||[]).flatMap(x=>(x.refs||[]).concat(x.ref?[x.ref]:[])))];
+const lessonVF=L=>((L&&L.blocks)||[]).filter(x=>x.kind==='vf'&&x.opts&&(x.keys||[]).length);
+function relText(b,L){return norm(((b&&b.text)||'')+' '+((b&&b.refs)||[]).join(' ')+' '+((L&&L.title)||'')+(b?'':' '+((L&&L.blocks)||[]).map(x=>x.text||'').join(' ')))}
+function pickBank(list,b,L){
+ const t=relText(b,L);let pool=list.filter(x=>!F.used.has(x.id));if(!pool.length){list.forEach(x=>F.used.delete(x.id));pool=list.slice()}
+ const sc=pool.map(x=>({x,s:(x.k||[]).reduce((n,k)=>n+(k&&t.includes(k)?1:0),0)})),mx=Math.max(...sc.map(a=>a.s)),best=sc.filter(a=>a.s===mx).map(a=>a.x);
+ const x=best[Math.floor(Math.random()*best.length)];F.used.add(x.id);return x}
 async function verseOf(ref){
  const k=K(),r=k.parseRef(ref);if(!r)return null;
  const vs=await k.chapter(r.book,r.chapter);
@@ -52,7 +199,8 @@ async function mkVerso(b){
   if(pool.length<3)continue;
   const opts=shuffle([ans].concat(shuffle(pool).slice(0,3)));
   const re=new RegExp('(^|[^A-Za-zÀ-ÿ])'+ans+'(?![A-Za-zÀ-ÿ])');
-  return {kind:'verso',ref,prompt:'“'+v.text.replace(re,(m,p)=>p+'_____')+'”',opts,answer:opts.indexOf(ans),secs:20,head:'Complete o versículo'};
+  const full=v.text.replace(re,(m,p)=>p+'_____');
+  return {type:'mc',kind:'verso',ref,prompt:'“'+around(full,'_____',120)+'”',opts,answer:opts.indexOf(ans),secs:15,head:'Complete o versículo'};
  }
  return null;
 }
@@ -64,51 +212,87 @@ async function mkRef(b){
   let guard=0;while(set.size<4&&guard++<40){const c=Math.max(1,r.chapter+Math.floor(Math.random()*7)-3),vv=Math.max(1,a+Math.floor(Math.random()*9)-4);set.add(lbl(r,c,vv,z?vv+(z-a):null))}
   if(set.size<4)continue;
   const opts=shuffle([...set]);
-  return {kind:'ref',ref,prompt:'“'+v.text.slice(0,420)+'”',opts,answer:opts.indexOf(right),secs:20,head:'Qual é a referência?'};
+  return {type:'mc',kind:'ref',ref,prompt:'“'+clip(v.text,140)+'”',opts,answer:opts.indexOf(right),secs:15,head:'Qual é a referência?'};
  }
  return null;
 }
 function mkVF(b){
- if(b.kind!=='vf'||!b.opts||!(b.keys||[]).length)return null;
- const idx=[];b.opts.forEach((o,i)=>{if(/^[VF]$/i.test(String(b.keys[i]||'').trim()))idx.push(i)});if(!idx.length)return null;
+ if(!b||b.kind!=='vf'||!b.opts||!(b.keys||[]).length)return null;
+ let idx=[];b.opts.forEach((o,i)=>{if(/^[VF]$/i.test(String(b.keys[i]||'').trim()))idx.push(i)});if(!idx.length)return null;
+ const short=idx.filter(i=>String(b.opts[i]).length<=150);if(short.length)idx=short;
  const i=idx[Math.floor(Math.random()*idx.length)];
- return {kind:'vf',ref:'',prompt:'“'+b.opts[i]+'”',opts:['Verdadeiro','Falso'],answer:/^V/i.test(String(b.keys[i]).trim())?0:1,secs:12,head:'Verdadeiro ou falso?'};
+ return {type:'mc',kind:'vf',ref:'',prompt:'“'+clip(b.opts[i],170)+'”',opts:['Verdadeiro','Falso'],answer:/^V/i.test(String(b.keys[i]).trim())?0:1,secs:10,head:'Verdadeiro ou falso?'};
 }
-async function build(b,kind){
- const tries=kind&&kind!=='auto'?[kind]:shuffle(['verso','ref','vf']);
- for(const t of tries){const s=t==='verso'?await mkVerso(b):t==='ref'?await mkRef(b):mkVF(b);if(s)return s}
- return null;
+function mkVFBank(b,L){const x=pickBank(VFB,b,L);return {type:'mc',kind:'vf',ref:'',prompt:'“'+x.s+'”',opts:['Verdadeiro','Falso'],answer:x.v?0:1,secs:10,head:'Verdadeiro ou falso?'}}
+function mkQuiz(b,L){const x=pickBank(QZ,b,L),opts=shuffle(x.o);return {type:'mc',kind:'quiz',ref:'',prompt:x.q,opts,answer:opts.indexOf(x.o[0]),secs:15,head:'Quiz bíblico'}}
+function mkWho(b,L){const x=pickBank(WHOB,b,L),all=[x.a].concat(x.d),opts=shuffle(all);return {type:'mc',kind:'who',ref:'',prompt:'Quem sou eu?',hints:x.h,opts,answer:opts.indexOf(x.a),secs:24,head:'Quem sou eu?'}}
+function chunks(text){
+ const w=text.replace(/\s+/g,' ').trim().split(' ').slice(0,26);if(w.length<7)return null;
+ const n=w.length>=18?5:w.length>=11?4:3,per=Math.ceil(w.length/n),out=[];
+ for(let i=0;i<w.length;i+=per)out.push(w.slice(i,i+per).join(' '));
+ return out.length>=3&&new Set(out).size===out.length?out:null}
+function mkOrdFrom(items,prompt,head,ref){
+ let opts=shuffle(items),g=0;while(opts.every((t,i)=>t===items[i])&&g++<10)opts=shuffle(items);
+ return {type:'ord',kind:'ord',ref:ref||'',prompt,opts,key:items.map(t=>opts.indexOf(t)),secs:Math.max(25,items.length*7),head:head||'Coloque na ordem'};
 }
-async function launch(bi,kind){
+async function mkOrdVerse(b){
+ for(const ref of shuffle((b&&b.refs)||[])){
+  const v=await verseOf(ref).catch(()=>null);if(!v)continue;const c=chunks(v.text);if(!c)continue;
+  const s=mkOrdFrom(c,'Monte o versículo na ordem certa','Monte o versículo',ref);s.verse=true;return s}
+ return null}
+function mkOrdBank(b,L){const x=pickBank(ORDB,b,L);return mkOrdFrom(x.s,x.t+': toque na ordem certa','Coloque na ordem')}
+function mkCloud(b,L){const t=L&&L.title?String(L.title).replace(/^\d+\s*[-–.:]?\s*/,''):'';
+ if(b&&b.text)return {type:'cloud',kind:'cloud',ref:'',prompt:'Uma palavra que resume sua resposta para: '+clip(b.text,80),secs:25,head:'Nuvem de palavras'};
+ if(t&&Math.random()<.7)return {type:'cloud',kind:'cloud',ref:'',prompt:'Uma palavra que resume o tema “'+clip(t,50)+'”.',secs:25,head:'Nuvem de palavras'};
+ const x=pickBank(CLB,b,L);return {type:'cloud',kind:'cloud',ref:'',prompt:x.p,secs:25,head:'Nuvem de palavras'}}
+async function build(b,L,kind,scope){
+ const vb=(b&&b.refs&&b.refs.length&&scope!=='tema')?b:{text:'',refs:lessonRefs(L)};
+ const vfb=(b&&b.kind==='vf'&&scope!=='tema')?b:shuffle(lessonVF(L))[0]||null;
+ const maker={verso:()=>vb.refs.length&&mkVerso(vb),ref:()=>vb.refs.length&&mkRef(vb),vf:()=>mkVF(vfb)||mkVFBank(b,L),quiz:()=>mkQuiz(b,L),who:()=>mkWho(b,L),
+  ord:async()=>(vb.refs.length&&await mkOrdVerse(vb))||mkOrdBank(b,L),cloud:()=>mkCloud(b,L)};
+ const tries=kind&&kind!=='auto'?[kind]:shuffle(['verso','ref','vf','ord','who','quiz']);
+ for(const t of tries){const s=await maker[t]();if(s)return s}
+ return kind&&kind!=='auto'&&kind!=='cloud'?mkQuiz(b,L):null;
+}
+async function launch(bi,kind,scope){
  const k=K(),R=k.S.room;if(!R||!R.host)return;
  if(F.hostCh&&F.hostCh.live){k.toast('Já há um desafio em andamento.');return}
- const L=k.lessonSrc(),b=L&&L.blocks[bi];
- if(!b||b.t!=='q'){k.toast('Marque uma pergunta com “▶ Aqui” primeiro.');return}
+ const L=k.lessonSrc(),blk=L&&bi>=0?L.blocks[bi]:null,b=scope!=='tema'&&blk&&blk.t==='q'?blk:null;
  k.toast('Preparando o desafio…');
- const s=await build(b,kind);
- if(!s){k.toast('Esta pergunta não tem versículo nem V/F para virar desafio.');return}
+ const s=await build(b,L,kind,scope);
+ if(!s){k.toast('Não consegui montar este desafio. Tente outro tipo.');return}
  const cid=rid();
- F.hostCh={cid,key:s.answer,answers:{},live:true,secs:s.secs,t0:Date.now()+1700,end:null};
- const pub={cid,kind:s.kind,head:s.head,title:b.text,ref:s.ref,prompt:s.prompt,opts:s.opts,secs:s.secs};
+ F.hostCh={cid,type:s.type,key:s.type==='ord'?s.key:s.answer,answers:{},live:true,secs:s.secs,t0:Date.now()+1700,end:null};
+ const pub={cid,type:s.type,kind:s.kind,head:s.head,title:b?clip(b.text,90):(L&&L.title?clip(L.title,70):''),ref:s.ref,prompt:s.prompt,opts:s.opts||[],hints:s.hints||null,secs:s.secs};
  k.send('chs',pub);playChallenge(pub,true);
 }
 const SHAPES=['▲','◆','●','■'];
 function closeFx(){const o=$('es-fx');if(o)o.remove();if(F.ch){clearInterval(F.ch.tm);clearTimeout(F.ch.auto);F.ch=null}document.body.classList.remove('es-fxon')}
+const closeBtn=isHost=>isHost?'':'<button type="button" class="fx-x" onclick="IASDEstudoFX.closeLocal()" aria-label="Fechar">✕</button>';
 function playChallenge(p,isHost){
  closeFx();stageClose(true);
- const k=K();
  const o=document.createElement('div');o.id='es-fx';o.className='es-fx fx-intro';document.body.appendChild(o);document.body.classList.add('es-fxon');
- F.ch={p,isHost,answered:-1,t0:0,left:p.secs,tm:null,done:false,res:null};
- o.innerHTML='<div class="fx-vig"></div><div class="fx-top"><span class="fx-tag">🎯 DESAFIO</span>'+sndBtn()+(isHost?'':'<button type="button" class="fx-x" onclick="IASDEstudoFX.closeLocal()" aria-label="Fechar">✕</button>')+'</div>'
-  +'<div class="fx-intro-box"><div class="fx-big">DESAFIO!</div><p>'+esc(p.head)+'</p><small>'+esc(p.title)+'</small></div>';
+ F.ch={p,isHost,answered:-1,t0:0,left:p.secs,tm:null,done:false,res:null,ord:[]};
+ o.innerHTML='<div class="fx-vig"></div><div class="fx-top"><span class="fx-tag">🎯 DESAFIO</span>'+sndBtn()+closeBtn(isHost)+'</div>'
+  +'<div class="fx-intro-box"><div class="fx-big">DESAFIO!</div><p>'+esc(p.head)+'</p>'+(p.title?'<small>'+esc(p.title)+'</small>':'')+'</div>';
  SFX.whoosh();SFX.riser();
  setTimeout(()=>{if(!F.ch||F.ch.p!==p)return;
   F.ch.t0=Date.now();o.classList.remove('fx-intro');o.classList.add('fx-play');
-  o.innerHTML='<div class="fx-vig"></div><div class="fx-top"><span class="fx-tag">🎯 '+esc(p.head.toUpperCase())+(p.ref&&!isHost?'':'')+'</span>'+sndBtn()+(isHost?'':'<button type="button" class="fx-x" onclick="IASDEstudoFX.closeLocal()" aria-label="Fechar">✕</button>')+'</div>'
+  let mid='';
+  if(p.type==='mc'){
+   mid=(p.hints?'<div class="fx-hints" id="fx-hints">'+p.hints.map((h,i)=>'<div class="fx-hint" data-h="'+i+'"><em>Dica '+(i+1)+'</em><span>'+esc(h)+'</span></div>').join('')+'</div>':'')
+    +'<div class="fx-opts n'+p.opts.length+(p.opts.some(t=>t.length>26)?' long':'')+'">'+p.opts.map((t,i)=>'<button type="button" class="fx-o c'+i+'" data-i="'+i+'" '+(isHost?'disabled':'')+' onclick="IASDEstudoFX.pick('+i+')"><i>'+SHAPES[i%4]+'</i><span>'+esc(t)+'</span></button>').join('')+'</div>';
+  }else if(p.type==='ord'){
+   mid='<div class="fx-ord"><div class="fx-slots" id="fx-slots"></div><div class="fx-pool" id="fx-pool"></div></div>';
+  }else{
+   mid=isHost?'<div class="fx-live" id="fx-live"></div>':'<div class="fx-wordbox"><input id="fx-word" maxlength="24" placeholder="Digite uma palavra" autocomplete="off" onkeydown="if(event.key===\'Enter\')IASDEstudoFX.sendWord()"><button type="button" class="fx-send" onclick="IASDEstudoFX.sendWord()">Enviar</button></div>';
+  }
+  const hint=p.type==='ord'?'Toque nos itens, um por vez, na ordem certa.':p.type==='cloud'?'Escreva só uma palavra. Todos verão a nuvem no final.':p.kind==='who'?'Quanto mais cedo acertar, mais pontos.':'Toque na resposta certa — quanto mais rápido, mais pontos.';
+  o.innerHTML='<div class="fx-vig"></div><div class="fx-top"><span class="fx-tag">🎯 '+esc(p.head.toUpperCase())+'</span>'+sndBtn()+closeBtn(isHost)+'</div>'
    +'<div class="fx-body"><div class="fx-timer"><svg viewBox="0 0 100 100"><circle class="fx-ring-bg" cx="50" cy="50" r="44"/><circle id="fx-ring" class="fx-ring" cx="50" cy="50" r="44"/></svg><b id="fx-num">'+p.secs+'</b></div>'
-   +'<div class="fx-q">'+esc(p.prompt)+'</div>'
-   +'<div class="fx-opts n'+p.opts.length+'">'+p.opts.map((t,i)=>'<button type="button" class="fx-o c'+i+'" data-i="'+i+'" '+(isHost?'disabled':'')+' onclick="IASDEstudoFX.pick('+i+')"><i>'+SHAPES[i%4]+'</i><span>'+esc(t)+'</span></button>').join('')+'</div>'
-   +'<div class="fx-foot" id="fx-foot">'+(isHost?'<span id="fx-cnt">0 respostas</span><button type="button" class="fx-end" onclick="IASDEstudoFX.endNow()">Encerrar agora</button>':'<span>Toque na resposta certa — quanto mais rápido, mais pontos.</span>')+'</div></div>';
+   +'<div class="fx-q'+(p.prompt.length>90?' sm':'')+'">'+esc(p.prompt)+'</div>'+(p.ref&&p.verse?'<div class="fx-sub">'+esc(p.ref)+'</div>':'')+mid
+   +'<div class="fx-foot" id="fx-foot">'+(isHost?'<span id="fx-cnt">0 respostas</span><button type="button" class="fx-end" onclick="IASDEstudoFX.endNow()">Encerrar agora</button>':'<span>'+hint+'</span>')+'</div></div>';
+  if(p.type==='ord')ordRender();
   tickCh();F.ch.tm=setInterval(tickCh,100);
  },1700);
 }
@@ -116,6 +300,7 @@ function tickCh(){
  const c=F.ch;if(!c||c.done)return;const p=c.p,el=Math.max(0,(Date.now()-c.t0)/1000),left=Math.max(0,p.secs-el),sec=Math.ceil(left);
  const ring=$('fx-ring'),num=$('fx-num'),o=$('es-fx');if(!ring||!num||!o)return;
  const C=2*Math.PI*44;ring.style.strokeDasharray=C;ring.style.strokeDashoffset=C*(1-left/p.secs);
+ if(p.hints){const n=Math.min(p.hints.length,1+Math.floor(el/5));document.querySelectorAll('#fx-hints .fx-hint').forEach((h,i)=>{if(i<n&&!h.classList.contains('on')){h.classList.add('on');if(i>0)SFX.ding()}})}
  if(num.textContent!==String(sec)){num.textContent=sec;
   if(left>0){if(sec<=5){SFX.beat();SFX.tick()}else SFX.tock()}}
  o.classList.toggle('fx-hot',left<=5&&left>0);o.classList.toggle('fx-late',left<=2&&left>0);
@@ -123,42 +308,76 @@ function tickCh(){
   const f=$('fx-foot');if(f&&!c.isHost)f.innerHTML='<span>⏰ Tempo! Aguardando o resultado…</span>';
   if(c.isHost)setTimeout(()=>finishChallenge(),900)}
 }
+function sendAns(extra){const c=F.ch,k=K();c.answered=1;const ms=Date.now()-c.t0;k.send('cha',Object.assign({cid:c.p.cid,id:k.S.room.me,name:k.myName(),ms},extra));
+ const f=$('fx-foot');if(f)f.innerHTML='<span>✔ Resposta enviada! Aguardando o tempo acabar…</span>'}
 function pick(i){
- const c=F.ch,k=K();if(!c||c.isHost||c.done||c.answered>=0)return;
- c.answered=i;const ms=Date.now()-c.t0;SFX.pop();
+ const c=F.ch;if(!c||c.isHost||c.done||c.answered>=0||c.p.type!=='mc')return;
+ SFX.pop();
  document.querySelectorAll('#es-fx .fx-o').forEach(b=>{b.disabled=true;b.classList.toggle('sel',+b.dataset.i===i);b.classList.toggle('dim',+b.dataset.i!==i)});
- const f=$('fx-foot');if(f)f.innerHTML='<span>✔ Resposta enviada! Aguardando o tempo acabar…</span>';
- k.send('cha',{cid:c.p.cid,id:k.S.room.me,name:k.myName(),i,ms});
+ sendAns({i});
 }
+function ordRender(){
+ const c=F.ch;if(!c||c.p.type!=='ord')return;const p=c.p,pool=$('fx-pool'),slots=$('fx-slots');if(!pool||!slots)return;
+ const lock=c.isHost||c.done||c.answered>=0;
+ slots.innerHTML=p.opts.map((_,s)=>{const idx=c.ord[s];return '<button type="button" class="fx-slot'+(idx!=null?' on':'')+'" '+(idx==null||lock?'disabled':'')+' onclick="IASDEstudoFX.unplace('+s+')"><em>'+(s+1)+'</em><span>'+(idx!=null?esc(p.opts[idx]):'')+'</span></button>'}).join('');
+ pool.innerHTML=p.opts.map((t,i)=>'<button type="button" class="fx-chip'+(c.ord.includes(i)?' used':'')+'" '+(c.ord.includes(i)||lock?'disabled':'')+' onclick="IASDEstudoFX.place('+i+')">'+esc(t)+'</button>').join('')}
+function place(i){const c=F.ch;if(!c||c.isHost||c.done||c.answered>=0||c.p.type!=='ord'||c.ord.includes(i))return;c.ord.push(i);SFX.pop();
+ if(c.ord.length===c.p.opts.length){sendAns({o:c.ord.slice()})}ordRender()}
+function unplace(s){const c=F.ch;if(!c||c.isHost||c.done||c.answered>=0||c.p.type!=='ord')return;c.ord.splice(s,1);ordRender()}
+function sendWord(){const c=F.ch;if(!c||c.isHost||c.done||c.answered>=0||c.p.type!=='cloud')return;const inp=$('fx-word'),w=(inp&&inp.value||'').trim().split(/\s+/)[0];if(!w){inp&&inp.focus();return}
+ SFX.pop();if(inp){inp.disabled=true}const b=document.querySelector('#es-fx .fx-send');if(b)b.disabled=true;sendAns({w:w.slice(0,24)})}
 function onAnswer(m){
  const h=F.hostCh;if(!h||!h.live||m.cid!==h.cid||h.answers[m.id])return;
- h.answers[m.id]={name:String(m.name||'?').slice(0,40),i:+m.i,ms:Math.max(0,Math.min(+m.ms||0,h.secs*1000))};
+ const a={name:String(m.name||'?').slice(0,40),ms:Math.max(0,Math.min(+m.ms||0,h.secs*1000))};
+ if(h.type==='mc')a.i=+m.i;else if(h.type==='ord')a.o=Array.isArray(m.o)?m.o.slice(0,10).map(Number):[];else a.w=String(m.w||'').trim().slice(0,24);
+ h.answers[m.id]=a;
  const n=Object.keys(h.answers).length,cnt=$('fx-cnt');if(cnt)cnt.textContent=n+(n===1?' resposta':' respostas');
+ if(h.type==='cloud'){const lv=$('fx-live');if(lv&&a.w){const s=document.createElement('span');s.className='fx-bub';s.style.setProperty('--h',hue(a.w));s.textContent=a.w;lv.appendChild(s)}}
  SFX.pop();
  const R=K().S.room;if(!R)return;const total=Object.keys(R.peers).length;
  if(total&&n>=total&&F.ch&&!F.ch.done){setTimeout(()=>{if(F.hostCh&&F.hostCh.live&&F.ch&&!F.ch.done){F.ch.done=true;clearInterval(F.ch.tm);finishChallenge()}},900)}
 }
 function endNow(){if(F.ch&&F.hostCh&&F.hostCh.live){F.ch.done=true;clearInterval(F.ch.tm);finishChallenge()}}
 function finishChallenge(){
- const h=F.hostCh,k=K();if(!h||!h.live||!k.S.room)return;h.live=false;
- const ans=Object.entries(h.answers).map(([id,a])=>{const ok=a.i===h.key,pts=ok?Math.round(1000-700*(a.ms/(h.secs*1000))):0;
-  const s=F.score[id]=F.score[id]||{name:a.name,pts:0};s.name=a.name;s.pts+=pts;return {id,name:a.name,i:a.i,pts,ms:a.ms}});
+ const h=F.hostCh,k=K(),R=k.S.room;if(!h||!h.live||!R)return;h.live=false;
+ const ids=new Map();Object.entries(R.peers).forEach(([id,p])=>ids.set(id,String(p.name||'?').slice(0,40)));Object.entries(h.answers).forEach(([id,a])=>{if(!ids.has(id))ids.set(id,a.name)});
+ const same=(x,y)=>Array.isArray(x)&&Array.isArray(y)&&x.length===y.length&&x.every((v,i)=>v===y[i]);
+ const ppl=[...ids].map(([id,name])=>{const a=h.answers[id];let ok=null;
+  if(h.type==='mc')ok=!!a&&a.i===h.key;else if(h.type==='ord')ok=!!a&&same(a.o,h.key);
+  const pts=ok?Math.round(1000-700*(a.ms/(h.secs*1000))):0;
+  if(a&&h.type!=='cloud'){const s=F.score[id]=F.score[id]||{name,pts:0};s.name=name;s.pts+=pts}
+  return {id,name,ok,none:!a,pts,ms:a?a.ms:0,w:a&&a.w||''}});
  const board=Object.entries(F.score).map(([id,s])=>({id,name:s.name,pts:s.pts})).sort((a,b)=>b.pts-a.pts).slice(0,8);
- const res={cid:h.cid,correct:h.key,ans,board,total:Object.keys(k.S.room.peers).length};
+ let words=null;if(h.type==='cloud'){const m=new Map();ppl.forEach(p=>{const w=norm(p.w);if(!w)return;const e=m.get(w)||{w:p.w,n:0};e.n++;m.set(w,e)});words=[...m.values()].sort((a,b)=>b.n-a.n).slice(0,40)}
+ const res={cid:h.cid,type:h.type,correct:h.key,ppl,board,words};
  k.send('chr',res);showResult(res);
 }
+const sil='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.3"/><path d="M3.4 21.5c.5-4.8 4.2-7.3 8.6-7.3s8.1 2.5 8.6 7.3z"/></svg>';
+const chip=(p,me,extra)=>'<div class="fx-pp'+(p.id===me?' me':'')+'" style="--h:'+hue(p.name)+'"><span class="fx-pa">'+sil+'</span><b>'+esc(p.name)+(p.id===me?' (você)':'')+'</b>'+(extra?'<small>'+extra+'</small>':'')+'</div>';
 function showResult(res){
  const c=F.ch,k=K();if(!c||c.p.cid!==res.cid)return;
- c.done=true;clearInterval(c.tm);c.res=res;
+ c.done=true;clearInterval(c.tm);c.res=res;const me=k.S.room.me,p=c.p;
  const o=$('es-fx');if(!o)return;o.classList.remove('fx-hot','fx-late','fx-time','fx-play','fx-intro');o.classList.add('fx-res');
- const me=res.ans.find(a=>a.id===k.S.room.me),ok=me&&me.i===res.correct;
- o.querySelectorAll('.fx-o').forEach(b=>{const i=+b.dataset.i;b.disabled=true;b.classList.remove('sel','dim');b.classList.add(i===res.correct?'right':'wrong')});
- const nOk=res.ans.filter(a=>a.i===res.correct).length;
+ const mine=res.ppl.find(a=>a.id===me);
+ if(res.type==='mc')o.querySelectorAll('.fx-o').forEach(b=>{const i=+b.dataset.i;b.disabled=true;b.classList.remove('sel','dim');b.classList.add(i===res.correct?'right':'wrong')});
+ if(res.type==='ord'){const sl=$('fx-slots'),pl=$('fx-pool');if(pl)pl.remove();if(sl)sl.innerHTML=res.correct.map((oi,s)=>'<div class="fx-slot on right"><em>'+(s+1)+'</em><span>'+esc(p.opts[oi])+'</span></div>').join('')}
+ if(res.type==='cloud'){const mid=$('fx-live')||document.querySelector('.fx-wordbox');const mx=Math.max(1,...(res.words||[]).map(w=>w.n));
+  if(mid)mid.outerHTML='<div class="fx-cloud">'+(res.words||[]).map((w,i)=>'<span style="--h:'+hue(w.w)+';--s:'+(1+.9*w.n/mx).toFixed(2)+';--d:'+(i*.07)+'s">'+esc(w.w)+(w.n>1?'<sup>'+w.n+'</sup>':'')+'</span>').join('')+'</div>'}
+ const ok=mine&&mine.ok,scored=res.type!=='cloud';
+ const win=res.ppl.filter(a=>a.ok),lose=res.ppl.filter(a=>scored&&!a.ok);
+ let msg;
+ if(!scored)msg='<div class="fx-verdict">'+res.ppl.filter(a=>a.w).length+' palavra(s) enviada(s)</div>';
+ else if(c.isHost)msg='<div class="fx-verdict">'+win.length+' de '+res.ppl.length+' acertaram</div>';
+ else if(!mine||mine.none)msg='<div class="fx-verdict no">⏰ Você não respondeu a tempo.</div>';
+ else msg=ok?'<div class="fx-verdict ok">🎉 Acertou! +'+mine.pts+' pontos</div>':'<div class="fx-verdict no">Quase! O certo está em verde.</div>';
+ const who=scored?'<div class="fx-who"><section class="ok"><h4>✔ Acertaram · '+win.length+'</h4>'+(win.length?win.sort((a,b)=>a.ms-b.ms).map((a,i)=>chip(a,me,'+'+a.pts+' · '+(a.ms/1000).toFixed(1)+'s')).join(''):'<p>Ninguém acertou desta vez.</p>')+'</section>'
+  +'<section class="no"><h4>✖ Erraram · '+lose.length+'</h4>'+(lose.length?lose.map(a=>chip(a,me,a.none?'não respondeu':'')).join(''):'<p>Ninguém errou. 👏</p>')+'</section></div>'
+  :'<div class="fx-who one"><section class="ok"><h4>Quem participou</h4>'+res.ppl.map(a=>chip(a,me,a.w?esc(a.w):'não enviou')).join('')+'</section></div>';
+ const board=res.board.map((b,i)=>'<div class="fx-row'+(b.id===me?' me':'')+'" style="--d:'+(i*.12)+'s"><em>'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'º')+'</em><b>'+esc(b.name)+'</b><span>'+b.pts+' pts</span></div>').join('');
  const f=$('fx-foot');
- const board=res.board.map((b,i)=>'<div class="fx-row'+(b.id===k.S.room.me?' me':'')+'" style="--d:'+(i*.12)+'s"><em>'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'º')+'</em><b>'+esc(b.name)+'</b><span>'+b.pts+' pts</span></div>').join('');
- const msg=c.isHost?'<div class="fx-verdict">'+nOk+' de '+res.ans.length+' acertaram</div>':(me?(ok?'<div class="fx-verdict ok">🎉 Acertou! +'+me.pts+' pontos</div>':'<div class="fx-verdict no">Quase! A resposta certa está em verde.</div>'):'<div class="fx-verdict no">⏰ Você não respondeu a tempo.</div>');
- if(f)f.outerHTML='<div class="fx-result">'+msg+(res.board.length?'<div class="fx-board"><h4>Placar da sala</h4>'+board+'</div>':'')+'<div class="fx-acts">'+(c.isHost?'<button type="button" class="fx-end" onclick="IASDEstudoFX.closeAll()">Fechar para todos</button>':'<button type="button" class="fx-end" onclick="IASDEstudoFX.closeLocal()">Continuar</button>')+'</div></div>';
- if(c.isHost||me){if(ok||c.isHost){SFX.win()}else SFX.lose()}else SFX.lose();
+ const html='<div class="fx-result">'+msg+who+(scored&&res.board.length?'<div class="fx-board"><h4>Placar da sala</h4>'+board+'</div>':'')+'<div class="fx-acts">'+(c.isHost?'<button type="button" class="fx-end" onclick="IASDEstudoFX.closeAll()">Fechar para todos</button>':'<button type="button" class="fx-end" onclick="IASDEstudoFX.closeLocal()">Continuar</button>')+'</div></div>';
+ if(f)f.outerHTML=html;
+ if(scored){if(c.isHost||ok)SFX.win();else SFX.lose()}else SFX.win();
  if(c.isHost)F.hostCh=null;
 }
 function closeAll(){const k=K();k.send('chx',{});closeFx();F.hostCh=null}
@@ -190,12 +409,20 @@ function stageRun(){
  },720);
 }
 function fmtFor(b,text){return String(text||'')}
+function picHTML(a,big){const k=K(),ms=k.stream(a.id);return {html:'<div class="stg-pic'+(big?' big':'')+(ms?' vid':'')+'" style="--h:'+hue(a.name)+'"><video autoplay playsinline muted></video><span class="stg-sil">'+sil+'</span><i class="stg-in">'+esc((a.name||'?').charAt(0).toUpperCase())+'</i></div>',ms}}
+function bindPic(root,ms,id){const v=root.querySelector('video'),pic=root.querySelector('.stg-pic');
+ const put=m=>{if(!v||!m)return false;v.srcObject=m;const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});if(pic)pic.classList.add('vid');return true};
+ if(put(ms)||!id)return;let n=0;const t=setInterval(()=>{if(!root.isConnected||++n>16){clearInterval(t);return}if(put(K().stream(id)))clearInterval(t)},500)}
+function typeText(el,text){text=String(text||'');if(text.length>200){el.textContent=text;return}let i=0;el.textContent='';el.classList.add('typing');
+ const t=setInterval(()=>{if(!el.isConnected){clearInterval(t);return}i+=2;el.textContent=text.slice(0,i);if(i>=text.length){clearInterval(t);el.classList.remove('typing')}},24)}
 function addCard(a){
  const g=$('stg-grid');const k=K(),R=k.S.room;if(!g||!R)return;
  const d=document.createElement('div');d.className='stg-card';d.dataset.id=a.id;d.style.setProperty('--h',hue(a.name));
- d.innerHTML='<span class="stg-av">'+esc((a.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(a.id===R.me?a.name+' (você)':a.name)+'</b><p>'+esc(a.text)+'</p>';
+ const pc=picHTML(a,false);
+ d.innerHTML=pc.html+'<b class="stg-nm">'+esc(a.id===R.me?a.name+' (você)':a.name)+'</b><p class="stg-tx"></p>';
+ bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(R.host)k.send('hl',{bid:F.stage&&F.stage.bid,id:a.id}),spot(F.stage&&F.stage.bid,a.id)};
- g.appendChild(d);SFX.pop();d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
+ g.appendChild(d);SFX.pop();setTimeout(()=>typeText(d.querySelector('.stg-tx'),a.text),380);d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
 }
 function stageTally(){
  const S2=F.stage;if(!S2)return;const b=S2.b,t=$('stg-tally');if(!t||b.kind!=='x'||!b.opts)return;
@@ -214,7 +441,7 @@ function spot(bid,id){
  if(!id||S2.spot===id){S2.spot=null;return}
  const a=ansList(bid).find(x=>x.id===id);if(!a)return;S2.spot=id;
  const d=document.createElement('div');d.className='stg-spot';d.style.setProperty('--h',hue(a.name));
- d.innerHTML='<div class="stg-spotc"><span class="stg-av big">'+esc((a.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(a.name)+'</b><p>'+esc(a.text)+'</p><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';
+ const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><p>'+esc(a.text)+'</p><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(K().S.room.host){K().send('hl',{bid,id:null});spot(bid,null)}else{d.remove();S2.spot=null}};
  $('es-stage').appendChild(d);SFX.chime();
 }
@@ -250,6 +477,6 @@ function on(ev,p){
  else if(ev==='end'&&!R.host){closeFx();stageClose(true);breakStop(true);k.endedByHost()}
 }
 function reset(){closeFx();stageClose(true);breakStop(true);F.hostCh=null;F.score={}}
-window.IASDEstudoFX={on,launch,pick,endNow,closeAll,closeLocal,stageEnd,stageClose,toggleSound(){setMuted(!muted)},breakGo,breakEnd,reset,sfx:SFX,stageOpen,
+window.IASDEstudoFX={on,launch,pick,place,unplace,sendWord,endNow,closeAll,closeLocal,stageEnd,stageClose,toggleSound(){setMuted(!muted)},breakGo,breakEnd,reset,sfx:SFX,stageOpen,
  isLive:()=>!!(F.hostCh&&F.hostCh.live)};
 })();
