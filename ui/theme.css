@@ -280,3 +280,11 @@ html[data-theme="light"] .vs-card{background:#fff;color:#0f1c3a;border-color:#b4
 html[data-theme="light"] .vs-b{background:#edf1f9}
 .iu-pas .iu-sharev{grid-column:1/-1;background:linear-gradient(135deg,#f5b73a,#e08a12)!important;color:#1b1608!important;border-color:transparent!important;font-weight:700}
 .vs-act .vs-b:last-child:nth-child(odd){grid-column:1/-1}
+
+/* Entalhe/barra de status (iPhone X+): o cabeçalho cobre a área segura e nada vaza por cima ou pelos lados */
+@media (max-width:900px){
+ html{background:var(--iu-bg,#080f18)}
+ html body.iu .iu-top{top:0;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:calc(16px + env(safe-area-inset-left,0px));padding-right:calc(16px + env(safe-area-inset-right,0px));background:var(--iu-bg);box-shadow:0 -60px 0 0 var(--iu-bg)}
+ html body.iu main{padding-left:calc(16px + env(safe-area-inset-left,0px))!important;padding-right:calc(16px + env(safe-area-inset-right,0px))!important}
+ .iu-bn{padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px))}
+}
