@@ -15,7 +15,10 @@ const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:st
 
 const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{}};
 const course=()=>(S.courses||[]).find(c=>c.id===S.cid)||null;
-const myName=()=>{try{const p=myProfile;if(p&&p.full_name)return p.full_name}catch(e){}const u=user();return (u&&(u.user_metadata?.full_name||(u.email||'').split('@')[0]))||'Fundador'};
+const GN='iasd-study-guest-name';
+const guestName=()=>{try{return (localStorage.getItem(GN)||'').trim()}catch(e){return ''}};
+const myName=()=>{try{const p=myProfile;if(p&&p.full_name)return p.full_name}catch(e){}const u=user();const n=u&&(u.user_metadata?.full_name||(u.email||'').split('@')[0]);return n||guestName()||(isF()?'Fundador':'Convidado')};
+const urlCode=()=>{try{return (new URLSearchParams(location.search).get('sala')||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)}catch(e){return ''}};
 
 /* ---------- dados ---------- */
 function sqlMsg(e){const m=(e&&e.message)||String(e);return /does not exist|schema cache|relation|function/i.test(m)?'Falta rodar o SQL docs/supabase-estudo.sql no Supabase.':/permiss|policy|row-level/i.test(m)?'Seu cargo não tem acesso a esta área.':m}
@@ -44,8 +47,8 @@ async function loadProg(){
 }
 let saveT=null,courseT=null;
 function saveProg(){
- try{localStorage.setItem(LS_PROG+S.cid,JSON.stringify(S.prog))}catch(e){}
- clearTimeout(saveT);saveT=setTimeout(async()=>{try{const u=user();if(!u||!S.cid)return;await cloud().from('iasd_study_progress').upsert({user_id:u.id,course_id:S.cid,data:S.prog,updated_at:new Date().toISOString()})}catch(e){console.warn('Estudo: progresso',e)}},900);
+ try{localStorage.setItem(LS_PROG+(S.cid||'sala'),JSON.stringify(S.prog))}catch(e){}
+ clearTimeout(saveT);saveT=setTimeout(async()=>{try{const u=user();if(!u||!S.cid||!isF())return;await cloud().from('iasd_study_progress').upsert({user_id:u.id,course_id:S.cid,data:S.prog,updated_at:new Date().toISOString()})}catch(e){console.warn('Estudo: progresso',e)}},900);
 }
 function saveCourse(now){
  const c=course();if(!c)return;clearTimeout(courseT);
@@ -72,17 +75,27 @@ async function verseText(ref){const h=await verseHtml(ref);return h.replace(/<su
 /* ---------- páginas ---------- */
 const I=n=>{try{return IASDUI.icon?IASDUI.icon(n):''}catch(e){return ''}};
 function page(){
- if(!isF())return '<div class="pg"><div class="pg-card"><h2>Acesso restrito</h2><p>A Sala de Estudo está em testes e é exclusiva do fundador.</p></div></div>';
  return '<div class="pg es" id="es-root"><div class="pg-card pg-empty">Carregando…</div></div>';
 }
-function after(){if(!isF())return;if(S.courses===null)load();else paint();paintBar();paintDock()}
+function after(){if(!isF()){paint();paintBar();paintDock();return}if(S.courses===null)load();else paint();paintBar();paintDock()}
 function paint(){
  const root=$('es-root');if(!root)return;
+ if(!isF()){root.innerHTML=(S.view==='lesson'&&S.room&&lessonSrc())?lessonHTML():guestHTML();afterPaint();return}
  if(S.err&&!(S.courses||[]).length){root.innerHTML='<div class="pg-card"><h2>Sala de Estudo</h2><p class="es-err">'+esc(S.err)+'</p><button class="pg-gold" onclick="IASDEstudo.reload()">Tentar de novo</button></div>';return}
  if(S.view==='lesson'&&lessonSrc())root.innerHTML=lessonHTML();
  else if(S.view==='course'&&course())root.innerHTML=courseHTML();
  else root.innerHTML=homeHTML();
  afterPaint();
+}
+function guestHTML(){
+ const code=(S.room&&S.room.code)||urlCode(),nm=guestName();
+ const hero='<div class="es-hero"><div><span class="es-kick">ESTUDO BÍBLICO</span><h1>Sala de <em>Estudo</em></h1><p>Entre na sala com o código que o dirigente passou. Funciona no celular e no computador, com voz e vídeo.</p></div></div>';
+ if(S.room)return hero+'<section class="pg-card"><h2 class="es-h">🎥 Você está na sala <b>'+esc(S.room.code)+'</b></h2><p class="muted">Aguardando o dirigente começar a lição…</p><button class="pg-ghost es-wide" onclick="IASDEstudo.leaveAsk()">Sair da sala</button></section>';
+ return hero+'<section class="pg-card"><h2 class="es-h">🎥 Entrar na sala</h2>'
+  +'<label class="es-lb">Seu nome<input id="es-gname" class="es-in" maxlength="40" autocomplete="name" placeholder="Como quer ser chamado" value="'+esc(nm)+'"></label>'
+  +'<label class="es-lb">Código da sala<input id="es-code" class="es-in" maxlength="8" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" value="'+esc(code)+'"></label>'
+  +'<button class="pg-gold es-wide" onclick="IASDEstudo.joinRoom()">Entrar na sala</button>'
+  +'<small class="es-note">Você acompanha a lição e participa por voz e vídeo. Os cursos e as respostas dos membros não ficam visíveis.</small></section>';
 }
 function homeHTML(){
  const cs=S.courses||[];
@@ -304,7 +317,8 @@ async function startRoom(code,host){
 async function track(){const R=S.room;if(!R||!R.ch)return;try{await R.ch.track({id:R.me,name:myName(),host:R.host,hand:R.hand,voice:!!R.voice,mic:R.voice?R.voice.mic:false,cam:R.voice?R.voice.cam:false})}catch(e){}}
 function createRoom(){if(!course()&&!(S.courses||[]).length){toast('Crie um curso antes.');return}
  const c=course()||S.courses[0];S.cid=c.id;loadProg().then(async()=>{await startRoom(mkCode(),true);toast('Sala criada. Passe o código '+S.room.code+' aos participantes.')})}
-async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().toUpperCase();if(v.length<4){toast('Digite o código da sala.');return}
+async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4){toast('Digite o código da sala.');return}
+ if(!isF()){const g=$('es-gname'),n=((g&&g.value)||'').trim();if(!n&&!guestName()){toast('Escreva seu nome.');return}if(n){try{localStorage.setItem(GN,n)}catch(e){}}}
  await startRoom(v,false);if(S.room)toast('Aguardando o dirigente…')}
 function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();if(!l)return;R.lesson={li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev})}
 function setPos(i){const R=S.room;if(!R||!R.host)return;R.bi=i;send('pos',{bi:i});markCur(false)}
@@ -333,7 +347,7 @@ function backToRoom(){S.view='lesson';paint()}
 function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;track();paintBar()}
 function react(e){send('rx',{e,name:myName()});floatReact(e,'Você')}
 function floatReact(e,name){const d=document.createElement('div');d.className='es-fl';d.innerHTML=esc(e)+'<small>'+esc(name||'')+'</small>';d.style.left=(20+Math.random()*60)+'%';document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
-function copyInvite(){const R=S.room;if(!R)return;const t='Entre na Sala de Estudo do IASD APP: '+location.origin+' → Estudo → código '+R.code;
+function copyInvite(){const R=S.room;if(!R)return;const t='Entre na Sala de Estudo do IASD APP: '+location.origin+'/estudo?sala='+R.code+' (código '+R.code+')';
  if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Convite copiado.'));else toast('Código: '+R.code)}
 
 /* barra da sala (fixa) */
