@@ -410,3 +410,14 @@ body.es-host .es-dock{right:14px}body.es-host .es-chat{right:14px}
 .pf-ls details{border-top:1px solid var(--iu-bd,rgba(255,255,255,.1));padding-top:6px}
 .pf-ls summary{cursor:pointer;font-weight:700}
 .pf-qa{margin:6px 0 0;font-size:14px;line-height:1.45}.pf-qa b{display:block}.pf-qa span{white-space:pre-wrap;color:var(--iu-mu,#9fb4cc)}
+
+/* modais fora da sala: herdam as cores do tema (claro/escuro) */
+.es-expw,.sm-ask{--es-bd:var(--iu-bd,rgba(128,128,128,.25));--es-sf:var(--iu-sf,#10243d);--es-sf2:var(--iu-sf2,rgba(128,128,128,.12));--es-tx:var(--iu-tx,#fff);--es-mu:var(--iu-mu,#9fb4cc);--es-gd:var(--iu-gd,#f0b44c);color:var(--es-tx)}
+.es-expb,.sm-box{background:var(--iu-sf,#10243d);color:var(--iu-tx,#fff)}
+.es-expc,.es-expc p,.es-expc li{color:var(--iu-tx,#fff)}
+.eg-q{color:var(--iu-tx,#fff)}
+.eg-d{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:rgba(52,199,89,.12);border:1px solid rgba(52,199,89,.38)}
+.eg-d b{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#1f9d4d;margin-bottom:4px}
+.eg-d p{font-weight:700;font-size:16px;line-height:1.45}
+.es-expc h4{color:var(--iu-gd,#b97d12)}
+html[data-theme="light"] .es-expc h4{color:#a8690a}

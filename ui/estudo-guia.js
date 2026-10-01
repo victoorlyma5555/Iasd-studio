@@ -36,9 +36,39 @@ function gabarito(b){
  const r=b.opts.filter((o,i)=>b.keys[i]==='X');return r.map(o=>'<li>'+esc(o)+'</li>').join('');
 }
 /* devolve {html, share}: html para o dirigente, share = texto curto que pode ir para a turma */
+const DIRETA={
+'A Palavra de Deus':'A Bíblia é a Palavra de Deus, inspirada pelo Espírito Santo, e é a única regra de fé e prática. Por ela Deus fala conosco hoje.',
+'Deus e o Espírito Santo':'Há um só Deus em três Pessoas: Pai, Filho e Espírito Santo. O Espírito nos convence, guia à verdade e transforma o caráter.',
+'Criação':'Deus criou tudo, e o ser humano à Sua imagem, em seis dias, e descansou no sétimo. Por isso cada pessoa tem valor e propósito.',
+'O Sábado':'O sábado, sétimo dia, foi santificado por Deus na Criação e é lembrança de que Ele é Criador e Salvador. Guardamos por amor, com alegria.',
+'A Lei de Deus':'A Lei de Deus expressa o Seu amor. Ela não nos salva, mas mostra o pecado e guia quem já foi salvo pela graça. Obedecemos por amor a Jesus.',
+'Salvação pela graça':'Somos salvos pela graça, por meio da fé em Jesus, e não por obras. Ele nos perdoa, nos justifica e nos transforma.',
+'Jesus Cristo':'Jesus é Deus feito homem, viveu sem pecado, morreu em nosso lugar, ressuscitou e hoje intercede por nós. Toda a Bíblia aponta para Ele.',
+'Morte e ressurreição':'A morte é um sono inconsciente até a ressurreição na volta de Jesus. Os que morreram em Cristo ressuscitarão para a vida eterna.',
+'A volta de Jesus':'Jesus voltará de forma pessoal, visível e gloriosa para buscar os Seus. Ninguém sabe o dia; por isso vivemos preparados.',
+'Santuário e juízo':'No santuário celestial Jesus intercede por nós como Sacerdote e Advogado, e realiza a obra final de juízo antes de voltar.',
+'Batismo':'O batismo por imersão mostra a morte para o pecado e a nova vida em Cristo. É a decisão pública de seguir a Jesus.',
+'Oração':'Orar é conversar com Deus como com um amigo. Ele nos ouve e responde segundo a Sua sabedoria e o Seu amor.',
+'Mordomia':'Tudo pertence a Deus; somos administradores do tempo, dos talentos e dos bens. O dízimo e as ofertas expressam gratidão e confiança.',
+'A Igreja':'A igreja é a família dos que seguem a Jesus. Somos chamados a nos reunir, cuidar uns dos outros e anunciar o evangelho em unidade.',
+'Dons e missão':'Deus dá dons a todos para edificar a igreja e cumprir a missão. Cada um tem um papel em compartilhar a esperança em Jesus.',
+'Corpo e saúde':'O corpo é templo do Espírito Santo. Cuidar da saúde glorifica a Deus: alimentação simples, descanso, exercício e temperança.',
+'Casamento e família':'O casamento foi instituído por Deus no Éden, como união de amor e fidelidade. A família é lugar de graça, ensino e testemunho.',
+'O grande conflito':'Há uma guerra entre Cristo e Satanás sobre o caráter de Deus. Na cruz Cristo venceu, e nEle também podemos vencer a tentação.',
+'Profecia':'As profecias mostram que Deus conduz a história e cumpre a Sua palavra. Elas dão confiança e esperança, não medo.',
+'Novo céu e nova terra':'Deus fará novos céus e nova terra, sem dor, choro nem morte. A vida eterna é dom aos que confiam em Jesus.',
+'Vida cristã':'Crescemos em Cristo permanecendo nEle: oração, Palavra, comunhão e serviço. O Espírito produz fruto e molda o caráter.'
+};
+const GENERIC='A resposta está na própria Bíblia: leia o texto indicado e responda com suas palavras o que ele ensina sobre Deus, sobre nós e sobre o caminho da salvação em Jesus.';
+function firstSent(x,n){x=String(x||'').replace(/\s+/g,' ').trim();if(!x)return '';const m=x.match(/^(.+?[.!?])(\s|$)/);let t=m?m[1]:x;if(t.length<60&&m){const m2=x.slice(t.length).trim().match(/^(.+?[.!?])(\s|$)/);if(m2)t+=' '+m2[1]}return t.length>n?t.slice(0,n).replace(/\s+\S*$/,'')+'…':t}
+function direta(b,t){
+ if(b.opts&&b.keys){const g=gabarito(b);if(g){const txt=g.replace(/<\/li>/g,'; ').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/; $/,'');return b.kind==='vf'?'Confira cada afirmação: '+txt:txt}}
+ if(b.guide)return firstSent(b.guide,260);
+ if(t&&DIRETA[t[1]])return DIRETA[t[1]];
+ return GENERIC}
 function explain(b,lt){
  const t=pick(b,lt),refs=[...new Set((b.refs||[]).concat(t?t[5].slice(0,3):[]))];
- const g=gabarito(b);let h='<div class="eg-q">'+esc(b.text)+'</div>';
+ const g=gabarito(b),dr=direta(b,t);let h='<div class="eg-q">'+esc(b.text)+'</div><div class="eg-d"><b>Resposta direta</b><p>'+esc(dr)+'</p></div>';
  if(g)h+='<h4>Resposta esperada</h4><ul class="eg-ul">'+g+'</ul>';
  if(b.guide)h+='<h4>Explicação</h4><p>'+nl(b.guide)+'</p>';
  if(t&&!b.guide)h+='<h4>Explicação</h4><p>'+esc(t[3])+'</p>';
@@ -48,7 +78,7 @@ function explain(b,lt){
  if(!t&&!b.guide&&!b.note)h+='<h4>Explicação</h4><p>Deixe a própria Bíblia responder: leia o texto indicado e peça que a turma diga com palavras simples o que ele ensina sobre Deus, sobre nós e sobre o caminho da salvação em Jesus.</p>';
  if(refs.length)h+='<h4>Base bíblica</h4><div class="eg-refs">'+refs.map(r=>'<span>📖 '+esc(r)+'</span>').join('')+'</div>';
  h+='<h4>Como conduzir</h4><ol class="eg-ul">'+base.map(x=>'<li>'+esc(x)+'</li>').join('')+(t?'<li>'+esc(t[4])+'</li>':'')+'</ol>';
- const share=[b.guide||(t&&t[3])||'',g&&b.opts?'':''].join('').slice(0,900);
+ const share=(dr+'\n\n'+(b.guide||(t&&t[3])||'')).slice(0,900);
  return {html:h,share,refs,topic:t?t[1]:''};
 }
 window.IASDGuia={explain,pick};
