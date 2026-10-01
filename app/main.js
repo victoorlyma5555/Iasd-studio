@@ -251,7 +251,7 @@ function projectionFeedback(message,failed=false){
  const el=$('projection-feedback');
  if(el){el.textContent=message;el.style.color=failed?'#ffb2a9':'#9ce3ba'}
 }
-window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-height')return;const frame=document.getElementById('iasd-studio-frame');if(frame&&e.source===frame.contentWindow){const height=Number(e.data.height);/* Size from the studio's actual content, not its document/viewport height. One page scrollbar only. */ if(Number.isFinite(height)&&height>=200&&height<=20000&&Math.abs(frame.getBoundingClientRect().height-height)>2){frame.style.height=Math.ceil(height)+'px'}}});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-height')return;const frame=document.getElementById('iasd-studio-frame');if(frame&&e.source===frame.contentWindow){const height=Number(e.data.height);/* Size from the studio's actual content, not its document/viewport height. One page scrollbar only. */ if(Number.isFinite(height)&&height>=200&&height<=20000&&Math.abs(frame.getBoundingClientRect().height-height)>2){frame.style.setProperty('height',Math.ceil(height)+'px','important')}}});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.type!=='iasd-studio-volume')return;if(canReachProjection())projectionWindow.postMessage({type:'iasd-studio-volume',value:e.data.value},location.origin)});
 function projectionPreviewLabel(t){
  if(!t)return 'Tela preta';
