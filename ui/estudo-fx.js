@@ -409,13 +409,20 @@ function stageOpen(bid){
 function stageRun(){
  const S2=F.stage;if(!S2||S2.intro)return;
  if(S2.tm)return;
+ clearTimeout(S2.cl);
  S2.tm=setInterval(()=>{
   const st=F.stage;if(!st){return}
   const next=ansList(st.bid).find(a=>!st.shown.has(a.id));
-  if(!next){clearInterval(st.tm);st.tm=null;stageNote();return}
+  if(!next){clearInterval(st.tm);st.tm=null;stageNote();armClose(st);return}
   st.shown.add(next.id);addCard(next);
  },720);
 }
+/* a janela de respostas fecha sozinha, para todos, um tempo depois da última resposta aparecer */
+function armClose(st){
+ clearTimeout(st.cl);const k=K(),R=k.S.room;if(!R)return;
+ const list=ansList(st.bid),chars=list.reduce((n,a)=>n+String(a.text||'').length,0),all=list.length>=Object.keys(R.peers).length+1;
+ const dwell=(all?8000:12000)+Math.min(9000,chars*30);
+ st.cl=setTimeout(()=>{if(F.stage!==st)return;if(R.host)stageEnd();else stageClose(true)},dwell)}
 function fmtFor(b,text){return String(text||'')}
 function picHTML(a,big){const k=K(),ms=k.stream(a.id);return {html:'<div class="stg-pic'+(big?' big':'')+(ms?' vid':'')+'" style="--h:'+hue(a.name)+'"><video autoplay playsinline muted></video><span class="stg-sil">'+sil+'</span><i class="stg-in">'+esc((a.name||'?').charAt(0).toUpperCase())+'</i></div>',ms}}
 function bindPic(root,ms,id){const v=root.querySelector('video'),pic=root.querySelector('.stg-pic');
@@ -451,10 +458,10 @@ function spot(bid,id){
  const d=document.createElement('div');d.className='stg-spot';d.style.setProperty('--h',hue(a.name));
  const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><p>'+esc(a.text)+'</p><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(K().S.room.host){K().send('hl',{bid,id:null});spot(bid,null)}else{d.remove();S2.spot=null}};
- $('es-stage').appendChild(d);SFX.chime();
+ $('es-stage').appendChild(d);SFX.chime();if(S2.cl)armClose(S2);
 }
 function stageEnd(){const k=K(),R=k.S.room;if(!R||!R.host||!F.stage)return;const bid=F.stage.bid;R.rev[bid]=false;k.send('rev',{bid,on:false});stageClose(true);k.repaintRv()}
-function stageClose(silent){const s=F.stage;if(s&&s.tm)clearInterval(s.tm);F.stage=null;const o=$('es-stage');if(o)o.remove();if(!$('es-fx'))document.body.classList.remove('es-fxon')}
+function stageClose(silent){const s=F.stage;if(s&&s.tm)clearInterval(s.tm);if(s)clearTimeout(s.cl);F.stage=null;const o=$('es-stage');if(o)o.remove();if(!$('es-fx'))document.body.classList.remove('es-fxon')}
 
 /* ---------- intervalo ---------- */
 function breakStart(secs){

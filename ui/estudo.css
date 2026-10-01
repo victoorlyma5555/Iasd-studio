@@ -424,3 +424,5 @@ html[data-theme="light"] .es-expc h4{color:#a8690a}
 
 .es-sendbar[data-v=ok] small{color:#1f9d4d;font-weight:700}.es-sendbar[data-v=part] small{color:#b7791f;font-weight:700}.es-sendbar[data-v=no] small{color:#d64545;font-weight:700}
 .es-sendbar[data-v=no] .es-send,.es-sendbar[data-v=part] .es-send{background:linear-gradient(135deg,#ffd37a,#f0b44c);color:#2a1a00;border:0}
+
+.es-exit{color:#ef4444!important;background:rgba(239,68,68,.12)!important}
