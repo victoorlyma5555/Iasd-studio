@@ -125,8 +125,8 @@ const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+'">'+esc(splitName(n)
 function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
 function screen(html,cls,opts){
  css();const r=root();
- r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">✕</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+(A().state?.().sfx||A().state?.().music?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
- S.sid=(S.sid||0)+1;snapSoon(true);
+ r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic sair" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">‹ Sair</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+(A().state?.().sfx||A().state?.().music?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
+ r.classList.toggle('host',!!S.host);S.sid=(S.sid||0)+1;snapSoon(true);
 }
 function sndMenu(btn){
  $('lg2-menu')?.remove();const st=A().state();const m=document.createElement('div');m.id='lg2-menu';m.className='lg2-menu';
@@ -150,7 +150,7 @@ function floatPts(text,el){if(!el)return;const s=document.createElement('b');s.c
 function css(){
  if($('live-game-css'))return;const s=document.createElement('style');s.id='live-game-css';s.textContent=`
 html.lg2-open{overflow:hidden}
-.lg2.telao .lg2-btn,.lg2.telao .lg2-autobar{display:none!important}.lg2.telao .lg2-body{pointer-events:none}
+.lg2.telao .lg2-btn,.lg2.telao .lg2-autobar,.lg2.telao .lb-mode{display:none!important}.lg2.telao .lg2-qv .qv-show{display:inline-flex!important}.lg2.telao .lg2-chrome{opacity:0;transition:opacity .4s}.lg2.telao:hover .lg2-chrome{opacity:1}.lg2.telao .lg2-body{pointer-events:none}
 .lg2{position:fixed;inset:0;z-index:9999;color:#f4f7ff;font-family:Inter,system-ui,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% -10%,#3b2c8f 0%,transparent 60%),radial-gradient(1000px 700px at 100% 110%,#8a5a12 0%,transparent 60%),linear-gradient(160deg,#0a1130,#0f1c4d 55%,#080d24);overflow:hidden}
 .lg2 *{box-sizing:border-box}.lg2 button{font:inherit;color:inherit;cursor:pointer}
 .lg2-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
@@ -306,6 +306,109 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lg2-awards div{font-size:clamp(15px,1.8vw,34px)}
 .lg2-av.big{font-size:clamp(40px,6.4vw,120px)}
 }
+/* ===== design de referência (telão 16:9): tudo medido em --u = 1% da largura (ou 1,78% da altura) ===== */
+.lg2-body.lb,.lg2-body.bgx{--u:min(1vw,1.7777vh);background:
+ radial-gradient(calc(var(--u)*13) calc(var(--u)*13) at 24% 4%,rgba(130,175,255,.55),transparent 70%),
+ radial-gradient(calc(var(--u)*10) calc(var(--u)*10) at 78% 12%,rgba(90,140,255,.5),transparent 70%),
+ radial-gradient(calc(var(--u)*30) calc(var(--u)*16) at 6% 40%,rgba(70,70,255,.4),transparent 70%),
+ radial-gradient(calc(var(--u)*34) calc(var(--u)*18) at 96% 58%,rgba(40,90,255,.4),transparent 70%),
+ radial-gradient(circle at 4% 24%,rgba(170,140,255,.85) 0 calc(var(--u)*.45),transparent calc(var(--u)*.6)),
+ radial-gradient(circle at 1.5% 66%,rgba(90,160,255,.85) 0 calc(var(--u)*.5),transparent calc(var(--u)*.65)),
+ linear-gradient(90deg,transparent 7%,rgba(90,130,255,.16) 8%,transparent 12%,transparent 26%,rgba(90,130,255,.14) 27%,transparent 31%,transparent 62%,rgba(90,130,255,.12) 63%,transparent 67%,transparent 84%,rgba(90,130,255,.16) 85%,transparent 90%),
+ linear-gradient(0deg,rgba(2,6,26,.78),transparent 38%),
+ url(/games/bg-igreja.jpg) center/cover no-repeat,
+ linear-gradient(180deg,#0b1d62 0%,#0a1650 48%,#060d36 100%)}
+.lg2-body.lb{padding:0;overflow:hidden}
+.lg2-body.cl::before,.lg2-body.qz::before{content:'';position:absolute;z-index:0;width:calc(var(--u)*3.6);height:calc(var(--u)*9.4);pointer-events:none;background:linear-gradient(#fff7cf,#ffd978) center/calc(var(--u)*1.05) 100% no-repeat,linear-gradient(#fff7cf,#ffd978) 50% 24%/100% calc(var(--u)*1.05) no-repeat;filter:drop-shadow(0 0 calc(var(--u)*1.4) rgba(255,215,120,.95)) drop-shadow(0 0 calc(var(--u)*3) rgba(255,200,90,.6))}
+.lg2-body.cl::before{left:calc(var(--u)*1);top:calc(var(--u)*5.2);opacity:.92}
+.lg2-body.qz::before{right:calc(var(--u)*.6);top:calc(var(--u)*15.2);opacity:.8}
+.lg2-body.cl::after{content:'BÍBLIA\\A SAGRADA';white-space:pre;position:absolute;z-index:0;right:calc(var(--u)*-2.5);top:calc(var(--u)*-.6);width:calc(var(--u)*17);height:calc(var(--u)*11.5);transform:perspective(calc(var(--u)*60)) rotateY(-24deg) rotateZ(-9deg);background:linear-gradient(135deg,#1c2a63,#090f33);border-radius:calc(var(--u)*1.2);border:1px solid rgba(160,130,255,.28);color:#a98be0;font:italic 800 calc(var(--u)*2.1)/1.2 Georgia,'Times New Roman',serif;text-align:center;padding-top:calc(var(--u)*4.4);text-shadow:0 0 calc(var(--u)*1) rgba(180,140,255,.55);opacity:.92;pointer-events:none}
+.lg2-lb{--u:min(1vw,1.7777vh);position:absolute;z-index:1;inset:0;margin:0 auto;width:min(100%,calc(var(--u)*100));display:grid;grid-template-columns:minmax(0,44.6fr) minmax(0,42fr);grid-template-rows:auto minmax(0,1fr);column-gap:calc(var(--u)*2);padding:0 calc(var(--u)*5.8) calc(var(--u)*2.6)}
+.lb-hd{grid-column:1/-1;position:relative;height:calc(var(--u)*14.8)}
+.lb-iasd{display:flex;align-items:center;gap:calc(var(--u)*.8)}
+.lb-iasd i{flex:none;width:calc(var(--u)*5);height:calc(var(--u)*4.7);filter:drop-shadow(0 0 calc(var(--u)*.3) rgba(255,255,255,.35));background:url(/iasd-simbolo-branco.png?v=1) center/contain no-repeat}
+.lb-iasd span{font-size:calc(var(--u)*1.55);line-height:1.1;font-weight:400;color:#fff;white-space:nowrap}
+.lb-hd .lb-iasd{position:absolute;left:calc(var(--u)*.8);top:calc(var(--u)*3.4)}
+.lb-brand{position:absolute;left:50%;top:calc(var(--u)*1);transform:translateX(-50%);display:grid;justify-items:center;text-align:center;line-height:1}
+.lb-brand .pe svg{height:calc(var(--u)*4.7);width:auto;display:block;filter:drop-shadow(0 0 calc(var(--u)*.7) rgba(248,170,40,.55))}
+.lb-brand h1{margin:calc(var(--u)*.6) 0 0;font-size:calc(var(--u)*4.7);font-weight:900;letter-spacing:.005em;white-space:nowrap;line-height:1}
+.lb-brand h1 span{background:linear-gradient(180deg,#fff 20%,#aebbe6);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 calc(var(--u)*.25) calc(var(--u)*.3) rgba(0,0,30,.55))}
+.lb-brand h1 b{background:linear-gradient(180deg,#fff0a0 0%,#ffc83d 45%,#e8860c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 calc(var(--u)*.6) rgba(245,170,40,.6)) drop-shadow(0 calc(var(--u)*.25) calc(var(--u)*.3) rgba(60,20,0,.6))}
+.lb-brand small{margin-top:calc(var(--u)*.7);font-size:calc(var(--u)*1.25);letter-spacing:.5em;padding-left:.5em;font-weight:600;color:#cfd9ff;opacity:.9}
+.lb-brand.stack h1{display:grid;font-size:calc(var(--u)*3.4);margin-top:calc(var(--u)*.3);line-height:.98}.lb-brand.stack h1 b{font-size:1.08em}
+.lb-brand.stack small{display:flex;align-items:center;gap:calc(var(--u)*1);font-size:calc(var(--u)*.95);margin-top:calc(var(--u)*.6)}
+.lb-brand.stack small:before,.lb-brand.stack small:after{content:'';width:calc(var(--u)*4.4);height:1px;background:linear-gradient(90deg,transparent,rgba(190,205,255,.7))}.lb-brand.stack small:after{transform:scaleX(-1)}
+.lb-ac{position:absolute;right:0;top:calc(var(--u)*3.9);display:grid;gap:calc(var(--u)*.6);justify-items:end}
+.lb-r2{display:flex;gap:calc(var(--u)*.6)}
+.lb-mode{font-style:normal;font-size:calc(var(--u)*1.15);font-weight:800;opacity:.85}
+.lg2-lb .lg2-btn{font-size:calc(var(--u)*1.2);padding:calc(var(--u)*.65) calc(var(--u)*1.3);border-radius:calc(var(--u)*1);white-space:nowrap}
+.lg2-lb .lg2-btn.gold{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.85) calc(var(--u)*1.9)}
+.lb-card{border-radius:calc(var(--u)*2);background:linear-gradient(160deg,rgba(26,56,150,.58),rgba(9,22,84,.66));border:1px solid rgba(140,172,255,.3);box-shadow:inset 0 0 calc(var(--u)*3) rgba(90,130,255,.12),0 calc(var(--u)*1.5) calc(var(--u)*4) rgba(0,0,14,.4)}
+.lb-cd{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;justify-items:center;align-items:center;padding:calc(var(--u)*1.3) calc(var(--u)*1.5) calc(var(--u)*1.1);min-height:0}
+.lg2-lb h3{margin:0;font-size:calc(var(--u)*2.15);font-weight:800;letter-spacing:.13em}
+.lg2-lb .lg2-code{font-size:calc(var(--u)*8);letter-spacing:.01em;line-height:1.02;font-weight:900;background:linear-gradient(180deg,#fff3ad 0%,#ffc83d 50%,#e8860c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 calc(var(--u)*1.5) rgba(255,190,60,.6))}
+.lb-qb{display:grid;place-items:center;min-height:0;width:100%}
+.lg2-lb .lg2-qr{width:calc(var(--u)*20.6);height:calc(var(--u)*20.6);aspect-ratio:1;padding:calc(var(--u)*.7);border-radius:calc(var(--u)*1.6);background:#fff;box-shadow:0 0 0 calc(var(--u)*.22) #5aa0ff,0 0 calc(var(--u)*3) rgba(80,150,255,.9)}
+.lb-sc{display:flex;align-items:center;gap:calc(var(--u)*1.2)}.lb-sc svg{height:calc(var(--u)*3.9);width:auto;color:#dce6ff}
+.lb-sc b{display:block;font-size:calc(var(--u)*1.85);font-weight:800;letter-spacing:.02em}.lb-sc small{display:block;font-size:calc(var(--u)*1.25);letter-spacing:.2em;color:#aab9e8;font-weight:600}
+.lb-rt{display:flex;flex-direction:column;gap:calc(var(--u)*.9);min-height:0}
+.lb-ct{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.5);height:calc(var(--u)*7.5);flex:none}
+.lb-ct svg{height:calc(var(--u)*4.4);width:auto;color:#eef3ff}
+.lb-ct b{font-size:calc(var(--u)*5.4);line-height:1;font-weight:900;background:linear-gradient(180deg,#9be1ff,#1d9bf0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 calc(var(--u)*.8) rgba(40,170,255,.65))}
+.lb-ct span{font-size:calc(var(--u)*2.3);font-weight:700}
+.lb-wt{flex:none;text-align:center;font-size:calc(var(--u)*1.15);letter-spacing:.4em;padding-left:.4em;color:#b9c6ee;font-weight:600}
+.lg2-lb .lg2-ppl{flex:0 1 auto;min-height:0;overflow:hidden;gap:calc(var(--u)*.7);align-content:flex-start;width:100%}
+.lg2-lb .lg2-ppl:empty{display:none}
+.lg2-lb .lg2-pp{font-size:calc(var(--u)*1.55);padding:calc(var(--u)*.35) calc(var(--u)*1.1) calc(var(--u)*.35) calc(var(--u)*.35)}
+.lb-hw{flex:1 1 0;min-height:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--u)*2) calc(var(--u)*2.6) calc(var(--u)*1.6)}
+.lb-hw h3{font-size:calc(var(--u)*2.3);font-weight:800;letter-spacing:.01em}
+.lb-st{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:calc(var(--u)*1.2)}
+.lb-n{width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 25%,#4f9bff,#1459dd 70%);font-weight:800;font-size:calc(var(--u)*2.1);box-shadow:0 0 calc(var(--u)*1.4) rgba(60,130,255,.65),inset 0 calc(var(--u)*.15) 0 rgba(255,255,255,.4)}
+.lb-ic{width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;display:grid;place-items:center;background:rgba(18,36,110,.7);border:1px solid rgba(150,180,255,.35);color:#dbe6ff}.lb-ic svg{width:52%;height:52%}
+.lb-st b{display:block;font-size:calc(var(--u)*1.65);font-weight:800;line-height:1.15;letter-spacing:.005em}.lb-st small{display:block;font-size:calc(var(--u)*1.25);color:#b3c1ee;line-height:1.25;margin-top:calc(var(--u)*.15)}
+.lg2-lb.many .lb-hw{display:none}.lg2-lb.many .lg2-ppl{flex:1 1 0}
+/* pergunta (referência 2) */
+.lg2-lb.lg2-qv{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);padding:0 calc(var(--u)*5.25) calc(var(--u)*2.8)}
+.qv-top{position:relative;flex:none;height:calc(var(--u)*14.8)}
+.qv-top .lb-brand{top:calc(var(--u)*1.1)}
+.qv-l{position:absolute;left:calc(var(--u)*-1.6);bottom:calc(var(--u)*2.4)}
+.qv-r{position:absolute;right:calc(var(--u)*-3.7);top:calc(var(--u)*1.2);display:grid;justify-items:end;gap:calc(var(--u)*1.9)}
+.qv-r .lb-iasd{position:static}
+.qv-row{display:flex;align-items:center;gap:calc(var(--u)*2.6)}
+.qv-pill{display:inline-flex;align-items:center;gap:calc(var(--u)*1);height:calc(var(--u)*3.4);padding:0 calc(var(--u)*2);border-radius:99px;background:rgba(10,24,84,.72);border:1px solid rgba(140,172,255,.35);font-size:calc(var(--u)*1.6);font-weight:700;box-shadow:inset 0 0 calc(var(--u)*1.4) rgba(90,130,255,.15)}
+.qv-pill svg{height:calc(var(--u)*2.1);width:auto}
+.qv-pill.gold{border-color:rgba(245,183,58,.75);color:#ffc83d;font-weight:800;padding:0 calc(var(--u)*2.2);gap:calc(var(--u)*.9);box-shadow:0 0 calc(var(--u)*1.2) rgba(245,183,58,.25),inset 0 0 calc(var(--u)*1.4) rgba(245,183,58,.12)}
+.qv-pill.gold i{width:1px;height:calc(var(--u)*1.9);background:rgba(255,255,255,.35);margin:0 calc(var(--u)*.5)}.qv-pill.gold span{color:#fff;font-weight:700}
+.qv-pill #lg-count b{color:#2fb4ff;font-size:1.2em;margin-right:.25em}.qv-pill svg{color:#cfe0ff}
+.lg2-qv .lg2-ring{width:calc(var(--u)*6.8);margin:0}
+.lg2-qv .lg2-ring svg{filter:drop-shadow(0 0 calc(var(--u)*.8) rgba(245,183,58,.5))}
+.lg2-qv .lg2-ring circle{stroke-width:7}.lg2-qv .lg2-ring .tr{stroke:rgba(245,183,58,.22)}.lg2-qv .lg2-ring .pg{stroke:#f5b73a}
+.lg2-qv .lg2-ring:before{content:'';position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,#0a1650 55%,#09123f)}
+.lg2-qv .lg2-ring b{font-size:calc(var(--u)*3.3);font-weight:900;z-index:1}
+.lg2-qv .lg2-qcard{flex:0 0 auto;margin:0 calc(var(--u)*1.1);padding:calc(var(--u)*1.7) calc(var(--u)*3);border-radius:calc(var(--u)*2.2);min-height:calc(var(--u)*10.9);display:grid;align-content:center;background:linear-gradient(180deg,rgba(34,66,170,.6),rgba(10,26,96,.78));border:1px solid rgba(150,180,255,.5);box-shadow:0 0 calc(var(--u)*2.4) rgba(80,130,255,.3),inset 0 calc(var(--u)*.12) 0 rgba(255,255,255,.22)}
+.lg2-qv .lg2-qcard h2{font-size:calc(var(--u)*2.8);font-weight:800;line-height:1.25}
+.lg2-qv .lg2-qcard h2[data-len=l]{font-size:calc(var(--u)*2.45)}.lg2-qv .lg2-qcard h2[data-len=xl]{font-size:calc(var(--u)*2.05)}
+.lg2-qv .lg2-qcard .ref{font-size:calc(var(--u)*1.4)}
+.lg2-qv .lg2-clues p{font-size:calc(var(--u)*2.2)}
+.lg2-qv .lg2-flash{min-height:calc(var(--u)*12)}.lg2-qv .lg2-flash .grid{font-size:calc(var(--u)*7)}.lg2-qv .lg2-flash .one{font-size:calc(var(--u)*11)}
+.lg2-qv .lg2-ans{flex:1 1 0;min-height:0;gap:calc(var(--u)*1.1) calc(var(--u)*1.6);grid-auto-rows:minmax(0,1fr)}
+.lg2-qv .lg2-a{min-height:0;font-size:calc(var(--u)*2.3);font-weight:700;padding:0 calc(var(--u)*2) 0 calc(var(--u)*2);gap:calc(var(--u)*1.7);border-radius:calc(var(--u)*2)}
+.lg2-qv .lg2-a i{width:calc(var(--u)*5.8);height:calc(var(--u)*5.8);border-radius:calc(var(--u)*1.3);font-size:calc(var(--u)*2.6);background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 0 calc(var(--u)*1.2) rgba(0,0,0,.3)}
+.qv-bot{flex:none;display:flex;justify-content:center;height:calc(var(--u)*3.8);margin-top:calc(var(--u)*.4)}
+.lg2-qv .lg2-btn.qv-show{display:inline-flex;align-items:center;gap:calc(var(--u)*1);font-size:calc(var(--u)*1.65);font-weight:700;padding:0 calc(var(--u)*3);border-radius:99px;background:rgba(10,24,84,.72);border:1px solid rgba(140,172,255,.4)}.qv-show svg{height:calc(var(--u)*2.2);width:auto}
+/* blocos de resposta neon (telão e celular) */
+.lg2-a{border:2px solid var(--nb,#fff);box-shadow:0 0 26px var(--ng,rgba(255,255,255,.3)),inset 0 0 22px rgba(255,255,255,.16),inset 0 2px 0 rgba(255,255,255,.4);overflow:hidden}
+.lg2-a:before{content:'';position:absolute;right:0;top:0;bottom:0;width:48%;pointer-events:none;background:radial-gradient(ellipse at 78% 58%,rgba(255,255,255,.34),transparent 62%);mix-blend-mode:soft-light}
+.lg2-a.c0,.lg2-a.tfF{--nb:#ff6b86;--n1:#f2334f;--n2:#a60f2b;--ng:rgba(255,60,95,.5)}
+.lg2-a.c1{--nb:#6fb0ff;--n1:#2f7bf2;--n2:#1239ad;--ng:rgba(70,135,255,.5)}
+.lg2-a.c2{--nb:#ffd25c;--n1:#f6a50f;--n2:#b3600a;--ng:rgba(255,185,40,.5)}
+.lg2-a.c3,.lg2-a.tfT{--nb:#62f2a4;--n1:#16b96c;--n2:#066b3d;--ng:rgba(40,230,140,.5)}
+.lg2-a.c0,.lg2-a.c1,.lg2-a.c2,.lg2-a.c3,.lg2-a.tfT,.lg2-a.tfF{background:linear-gradient(135deg,var(--n1),var(--n2))}
+.lg2-a.ok{box-shadow:0 0 0 5px #fff,0 0 60px rgba(52,211,153,.95)}
+/* botão Sair */
+.lg2.host .lg2-chrome .lg2-ic:not(.sair){position:fixed;bottom:12px;right:12px;z-index:5}.lg2.host .lg2-chrome .lg2-ic:not(.sair):nth-last-child(2){right:62px}.lg2.host .lg2-chrome .lg2-ic:not(.sair):nth-last-child(3){right:112px}
+.lg2-chrome .lg2-ic.sair{width:auto;padding:0 18px;height:42px;display:inline-flex;align-items:center;gap:8px;border-radius:99px;font-weight:700;font-size:15px;background:rgba(10,24,84,.72);border:1px solid rgba(140,172,255,.35)}
+@media (max-width:800px){.lg2-body.lb{overflow:auto}.lg2-lb{--u:2.4vw;position:relative;inset:auto;height:auto;grid-template-columns:1fr;grid-template-rows:none;padding:0 calc(var(--u)*3) calc(var(--u)*3)}.lb-hd{height:auto;display:grid;justify-items:center;gap:calc(var(--u)*1.5);padding-top:calc(var(--u)*5)}.lb-hd .lb-iasd,.lb-brand,.lb-ac{position:static;transform:none}.lb-ac{justify-items:center}.lb-cd{gap:calc(var(--u)*1.5)}.lg2-lb .lg2-qr{width:calc(var(--u)*44);height:calc(var(--u)*44)}.lb-rt{margin-top:calc(var(--u)*2)}}
 @media (prefers-reduced-motion:reduce){.lg2 *{animation-duration:.01s!important}}
 `;document.head.appendChild(s);
 }
@@ -354,16 +457,34 @@ async function create(){
  }catch(e){console.error('IASDLive create room:',e);alert('Não foi possível criar a sala. Tente novamente.')}
 }
 const players=async()=>await rpc('live_room_players',{p_room:S.room.id});
+const LBI={
+ people:'<svg viewBox="0 0 64 44" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="lbg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd86b"/><stop offset="1" stop-color="#f29a14"/></linearGradient><linearGradient id="lbg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fb1ff"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><g stroke="url(#lbg1)" stroke-width="3.4"><circle cx="32" cy="8.500" r="6"/><circle cx="12.500" cy="14" r="4.600"/><circle cx="51.500" cy="14" r="4.600"/></g><g stroke="url(#lbg2)" stroke-width="3.6"><path d="M20.500 35c0-7.500 5-12.500 11.500-12.500S43.500 27.500 43.500 35"/><path d="M5 32c0-5 3.200-8.500 7.500-8.500M59 32c0-5-3.200-8.500-7.500-8.500"/></g><path d="M2.500 41.500c11-9 48-9 59 0" stroke="url(#lbg1)" stroke-width="3.200"/></svg>',
+ group:'<svg viewBox="0 0 64 48" fill="currentColor"><circle cx="24" cy="14" r="9"/><circle cx="47" cy="17" r="7"/><path d="M5 44c0-11 8-18 19-18s19 7 19 18z"/><path d="M44 30c9 0 17 5 17 14H48c0-6-1.500-11-4-14z" opacity=".8"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.500"/><path d="M11 18.500h2"/></svg>',
+ pad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7.500h10a4.500 4.500 0 014.500 4.500v1.500a3.200 3.200 0 01-5.600 2.100l-1.100-1.300h-5.600l-1.100 1.300A3.200 3.200 0 012.500 13.500V12A4.500 4.500 0 017 7.500z"/><path d="M8 10.500v3M6.500 12h3"/><circle cx="15.500" cy="11" r=".7"/><circle cx="17.500" cy="13" r=".7"/></svg>',
+ scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5.500A1.500 1.500 0 015.500 4H8M16 4h2.500A1.500 1.500 0 0120 5.500V8M20 16v2.500a1.500 1.500 0 01-1.500 1.500H16M8 20H5.500A1.500 1.500 0 014 18.500V16M7 12h10"/></svg>',
+ bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.500 2 4.500 13.500H11L9.500 22l9-11.500H12z"/></svg>',
+ eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.500 12S5.500 5 12 5s10.500 7 10.500 7-4 7-10.500 7S1.500 12 1.500 12z"/><circle cx="12" cy="12" r="3.200" fill="currentColor"/></svg>'
+};
+const iasdLogo=()=>'<div class="lb-iasd"><i></i><span>Igreja Adventista<br>do Sétimo Dia</span></div>';
+const brandHTML=stack=>'<div class="lb-brand'+(stack?' stack':'')+'"><span class="pe">'+LBI.people+'</span><h1><span>JOGO</span> <b>COLETIVO</b></h1><small>IASD APP</small></div>';
 async function lobby(){
  S.phase='lobby';A().music('lobby');
  const ps=await players();const {mode,total}=cfgOf(code());
  const link=location.origin+'/jogos?game='+code();
- const qr='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data='+encodeURIComponent(link);
- screen('<div class="lg2-lobby"><div class="lg2-join"><span class="lg2-pill">'+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</span><small style="opacity:.75">Abra o IASD APP no celular e digite o código:</small><div class="lg2-code">'+esc(code())+'</div><img class="lg2-qr" alt="QR Code para entrar" src="'+qr+'"><small style="opacity:.75">ou escaneie o QR Code</small></div><div style="display:grid;gap:16px;justify-items:center;text-align:center"><h2 style="font-size:clamp(22px,3.4vw,40px)"><span id="lg-player-count">'+ps.length+'</span> jogador(es) na sala</h2><div class="lg2-ppl" id="lg-player-list"></div><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button><button class="lg2-btn" onclick="IASDLive.telao()">📽 Projetar no telão</button><button class="lg2-btn" onclick="IASDLive.exit()">✕ Cancelar sala</button></div></div>','');
+ const qr='https://api.qrserver.com/v1/create-qr-code/?size=640x640&margin=0&data='+encodeURIComponent(link);
+ const step=(n,ic,t,d)=>'<div class="lb-st"><span class="lb-n">'+n+'</span><span class="lb-ic">'+LBI[ic]+'</span><div><b>'+t+'</b><small>'+d+'</small></div></div>';
+ screen('<div class="lg2-lb">'+
+  '<div class="lb-hd">'+iasdLogo()+brandHTML(false)+
+  '<div class="lb-ac"><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button><div class="lb-r2"><button class="lg2-btn" onclick="IASDLive.telao()">📽 Projetar no telão</button><button class="lg2-btn" onclick="IASDLive.exit()">✕ Cancelar sala</button></div><em class="lb-mode">'+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</em></div></div>'+
+  '<section class="lb-card lb-cd"><h3>CÓDIGO DA SALA</h3><div class="lg2-code">'+esc(code())+'</div><div class="lb-qb"><img class="lg2-qr" alt="QR Code para entrar" src="'+qr+'"></div><div class="lb-sc">'+LBI.phone+'<div><b>ESCANEIE O QR CODE</b><small>PARA ENTRAR NA SALA</small></div></div></section>'+
+  '<section class="lb-rt"><div class="lb-card lb-ct">'+LBI.group+'<b id="lg-player-count">'+ps.length+'</b><span>jogador(es) na sala</span></div>'+
+  '<small class="lb-wt" id="lg-wait">AGUARDANDO OS PARTICIPANTES...</small><div class="lg2-ppl" id="lg-player-list"></div>'+
+  '<div class="lb-card lb-hw"><h3>COMO PARTICIPAR?</h3>'+step(1,'phone','ABRA O IASD APP','No seu celular ou computador.')+step(2,'pad','ACESSE O JOGO COLETIVO','Vá até a aba “Jogos” e toque em “Entrar com código”.')+step(3,'scan','DIGITE O CÓDIGO OU<br>ESCANEIE O QR CODE','Use o código ao lado para entrar na sala.')+'</div></section></div>','lb cl');
  paintLobbyPlayers(ps,true);
 }
 function paintLobbyPlayers(ps,first){
- const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;
+ const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;document.querySelector('.lg2-lb')?.classList.toggle('many',ps.length>6);const wt=$('lg-wait');if(wt)wt.textContent=ps.length?'TUDO PRONTO? É SÓ COMEÇAR!':'AGUARDANDO OS PARTICIPANTES...';
  ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);box.appendChild(d);if(!first)A().sfx('join')}});
 }
 async function start(){
@@ -378,7 +499,7 @@ async function patchRoom(obj){
 }
 function intro(i){
  clearTimers();S.phase='intro';S.qn=i;const q=deckFor(code())[i],t=TYPES[q.ltype];A().music('play');A().sfx('whoosh');
- screen('<div class="lg2-intro" style="--tc:'+t.c+'"><span class="lg2-pill">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span><div class="e">'+t.e+'</div><h1 style="color:'+t.c+'">'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','');
+ screen('<div class="lg2-intro" style="--tc:'+t.c+'"><span class="lg2-pill">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span><div class="e">'+t.e+'</div><h1 style="color:'+t.c+'">'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','bgx qz');
  S.auto=setTimeout(async()=>{try{await patchRoom({status:'question',current_question:i})}catch(e){console.error(e);return}hostQuestion()},2300/speed());
 }
 function ringHTML(t){return '<div class="lg2-ring" id="lg-ring" style="--tc:'+t.c+'"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="pg" id="lg-pg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg><b id="lg-timer">'+0+'</b></div>'}
@@ -403,7 +524,8 @@ function runFlash(q,onDone){
 function hostQuestion(){
  clearTimers();S.phase='question';const i=qi(),q=deckFor(code())[i],t=TYPES[q.ltype],secs=roundSecs(q);
  players().then(ps=>{ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0});HS.n=ps.length;paintDots(0)}).catch(()=>{});
- screen('<div class="lg2-top"><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span><div class="lg2-count"><div class="lg2-dots" id="lg-dots"></div><span id="lg-count">0 responderam</span></div>'+ringHTML(t)+'</div>'+qBody(q,t,'host')+'<div class="lg2-ans '+(q.type==='tf'?'two':'')+'" id="lg-ans">'+ansTiles(q,'host')+'</div><div class="lg2-row" style="margin-top:12px"><button class="lg2-btn" onclick="IASDLive.reveal()">Mostrar resposta</button></div>','',{style:'--tc:'+t.c});
+ screen('<div class="lg2-lb lg2-qv" style="--tc:'+t.c+'"><div class="qv-top"><div class="qv-l"><span class="qv-pill gold">'+LBI.bolt+'<b>'+esc(t.n)+'</b><i></i><span>'+(i+1)+'/'+cfgOf(code()).total+'</span></span></div>'+brandHTML(true)+'<div class="qv-r">'+iasdLogo()+'<div class="qv-row"><span class="qv-pill">'+LBI.group+'<span id="lg-count"><b>0</b> responderam</span></span>'+ringHTML(t)+'</div></div></div>'+qBody(q,t,'host')+'<div class="lg2-ans '+(q.type==='tf'?'two':'')+'" id="lg-ans">'+ansTiles(q,'host')+'</div><div class="qv-bot"><button class="lg2-btn qv-show" onclick="IASDLive.reveal()">'+LBI.eye+' Mostrar resposta</button></div></div>','lb qz',{style:'--tc:'+t.c});
+ {const h=document.querySelector('.lg2-qv .lg2-qcard h2');if(h)h.dataset.len=String(q.q).length>170?'xl':String(q.q).length>110?'l':'m'}
  S.qStart=Date.now();S.flashing=q.ltype==='flash';
  if(q.ltype==='flash'){$('lg-ans').classList.add('hidden');runFlash(q,()=>{S.qStart=Date.now();S.flashing=false;const a=$('lg-ans');if(a)a.classList.remove('hidden');const fq=$('lg-flash-q');if(fq)fq.style.visibility='visible';A().sfx('whoosh')})}
  const total=secs-(q.ltype==='flash'?Math.round(q.showMs/1000/speed()):0);
@@ -420,7 +542,7 @@ function tickClock(q,t,secs){
  const sec=Math.ceil(left);if(!flash&&sec<=5&&sec>0&&sec!==S.lastSec){S.lastSec=sec;A().sfx('urgent');if(A().current?.()!=='tension')A().music('tension')}
  if(!flash&&left<=0){clearInterval(S.clock);reveal()}
 }
-function paintDots(n){const d=$('lg-dots');if(!d)return;const tot=HS.n||0;d.innerHTML=Array.from({length:Math.min(tot,40)},(_,k)=>'<i class="'+(k<n?'on':'')+'"></i>').join('');const c=$('lg-count');if(c)c.textContent=n+(tot?' de '+tot:'')+' responderam'}
+function paintDots(n){const tot=HS.n||0;const d=$('lg-dots');if(d)d.innerHTML=Array.from({length:Math.min(tot,40)},(_,k)=>'<i class="'+(k<n?'on':'')+'"></i>').join('');const c=$('lg-count');if(c)c.innerHTML='<b>'+n+'</b> responderam'}
 async function reveal(){
  if(S.phase!=='question')return;S.phase='reveal';clearTimers();
  const i=qi(),q=deckFor(code())[i];A().music('play');A().sfx('reveal');
@@ -448,7 +570,7 @@ async function scoreboard(i,q){
  screen('<div class="lg2-top"><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span><span class="lg2-pill">✓ '+gotIt+' de '+ps.length+' acertaram</span></div>'+
   '<div class="lg2-ansbar">Resposta: <b>'+esc(q.a)+'</b>'+(q.ref?'<small style="opacity:.6;font-weight:600;font-size:.55em">'+esc(q.ref)+'</small>':'')+'</div>'+
   '<div class="lg2-board">'+(ps.slice(0,7).map(lane).join('')||'<p class="lg2-sub">Sem jogadores.</p>')+(ps.length>7?'<small class="lg2-sub" style="text-align:center">+'+(ps.length-7)+' jogadores</small>':'')+'</div>'+
-  '<div class="lg2-row" style="margin-top:auto;padding-top:14px;flex-direction:column;align-items:center"><button class="lg2-btn gold" onclick="IASDLive.next()">'+(isLast?'🏆 Ver o pódio':'Próxima rodada →')+'</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div>','',{style:'--tc:'+t.c});
+  '<div class="lg2-row" style="margin-top:auto;padding-top:14px;flex-direction:column;align-items:center"><button class="lg2-btn gold" onclick="IASDLive.next()">'+(isLast?'🏆 Ver o pódio':'Próxima rodada →')+'</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div>','bgx qz',{style:'--tc:'+t.c});
  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.lg2-lane .tk i').forEach(el=>el.style.width=el.dataset.w+'%')));
  ps.forEach(p=>{HS.prev[p.id]=p.score});
  if(gotIt)A().sfx(HS.streak[ps[0]?.id]>=3?'streak':'correct');
@@ -471,7 +593,7 @@ async function finalPodium(){
   '<div class="lg2-pod">'+top3.map((p,k)=>p?'<div class="s '+cls[k]+'">'+(cls[k]==='p1'?'<span class="crown">👑</span>':'')+avatarHTML(p.name,'big')+'<div class="nm">'+esc(splitName(p.name).name)+'</div><div class="pt">'+fmt(p.score)+' pts</div><div class="bar">'+pos[k]+'</div></div>':'<div class="s '+cls[k]+'"></div>').join('')+'</div>'+
   '<div class="lg2-awards">'+(bestStreak&&HS.best[bestStreak.id]>=2?'<div>🔥 Sequência de fogo<small>'+esc(splitName(bestStreak.name).name)+' · '+HS.best[bestStreak.id]+' seguidas</small></div>':'')+(mostOk&&HS.correct[mostOk.id]?'<div>🎯 Mais acertos<small>'+esc(splitName(mostOk.name).name)+' · '+HS.correct[mostOk.id]+' de '+total+'</small></div>':'')+'</div>'+
   (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,12).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
-  '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','');
+  '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','bgx qz');
 }
 /* ---------- JOGADOR (celular) ---------- */
 async function playerView(){
