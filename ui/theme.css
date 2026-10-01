@@ -384,3 +384,10 @@ html[data-theme="light"] .rm-verse{color:#fff}
 .vs-card .vs-b.dl{background:linear-gradient(135deg,#f5b73a,#e08a12)!important;color:#1b1608!important}
 .vs-card .vs-b.cp{background:linear-gradient(135deg,#64748b,#475569)!important}
 .vs-card .vs-b small{opacity:.9!important}
+
+.vs-guide{position:absolute;inset:0;z-index:5;display:grid;align-items:end;background:rgba(5,10,24,.55);border-radius:inherit}
+.vs-gc{display:grid;gap:8px;padding:16px;border-radius:18px;background:var(--iu-sf,#0b1730);color:var(--iu-tx,#fff);border-top:1px solid rgba(255,255,255,.12)}
+html[data-theme="light"] .vs-gc{background:#fff;color:#0f1c3a}
+.vs-gc h4{margin:0;font-size:17px}.vs-gc ol{margin:0;padding-left:20px;font-size:14px;line-height:1.5;opacity:.9}
+.vs-gx{border:0;background:transparent;color:inherit;opacity:.65;font:inherit;padding:8px;cursor:pointer}
+.vs-gc li{border:0!important;padding:0!important}
