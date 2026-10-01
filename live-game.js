@@ -39,7 +39,7 @@ let libP=null;
 const loadScript=src=>new Promise((ok,no)=>{if(document.querySelector('script[data-g="'+src+'"]'))return ok();const s=document.createElement('script');s.src=src;s.dataset.g=src;s.onload=ok;s.onerror=()=>no(Error('Falha ao carregar '+src));document.head.appendChild(s)});
 function libs(){
  if(window.IASDGameEngine&&window.IASDGameAudio)return Promise.resolve();
- if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=3');await loadScript('/games/engine.js?v=3')})().catch(e=>{libP=null;throw e});
+ if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=4');await loadScript('/games/engine.js?v=4')})().catch(e=>{libP=null;throw e});
  return libP;
 }
 
@@ -121,27 +121,101 @@ const curQ=()=>deckFor(code())[qi()];
 function splitName(n){const m=/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)\s+(.+)$/u.exec(String(n||''));return m?{av:m[1],name:m[2]}:{av:'🙂',name:String(n||'')}}
 const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+'">'+esc(splitName(n).av)+'</span>';
 
+
+/* ---------- sincronização: canal em tempo real + relógio do apresentador ----------
+   O apresentador marca o instante exato (T) em que cada fase aparece; telão e celulares desenham no mesmo T.
+   Sem tempo real (ou se a mensagem se perder) o jogo cai para a consulta periódica de antes. */
+const SY={ch:null,on:false,off:0,rtt:1e9,seq:0,last:null,lastMsg:0,tm:null,hb:null,pingT:null,pid:''};
+const sleep=ms=>new Promise(r=>setTimeout(r,Math.max(0,ms)));
+const LEAD=()=>900/speed();
+const hostClock=()=>Date.now()+SY.off;
+function sySend(m){try{if(SY.ch&&SY.on)SY.ch.send({type:'broadcast',event:'m',payload:m})}catch(e){}}
+function syOpen(){
+ const cl=window.iasdCloud;if(!cl||!cl.channel||SY.ch||!S.room)return;
+ try{
+  SY.ch=cl.channel('iasd-live-'+code(),{config:{broadcast:{self:false,ack:false}}});
+  SY.ch.on('broadcast',{event:'m'},ev=>syRecv(ev&&ev.payload||{}));
+  SY.ch.subscribe(st=>{if(st==='SUBSCRIBED'){SY.on=true;if(S.host){if(SY.last)sySend({...SY.last,hb:1})}else{syPing();sySend({t:'hello'})}}else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT')SY.on=false});
+ }catch(e){SY.ch=null;SY.on=false}
+}
+function syClose(){
+ clearInterval(SY.hb);clearInterval(SY.pingT);clearTimeout(SY.tm);
+ try{if(SY.ch&&window.iasdCloud?.removeChannel)window.iasdCloud.removeChannel(SY.ch)}catch(e){}
+ SY.ch=null;SY.on=false;SY.last=null;SY.seq=0;SY.lastMsg=0;SY.off=0;SY.rtt=1e9;
+}
+/* apresentador: anuncia a fase que vai aparecer no instante T (horário do próprio apresentador) */
+function syPhase(status,q,at){
+ if(!SY.last||SY.last.status!==status||SY.last.q!==q)SY.seq++;
+ SY.last={t:'phase',seq:SY.seq,status,q,at};
+ sySend(SY.last);
+ clearInterval(SY.hb);SY.hb=setInterval(()=>{if(SY.last)sySend({...SY.last,hb:1})},2000);
+}
+function syRecv(m){
+ if(S.host){
+  if(m.t==='ping')sySend({t:'pong',id:m.id,c0:m.c0,h:Date.now()});
+  else if(m.t==='hello'&&SY.last)sySend({...SY.last,hb:1});
+  return}
+ SY.lastMsg=Date.now();
+ if(m.t==='pong'){if(m.id!==SY.pid)return;const c1=Date.now(),rtt=c1-m.c0;if(rtt<SY.rtt){SY.rtt=rtt;SY.off=m.h+rtt/2-c1}}
+ else if(m.t==='phase')syPhaseIn(m);
+ else if(m.t==='closed')closedScreen();
+}
+function syPing(){
+ let n=0;const go=()=>{SY.pid=Math.random().toString(36).slice(2);sySend({t:'ping',id:SY.pid,c0:Date.now()});if(++n<6)setTimeout(go,250)};
+ go();clearInterval(SY.pingT);SY.pingT=setInterval(()=>{SY.rtt=1e9;n=0;go()},25000);
+}
+/* jogador: aplica a fase no instante T (convertido para o relógio do próprio aparelho) */
+function syPhaseIn(m){
+ if(m.seq<=SY.seq||!S.room||S.host)return;SY.seq=m.seq;
+ const delay=m.at-hostClock();
+ clearTimeout(SY.tm);
+ SY.tm=setTimeout(()=>{if(S.host||!S.room)return;S.room={...S.room,status:m.status,current_question:m.q};PS.at=m.at-SY.off;playerView()},Math.max(0,Math.min(delay,4000)));
+}
+const syHealthy=()=>!S.host&&SY.on&&SY.lastMsg&&Date.now()-SY.lastMsg<7000;
+
 /* ---------- casca da tela ---------- */
-function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
+function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');if(!window.__lgBg){window.__lgBg=1;try{const im=new Image();im.onload=()=>document.documentElement.style.setProperty('--lgbg','url(/games/bg-igreja.jpg) center/cover no-repeat');im.src='/games/bg-igreja.jpg'}catch(e){}}try{document.documentElement.classList.toggle('lg2-lite',matchMedia('(max-width:900px)').matches||(navigator.hardwareConcurrency||8)<=4)}catch(e){}try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
 function screen(html,cls,opts){
  css();const r=root();
- r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic sair" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">‹ Sair</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+(A().state?.().sfx||A().state?.().music?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
+ r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic sair" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">‹ Sair</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+((A().state?.().sfx||A().state?.().music)&&A().state?.().vol>0?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
  r.classList.toggle('host',!!S.host);S.sid=(S.sid||0)+1;snapSoon(true);
 }
+function sndIcons(){const st=A().state?.()||{};const on=st.sfx||st.music;document.querySelectorAll('#lg2-snd').forEach(b=>b.textContent=on&&st.vol>0?'🔊':'🔇')}
 function sndMenu(btn){
- $('lg2-menu')?.remove();const st=A().state();const m=document.createElement('div');m.id='lg2-menu';m.className='lg2-menu';
- m.innerHTML='<label><input type="checkbox" id="lg2-m1" '+(st.music?'checked':'')+'> Música</label><label><input type="checkbox" id="lg2-m2" '+(st.sfx?'checked':'')+'> Efeitos</label><label>Volume <input type="range" id="lg2-m3" min="0" max="100" value="'+Math.round(st.vol*100)+'"></label>';
- $('lg2').appendChild(m);
- $('lg2-m1').onchange=e=>{A().setMusic(e.target.checked);btn.textContent=A().state().sfx||A().state().music?'🔊':'🔇'};
- $('lg2-m2').onchange=e=>{A().setSfx(e.target.checked);btn.textContent=A().state().sfx||A().state().music?'🔊':'🔇'};
- $('lg2-m3').oninput=e=>A().vol(e.target.value/100);
- setTimeout(()=>document.addEventListener('click',function h(ev){if(!m.contains(ev.target)&&ev.target!==btn){m.remove();document.removeEventListener('click',h)}}),0);
+ const old=$('lg2-menu');if(old){old.remove();return}
+ const st=A().state();const m=document.createElement('div');m.id='lg2-menu';m.className='lg2-menu';
+ m.innerHTML='<label><span>🎵 Música</span><input type="checkbox" id="lg2-m1" '+(st.music?'checked':'')+'></label><label><span>🔔 Efeitos sonoros</span><input type="checkbox" id="lg2-m2" '+(st.sfx?'checked':'')+'></label><label class="vol"><span>🔊 Volume <b id="lg2-m3v">'+Math.round(st.vol*100)+'%</b></span><input type="range" id="lg2-m3" min="0" max="100" step="5" value="'+Math.round(st.vol*100)+'"></label>';
+ document.body.appendChild(m);
+ const r=btn.getBoundingClientRect(),w=m.offsetWidth||240,h=m.offsetHeight||150;
+ m.style.right=Math.max(8,Math.min(innerWidth-w-8,innerWidth-r.right))+'px';
+ if(r.top>innerHeight/2)m.style.bottom=Math.max(8,innerHeight-r.top+8)+'px';else m.style.top=Math.min(innerHeight-h-8,r.bottom+8)+'px';
+ $('lg2-m1').onchange=e=>{A().setMusic(e.target.checked);sndIcons()};
+ $('lg2-m2').onchange=e=>{A().setSfx(e.target.checked);sndIcons()};
+ $('lg2-m3').oninput=e=>{A().vol(e.target.value/100);$('lg2-m3v').textContent=e.target.value+'%';sndIcons()};
+ const off=ev=>{if(!m.contains(ev.target)&&!btn.contains(ev.target)){m.remove();document.removeEventListener('pointerdown',off,true)}};
+ setTimeout(()=>document.addEventListener('pointerdown',off,true),0);
+}
+
+/* encolhe o texto até caber na altura disponível (passagens longas nunca ultrapassam a tela) */
+function fitText(el,maxH,minPx){
+ if(!el||!maxH)return;el.style.fontSize='';const base=parseFloat(getComputedStyle(el).fontSize)||20;let px=base,n=0;
+ while(el.scrollHeight>maxH+1&&px>(minPx||12)&&n++<24){px*=.93;el.style.fontSize=px.toFixed(1)+'px'}
+}
+const uPx=()=>Math.min(innerWidth/100,innerHeight/56.25);
+function fitHost(){
+ const h=document.querySelector('.lg2-qv .lg2-qcard h2');if(h){const c=h.parentElement,pad=parseFloat(getComputedStyle(c).paddingTop)*2;fitText(h,uPx()*17-pad,10)}
+ document.querySelectorAll('.lg2-qv .lg2-a span').forEach(sp=>{const a=sp.closest('.lg2-a');if(a)fitText(sp,a.clientHeight*.82,10)});
+ document.querySelectorAll('.lg2-clues p span').forEach(sp=>fitText(sp,uPx()*5,10));
+}
+function fitPhone(){
+ const q=document.querySelector('.lg2-ph-q');if(q)fitText(q,innerHeight*.3,12);
+ document.querySelectorAll('.lg2-ph-ans .lg2-a span').forEach(sp=>{const a=sp.closest('.lg2-a');if(a)fitText(sp,Math.max(36,a.clientHeight*.8),11)});
 }
 function confetti(ms=5200){
  bcSend({t:'confetti',ms});
  const c=document.createElement('canvas');c.className='lg2-confetti';document.body.appendChild(c);const x=c.getContext('2d');
  const W=c.width=innerWidth,Hh=c.height=innerHeight,cols=['#f5b73a','#38bdf8','#fb7185','#34d399','#a78bfa','#fff'];
- const ps=Array.from({length:150},()=>({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)]}));
+ const ps=Array.from({length:document.documentElement.classList.contains('lg2-lite')?60:150},()=>({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)]}));
  const t0=performance.now();(function f(t){x.clearRect(0,0,W,Hh);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.6);x.restore()});if(t-t0<ms&&c.isConnected)requestAnimationFrame(f);else c.remove()})(t0);
 }
 function floatPts(text,el){if(!el)return;const s=document.createElement('b');s.className='lg2-float';s.textContent=text;el.appendChild(s);setTimeout(()=>s.remove(),1600)}
@@ -161,8 +235,8 @@ html.lg2-open{overflow:hidden}
 .lg2-chrome{position:absolute;z-index:5;top:10px;left:10px;right:10px;display:flex;gap:8px;align-items:center}.lg2-sp{flex:1}
 .lg2-ic{width:42px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);backdrop-filter:blur(6px);font-size:17px}
 .lg2-ic:hover{background:rgba(255,255,255,.18)}
-.lg2-menu{position:absolute;z-index:8;top:58px;right:10px;background:#0f1a3a;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;display:grid;gap:10px;font-size:14px;min-width:200px}
-.lg2-menu label{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.lg2-menu{position:fixed;z-index:100000;background:#0f1a3a;color:#f4f7ff;font-family:Inter,system-ui,Arial,sans-serif;border:1px solid rgba(140,172,255,.4);border-radius:16px;padding:14px 16px;display:grid;gap:14px;font-size:16px;width:min(300px,calc(100vw - 16px));box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.lg2-menu label{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:36px}.lg2-menu label.vol{display:grid;gap:8px}.lg2-menu input[type=checkbox]{width:26px;height:26px;accent-color:#f5b73a}.lg2-menu input[type=range]{width:100%;height:32px;accent-color:#f5b73a;touch-action:pan-x}
 .lg2-body{position:absolute;inset:0;padding:64px clamp(14px,3vw,44px) clamp(14px,3vw,30px);overflow:auto;display:flex;flex-direction:column;animation:lgin .4s ease both}
 @keyframes lgin{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
 .lg2 h1,.lg2 h2,.lg2 h3{margin:0}
@@ -289,7 +363,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lg2-qr{width:min(30vw,44vh,600px);min-width:220px;padding:clamp(10px,1.2vw,22px);border-radius:24px}
 .lg2-lobby h2{font-size:clamp(28px,4.2vw,84px)!important}
 .lg2-pp{font-size:clamp(17px,2.7vw,48px);padding:.4em 1em .4em .4em}
-.lg2-intro .e{font-size:clamp(120px,24vw,420px)}.lg2-intro h1{font-size:clamp(44px,9vw,170px)}.lg2-intro p{font-size:clamp(20px,3.2vw,58px)}
+
 .lg2-ring{width:clamp(80px,11vw,210px)}.lg2-ring b{font-size:clamp(30px,4.8vw,94px)}
 .lg2-count{font-size:clamp(16px,2.5vw,44px)}.lg2-dots i{width:clamp(13px,1.3vw,26px);height:clamp(13px,1.3vw,26px)}
 .lg2-qcard h2{font-size:clamp(26px,5vw,104px)}.lg2-qcard .ref{font-size:clamp(14px,1.6vw,30px)}
@@ -316,7 +390,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
  radial-gradient(circle at 1.5% 66%,rgba(90,160,255,.85) 0 calc(var(--u)*.5),transparent calc(var(--u)*.65)),
  linear-gradient(90deg,transparent 7%,rgba(90,130,255,.16) 8%,transparent 12%,transparent 26%,rgba(90,130,255,.14) 27%,transparent 31%,transparent 62%,rgba(90,130,255,.12) 63%,transparent 67%,transparent 84%,rgba(90,130,255,.16) 85%,transparent 90%),
  linear-gradient(0deg,rgba(2,6,26,.78),transparent 38%),
- url(/games/bg-igreja.jpg) center/cover no-repeat,
+ var(--lgbg,linear-gradient(transparent,transparent)),
  linear-gradient(180deg,#0b1d62 0%,#0a1650 48%,#060d36 100%)}
 .lg2-body.lb{padding:0;overflow:hidden}
 .lg2-body.cl::before,.lg2-body.qz::before{content:'';position:absolute;z-index:0;width:calc(var(--u)*3.6);height:calc(var(--u)*9.4);pointer-events:none;background:linear-gradient(#fff7cf,#ffd978) center/calc(var(--u)*1.05) 100% no-repeat,linear-gradient(#fff7cf,#ffd978) 50% 24%/100% calc(var(--u)*1.05) no-repeat;filter:drop-shadow(0 0 calc(var(--u)*1.4) rgba(255,215,120,.95)) drop-shadow(0 0 calc(var(--u)*3) rgba(255,200,90,.6))}
@@ -329,6 +403,20 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lb-iasd i{flex:none;width:calc(var(--u)*5);height:calc(var(--u)*4.7);filter:drop-shadow(0 0 calc(var(--u)*.3) rgba(255,255,255,.35));background:url(/iasd-simbolo-branco.png?v=1) center/contain no-repeat}
 .lb-iasd span{font-size:calc(var(--u)*1.55);line-height:1.1;font-weight:400;color:#fff;white-space:nowrap}
 .lb-hd .lb-iasd{position:absolute;left:calc(var(--u)*.8);top:calc(var(--u)*3.4)}
+.lb-bar,.ph-brand{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*.9);font-weight:900;letter-spacing:.04em;color:#fff;pointer-events:none}
+.lb-bar{position:absolute;left:50%;top:calc(var(--u)*1.1);transform:translateX(-50%);font-size:calc(var(--u)*1.7);z-index:2}
+.lb-bar .pe svg{height:calc(var(--u)*2.6);width:auto;display:block;filter:drop-shadow(0 0 calc(var(--u)*.5) rgba(248,170,40,.55))}
+.lb-bar i,.ph-brand i{font-style:normal;background:linear-gradient(180deg,#fff0a0,#ffc83d 50%,#e8860c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ph-brand{font-size:18px;margin:0 auto 12px}.ph-brand .pe svg{height:30px;width:auto;display:block}
+.lb-panel{padding-top:calc(var(--u)*4)}
+.lb-intro{--tc:#ffd24a;margin:auto;text-align:center;display:grid;justify-items:center;gap:calc(var(--u)*1.4);max-width:calc(var(--u)*80);padding:0 calc(var(--u)*2)}
+.lb-intro .e{font-size:calc(var(--u)*13);line-height:1;filter:drop-shadow(0 0 calc(var(--u)*1.5) var(--tc));animation:lgboing 1s ease both}
+.lb-intro h1{margin:0;font-size:calc(var(--u)*6.4);line-height:1.05;font-weight:900;color:var(--tc);text-shadow:0 0 calc(var(--u)*1.4) var(--tc);overflow-wrap:anywhere}
+.lb-intro p{margin:0;font-size:calc(var(--u)*2.3);opacity:.85;line-height:1.3}
+.lb-chip{padding:calc(var(--u)*.6) calc(var(--u)*1.8);border-radius:999px;font-weight:800;font-size:calc(var(--u)*1.5);letter-spacing:.12em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25)}
+.lg2-lite .lg2-bg i{animation:none!important;filter:none!important}
+.lg2-lite *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(max-width:900px){.lb-intro{--u:min(1vw,.9vh);}.lb-bar{display:none}}
 .lb-brand{position:absolute;left:50%;top:calc(var(--u)*1);transform:translateX(-50%);display:grid;justify-items:center;text-align:center;line-height:1}
 .lb-brand .pe svg{height:calc(var(--u)*4.7);width:auto;display:block;filter:drop-shadow(0 0 calc(var(--u)*.7) rgba(248,170,40,.55))}
 .lb-brand h1{margin:calc(var(--u)*.6) 0 0;font-size:calc(var(--u)*4.7);font-weight:900;letter-spacing:.005em;white-space:nowrap;line-height:1}
@@ -419,18 +507,18 @@ async function home(){
  A().unlock();
  if(!S.room&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player'))&&await reconnect(2))return;
  S.host=false;
- screen('<div class="lg2-center"><span class="lg2-pill">🎮 JOGO COLETIVO</span><h1 class="lg2-hero">Desafio Bíblico Ao Vivo</h1><p class="lg2-sub">Projete no telão e jogue com todos pelo celular. Vários jogos, pontos, sequências e um pódio final.</p><div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.setup()">📺 Criar sala no telão</button><button class="lg2-btn" onclick="IASDLive.joinForm()">📱 Entrar com código</button></div><small class="lg2-sub">'+fmt(window.IASDGameEngine.stats().total)+'+ perguntas e desafios para sortear.</small></div>','');
+ screen(barHTML()+'<div class="lg2-center lb-panel"><span class="lg2-pill">🎮 JOGO COLETIVO</span><h1 class="lg2-hero">Desafio Bíblico Ao Vivo</h1><p class="lg2-sub">Projete no telão e jogue com todos pelo celular. Vários jogos, pontos, sequências e um pódio final.</p><div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.setup()">📺 Criar sala no telão</button><button class="lg2-btn" onclick="IASDLive.joinForm()">📱 Entrar com código</button></div><small class="lg2-sub">'+fmt(window.IASDGameEngine.stats().total)+'+ perguntas e desafios para sortear.</small></div>','bgx cl');
  A().music('menu');
 }
 let SET={mode:0,rounds:1};
 function setup(){
  A().sfx('click');
- const paint=()=>screen('<div class="lg2-center"><span class="lg2-pill">📺 NOVA SALA</span><h2 class="lg2-hero" style="font-size:clamp(28px,5vw,48px)">Escolha o jogo</h2><div class="lg2-modes">'+MODES.map(m=>'<button class="lg2-mode '+(SET.mode===m.id?'on':'')+'" onclick="IASDLive._set(\'mode\','+m.id+')"><span>'+m.e+'</span><b>'+m.n+'</b><small>'+m.d+'</small></button>').join('')+'</div><div class="lg2-row" style="align-items:center"><small class="lg2-sub" style="margin:0">Rodadas:</small>'+ROUNDS.map((n,i)=>'<button class="lg2-chip '+(SET.rounds===i?'on':'')+'" onclick="IASDLive._set(\'rounds\','+i+')">'+n+'</button>').join('')+'</div><div class="lg2-row"><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button><button class="lg2-btn gold" onclick="IASDLive.create()">Criar sala</button></div></div>','');
+ const paint=()=>screen(barHTML()+'<div class="lg2-center lb-panel"><span class="lg2-pill">📺 NOVA SALA</span><h2 class="lg2-hero" style="font-size:clamp(28px,5vw,48px)">Escolha o jogo</h2><div class="lg2-modes">'+MODES.map(m=>'<button class="lg2-mode '+(SET.mode===m.id?'on':'')+'" onclick="IASDLive._set(\'mode\','+m.id+')"><span>'+m.e+'</span><b>'+m.n+'</b><small>'+m.d+'</small></button>').join('')+'</div><div class="lg2-row" style="align-items:center"><small class="lg2-sub" style="margin:0">Rodadas:</small>'+ROUNDS.map((n,i)=>'<button class="lg2-chip '+(SET.rounds===i?'on':'')+'" onclick="IASDLive._set(\'rounds\','+i+')">'+n+'</button>').join('')+'</div><div class="lg2-row"><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button><button class="lg2-btn gold" onclick="IASDLive.create()">Criar sala</button></div></div>','bgx cl');
  API._set=(k,v)=>{SET[k]=v;A().sfx('tap');paint()};paint();
 }
 function joinForm(pre){
  A().sfx('click');const av=AVATARS[Math.floor(Math.random()*AVATARS.length)];let pick=av;
- screen('<div class="lg2-phone"><span class="lg2-pill">📱 ENTRAR NA PARTIDA</span><h2>Quem é você?</h2><div class="lg2-row" id="lg2-avs" style="gap:8px">'+AVATARS.map(a=>'<button class="lg2-chip '+(a===av?'on':'')+'" style="font-size:24px;padding:6px 12px" data-a="'+a+'">'+a+'</button>').join('')+'</div><input class="lg2-input" id="lg-code" inputmode="numeric" maxlength="6" placeholder="Código da sala" value="'+esc(pre||'')+'"><input class="lg2-input" id="lg-name" maxlength="24" placeholder="Seu nome"><button class="lg2-btn gold" style="width:100%" onclick="IASDLive.join()">Entrar</button><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button></div>','');
+ screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">📱 ENTRAR NA PARTIDA</span><h2>Quem é você?</h2><div class="lg2-row" id="lg2-avs" style="gap:8px">'+AVATARS.map(a=>'<button class="lg2-chip '+(a===av?'on':'')+'" style="font-size:24px;padding:6px 12px" data-a="'+a+'">'+a+'</button>').join('')+'</div><input class="lg2-input" id="lg-code" inputmode="numeric" maxlength="6" placeholder="Código da sala" value="'+esc(pre||'')+'"><input class="lg2-input" id="lg-name" maxlength="24" placeholder="Seu nome"><button class="lg2-btn gold" style="width:100%" onclick="IASDLive.join()">Entrar</button><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button></div>','');
  $('lg2-avs').onclick=e=>{const b=e.target.closest('button');if(!b)return;pick=b.dataset.a;$('lg2-avs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));A().sfx('tap');API._av=pick};API._av=pick;
 }
 async function join(){
@@ -443,7 +531,7 @@ async function join(){
   S.player=p[0];const rooms=await rpc('live_room_state',{p_room:S.player.room_id});if(!rooms?.length)throw Error('room_state_missing');
   S.room=rooms[0];S.host=false;PS={answered:-1,lastScore:0,sawQ:-1,revealFor:-1};
   A().sfx('join');localStorage.setItem('iasd_live_player',JSON.stringify({room:S.room.id,player:S.player.id,token:S.player.player_token}));
-  deckFor(code());playerView();poll();
+  deckFor(code());playerView();poll();syOpen();
  }catch(e){console.error('IASDLive join:',e);alert('Não foi possível entrar na sala. Confira o código e tente novamente.')}
 }
 /* ---------- APRESENTADOR ---------- */
@@ -453,7 +541,7 @@ async function create(){
   const r=await rpc('live_create_room',{p_code:c});if(!r?.length)throw Error('room_not_created');
   S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[]};
   localStorage.setItem('iasd_live_host',JSON.stringify({id:S.room.id,token:S.room.host_token,code:c}));
-  deckFor(c);A().sfx('join');lobby();poll();
+  deckFor(c);A().sfx('join');lobby();poll();syOpen();
  }catch(e){console.error('IASDLive create room:',e);alert('Não foi possível criar a sala. Tente novamente.')}
 }
 const players=async()=>await rpc('live_room_players',{p_room:S.room.id});
@@ -466,6 +554,8 @@ const LBI={
  bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.500 2 4.500 13.500H11L9.500 22l9-11.500H12z"/></svg>',
  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.500 12S5.500 5 12 5s10.500 7 10.500 7-4 7-10.500 7S1.500 12 1.500 12z"/><circle cx="12" cy="12" r="3.200" fill="currentColor"/></svg>'
 };
+const phBrand=()=>'<div class="ph-brand"><span class="pe">'+LBI.people+'</span><b>JOGO <i>COLETIVO</i></b></div>';
+const barHTML=()=>'<div class="lb-bar"><span class="pe">'+LBI.people+'</span><b>JOGO <i>COLETIVO</i></b></div>';
 const iasdLogo=()=>'<div class="lb-iasd"><i></i><span>Igreja Adventista<br>do Sétimo Dia</span></div>';
 const brandHTML=stack=>'<div class="lb-brand'+(stack?' stack':'')+'"><span class="pe">'+LBI.people+'</span><h1><span>JOGO</span> <b>COLETIVO</b></h1><small>IASD APP</small></div>';
 async function lobby(){
@@ -499,8 +589,8 @@ async function patchRoom(obj){
 }
 function intro(i){
  clearTimers();S.phase='intro';S.qn=i;const q=deckFor(code())[i],t=TYPES[q.ltype];A().music('play');A().sfx('whoosh');
- screen('<div class="lg2-intro" style="--tc:'+t.c+'"><span class="lg2-pill">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span><div class="e">'+t.e+'</div><h1 style="color:'+t.c+'">'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','bgx qz');
- S.auto=setTimeout(async()=>{try{await patchRoom({status:'question',current_question:i})}catch(e){console.error(e);return}hostQuestion()},2300/speed());
+ screen(barHTML()+'<div class="lb-intro" style="--tc:'+t.c+'"><span class="lb-chip">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span><div class="e">'+t.e+'</div><h1>'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','bgx qz',{style:'--tc:'+t.c});
+ S.auto=setTimeout(async()=>{const T=Date.now()+LEAD();syPhase('question',i,T);try{await Promise.all([patchRoom({status:'question',current_question:i}),sleep(T-Date.now())])}catch(e){console.error(e);return}await sleep(T-Date.now());hostQuestion(T)},2300/speed());
 }
 function ringHTML(t){return '<div class="lg2-ring" id="lg-ring" style="--tc:'+t.c+'"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="pg" id="lg-pg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg><b id="lg-timer">'+0+'</b></div>'}
 function ansTiles(q,mode,onclickFn){
@@ -521,12 +611,13 @@ function runFlash(q,onDone){
  if(q.flashKind==='count'){let i=0;const step=()=>{if(!$('lg-flash'))return;if(i>=q.seq.length){box.innerHTML='<div class="hide">🤔</div>';S.flashT=setTimeout(onDone,300/speed());return}box.innerHTML='<div class="one" style="animation-duration:'+(ms/1000)+'s">'+q.seq[i]+'</div>';A().sfx('tick');i++;S.flashT=setTimeout(step,ms)};S.flashT=setTimeout(step,500/speed())}
  else{box.innerHTML='<div class="grid">'+q.shown.map((e,i)=>'<span style="animation-delay:'+(i*.08)+'s">'+e+'</span>').join('')+'</div>';A().sfx('reveal');S.flashT=setTimeout(()=>{if(!$('lg-flash'))return;box.innerHTML='<div class="hide">🤔 Qual sumiu?</div>';S.flashT=setTimeout(onDone,350/speed())},q.showMs/speed())}
 }
-function hostQuestion(){
+function hostQuestion(T0){
  clearTimers();S.phase='question';const i=qi(),q=deckFor(code())[i],t=TYPES[q.ltype],secs=roundSecs(q);
  players().then(ps=>{ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0});HS.n=ps.length;paintDots(0)}).catch(()=>{});
  screen('<div class="lg2-lb lg2-qv" style="--tc:'+t.c+'"><div class="qv-top"><div class="qv-l"><span class="qv-pill gold">'+LBI.bolt+'<b>'+esc(t.n)+'</b><i></i><span>'+(i+1)+'/'+cfgOf(code()).total+'</span></span></div>'+brandHTML(true)+'<div class="qv-r">'+iasdLogo()+'<div class="qv-row"><span class="qv-pill">'+LBI.group+'<span id="lg-count"><b>0</b> responderam</span></span>'+ringHTML(t)+'</div></div></div>'+qBody(q,t,'host')+'<div class="lg2-ans '+(q.type==='tf'?'two':'')+'" id="lg-ans">'+ansTiles(q,'host')+'</div><div class="qv-bot"><button class="lg2-btn qv-show" onclick="IASDLive.reveal()">'+LBI.eye+' Mostrar resposta</button></div></div>','lb qz',{style:'--tc:'+t.c});
  {const h=document.querySelector('.lg2-qv .lg2-qcard h2');if(h)h.dataset.len=String(q.q).length>170?'xl':String(q.q).length>110?'l':'m'}
- S.qStart=Date.now();S.flashing=q.ltype==='flash';
+ requestAnimationFrame(fitHost);
+ S.qStart=T0||Date.now();S.flashing=q.ltype==='flash';
  if(q.ltype==='flash'){$('lg-ans').classList.add('hidden');runFlash(q,()=>{S.qStart=Date.now();S.flashing=false;const a=$('lg-ans');if(a)a.classList.remove('hidden');const fq=$('lg-flash-q');if(fq)fq.style.visibility='visible';A().sfx('whoosh')})}
  const total=secs-(q.ltype==='flash'?Math.round(q.showMs/1000/speed()):0);
  S.clock=setInterval(()=>tickClock(q,t,secs),100);
@@ -545,12 +636,14 @@ function tickClock(q,t,secs){
 function paintDots(n){const tot=HS.n||0;const d=$('lg-dots');if(d)d.innerHTML=Array.from({length:Math.min(tot,40)},(_,k)=>'<i class="'+(k<n?'on':'')+'"></i>').join('');const c=$('lg-count');if(c)c.innerHTML='<b>'+n+'</b> responderam'}
 async function reveal(){
  if(S.phase!=='question')return;S.phase='reveal';clearTimers();
- const i=qi(),q=deckFor(code())[i];A().music('play');A().sfx('reveal');
- try{
+ const i=qi(),q=deckFor(code())[i],T=Date.now()+LEAD();syPhase('reveal',i,T);
+ const job=(async()=>{try{
   await patchRoom({status:'reveal'});
   const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');
   await rpc('live_host_score',{p_room:S.room.id,p_token:h.token,p_question:i,p_correct:q.ans});
- }catch(e){console.error(e)}
+ }catch(e){console.error(e)}})();
+ await Promise.all([job,sleep(T-Date.now())]);
+ A().music('play');A().sfx('reveal');
  await scoreboard(i,q);
 }
 async function scoreboard(i,q){
@@ -567,7 +660,7 @@ async function scoreboard(i,q){
  const isLast=i+1>=cfgOf(code()).total;
  const ansHTML=ansTiles(q,'host');
  S.phase='board';
- screen('<div class="lg2-top"><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span><span class="lg2-pill">✓ '+gotIt+' de '+ps.length+' acertaram</span></div>'+
+ screen(barHTML()+'<div class="lg2-top"><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span><span class="lg2-pill">✓ '+gotIt+' de '+ps.length+' acertaram</span></div>'+
   '<div class="lg2-ansbar">Resposta: <b>'+esc(q.a)+'</b>'+(q.ref?'<small style="opacity:.6;font-weight:600;font-size:.55em">'+esc(q.ref)+'</small>':'')+'</div>'+
   '<div class="lg2-board">'+(ps.slice(0,7).map(lane).join('')||'<p class="lg2-sub">Sem jogadores.</p>')+(ps.length>7?'<small class="lg2-sub" style="text-align:center">+'+(ps.length-7)+' jogadores</small>':'')+'</div>'+
   '<div class="lg2-row" style="margin-top:auto;padding-top:14px;flex-direction:column;align-items:center"><button class="lg2-btn gold" onclick="IASDLive.next()">'+(isLast?'🏆 Ver o pódio':'Próxima rodada →')+'</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div>','bgx qz',{style:'--tc:'+t.c});
@@ -583,13 +676,13 @@ async function next(){
 }
 async function finalPodium(){
  clearTimers();S.phase='final';
- try{await patchRoom({status:'finished'})}catch(e){}
+ {const T=Date.now()+LEAD();syPhase('finished',qi(),T);try{await Promise.all([patchRoom({status:'finished'}),sleep(T-Date.now())])}catch(e){}await sleep(T-Date.now())}
  const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);
  A().music('victory');setTimeout(()=>A().sfx('drum'),200);setTimeout(()=>{A().sfx('win');confetti(8000)},3400/ (speed()>1?1:1));
  const top3=[ps[1],ps[0],ps[2]],cls=['p2','p1','p3'],pos=['2','1','3'];
  const bestStreak=ps.slice().sort((a,b)=>(HS.best[b.id]||0)-(HS.best[a.id]||0))[0],mostOk=ps.slice().sort((a,b)=>(HS.correct[b.id]||0)-(HS.correct[a.id]||0))[0];
  const total=cfgOf(code()).total;
- screen('<div class="lg2-center" style="width:min(1000px,100%)"><span class="lg2-pill">🏁 FIM DE JOGO · '+total+' RODADAS</span><h1 class="lg2-hero" style="font-size:clamp(30px,5vw,56px)">Pódio</h1>'+
+ screen(barHTML()+'<div class="lg2-center" style="width:min(1000px,100%)"><span class="lg2-pill">🏁 FIM DE JOGO · '+total+' RODADAS</span><h1 class="lg2-hero" style="font-size:clamp(30px,5vw,56px)">Pódio</h1>'+
   '<div class="lg2-pod">'+top3.map((p,k)=>p?'<div class="s '+cls[k]+'">'+(cls[k]==='p1'?'<span class="crown">👑</span>':'')+avatarHTML(p.name,'big')+'<div class="nm">'+esc(splitName(p.name).name)+'</div><div class="pt">'+fmt(p.score)+' pts</div><div class="bar">'+pos[k]+'</div></div>':'<div class="s '+cls[k]+'"></div>').join('')+'</div>'+
   '<div class="lg2-awards">'+(bestStreak&&HS.best[bestStreak.id]>=2?'<div>🔥 Sequência de fogo<small>'+esc(splitName(bestStreak.name).name)+' · '+HS.best[bestStreak.id]+' seguidas</small></div>':'')+(mostOk&&HS.correct[mostOk.id]?'<div>🎯 Mais acertos<small>'+esc(splitName(mostOk.name).name)+' · '+HS.correct[mostOk.id]+' de '+total+'</small></div>':'')+'</div>'+
   (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,12).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
@@ -598,9 +691,8 @@ async function finalPodium(){
 /* ---------- JOGADOR (celular) ---------- */
 async function playerView(){
  const st=S.room.status,i=qi();
- if(st==='finished'&&(i>=cfgOf(code()).total||(i===0&&PS.sawQ<0))){clearTimers();S.phase='p-final';try{localStorage.removeItem('iasd_live_player')}catch(e){}
-  return screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">🚪</div><h2>Sala encerrada</h2><p class="lg2-sub">O apresentador encerrou esta sala.</p><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Voltar</button></div></div>','')}
- if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone"><span class="lg2-pill">🎉 VOCÊ ENTROU!</span><div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div><button class="lg2-btn" onclick="IASDLive.exit()">Sair da sala</button></div>','')}
+ if(st==='finished'&&(i>=cfgOf(code()).total||(i===0&&PS.sawQ<0)))return closedScreen();
+ if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">🎉 VOCÊ ENTROU!</span><div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div><button class="lg2-btn" onclick="IASDLive.exit()">Sair da sala</button></div>','')}
  if(st==='question'){
   if(PS.sawQ===i&&S.phase==='p-question')return;
   if(PS.answered===i){S.phase='p-sent';return sentScreen()}
@@ -608,21 +700,26 @@ async function playerView(){
  if(st==='reveal'){if(PS.revealFor!==i){PS.revealFor=i;S.phase='p-reveal';return phoneReveal(i)}return}
  return phoneFinal();
 }
-function sentScreen(){screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">✅</div><h2>Resposta enviada!</h2><p class="lg2-sub">Aguardando os outros jogadores…</p><div class="lg2-wait"><i></i><i></i><i></i></div></div></div>','')}
+function closedScreen(){
+ clearTimers();clearTimeout(SY.tm);S.phase='p-final';try{localStorage.removeItem('iasd_live_player')}catch(e){}A().music(null);
+ screen('<div class="lg2-phone">'+phBrand()+'<div class="lg2-res"><div class="big">🚪</div><h2>Sala encerrada</h2><p class="lg2-sub">O apresentador encerrou esta sala.</p><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Voltar</button></div></div>','');
+}
+function sentScreen(){screen('<div class="lg2-phone">'+phBrand()+'<div class="lg2-res"><div class="big">✅</div><h2>Resposta enviada!</h2><p class="lg2-sub">Aguardando os outros jogadores…</p><div class="lg2-wait"><i></i><i></i><i></i></div></div></div>','')}
 function phoneQuestion(i){
- const q=deckFor(code())[i],t=TYPES[q.ltype],secs=roundSecs(q);clearTimers();PS.sawQ=i;S.phase='p-question';S.qStart=Date.now();S.shownClues=1;
+ const q=deckFor(code())[i],t=TYPES[q.ltype],secs=roundSecs(q);clearTimers();PS.sawQ=i;S.phase='p-question';S.qStart=PS.at||Date.now();PS.at=0;S.shownClues=1;
  A().sfx('whoosh');
  const flash=q.ltype==='flash';
  screen('<div class="lg2-phone" style="--tc:'+t.c+'"><div class="lg2-tbar"><i id="lg-pbar" style="width:100%"></i></div><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span>'+
   (q.ltype==='who'?'<div class="lg2-clues" style="--tc:'+t.c+'">'+q.clues.map((c,k)=>'<p data-c="'+k+'" class="'+(k===0?'on':'off')+'" style="font-size:clamp(15px,4.4vw,20px)"><b>'+(k+1)+'</b><span>'+(k===0?esc(c):'…')+'</span></p>').join('')+'</div>':flash?'<div class="lg2-flash" id="lg-flash"></div><div class="lg2-ph-q" id="lg-flash-q" style="visibility:hidden">'+esc(q.q)+'</div>':'<div class="lg2-ph-q">'+esc(q.q)+'</div>')+
   '<div class="lg2-ph-ans '+(q.type==='tf'?'':'')+'" id="lg-ans" style="'+(flash?'visibility:hidden':'')+'">'+ansTiles(q,'player','IASDLive.answer')+'</div></div>','',{style:'--tc:'+t.c});
+ requestAnimationFrame(fitPhone);
  const dur=flash?Math.max(6,secs-Math.round(q.showMs/1000/speed())):secs;
  if(flash)runFlash(q,()=>{S.qStart=Date.now();S.flashing=false;const a=$('lg-ans');if(a)a.style.visibility='visible';const fq=$('lg-flash-q');if(fq)fq.style.visibility='visible'});
  S.flashing=flash;
  S.clock=setInterval(()=>{
   const el=(Date.now()-S.qStart)/1000,left=S.flashing?dur:Math.max(0,dur-el),b=$('lg-pbar');if(b)b.style.width=(left/dur*100)+'%';
   if(q.ltype==='who'){const n=Math.min(q.clues.length,1+Math.floor(el/(dur/3.2)));while(S.shownClues<n){const p=document.querySelector('.lg2-clues p[data-c="'+S.shownClues+'"]');if(p){p.className='on';p.querySelector('span').textContent=q.clues[S.shownClues]}S.shownClues++}}
-  if(left<=0&&!S.flashing)clearInterval(S.clock)},120);
+  if(left<=0&&!S.flashing){clearInterval(S.clock);document.querySelectorAll('#lg-ans .lg2-a').forEach(b=>{b.disabled=true})}},120);
 }
 async function answer(i){
  if(PS.answered===qi())return;const ix=qi();PS.answered=ix;
@@ -656,7 +753,7 @@ async function tick(){
  if(!S.room)return;
  try{
   const r=await rpc('live_room_state',{p_room:S.room.id});if(!r.length)return;
-  const old=S.room.status+'|'+S.room.current_question;S.room={...S.room,...r[0]};const now=S.room.status+'|'+S.room.current_question;
+  const old=S.room.status+'|'+S.room.current_question,hold=syHealthy()?{status:S.room.status,current_question:S.room.current_question}:{};S.room={...S.room,...r[0],...hold};const now=S.room.status+'|'+S.room.current_question;if(!S.host&&!hold.status)PS.at=0;
   if(S.host){
    if(S.phase==='lobby')paintLobbyPlayers(await players());
    else if(S.phase==='question'){
@@ -666,8 +763,8 @@ async function tick(){
   }else if(old!==now||(S.room.status==='reveal'&&S.phase==='p-question'))playerView();
  }catch(e){}
 }
-function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1500/Math.min(3,speed()))}
-function closeAll(){clearInterval(S.poll);clearTimers();S.poll=null;$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');A().music(null)}
+function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1000/Math.min(3,speed()))}
+function closeAll(){clearInterval(S.poll);clearTimers();syClose();S.poll=null;$('lg2-menu')?.remove();$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');try{A().music(null);A().stopAll&&A().stopAll()}catch(e){}}
 function leave(){bcSend({t:'end'});closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
 function fullscreen(){const el=$('lg2');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
 let recBusy=false;
@@ -679,13 +776,13 @@ async function reconnect(tries=3,wanted){
     await libs();
     const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');
     if(h?.id){const rr=await rpc('live_room_state',{p_room:h.id});
-     if(rr.length&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.host=true;HS.prev={};poll();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return true}
+     if(rr.length&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.host=true;HS.prev={};poll();syOpen();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return true}
      if(!rr.length||rr[0].status==='finished')localStorage.removeItem('iasd_live_host')}
     const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');
     if(p?.room&&p?.player){const rr=await rpc('live_room_state',{p_room:p.room}),pp=await rpc('live_room_players',{p_room:p.room}),me=pp.find(x=>x.id===p.player);
      if(rr.length&&me&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.player={...me,player_token:p.token};S.host=false;PS={answered:-1,lastScore:Number(me.score)||0,sawQ:-1,revealFor:-1};
       try{const an=JSON.parse(localStorage.getItem('iasd_live_ans')||'null');if(an&&an.room===S.room.id){PS.answered=an.q;PS.pickFor=an.q;PS.lastPick=an.pick}}catch(e){}
-      deckFor(code());poll();playerView();return true}
+      deckFor(code());poll();playerView();syOpen();return true}
      if(!rr.length||!me||rr[0].status==='finished')localStorage.removeItem('iasd_live_player')}
     return false
    }catch(e){await new Promise(r=>setTimeout(r,1500))}
@@ -695,7 +792,7 @@ async function reconnect(tries=3,wanted){
 }
 /* sair / encerrar */
 async function cancelRoom(){
- const total=cfgOf(code()).total;
+ const total=cfgOf(code()).total;sySend({t:'closed'});
  try{await patchRoom({status:'finished',current_question:total})}catch(e){try{await patchRoom({status:'finished'})}catch(e2){console.warn(e2)}}
  leave();
 }

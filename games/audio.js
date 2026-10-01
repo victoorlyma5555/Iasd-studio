@@ -58,7 +58,10 @@ const TRACKS={
  tension:{bpm:148,chords:[[57,60,64],[57,60,64],[53,57,60],[56,59,62]],bass:true,arp:true,drums:true,lead:false,wave:'square',vol:.45},
  victory:{bpm:120,chords:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],bass:true,arp:true,drums:true,lead:true,wave:'triangle',vol:.6}
 };
-let cur=null,timer=null,step=0,nextT=0;
+let cur=null,want=null,timer=null,step=0,nextT=0,musicT0=0;
+const lite=(()=>{try{return matchMedia('(max-width:900px)').matches||(navigator.hardwareConcurrency||8)<=4}catch(e){return false}})();
+/* só toca enquanto existir uma tela de jogo aberta (jogo coletivo ou jogo individual) */
+const alive=()=>!!(document.getElementById('lg2')||document.querySelector('.sg'));
 function sched(tr){
  const x=C();if(!x)return;const spb=60/tr.bpm/2; /* colcheias */
  while(nextT<x.currentTime+.25){
@@ -66,26 +69,35 @@ function sched(tr){
   if(tr.arp){const pat=[0,1,2,1,2,1,2,1],m=ch[pat[i]]+(i%4===3?12:0);tone(n2f(m+12),spb*.9,tr.wave,.055*tr.vol,t,mGain)}
   if(tr.bass&&i%4===0)tone(n2f(ch[0]-12),spb*3.6,'sine',.16*tr.vol,t,mGain);
   if(i===0)ch.forEach(m=>tone(n2f(m),spb*7.6,'sine',.03*tr.vol,t,mGain));
-  if(tr.drums){if(i%4===0)tone(120,.12,'sine',.22*tr.vol,t,mGain,45);if(i%4===2)noise(.05,.05*tr.vol,t,mGain,5000);if(i%2===1)noise(.02,.025*tr.vol,t,mGain,8000)}
-  if(tr.lead&&(i===0||i===3||i===6)&&bar%2===1)tone(n2f(ch[2]+24),spb*1.6,'triangle',.04*tr.vol,t,mGain);
+  if(tr.drums){if(i%4===0)tone(120,.12,'sine',.22*tr.vol,t,mGain,45);if(!lite){if(i%4===2)noise(.05,.05*tr.vol,t,mGain,5000);if(i%2===1)noise(.02,.025*tr.vol,t,mGain,8000)}}
+  if(!lite&&tr.lead&&(i===0||i===3||i===6)&&bar%2===1)tone(n2f(ch[2]+24),spb*1.6,'triangle',.04*tr.vol,t,mGain);
   nextT+=spb;step++}
 }
 function music(name){
- if(!name){stopMusic();return}
+ if(!name){want=null;stopMusic();return}
+ want=name;
  if(cur===name&&timer)return;
- const x=C();if(!x)return;stopMusic(true);cur=name;step=0;nextT=x.currentTime+.08;
+ if(document.hidden||!alive())return;
+ const x=C();if(!x)return;stopMusic(true);cur=name;step=0;nextT=x.currentTime+.08;musicT0=Date.now();
  if(!st.music)return;fadeTo(1,.8);
- timer=setInterval(()=>{if(cur&&TRACKS[cur])sched(TRACKS[cur])},60)}
-function fadeTo(v,s){if(!mGain)return;const t=ctx.currentTime;mGain.gain.cancelScheduledValues(t);mGain.gain.setValueAtTime(Math.max(.0001,mGain.gain.value),t);mGain.gain.exponentialRampToValueAtTime(Math.max(.0001,v),t+s)}
+ timer=setInterval(tickMusic,lite?90:60)}
+function tickMusic(){
+ if(!alive()||document.hidden){hardStop();return}
+ if(cur==='victory'&&Date.now()-musicT0>14000){want=null;stopMusic(false);return}
+ if(cur&&TRACKS[cur])sched(TRACKS[cur])}
+function fadeTo(v,s){if(!mGain||!ctx)return;const t=ctx.currentTime;mGain.gain.cancelScheduledValues(t);mGain.gain.setValueAtTime(Math.max(.0001,mGain.gain.value),t);mGain.gain.exponentialRampToValueAtTime(Math.max(.0001,v),t+s)}
 function stopMusic(quick){clearInterval(timer);timer=null;if(mGain&&ctx){if(quick)mGain.gain.value=.0001;else fadeTo(.0001,.4)}if(!quick)cur=null}
+/* para tudo de vez: música, áudio mudo e o contexto de áudio (o celular deixa de mostrar "tocando") */
+function releaseMedia(){try{if(mute){mute.pause();mute.removeAttribute('src');mute.load&&mute.load();mute=null}}catch(e){mute=null}}
+function hardStop(){want=null;stopMusic(true);cur=null;releaseMedia();try{if(ctx&&ctx.state==='running')ctx.suspend()}catch(e){}}
 
 const API={
- sfx(n){if(!st.sfx)return;try{FX[n]?.()}catch(e){}},
- music,stop:()=>stopMusic(),
+ sfx(n){if(!st.sfx||document.hidden||!alive())return;try{FX[n]?.()}catch(e){}},
+ music,stop:()=>{want=null;stopMusic()},stopAll:hardStop,
  current:()=>cur,
- setMusic(on){st.music=!!on;SS('iasd_game_music',on?'on':'off');if(!on)stopMusic(false);else if(cur){const n=cur;cur=null;music(n)}return st.music},
+ setMusic(on){st.music=!!on;SS('iasd_game_music',on?'on':'off');if(!on){const w=want;stopMusic(true);cur=null;want=w}else if(want){const n=want;cur=null;music(n)}return st.music},
  setSfx(on){st.sfx=!!on;SS('iasd_game_sound',on?'on':'off');if(on)FX.click();return st.sfx},
- vol(v){st.vol=Math.max(0,Math.min(1,Number(v)||0));SS('iasd_game_volume',String(st.vol));if(master)master.gain.value=st.vol},
+ vol(v){st.vol=Math.max(0,Math.min(1,Number(v)||0));SS('iasd_game_volume',String(st.vol));if(master&&ctx)master.gain.setTargetAtTime(st.vol,ctx.currentTime,.02)},
  state:()=>({...st}),
  unlock(){C()},
  /* compatibilidade com o som antigo do jogo coletivo */
@@ -96,8 +108,10 @@ window.IASDGameAudio=API;
 /* Celulares só liberam áudio dentro de um toque — e o iPhone ainda silencia o WebAudio no modo silencioso.
    A cada toque: retoma o contexto, toca um instante de silêncio e mantém um <audio> mudo em loop (põe o som como "mídia"). */
 let mute=null;
+let lastWake=0;
 function wake(){
  try{
+  if(!alive())return;const now=Date.now();if(now-lastWake<400)return;lastWake=now;
   const x=C();if(!x)return;
   if(x.state!=='running')x.resume&&x.resume();
   const b=x.createBuffer(1,1,22050),n=x.createBufferSource();n.buffer=b;n.connect(x.destination);n.start(0);
@@ -108,10 +122,11 @@ function wake(){
    mute=document.createElement('audio');mute.src=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));mute.loop=true;mute.setAttribute('playsinline','');mute.volume=.01;
    mute.play&&mute.play().catch(()=>{mute=null})}
   else if(mute.paused)mute.play().catch(()=>{});
-  if(cur&&st.music&&!timer){const n2=cur;cur=null;music(n2)}
+  if(want&&st.music&&!timer){const n2=want;cur=null;music(n2)}
  }catch(e){}
 }
 ['touchstart','touchend','pointerdown','click','keydown'].forEach(ev=>addEventListener(ev,wake,{passive:true,capture:true}));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx&&ctx.state!=='running')ctx.resume().catch(()=>{})});
-API.unlock=wake;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){const w=want;hardStop();want=w}else if(alive()){if(ctx&&ctx.state!=='running')ctx.resume().catch(()=>{});if(want&&st.music&&!timer){const n=want;cur=null;music(n)}}});
+addEventListener('pagehide',()=>{hardStop()});
+API.unlock=()=>{lastWake=0;wake()};
 })();
