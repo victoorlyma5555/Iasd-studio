@@ -291,3 +291,10 @@ body.st2 main>.work .row>.danger{margin-left:auto}
 body.st2 main>.work button{min-height:40px}
 @media (pointer:coarse){body.st2 main>.work button,body.st2 main>.work select,body.st2 main>.work input{min-height:44px}}
 body.st2 main>.work button:focus-visible,body.st2 main>.work input:focus-visible,body.st2 main>.work select:focus-visible,.tool:focus-visible,.studio-action:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+/* Celular/tablet: uma única rolagem (a da página do app); abas rolam na horizontal com o dedo */
+html,body{overflow:hidden!important;height:auto!important;overscroll-behavior:none}
+body.st2 main>.tools{overflow-x:auto!important;overflow-y:hidden!important;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
+@media (max-width:1000px){body.st2 main>.work{overflow:visible!important;max-height:none!important;height:auto!important}}
+.amb-more{align-self:center;margin:10px auto;min-height:44px}
+@media (max-width:1000px){.amb-list{overflow:visible;flex:none}}

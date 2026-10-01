@@ -46,7 +46,11 @@ function renderChips(){const box=$('ambChips');if(!box)return;box.replaceChildre
 function renderList(){const box=$('ambList');if(!box)return;box.replaceChildren();const ql=q.trim().toLowerCase();
  const ids=visibleIds();
  if(!ids.length){const e=el('div','amb-empty');e.append(el('p','',lib().length?'Nenhuma música encontrada.':'Sua biblioteca está vazia. Adicione uma URL do YouTube ou pesquise na aba YouTube.'));if(!lib().length){const b=el('button','mp-btn','＋ Adicionar pad de referência');b.type='button';b.onclick=()=>{addAmbientExample();renderAll()};e.append(b)}box.append(e);return}
- ids.forEach(id=>{const r=el('div','amb-row'+(sel===id?' is-sel':''));r.append(thumb(id));const i=el('div','amb-info');i.append(el('b','',title(id)),el('small','',tagOf(id)||'Sem categoria'));r.append(i,playBtn(id),moreBtn(b=>libMenu(b,id),'Opções de '+title(id)));box.append(r)})}
+ const small=window.matchMedia&&matchMedia('(max-width:1000px)').matches,key=ql+'|'+tag+'|'+(plView?plView.length:'');if(key!==listKey){listKey=key;listMax=10}
+ const total=ids.length,view=small?ids.slice(0,listMax):ids;
+ view.forEach(id=>{const r=el('div','amb-row'+(sel===id?' is-sel':''));r.append(thumb(id));const i=el('div','amb-info');i.append(el('b','',title(id)),el('small','',tagOf(id)||'Sem categoria'));r.append(i,playBtn(id),moreBtn(b=>libMenu(b,id),'Opções de '+title(id)));box.append(r)});
+ if(view.length<total){const m=el('button','mp-btn amb-more','Mostrar mais ('+(total-view.length)+' restantes)');m.type='button';m.onclick=()=>{listMax+=15;renderList();if(typeof requestStudioHeight==='function')requestStudioHeight()};box.append(m)}}
+let listKey='',listMax=10;
 function renderSel(){const box=$('ambSel');if(!box)return;box.replaceChildren();
  if(!sel){box.classList.remove('has');const t=el('span','muted','Nenhuma música selecionada.');const a=el('button','mp-btn','🎲 Sortear');a.type='button';a.title='Escolhe sem repetir as anteriores desta rodada';a.onclick=()=>{randomAmbient();if(selectedYouTube.ambient){sel=selectedYouTube.ambient;renderSel();renderList()}};const b=el('button','mp-btn','↻ Reiniciar rodada');b.type='button';b.onclick=resetAmbientRound;box.append(t,a,b);return}
  box.classList.add('has');box.append(thumb(sel));const i=el('div','amb-info');i.append(el('small','','SELECIONADA'),el('b','',title(sel)));const go=el('button','mp-blue','Projetar no telão');go.type='button';go.onclick=()=>projectSelectedYouTube('ambient');const x=el('button','amb-more','✕');x.type='button';x.title='Limpar seleção';x.onclick=clearSel;box.append(i,go,x)}
