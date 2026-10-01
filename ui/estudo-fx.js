@@ -244,15 +244,22 @@ function mkOrdBank(b,L){const x=pickBank(ORDB,b,L);return mkOrdFrom(x.s,x.t+': t
 function mkCloud(b,L){const t=L&&L.title?String(L.title).replace(/^\d+\s*[-–.:]?\s*/,''):'';
  if(b&&b.text)return {type:'cloud',kind:'cloud',ref:'',prompt:'Uma palavra que resume sua resposta para: '+clip(b.text,80),secs:25,head:'Nuvem de palavras'};
  if(t&&Math.random()<.7)return {type:'cloud',kind:'cloud',ref:'',prompt:'Uma palavra que resume o tema “'+clip(t,50)+'”.',secs:25,head:'Nuvem de palavras'};
- const x=pickBank(CLB,b,L);return {type:'cloud',kind:'cloud',ref:'',prompt:x.p,secs:25,head:'Nuvem de palavras'}}
+ return {type:'cloud',kind:'cloud',ref:'',prompt:'Uma palavra que resume o que estudamos até aqui.',secs:25,head:'Nuvem de palavras'}}
+/* Os desafios só usam o conteúdo da própria lição (pergunta, versículos e alternativas dela) — nada de banco de perguntas gerais. */
+const lessonX=L=>((L&&L.blocks)||[]).filter(x=>x.kind==='x'&&x.opts&&x.opts.length>=2&&(x.keys||[]).includes('X'));
+function mkLessonMC(b,L,scope){
+ const own=b&&b.kind==='x'&&(b.keys||[]).includes('X')&&scope!=='tema'?b:null;
+ const x=own||shuffle(lessonX(L))[0];if(!x)return null;
+ const right=x.opts[x.keys.indexOf('X')],opts=shuffle(x.opts.map(o=>clip(o,110)));
+ return {type:'mc',kind:'quiz',ref:'',prompt:clip(x.text,150),opts,answer:opts.indexOf(clip(right,110)),secs:18,head:'Escolha a resposta certa'}}
 async function build(b,L,kind,scope){
  const vb=(b&&b.refs&&b.refs.length&&scope!=='tema')?b:{text:'',refs:lessonRefs(L)};
  const vfb=(b&&b.kind==='vf'&&scope!=='tema')?b:shuffle(lessonVF(L))[0]||null;
- const maker={verso:()=>vb.refs.length&&mkVerso(vb),ref:()=>vb.refs.length&&mkRef(vb),vf:()=>mkVF(vfb)||mkVFBank(b,L),quiz:()=>mkQuiz(b,L),who:()=>mkWho(b,L),
-  ord:async()=>(vb.refs.length&&await mkOrdVerse(vb))||mkOrdBank(b,L),cloud:()=>mkCloud(b,L)};
- const tries=kind&&kind!=='auto'?[kind]:shuffle(['verso','ref','vf','ord','who','quiz']);
+ const maker={verso:()=>vb.refs.length&&mkVerso(vb),ref:()=>vb.refs.length&&mkRef(vb),vf:()=>mkVF(vfb),quiz:()=>mkLessonMC(b,L,scope)||mkVF(vfb),who:()=>mkLessonMC(b,L,scope)||mkVF(vfb),
+  ord:()=>vb.refs.length&&mkOrdVerse(vb),cloud:()=>mkCloud(b,L)};
+ const tries=kind&&kind!=='auto'?[kind]:shuffle(['verso','ref','vf','ord','quiz']);
  for(const t of tries){const s=await maker[t]();if(s)return s}
- return kind&&kind!=='auto'&&kind!=='cloud'?mkQuiz(b,L):null;
+ return mkCloud(b,L);
 }
 async function launch(bi,kind,scope){
  const k=K(),R=k.S.room;if(!R||!R.host)return;
