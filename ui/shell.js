@@ -303,7 +303,7 @@ function normRows(list){
     const p=x.iasd_profiles||{};
     const path=p.avatar_path,url=path?g(()=>profileMediaUrl(path)):'';
     const total=Number(x.total_answers||0),ok=Number(x.correct_answers||0);
-    return {name:x.display_name||p.full_name||'Participante',score:Number(x.score||0),acc:total?Math.round(ok*100/total):0,streak:Number(x.best_streak||0),avatar:url||'',uid:x.user_id||null};
+    return {name:x.display_name||p.full_name||'Participante',score:Number(x.score||0),acc:total?Math.round(ok*100/total):0,streak:Number(x.best_streak||0),avatar:url||'',uid:x.user_id||null,total,ok};
   });
 }
 function loadRanking(force){
@@ -318,7 +318,7 @@ function loadRanking(force){
   if(user){
     Promise.resolve(g(()=>loadGameRanking())).catch(()=>{}).then(()=>{
       const list=g(()=>gameRanking)||[];
-      rank.rows=normRows(list);rank.error=false;rank.scope='all';
+      rank.rows=normRows(list);rank.all=rank.rows;rank.error=false;rank.scope='all';
       const i=list.findIndex(x=>x.user_id===user.id);
       rank.me=i>=0?{pos:i+1,score:Number(list[i].score||0)}:null;
       const c=g(()=>cloud);
@@ -344,7 +344,7 @@ function loadRanking(force){
 }
 function pts(n){return Number(n||0).toLocaleString('pt-BR')}
 function rankRow(r,place){
-  return `<button class="iu-rk" data-go="Jogo"><b class="iu-rk-n n${place}">${place}</b>${avatarHTML(r,false)}<span class="nm">${E(r.name)}</span><span class="sc">${pts(r.score)} pts</span>${ic('chev',16)}</button>`;
+  return `<button class="iu-rk" data-act="pf-open" data-key="${E(rowKey(r))}"><b class="iu-rk-n n${place}">${place}</b>${avatarHTML(r,false)}<span class="nm">${E(r.name)}</span><span class="sc">${pts(r.score)} pts</span>${ic('chev',16)}</button>`;
 }
 function rankBody(){
   if(rank.rows===null)return '<div class="iu-empty">Carregando destaques…</div>';
@@ -352,7 +352,7 @@ function rankBody(){
   let h='';
   if(rows[0]){
     const r=rows[0];
-    h+=`<button class="iu-feat" data-go="Jogo"><span class="iu-feat-av">${avatarHTML(r,true)}</span><span class="iu-feat-tx"><span class="iu-feat-bd">${ic('star',13)}DESTAQUE ${week?'DA SEMANA':'DA COMUNIDADE'}</span><b>${E(r.name)}</b><small>${pts(r.score)} pontos</small><span class="iu-feat-pl">${ic('trophy',15)}1º lugar</span></span>${ic('chev',18)}</button>`;
+    h+=`<button class="iu-feat" data-act="pf-open" data-key="${E(rowKey(r))}"><span class="iu-feat-av">${avatarHTML(r,true)}</span><span class="iu-feat-tx"><span class="iu-feat-bd">${ic('star',13)}DESTAQUE ${week?'DA SEMANA':'DA COMUNIDADE'}</span><b>${E(r.name)}</b><small>${pts(r.score)} pontos</small><span class="iu-feat-pl">${ic('trophy',15)}1º lugar</span></span>${ic('chev',18)}</button>`;
   }
   if(rows[1])h+=rankRow(rows[1],2);
   if(rows[2])h+=rankRow(rows[2],3);
@@ -400,7 +400,7 @@ const SIDE_TABS=[
 ];
 const sideTab={open:null};
 function sideTabsHTML(){
-  return `<aside class="iu-sidetabs" aria-label="Painéis laterais">${SIDE_TABS.map(t=>`<button class="iu-stab" data-act="tab-open" data-tab="${t.id}" aria-label="${E(t.title)}" aria-expanded="false">${ic(t.icon,20)}<span>${E(t.label)}</span></button>`).join('')}</aside><div class="iu-sd-bk" data-act="tab-close" hidden></div><section class="iu-sd" id="iu-sd" role="dialog" aria-modal="true" aria-labelledby="iu-sd-t" hidden><div class="iu-sd-h"><h2 id="iu-sd-t"></h2><button class="iu-ib" data-act="tab-close" aria-label="Fechar">${ic('close',18)}</button></div><div class="iu-sd-b" id="iu-sd-b"></div></section>`;
+  return `<aside class="iu-sidetabs" aria-label="Painéis laterais">${SIDE_TABS.map(t=>`<button class="iu-stab" data-act="tab-open" data-tab="${t.id}" aria-label="${E(t.title)}" aria-expanded="false">${ic(t.icon,20)}<span>${E(t.label)}</span></button>`).join('')}</aside><div class="iu-sd-bk" data-act="tab-close" hidden></div><section class="iu-sd" id="iu-sd" role="dialog" aria-modal="true" aria-labelledby="iu-sd-t" hidden><div class="iu-sd-h"><button class="iu-ib iu-sd-back" data-act="pf-back" aria-label="Voltar aos destaques" hidden>${ic('back',18)}</button><h2 id="iu-sd-t"></h2><button class="iu-ib" data-act="tab-close" aria-label="Fechar">${ic('close',18)}</button></div><div class="iu-sd-b" id="iu-sd-b"></div></section>`;
 }
 function openSideTab(id){
   const t=SIDE_TABS.find(x=>x.id===id),sd=$('iu-sd');if(!t||!sd)return;
@@ -413,10 +413,67 @@ function openSideTab(id){
 }
 function closeSideTab(){
   const sd=$('iu-sd');if(!sd||sd.hidden)return;
-  sideTab.open=null;sd.classList.remove('on');
+  sideTab.open=null;sideTab.pf=null;sd.classList.remove('on');const bk=document.querySelector('.iu-sd-back');if(bk)bk.hidden=true;
   document.querySelector('.iu-sd-bk')?.setAttribute('hidden','');
   document.querySelectorAll('.iu-stab').forEach(b=>{b.hidden=false});
   setTimeout(()=>{if(!sideTab.open)sd.hidden=true},220);
+}
+/* ---------- perfil público (aberto pela aba Destaques) ---------- */
+function rowKey(r){return r.uid||('n:'+r.name)}
+const PP_SC=[['Hoje','day'],['Semana','week'],['Mês','month'],['Geral','all']];
+function ppList(sc){return sc==='all'?(rank.all||(rank.scope==='all'?rank.rows:null)):(rank.sc&&rank.sc[sc])||(sc==='week'&&rank.scope==='week'?rank.rows:null)}
+function ppFind(key){for(const [,sc] of [['','all'],['','week'],['','month'],['','day']]){const l=ppList(sc);const r=l&&l.find(x=>rowKey(x)===key);if(r)return r}return (rank.rows||[]).find(x=>rowKey(x)===key)||null}
+function loadScopes(){
+  const c=g(()=>cloud);if(!S.user()||!c||!c.rpc)return Promise.resolve();
+  if(rank.sc&&Date.now()-(rank.scAt||0)<60000)return Promise.resolve();
+  return Promise.all(['day','week','month'].map(sc=>Promise.resolve(c.rpc('iasd_daily_ranking',{p_scope:sc})).then(r=>[sc,r&&!r.error&&Array.isArray(r.data)?normRows(r.data.map(x=>({user_id:x.user_id,score:x.score,correct_answers:x.correct,total_answers:x.total,best_streak:x.best_streak,iasd_profiles:{full_name:x.full_name,avatar_path:x.avatar_path}}))):[]]).catch(()=>[sc,[]]))).then(a=>{rank.sc=Object.fromEntries(a);rank.scAt=Date.now()});
+}
+function ppBadges(p,posAll){
+  return [
+    ['Primeiros passos','📖','#c2762b','#7a3f12',p.score>0||p.total>0],
+    ['Sequência de fogo','🔥','#2f7bff','#13328c',p.streak>=5],
+    ['Precisão','🎯','#ef4444','#7a1414',p.total>=20&&p.acc>=80],
+    ['1.000 pontos','⭐','#16a34a','#0b4a24',p.score>=1000],
+    ['5.000 pontos','💎','#06b6d4','#0a4a58',p.score>=5000],
+    ['Top 20','🏆','#7c3aed','#3b1478',posAll>0&&posAll<=20],
+    ['Pódio','🥇','#f5b73a','#8a5a07',posAll>0&&posAll<=3]
+  ];
+}
+function profileView(key){
+  const p=ppFind(key);
+  if(!p)return '<div class="iu-empty">Não encontramos este perfil.</div>';
+  const me=S.user()&&p.uid&&p.uid===S.user().id;
+  const lvl=Math.max(1,Math.floor(p.score/500)+1),into=p.score%500,pct=Math.round(into*100/500);
+  const pos=PP_SC.map(([lb,sc])=>{const l=ppList(sc);const i=l?l.findIndex(x=>rowKey(x)===key):-1;return {lb,sc,pos:i>=0?i+1:0,score:i>=0?l[i].score:0,loaded:!!l}});
+  const posAll=(pos.find(x=>x.sc==='all')||{}).pos||0;
+  const medals=pos.filter(x=>x.pos>=1&&x.pos<=3).map(x=>({m:['🥇','🥈','🥉'][x.pos-1],t:`${x.pos}º lugar · ${x.lb==='Geral'?'geral':x.lb==='Hoje'?'hoje':x.lb==='Semana'?'na semana':'no mês'}`}));
+  const bd=ppBadges(p,posAll),un=bd.filter(b=>b[4]).length;
+  const av=p.avatar?`<img src="${E(p.avatar)}" alt="">`:`<b style="background:hsl(${hue(p.name)} 55% 42%)">${E(initials(p.name))}</b>`;
+  const canPos=!!S.user();
+  return `<div class="pp">
+   <div class="pp-hero"><span class="pp-av">${av}</span><div class="pp-id"><h3>${E(p.name)}${me?' <em>você</em>':''}</h3><span class="pp-lv">Nível ${lvl}</span><div class="pp-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div><small>${500-into} pontos para o nível ${lvl+1}</small></div></div>
+   <div class="pp-stats"><div><b>${pts(p.score)}</b><small>pontos</small></div><div><b>${p.total?p.acc+'%':'—'}</b><small>de acertos</small></div><div><b>${pts(p.total)}</b><small>respostas</small></div><div><b>${p.streak||0}</b><small>melhor sequência</small></div></div>
+   <h4>${ic('chart',16)}Posição no ranking</h4>
+   ${canPos?`<div class="pp-pos">${pos.map(x=>`<div class="${x.pos&&x.pos<=3?'top':''}"><small>${x.lb}</small><b>${x.pos?x.pos+'º':'—'}</b>${x.pos?`<em>${pts(x.score)} pts</em>`:`<em>${x.loaded?'sem pontos':'…'}</em>`}</div>`).join('')}</div>`:'<p class="pp-note">Entre na sua conta para ver as posições de hoje, da semana e do mês.</p>'}
+   <h4>${ic('trophy',16)}Premiações</h4>
+   ${medals.length?`<div class="pp-aw">${medals.map(m=>`<span><i>${m.m}</i>${E(m.t)}</span>`).join('')}</div>`:'<p class="pp-note">Ainda sem medalhas de pódio. Quem joga com frequência chega lá!</p>'}
+   <h4>${ic('star',16)}Selos <small>${un} de ${bd.length}</small></h4>
+   <div class="pp-bds">${bd.map(b=>`<div class="${b[4]?'':'off'}"><span style="--c1:${b[2]};--c2:${b[3]}"><i>${b[4]?b[1]:'🔒'}</i></span><b>${E(b[0])}</b></div>`).join('')}</div>
+   ${me?`<button class="iu-btn" data-go="Perfil">${ic('user',16)}Ver meu perfil completo${ic('chev',16)}</button>`:''}
+  </div>`;
+}
+function openPublicProfile(key){
+  const p=ppFind(key);if(!p)return;
+  sideTab.pf=key;
+  $('iu-sd-t').textContent=p.name;$('iu-sd-b').innerHTML=profileView(key);
+  const bk=document.querySelector('.iu-sd-back');if(bk)bk.hidden=false;
+  $('iu-sd-b').scrollTop=0;
+  loadScopes().then(()=>{if(sideTab.open==='destaques'&&sideTab.pf===key)$('iu-sd-b').innerHTML=profileView(key)});
+}
+function backToRank(){
+  sideTab.pf=null;const t=SIDE_TABS.find(x=>x.id==='destaques');if(!t)return;
+  $('iu-sd-t').textContent=rank.scope==='week'?'Destaques da semana':t.title;$('iu-sd-b').innerHTML=t.body();
+  const bk=document.querySelector('.iu-sd-back');if(bk)bk.hidden=true;
 }
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
@@ -490,6 +547,8 @@ function bind(){
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
       else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
       else if(a==='projtest')checkProjector();
+      else if(a==='pf-open')openPublicProfile(act.dataset.key);
+      else if(a==='pf-back')backToRank();
       else if(a==='tab-open')openSideTab(act.dataset.tab);
       else if(a==='tab-close')closeSideTab();
       else if(a==='team-toggle'){const body=$('iu-team-b');if(body){const open=body.hidden;body.hidden=!open;try{localStorage.setItem('iasd-ui-team-open',open?'1':'0')}catch(e){}const ch=$('iu-team-ch');if(ch)ch.innerHTML=ic(open?'up':'down',18);act.setAttribute('aria-expanded',open)}}
