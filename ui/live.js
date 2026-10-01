@@ -45,7 +45,7 @@ let lastTouch=Date.now();['touchstart','touchmove','pointerdown','keydown','whee
  }
  function newVersion(){
   if(reloadAsked)return;reloadAsked=true;
-  const go=()=>{try{location.reload()}catch(e){}};
+  const go=()=>{try{const t=+sessionStorage.getItem('iasd-live-rl')||0;if(Date.now()-t<120000)return;sessionStorage.setItem('iasd-live-rl',String(Date.now()))}catch(e){}try{location.reload()}catch(e){}};
   const modal=()=>!!document.querySelector('.vs-back,.ex-back,.vbar,#sg-tm-bar');
   const tryReload=()=>{
    // volta do segundo plano (app da tela inicial): recarrega na hora; em uso: espera 5 s sem toque; nunca com teclado/popup aberto
@@ -61,9 +61,9 @@ let lastTouch=Date.now();['touchstart','touchmove','pointerdown','keydown','whee
  }
  function start(){
   subscribe();setTimeout(subscribe,4000);setTimeout(subscribe,12000);
-  version();setInterval(version,15000);setInterval(poll,30000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){version();poll()}});
-  window.addEventListener('online',()=>{version();Object.keys(TABLES).forEach(queue)});
+  version();setInterval(version,15000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)version()});
+  window.addEventListener('online',()=>version());
  }
  if(document.readyState==='complete')setTimeout(start,1500);else window.addEventListener('load',()=>setTimeout(start,1500));
 })();
