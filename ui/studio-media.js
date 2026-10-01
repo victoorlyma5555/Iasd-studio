@@ -109,6 +109,7 @@ function actionsBar(kind){
  const bk=btn('Tela preta','pj-black',()=>blackScreen(),'sq','Cobre o telão de preto sem fechar a janela');
  bar.append(go,cl,bk);return bar;
 }
+window.stActionsBar=actionsBar;
 function closeVideo(kind){
  if(kind==='video'){const v=$('serviceVideo');if(v)try{v.pause()}catch(e){}}
  if(kind==='testimony'){const p=$('testimonyPlayer');if(p)try{p.pause()}catch(e){}}
