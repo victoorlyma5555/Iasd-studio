@@ -564,3 +564,6 @@ body.iu .reader-verse.sel{outline:2px solid #f5b73a;outline-offset:2px;box-shado
 .vb-go{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:0;border-radius:12px;background:linear-gradient(135deg,#f5b73a,#e08a12);color:#1b1608;font:inherit;font-weight:800;cursor:pointer}.vb-go svg{width:18px;height:18px}
 @media (max-width:380px){.vb-c{width:30px;height:30px}.vb-dots{gap:4px}.vb-go{font-size:14px}}
 @media (max-width:480px){.vbar{padding:10px}.vb-r{gap:6px}.vb-dots{gap:4px}.vb-c{width:30px;height:30px}.vb-x,.vb-b{width:38px;height:38px}.vb-go{font-size:14px;padding:0 6px;gap:6px;overflow:hidden;white-space:nowrap}.vb-go svg{width:16px;height:16px;flex:none}}
+
+.bb-sharebtn{grid-column:1/-1;background:linear-gradient(135deg,#f5b73a,#e08a12)!important;color:#1b1608!important;border-color:transparent!important;font-weight:800}
+.bb-sharebtn[hidden]{display:none!important}
