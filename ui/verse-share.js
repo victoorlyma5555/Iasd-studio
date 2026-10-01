@@ -9,10 +9,10 @@ const THEMES={
  claro:{n:'Claro',a:'#f6efe0',b:'#e8ecf7',txt:'#1a2547',acc:'#b8730a',sub:'rgba(26,37,71,.55)'}
 };
 const FORMATS={feed:{n:'Feed',w:1080,h:1080},story:{n:'Story',w:1080,h:1920}};
-let S={text:'',ref:'',head:'',lines:null,title:'',theme:'noite',fmt:'feed',logo:null};
+let S={link:'',text:'',ref:'',head:'',lines:null,title:'',theme:'noite',fmt:'feed',logo:null};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function clean(t){return String(t||'').replace(/^[\s“”"«»]+|[\s“”"«»]+$/g,'').replace(/\s+/g,' ')}
-function plainText(){if(S.plain)return S.plain+'\n\n📖 IASD APP · '+SITE;return (S.head?S.head+'\n':'')+'“'+S.text+'”\n— '+S.ref+'\n\n📖 IASD APP · '+SITE}
+function plainText(){if(S.plain)return S.plain+'\n\n📖 IASD APP · '+(S.link||SITE);return (S.head?S.head+'\n':'')+'“'+S.text+'”\n— '+S.ref+'\n\n📖 IASD APP · '+(S.link||SITE)}
 function wrap(ctx,text,maxW){const words=text.split(' '),lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);return lines}
 function draw(cv){
  const F=FORMATS[S.fmt],T=THEMES[S.theme];cv.width=F.w;cv.height=F.h;const x=cv.getContext('2d'),W=F.w,H=F.h;
@@ -70,7 +70,7 @@ async function act(k){
 function paint(){const cv=document.getElementById('vs-cv');if(cv){draw(cv);cv.parentElement.className='vs-prev '+S.fmt}}
 function close(){document.getElementById('vs-ov')?.remove();document.body.classList.remove('vs-lock')}
 function open(o){
- close();S.head=o.head||'';S.list=o.list||null;S.plain=o.plain||'';S.title=o.title||'Compartilhar versículo';S.theme=o.theme||(S.theme==='festa'?'noite':S.theme);S.text=o.raw?String(o.text||''):clean(o.text);S.ref=o.noref?'':String(o.ref||'').replace(/\s*\([^)]*\)\s*$/,'')+(o.ver?' ('+o.ver+')':(/\(([^)]+)\)\s*$/.exec(o.ref||'')?' ('+/\(([^)]+)\)\s*$/.exec(o.ref)[1]+')':''));
+ close();S.link=o.link&&o.ref?('https://'+SITE+'/biblia?ref='+encodeURIComponent(String(o.ref).replace(/\s*\([^)]*\)\s*$/,''))):'';S.head=o.head||'';S.list=o.list||null;S.plain=o.plain||'';S.title=o.title||'Compartilhar versículo';S.theme=o.theme||(S.theme==='festa'?'noite':S.theme);S.text=o.raw?String(o.text||''):clean(o.text);S.ref=o.noref?'':String(o.ref||'').replace(/\s*\([^)]*\)\s*$/,'')+(o.ver?' ('+o.ver+')':(/\(([^)]+)\)\s*$/.exec(o.ref||'')?' ('+/\(([^)]+)\)\s*$/.exec(o.ref)[1]+')':''));
  const ov=document.createElement('div');ov.id='vs-ov';ov.className='vs-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Compartilhar versículo');
  ov.innerHTML='<div class="vs-card"><button class="vs-x" data-vs="close" aria-label="Fechar">✕</button><h3>'+esc(S.title)+'</h3><div class="vs-prev feed"><canvas id="vs-cv"></canvas></div>'+
  '<div class="vs-row" role="group" aria-label="Formato">'+Object.entries(FORMATS).map(([k,v])=>'<button class="vs-chip'+(S.fmt===k?' on':'')+'" data-fmt="'+k+'">'+v.n+(k==='feed'?' · 1:1':' · 9:16')+'</button>').join('')+'</div>'+

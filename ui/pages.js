@@ -205,6 +205,19 @@ const VOTD=[['João','John',17,'A tua palavra é a verdade.','João 17:17'],['Sa
 
 /* ---- Bíblia: escolher versículos (intervalo + seleção por toque) ---- */
 const RD={verses:[],name:'',chapter:0,from:0,to:0,sel:new Set(),key:''};
+/* marca-texto: fica salvo neste aparelho (book|chapter -> {verso:cor}) */
+const HL_KEY='iasd-hl-v1',HL_COLORS=['','#facc15','#4ade80','#60a5fa','#f472b6'];
+function hlAll(){try{return JSON.parse(localStorage.getItem(HL_KEY)||'{}')||{}}catch(e){return {}}}
+function hlChap(){return hlAll()[readerState.book+'|'+RD.chapter]||{}}
+function hlApply(color){
+ const all=hlAll(),k=readerState.book+'|'+RD.chapter,m=all[k]||{},sel=[...RD.sel];
+ const same=color&&sel.length&&sel.every(n=>m[n]===color);
+ sel.forEach(n=>{if(!color||same)delete m[n];else m[n]=color});
+ if(Object.keys(m).length)all[k]=m;else delete all[k];
+ try{localStorage.setItem(HL_KEY,JSON.stringify(all))}catch(e){}
+ RD.sel=new Set();rdPaint();
+ bbToast(!color||same?'Marca removida':'Marcado ✓ (fica salvo neste aparelho)');
+}
 function rdVersionLabel(){const t=(readerState.translation||'nvi').toUpperCase();return t==='ALMEIDA'?'Almeida 1911':t}
 function rdSet(name,chapter,verses){
  const key=readerState.book+'|'+chapter;
@@ -213,7 +226,7 @@ function rdSet(name,chapter,verses){
  if(go&&go.book===readerState.book&&Number(go.chapter)===Number(chapter)){
   const last=verses.length?verses[verses.length-1].verse:1;
   let f=Math.min(Math.max(1,go.from||1),last),t=go.to?Math.min(Math.max(f,go.to),last):0;
-  if(go.from){RD.from=f;RD.to=t===f?0:t;RD.sel=new Set();for(let n=f;n<=(t||f);n++)RD.sel.add(n);jumped=true}
+  if(go.from){RD.from=f;RD.to=t===f?0:t;RD.sel=new Set();jumped=true}
   window.__rdGoto=null;
  }
  RD.name=name;RD.chapter=chapter;RD.verses=verses;rdPaint();
@@ -237,13 +250,13 @@ function favToggle(){
  const on=IASDExtras.favToggle(p);favRefresh();
  bbToast(on?'★ '+rdPassRef(p)+' salvo nos favoritos':'Removido dos favoritos');
 }
-function share(){const p=rdPassage();if(!p.from){bbToast('Toque nos versículos que quer compartilhar (ou use De/Até).');return}window.IASDVerseShare.open({text:p.text,ref:rdPassRef(p),ver:rdVersionLabel()})}
+function share(){const p=rdPassage();if(!p.from){bbToast('Toque nos versículos que quer compartilhar (ou use De/Até).');return}window.IASDVerseShare.open({text:p.text,ref:rdPassRef(p),ver:rdVersionLabel(),link:true})}
 function copyQuick(btn){const p=rdPassage();if(p.from){navigator.clipboard?.writeText('“'+p.text+'” — '+rdPassRef(p)+' ('+rdVersionLabel()+')').then(()=>bbToast('Texto copiado ✓'));return}readerCopy()}
 function rdVisible(){return RD.from?RD.verses.filter(v=>v.verse>=RD.from&&v.verse<=(RD.to||RD.from)):RD.verses}
 function rdPaint(){
  const el=document.getElementById('reader-text');if(!el)return;
- const vis=rdVisible();
- el.innerHTML='<h3>'+esc(RD.name)+' <span>'+RD.chapter+(RD.from?':'+RD.from+(RD.to&&RD.to!==RD.from?'-'+RD.to:''):'')+'</span></h3>'+vis.map(v=>'<p class="reader-verse'+(RD.sel.has(v.verse)?' sel':'')+'" data-v="'+v.verse+'" tabindex="0"><sup>'+v.verse+'</sup>'+esc(v.text.trim())+'</p>').join('');
+ const vis=rdVisible(),hl=hlChap();
+ el.innerHTML='<h3>'+esc(RD.name)+' <span>'+RD.chapter+(RD.from?':'+RD.from+(RD.to&&RD.to!==RD.from?'-'+RD.to:''):'')+'</span></h3>'+vis.map(v=>'<p class="reader-verse'+(RD.sel.has(v.verse)?' sel':'')+(hl[v.verse]?' hl hl'+Math.max(1,HL_COLORS.indexOf(hl[v.verse])):'')+'" data-v="'+v.verse+'" tabindex="0"><sup>'+v.verse+'</sup>'+esc(v.text.trim())+'</p>').join('');
  const f=document.getElementById('rd-from'),t=document.getElementById('rd-to');
  if(f&&t){const max=RD.verses.length,opts=(sel)=>Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'"'+(sel===i+1?' selected':'')+'>'+(i+1)+'</option>').join('');
   f.innerHTML='<option value="0">Todos</option>'+opts(RD.from);t.innerHTML='<option value="0">—</option>'+opts(RD.to);t.disabled=!RD.from}
@@ -268,13 +281,16 @@ function rdAll(){RD.from=0;RD.to=0;rdPaint()}
 function rdSelRef(){const a=[...RD.sel].sort((x,y)=>x-y);if(!a.length)return '';const parts=[];let s=a[0],p=a[0];for(let i=1;i<=a.length;i++){if(a[i]===p+1){p=a[i];continue}parts.push(s===p?String(s):s+'-'+p);s=a[i];p=a[i]}return RD.name+' '+RD.chapter+':'+parts.join(',')}
 function rdSelText(){const a=[...RD.sel].sort((x,y)=>x-y);return a.map(n=>RD.verses.find(v=>v.verse===n)).filter(Boolean).map(v=>v.text.trim()).join(' ')}
 function rdQuote(){return '“'+rdSelText()+'” — '+rdSelRef()+' ('+rdVersionLabel()+')'}
-function rdBar(){document.getElementById('rd-bar')?.remove();return;
+function rdBar(){
  let bar=document.getElementById('rd-bar');const n=RD.sel.size;
- const host=document.querySelector('.bb-main');if(!host)return;
- if(!n){bar?.remove();return}
- const canP=typeof canUseSound==='function'&&canUseSound()&&typeof project==='function';
- const html='<b>'+esc(rdSelRef())+'</b><span>'+n+' selecionado'+(n===1?'':'s')+'</span><button onclick="IASDPages.rdCopy(this)">'+I('doc')+'Copiar</button><button onclick="IASDPages.rdShare()">'+I('share')+'Compartilhar</button>'+(canP?'<button class="gold" onclick="IASDPages.rdProject()">'+I('play')+'Projetar</button>':'')+'<button onclick="IASDPages.rdClear()" aria-label="Limpar seleção">✕</button>';
- if(!bar){bar=document.createElement('div');bar.id='rd-bar';bar.className='rd-bar';document.body.appendChild(bar)}
+ if(!document.querySelector('.bb-main')||!n){bar?.remove();return}
+ const p=rdPassage(),hl=hlChap(),marked=[...RD.sel].some(v=>hl[v]);
+ const dots=[1,2,3,4].map(c=>'<button class="vb-c" style="--c:'+HL_COLORS[c]+'" aria-label="Marcar com a cor '+c+'" onclick="IASDPages.hlApply('+"'"+HL_COLORS[c]+"'"+')"></button>').join('')
+  +(marked?'<button class="vb-x" aria-label="Tirar a marca" title="Tirar a marca" onclick="IASDPages.hlApply(0)">'+I('trash')+'</button>':'');
+ const fav=window.IASDExtras&&IASDExtras.favHas(p);
+ const html='<div class="vb-t"><b>'+esc(rdPassRef(p))+'</b><span>'+n+' versículo'+(n===1?'':'s')+'</span><button class="vb-close" onclick="IASDPages.rdClear()" aria-label="Limpar seleção">✕</button></div>'
+  +'<div class="vb-r"><span class="vb-dots" role="group" aria-label="Marca-texto">'+dots+'</span><button class="vb-b'+(fav?' on':'')+'" onclick="IASDPages.favToggle()" aria-label="Favoritar">'+I('star')+'</button><button class="vb-b" onclick="IASDPages.copyQuick(this)" aria-label="Copiar">'+I('doc')+'</button><button class="vb-go" onclick="IASDPages.share()">'+I('share')+'Compartilhar</button></div>';
+ if(!bar){bar=document.createElement('div');bar.id='rd-bar';bar.className='vbar';document.body.appendChild(bar)}
  bar.innerHTML=html;
 }
 function rdToggle(v){if(RD.sel.has(v))RD.sel.delete(v);else RD.sel.add(v);document.querySelector('#reader-text .reader-verse[data-v="'+v+'"]')?.classList.toggle('sel',RD.sel.has(v));rdBar();favRefresh()}
@@ -298,7 +314,7 @@ function bible(){
  '<div class="pg-card bb-nav"><button class="pg-ghost strong" onclick="readerMove(-1)" aria-label="Capítulo anterior">'+I('left')+'<em>Anterior</em></button><span id="reader-ref">'+esc(name)+' '+readerState.chapter+'</span><button class="pg-ghost sq fav" id="bb-fav" onclick="IASDPages.favToggle()" aria-label="Favoritar esta passagem" title="Favoritar">'+I('star')+'</button><button class="pg-ghost sq favs" onclick="IASDExtras.open(\'fav\')" aria-label="Meus favoritos" title="Meus favoritos">'+I('list')+'<i id="bb-favn"></i></button><button class="pg-ghost strong" onclick="readerMove(1)" aria-label="Próximo capítulo"><em>Próximo</em>'+I('right')+'</button></div>'+
  '<div class="pg-card bb-verses"><div class="bv-l"><b>'+I('list')+'Versículos</b></div><label>De<div class="pg-sel"><select id="rd-from" onchange="IASDPages.rdRange()"><option value="0">Todos</option></select></div></label><label>Até<div class="pg-sel"><select id="rd-to" onchange="IASDPages.rdRange()" disabled><option value="0">—</option></select></div></label><button class="pg-ghost" onclick="IASDPages.rdAll()">Inteiro</button></div>'+
  '<div class="bb-main"><article class="pg-card bb-paper reader-paper" id="reader-text" aria-live="polite"><p>Carregando capítulo…</p></article><aside class="bb-side">'+
- '<div class="pg-card bb-quick"><h3>'+I('star','gold')+'Ações rápidas</h3><div class="bb-grid"><button onclick="IASDPages.share()">'+I('share')+'Compartilhar</button><button onclick="IASDPages.copyQuick(this)">'+I('doc')+'Copiar texto</button><button class="bb-wide" onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button></div></div></aside></div>'+
+ '<div class="pg-card bb-quick bb-mini"><button onclick="IASDPages.listen(this)">'+I('head')+'Ouvir capítulo</button><button onclick="readerCopy()">'+I('doc')+'Copiar capítulo</button></div></aside></div>'+
  '<p class="reader-source">Tradução Almeida em português, consultada online. A disponibilidade dos capítulos depende da fonte externa e da conexão. Não há projeção nesta área.</p></div>';
 }
 function listen(btn){const s=window.speechSynthesis;if(!s)return;if(s.speaking){s.cancel();btn.lastChild.textContent='Ouvir capítulo';return}const t=(document.getElementById('reader-text')?.innerText||'').trim();if(!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=/^(kjv|web)$/.test(readerState.translation)?'en-US':'pt-BR';u.onend=()=>{btn.lastChild.textContent='Ouvir capítulo'};s.speak(u);btn.lastChild.textContent='Parar leitura'}
@@ -633,5 +649,5 @@ function pfLoad(){
  try{if(typeof loadGameRanking==='function')loadGameRanking();if(typeof dailyLoad==='function'&&typeof DR!=='undefined'&&!DR.loaded.week)Promise.resolve(dailyLoad('week')).then(pfRepaint)}catch(e){}
 }
 
-window.IASDPages={rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={hlApply,rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();

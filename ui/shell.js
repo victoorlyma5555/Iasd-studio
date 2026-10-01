@@ -460,7 +460,7 @@ function bind(){
       else if(a==='sched-toggle'){sched.expanded=!sched.expanded;updateSchedule()}
       else if(a==='signup')g(()=>openAuthModal(true));
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
-      else if(a==='vshare'){g(()=>window.IASDVerseShare.open({text:passage.text,ref:passage.ref}))}
+      else if(a==='vshare'){g(()=>window.IASDVerseShare.open({text:passage.text,ref:passage.ref,link:true}))}
       else if(a==='passage'){
         g(()=>{readerState.book=passage.book;readerState.chapter=passage.chapter;window.__rdGoto={book:passage.book,chapter:Number(passage.chapter),from:Number(passage.verse)||1,to:0};saveReader()});
         g(()=>go('Bíblia'));

@@ -170,7 +170,7 @@ INPUTS['rm-on']=async t=>{
  if(t.checked){let perm=Notification.permission;if(perm!=='granted')perm=await Notification.requestPermission();if(perm!=='granted'){t.checked=false;r.on=false;LS.set(RM_KEY,r);body(remindHTML());return}r.on=true;r.last='';LS.set(RM_KEY,r);toast('Lembrete ativado');remindTick()}
  else{r.on=false;LS.set(RM_KEY,r);toast('Lembrete desativado')}
 };
-HANDLERS['rm-share']=()=>{const p=passageNow();if(p)window.IASDVerseShare.open({text:p.text,ref:p.ref})};
+HANDLERS['rm-share']=()=>{const p=passageNow();if(p)window.IASDVerseShare.open({text:p.text,ref:p.ref,link:true})};
 HANDLERS['rm-read']=()=>{const p=passageNow();if(!p)return;try{readerState.book=p.book;readerState.chapter=p.chapter;window.__rdGoto={book:p.book,chapter:Number(p.chapter),from:Number(p.verse)||1,to:0};saveReader()}catch(e){}close();go('Bíblia')};
 HANDLERS['rm-ics']=()=>{
  const r=rm(),[h,m]=String(r.hour||'07:00').split(':').map(Number),d=new Date();const pad=n=>String(n).padStart(2,'0');
@@ -303,7 +303,7 @@ function openFavs(){FV.q='';favPull();sheet('Meus favoritos','Passagens que voc�
 INPUTS['fv-q']=t=>{FV.q=t.value;const pos=t.selectionStart;body(favHTML());const n=sheetEl.querySelector('#fv-q');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}};
 const favById=id=>favs().find(f=>f.id===id);
 HANDLERS['fv-open']=b=>{const f=favById(b.dataset.id);if(!f)return;try{readerState.book=f.book;readerState.chapter=f.chapter;readerState.translation=f.tr;window.__rdGoto=f.from?{book:f.book,chapter:f.chapter,from:f.from,to:f.to||0}:null;saveReader()}catch(e){}close();if(typeof current!=='undefined'&&current==='Bíblia'){render();readerLoad()}else go('Bíblia')};
-HANDLERS['fv-share']=b=>{const f=favById(b.dataset.id);if(!f)return;if(!f.text)return toast('Abra a passagem primeiro para carregar o texto.');window.IASDVerseShare.open({text:f.text,ref:favRef(f),ver:trLabel(f.tr)})};
+HANDLERS['fv-share']=b=>{const f=favById(b.dataset.id);if(!f)return;if(!f.text)return toast('Abra a passagem primeiro para carregar o texto.');window.IASDVerseShare.open({text:f.text,ref:favRef(f),ver:trLabel(f.tr),link:true})};
 HANDLERS['fv-copy']=async b=>{const f=favById(b.dataset.id);if(!f)return;if(!f.text)return toast('Abra a passagem primeiro para carregar o texto.');try{await navigator.clipboard.writeText('“'+f.text+'” — '+favRef(f)+' ('+trLabel(f.tr)+')');toast('Texto copiado ✓')}catch(e){toast('Não foi possível copiar')}};
 HANDLERS['fv-del']=b=>{const a=favs().filter(f=>f.id!==b.dataset.id);favPut(a);body(favHTML());try{IASDPages.favRefresh()}catch(e){}toast('Removido dos favoritos')};
 
@@ -312,5 +312,16 @@ const OPEN={champ:openChampions,plan:openPlan,remind:openRemind,cards:openCards,
 function planToday(){const s=planState();if(!s||!s.start)return null;const d=Math.min(365,Math.max(1,planDayNow(s)));return {day:d,label:planLabel(planDay(d)),done:(s.done||[]).includes(d)}}
 window.IASDExtras={favHas,favToggle,favCount,planToday,open:k=>{try{(OPEN[k]||(()=>{}))()}catch(e){console.warn('[extras]',e)}},planStats,remindTick,close};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)remindTick()});
+/* link compartilhado: iasdapp.com.br/biblia?ref=João+3:16 abre a Bíblia direto na passagem */
+function openSharedRef(){
+ try{
+  const u=new URL(location.href),ref=u.searchParams.get('ref');if(!ref||!window.IASDBibleRef||typeof bibleBooks==='undefined')return;
+  const r=IASDBibleRef.parse(ref,bibleBooks);u.searchParams.delete('ref');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);if(!r)return;
+  const idx=bibleBooks.findIndex(x=>x[1]===r.book),max=bibleChapterCounts[idx]||150,chapter=Math.min(r.chapter,max);
+  readerState.book=r.book;readerState.chapter=chapter;window.__rdGoto={book:r.book,chapter,from:r.from,to:r.to};saveReader();
+  if(current!=='Bíblia')go('Bíblia');else{render();readerLoad()}
+ }catch(e){console.warn('[ref]',e)}
+}
+window.addEventListener('load',()=>setTimeout(openSharedRef,500));
 setTimeout(remindTick,4000);
 })();
