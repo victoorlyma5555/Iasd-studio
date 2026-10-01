@@ -366,6 +366,16 @@ function rankHTML(){
   loadRanking();
   return `<section class="iu-rank"><div class="iu-pan iu-rank-main"><div class="iu-ph">${ic('trophy',20)}<h2>Destaques da comunidade</h2><button class="iu-link" data-go="Jogo">Ver ranking completo${ic('chev',14)}</button></div><small class="iu-sub">Quem mais se dedica ao Desafio da Palavra.</small><div id="iu-rank-body">${rankBody()}</div></div><div class="iu-rank-cta" id="iu-rank-cta">${ctaBody()}</div></section>`;
 }
+const EXTRAS=[
+ ['plan','📖','Plano de leitura','Bíblia em 1 ano','#0f766e','#134e4a'],
+ ['remind','🔔','Lembrete diário','Versículo do dia','#1d4ed8','#312e81'],
+ ['prayer','🙏','Pedidos de oração','Orar uns pelos outros','#7c3aed','#4c1d95'],
+ ['cards','🎉','Cartão de parabéns','Aniversários e datas','#db2777','#7c2d6b'],
+ ['champ','🏆','Campeões','Pódio do Domingo Jovem','#b45309','#7c2d12']
+];
+function extrasHTML(){
+  return `<section class="iu-pan iu-extras"><div class="iu-ph">${ic('star',20)}<h2>Para a comunidade</h2></div><div class="iu-qg">${EXTRAS.map(([k,em,t,sub,c1,c2])=>`<button class="iu-q iu-ex" style="background:linear-gradient(135deg,${c1},${c2})" data-act="ex" data-ex="${k}"><span class="iu-em">${em}</span><span><b>${E(t)}</b><small>${E(sub)}</small></span></button>`).join('')}</div></section>`;
+}
 function quickHTML(){
   const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
   if(!items.length)return '';
@@ -378,7 +388,7 @@ function bannerHTML(){
 }
 api.home=function(){
   try{
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}${sched.expanded?' exp':''}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${rankHTML()}${quickHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div><div class="iu-grid${S.sound()?'':' two'}${sched.expanded?' exp':''}">${scheduleHTML()}${S.sound()?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:''}${passageHTML()}</div>${rankHTML()}${extrasHTML()}${quickHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -426,6 +436,7 @@ function bind(){
     const act=e.target.closest('[data-act]');
     if(act&&act.closest('.iu-side,.iu-top,.iu-home,.iu-bn')){
       const a=act.dataset.act;
+      if(a==='ex'){g(()=>window.IASDExtras.open(act.dataset.ex));return}
       if(a==='menu')document.body.classList.add('iu-open');
       else if(a==='back')g(()=>mobileGoBack());
       else if(a==='theme')g(()=>toggleTheme());
@@ -491,5 +502,6 @@ api.fail=function(e){
 };
 api.projState=()=>proj.state;
 g(()=>IASDPresence.onChange(()=>{if(S.cur()==='Painel')updatePres()}));
+api.passage=()=>passage;
 window.IASDUI=api;
 })();

@@ -563,10 +563,14 @@ const PF_BADGES=[
  ['Pódio','Está entre os 3 primeiros','🥇','#f5b73a','#8a5a07',c=>c.pos>0&&c.pos<=3],
  ['1.000 pontos','Passou de mil pontos','⭐','#16a34a','#0b4a24',c=>c.score>=1000],
  ['5.000 pontos','Passou de cinco mil pontos','💎','#06b6d4','#0a4a58',c=>c.score>=5000],
- ['Precisão','80% de acertos em 20+ respostas','🎯','#ef4444','#7a1414',c=>c.total>=20&&c.acc>=80]
+ ['Precisão','80% de acertos em 20+ respostas','🎯','#ef4444','#7a1414',c=>c.total>=20&&c.acc>=80],
+ ['Leitor fiel','7 dias do plano de leitura','📚','#0d9488','#134e4a',c=>c.plan>=7],
+ ['30 dias de Palavra','30 dias do plano de leitura','🕊️','#0ea5e9','#0c3b5e',c=>c.plan>=30],
+ ['Um quarto da Bíblia','Leu 25% do plano (91 dias)','🏔️','#8b5cf6','#3b1c7a',c=>c.plan>=91]
 ];
 function pfCtx(){const m=pfMe(),r=m.row||{};const total=Number(r.total_answers||0),ok=Number(r.correct_answers||0);
- return {score:Number(r.score||0),pos:m.pos,streak:pfStreak(),played:Number(r.games_played||0)||(Number(r.score||0)>0||pfStreak()?1:0),total,acc:total?Math.round(ok*100/total):0}}
+ let plan=0;try{plan=window.IASDExtras?.planStats().done||0}catch(e){}
+ return {plan,score:Number(r.score||0),pos:m.pos,streak:pfStreak(),played:Number(r.games_played||0)||(Number(r.score||0)>0||pfStreak()?1:0),total,acc:total?Math.round(ok*100/total):0}}
 function pfBadge(b,on){return '<div class="pf-bd'+(on?'':' off')+'" title="'+esc(b[1])+'"><span class="pf-hex" style="--c1:'+b[3]+';--c2:'+b[4]+'"><i>'+(on?b[2]:'🔒')+'</i></span><b>'+esc(b[0])+'</b><small>'+esc(b[1])+'</small></div>'}
 function pfRankRows(){
  const me=pfMe();let rows=[];
