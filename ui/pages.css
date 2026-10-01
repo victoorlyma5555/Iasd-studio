@@ -417,3 +417,50 @@ html[data-theme="light"] .gm-tag.rk{color:#a15c07}html[data-theme="light"] .gm-t
 .pg-jogos .dy-note{display:block}
 .pg-jogos #pg-daily .pg-head,.pg-jogos .gm-free .pg-head{flex-wrap:wrap;gap:8px 12px}
 .pg-jogos .gm-free{border-top:1px dashed var(--iu-bd,#26375f);padding-top:16px}
+
+/* Bíblia compacta: menos rolagem até o texto */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pg-biblia .bb-find{flex-wrap:nowrap;padding:8px 10px;gap:8px;align-items:center}
+.pg-biblia .bb-find label{flex:1 1 auto}
+.pg-biblia .bb-find .pg-ghost{min-height:44px;flex:none}
+.pg-biblia .bb-bar{grid-template-columns:1.4fr .6fr 1.2fr auto;gap:8px 10px;padding:10px;align-items:end}
+.pg-biblia .bb-bar label{gap:3px;font-size:12px}
+.pg-biblia .bb-tools{gap:6px}.pg-biblia .bb-tools .pg-ghost{padding:0 12px;min-width:44px;justify-content:center}
+.pg-biblia .bb-nav em{font-style:normal}
+.pg-biblia .bb-nav{padding:6px 8px}.pg-biblia .bb-nav #reader-ref{font-size:17px}
+body.iu .pg-biblia .bb-verses{flex-wrap:nowrap;gap:8px;padding:8px 12px;align-items:center}
+body.iu .pg-biblia .bb-verses label{display:flex;align-items:center;gap:6px}
+body.iu .pg-biblia .bb-verses .bv-l{flex:1 1 auto}
+body.iu .pg-biblia .bb-verses .pg-sel select{min-width:64px}
+@media (max-width:900px){.pg-biblia{gap:10px}.pg-biblia .pg-hero{min-height:0}.pg-biblia .pg-hero-txt{padding:14px 16px}.pg-biblia .pg-hero-txt p,.pg-biblia .pg-hero-txt blockquote,.pg-biblia .pg-hero-txt .pg-quote,.pg-biblia .pg-hero-quote{display:none}.pg-biblia .pg-hero-txt h1{font-size:24px;margin:0}}
+@media (max-width:560px){
+ .pg-biblia .bb-bar{grid-template-columns:1fr 84px;grid-template-areas:"bk ch" "tr tl"}
+ .pg-biblia .bb-bar .f-bk{grid-area:bk}.pg-biblia .bb-bar .f-ch{grid-area:ch}.pg-biblia .bb-bar .f-tr{grid-area:tr}.pg-biblia .bb-bar .bb-tools{grid-area:tl;grid-column:auto;justify-content:flex-end}
+ .pg-biblia .bb-tools .pg-ghost{padding:0 8px;min-width:40px}
+ .pg-biblia .bb-nav em{display:none}.pg-biblia .bb-nav .pg-ghost{min-width:52px;justify-content:center}
+ body.iu .pg-biblia .bb-verses .bv-l b{font-size:0;gap:0}body.iu .pg-biblia .bb-verses .bv-l b svg{width:20px;height:20px}
+ body.iu .pg-biblia .bb-verses .pg-sel select{min-width:58px}
+ body.iu .pg-biblia .bb-verses .pg-ghost{padding:0 10px}
+}
+.pg-biblia .bb-bar>*{min-width:0}.pg-biblia .bb-bar .pg-sel{min-width:0}.pg-biblia .bb-bar select{min-width:0;width:100%;text-overflow:ellipsis}
+@media (max-width:560px){
+ .pg-biblia .bb-bar{grid-template-columns:minmax(0,1fr) 92px;gap:8px}
+ .pg-biblia .bb-bar label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ .pg-biblia .bb-bar .pg-sel{padding-left:10px}
+ .pg-biblia .bb-bar .pg-sel .pgi,.pg-biblia .bb-bar .pg-sel svg{display:none}
+ .pg-biblia .bb-bar .bb-tools{flex-wrap:nowrap}
+ .pg-biblia .bb-tools .pg-ghost{min-width:0;padding:0;width:42px;flex:none}
+ .pg-biblia .bb-bar .f-tr{grid-area:tr}.pg-biblia .bb-bar .bb-tools{width:auto}
+ .pg-biblia .bb-bar{grid-template-columns:minmax(0,1fr) 92px;grid-template-areas:"bk ch" "tr tr" "tl tl"}
+ .pg-biblia .bb-bar .bb-tools{justify-content:space-between}.pg-biblia .bb-bar .bb-tools .pg-ghost{flex:1}
+ .pg-biblia .pg-hero-txt h1 .big{font-size:inherit}
+}
+.pg-biblia .pg-hero{min-height:0}.pg-biblia .pg-hero-txt p{display:none}.pg-biblia .pg-hero-txt h1{font-size:clamp(26px,3.2vw,40px);line-height:1.05}
+.pg-biblia .bb-bar{grid-template-columns:1.3fr 1fr .5fr auto}
+@media (max-width:560px){
+ .pg-biblia .pg-hero{display:none}
+ .pg-biblia .bb-bar{grid-template-columns:minmax(0,1fr) 84px;grid-template-areas:"bk ch" "tr tl"}
+ .pg-biblia .bb-bar .f-tr{grid-area:tr}.pg-biblia .bb-bar .bb-tools{grid-area:tl;grid-column:auto}
+ .pg-biblia .bb-bar{grid-template-columns:minmax(0,1fr) 1fr}
+ .pg-biblia .bb-bar .bb-tools{justify-content:flex-end;gap:5px}.pg-biblia .bb-bar .bb-tools .pg-ghost{flex:1;width:auto;min-width:0;max-width:44px}
+}
