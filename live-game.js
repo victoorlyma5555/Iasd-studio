@@ -15,12 +15,20 @@ const speed=()=>Number(window.__LG_SPEED)||1;
 const fmt=n=>Number(n||0).toLocaleString('pt-BR');
 const A=()=>window.IASDGameAudio||new Proxy({},{get:()=>()=>{}});
 /* ---------- telão: 2ª janela que espelha a tela do apresentador (mesmo navegador) ---------- */
-const BC=('BroadcastChannel' in window)?new BroadcastChannel('iasd-live-telao'):null;
+const BC=('BroadcastChannel' in window)?new BroadcastChannel('iasd-live-telao'):new Proxy({},{get:()=>()=>{}});
 let snapT=null;
-function snapSend(){if(!BC)return;const b=document.querySelector('#lg2 .lg2-body');if(!b)return;try{BC.postMessage({t:'snap',sid:S.sid,cls:b.className,style:b.getAttribute('style')||'',html:b.innerHTML})}catch(e){}}
+function snapSend(){const b=document.querySelector('#lg2 .lg2-body');if(!b)return;const m={t:'snap',sid:S.sid,cls:b.className,style:b.getAttribute('style')||'',html:b.innerHTML};try{BC.postMessage(m)}catch(e){}pjSend(m)}
 let TL=false;
-function snapSoon(now){if(!BC||!S.host)return;if(!now&&!TL)return;if(now){clearTimeout(snapT);snapT=null;return snapSend()}if(snapT)return;snapT=setTimeout(()=>{snapT=null;snapSend()},220)}
-function bcSend(m){if(BC&&S.host)try{BC.postMessage(m)}catch(e){}}
+/* ---------- Projetor IASD (app do Windows): mesma ponte da Sonoplastia ---------- */
+const PJ={on:false,busy:false,next:null,last:''};
+function pjReq(route,payload){const T=localStorage.getItem('iasd-projetor-token')||'';
+ if(!T)return Promise.reject(Error('nopair'));
+ return fetch('http://127.0.0.1:38741'+route,{method:'POST',targetAddressSpace:'loopback',headers:{'Content-Type':'application/json',Authorization:'Bearer '+T},body:JSON.stringify(payload||{})}).then(async r=>{const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'IASD Projetor indisponível');return b})}
+async function pjFlush(){if(PJ.busy)return;PJ.busy=true;try{while(PJ.next!==null){const c=PJ.next;PJ.next=null;try{await pjReq('/project',{content:c})}catch(e){if(/Mensagem|Conteúdo inválido/.test(e.message)){PJ.big=1}}}}finally{PJ.busy=false}}
+function toast(t){try{const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:99999;background:#14283e;color:#fff;border:1px solid #d3a653;padding:10px 18px;border-radius:12px;font:700 14px Inter,system-ui;box-shadow:0 8px 30px #0008';document.body.appendChild(d);setTimeout(()=>d.remove(),3200)}catch(e){}}
+function pjSend(m){if(!PJ.on)return;const c='IASD_GAME:'+JSON.stringify(m);if(c.length>49000&&!PJ.big){/* projetor antigo limita 50 mil caracteres */}PJ.next=c;pjFlush()}
+function snapSoon(now){if(!S.host)return;if(!now&&!TL&&!PJ.on)return;if(now){clearTimeout(snapT);snapT=null;return snapSend()}if(snapT)return;snapT=setTimeout(()=>{snapT=null;snapSend()},220)}
+function bcSend(m){if(!S.host)return;if(BC)try{BC.postMessage(m)}catch(e){}pjSend(m)}
 if(BC)BC.onmessage=e=>{if(e.data?.t==='hello'&&S.host){TL=true;snapSoon(true)}};
 /* atualiza só o que mudou (não reinicia as animações) */
 function syncNode(a,b){
@@ -1211,7 +1219,7 @@ async function tick(){
 }
 function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1000/Math.min(3,speed()))}
 function closeAll(){clearInterval(S.poll);clearTimers();syClose();S.poll=null;$('lg2-menu')?.remove();$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');try{A().music(null);A().stopAll&&A().stopAll()}catch(e){}}
-function leave(){bcSend({t:'end'});TL=false;closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
+function leave(){bcSend({t:'end'});if(PJ.on){PJ.on=false;PJ.next='';pjFlush()}TL=false;closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
 function fullscreen(){const el=$('lg2');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
 let recBusy=false;
 async function reconnect(tries=3,wanted){
@@ -1254,7 +1262,13 @@ async function exit(){
   leave();
  }
 }
-function telao(){
+async function telao(){
+ let sent=false;
+ if(localStorage.getItem('iasd-projetor-token')){
+  try{await pjReq('/open');PJ.on=true;PJ.big=0;sent=true;snapSoon(true);
+   toast('📽 Jogo enviado ao IASD Projetor');return}
+  catch(e){if(!/nopair|Failed to fetch|NetworkError|Load failed/i.test(e.message)){if(!confirm('IASD Projetor: '+e.message+'\n\nAbrir o telão numa janela do navegador?'))return}}
+ }
  const w=window.open('/jogos?telao=1','iasd-telao','popup=yes,width=1280,height=720');
  if(!w){alert('O navegador bloqueou a janela. Permita pop-ups para o IASD APP e tente de novo.');return}
  setTimeout(()=>snapSoon(true),1200);
@@ -1266,12 +1280,12 @@ function telaoMode(){
  const wait='<div class="lg2-center"><span class="lg2-pill">📺 TELÃO</span><h1 class="lg2-hero">Aguardando o apresentador…</h1><p class="lg2-sub">Crie a sala na outra janela e use o botão 📽 Projetar no telão.</p></div>';
  r.innerHTML='<div class="lg2-bg">'+'<i></i>'.repeat(8)+'</div><div class="lg2-chrome"><span class="lg2-sp"></span><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia (F11)">⛶</button></div><div class="lg2-body" id="lg-mirror">'+wait+'</div>';
  const body=()=>document.getElementById('lg-mirror');let sid=-1,got=false;
- if(!BC){body().innerHTML='<div class="lg2-center"><h1 class="lg2-hero" style="font-size:40px">Este navegador não permite espelhar o telão.</h1></div>';return}
- BC.onmessage=e=>{const m=e.data||{},b=body();if(!b)return;
+ const onMsg=e=>{const m=e.data||{},b=body();if(!b)return;
   if(m.t==='snap'){got=true;b.className=m.cls;b.setAttribute('style',m.style);if(m.sid!==sid){sid=m.sid;b.innerHTML=m.html}else{const t=document.createElement('div');t.innerHTML=m.html;syncNode(b,t)}}
   else if(m.t==='confetti')confetti(m.ms);
   else if(m.t==='end'){got=false;sid=-1;b.className='lg2-body';b.removeAttribute('style');b.innerHTML=wait}};
- const hello=()=>{if(!got)BC.postMessage({t:'hello'})};hello();setInterval(hello,2500);
+ BC.onmessage=onMsg;window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.t)onMsg({data:e.data})});
+ const emb=window.parent!==window;const hello=()=>{if(!got){BC.postMessage({t:'hello'});if(emb)try{parent.postMessage({t:'lg-hello'},location.origin)}catch(e){}}};hello();setInterval(hello,2500);
  document.addEventListener('dblclick',fullscreen);
 }
 function install(){

@@ -101,8 +101,23 @@ function drawSet(box,text){const s=String(text);while(box.children.length<s.leng
 function drawRandLike(n){const L=String(n).length;let r='';for(let i=0;i<L;i++)r+=String((i===0&&L>1)?1+Math.floor(Math.random()*9):Math.floor(Math.random()*10));return r}
 function paintTheme(id){const th=window.IASDTimerDisplay&&IASDTimerDisplay.themes[id];if(!th)return null;out.style.background=th.bg;out.style.setProperty('--c1',th.c1);out.style.setProperty('--c2',th.c2);out.style.setProperty('--glow',th.glow);out.style.setProperty('--tx',th.tx||'#ffffff');const L=!!th.tx;[['--ta',L?'rgba(255,255,255,.8)':'rgba(255,255,255,.1)'],['--tb',L?'rgba(255,255,255,.42)':'rgba(0,0,0,.24)'],['--tbg',L?'rgba(255,255,255,.3)':'rgba(8,12,30,.74)'],['--tsh',L?'rgba(40,30,80,.28)':'rgba(0,0,0,.55)'],['--d1',L?th.c2:'#fffbe6'],['--d2',L?th.c1:th.c2],['--d3',L?th.tx:th.c1]].forEach(a=>out.style.setProperty(a[0],a[1]));return th}
 const allowed='https://gtsaaixuampeaivugxdm.supabase.co/storage/v1/object/public/iasd-images/';
+let gameLast=null,gameFrame=null;
+function gameShow(t){
+ let m;try{m=JSON.parse(t.slice('IASD_GAME:'.length))}catch(e){return}
+ if(m.t==='snap'||m.t==='end')gameLast=m.t==='end'?null:m;
+ if(!gameFrame||!gameFrame.isConnected){
+  ++drawSerial;if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.removeAttribute('class');out.style.background='#10062a';
+  out.classList.add('game-mode');
+  gameFrame=document.createElement('iframe');gameFrame.src='/jogos?telao=1&embed=1';gameFrame.setAttribute('allow','autoplay;fullscreen');
+  gameFrame.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;background:#10062a';out.append(gameFrame);
+ }
+ try{gameFrame.contentWindow&&gameFrame.contentWindow.postMessage(m,location.origin)}catch(e){}
+}
+window.addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.t==='lg-hello'&&gameFrame&&e.source===gameFrame.contentWindow&&gameLast)try{gameFrame.contentWindow.postMessage(gameLast,location.origin)}catch(_){}});
 function show(value){
  const t=typeof value==='string'?value:'';
+ if(t.startsWith('IASD_GAME:'))return gameShow(t);
+ gameFrame=null;out.style.background='';out.classList.remove('game-mode');
  ++drawSerial;out.style.background='';['--c1','--c2','--glow','--tx','--ta','--tb','--tbg','--tsh','--d1','--d2','--d3'].forEach(v=>out.style.removeProperty(v));if(timerView){timerView.stop();timerView=null}out.replaceChildren();out.classList.remove('draw-mode','youtube-mode','local-media-mode','bible-mode','timer-mode');
  if(t.startsWith('IASD_TIMER:')){
   try{
