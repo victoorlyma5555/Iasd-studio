@@ -102,8 +102,10 @@ function wake(){
   if(x.state!=='running')x.resume&&x.resume();
   const b=x.createBuffer(1,1,22050),n=x.createBufferSource();n.buffer=b;n.connect(x.destination);n.start(0);
   if(!mute){
-   const wav='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
-   mute=document.createElement('audio');mute.src=wav;mute.loop=true;mute.setAttribute('playsinline','');mute.volume=.01;
+   /* WAV mudo de 1 s com amostras de verdade. (O antigo tinha 0 amostras: em loop, o Chrome ficava girando sem parar e travava o computador.) */
+   const sr=8000,n=sr,buf=new ArrayBuffer(44+n*2),v=new DataView(buf),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+   w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+   mute=document.createElement('audio');mute.src=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));mute.loop=true;mute.setAttribute('playsinline','');mute.volume=.01;
    mute.play&&mute.play().catch(()=>{mute=null})}
   else if(mute.paused)mute.play().catch(()=>{});
   if(cur&&st.music&&!timer){const n2=cur;cur=null;music(n2)}
