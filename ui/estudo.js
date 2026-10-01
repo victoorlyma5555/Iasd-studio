@@ -462,8 +462,8 @@ function paintBar(){
   +'<button class="es-bt es-mic'+(v.mic?' on':' off')+'" onclick="IASDEstudo.toggleMic()" aria-label="'+(v.mic?'Desligar microfone':'Ligar microfone')+'">🎙</button>'
   +'<button class="es-bt es-cam'+(v.cam?' on':' off')+'" onclick="IASDEstudo.toggleCam()" aria-label="'+(v.cam?'Desligar câmera':'Ligar câmera')+'">📷</button>'
   +(R.host?'':'<button class="es-bt es-hb'+(R.hand?' on hup':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="'+(R.hand?'Baixar a mão':'Levantar a mão')+'" title="'+(R.hand?'Baixar a mão':'Levantar a mão')+'">✋</button>')
-  +(chOff?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" aria-label="Chat">💬'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
-  +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" aria-label="Reações">😊</button>')
+  +(chOff?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" data-tg="chat" aria-label="Chat">💬'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
+  +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" data-tg="rx" aria-label="Reações">😊</button>')
   +(R.host?'<button class="es-bt es-gear'+(R.hostOpen?' on':'')+'" onclick="IASDEstudo.toggleHost()" aria-label="Painel do dirigente" title="Painel do dirigente">⚙</button>':'')
   +'<button class="es-bt es-exit" onclick="IASDEstudo.leaveAsk()" aria-label="'+(R.host?'Encerrar a sala':'Sair da sala')+'" title="'+(R.host?'Encerrar a sala':'Sair da sala')+'">🚪</button></div>'
   +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react(\''+e+'\')">'+e+'</button>').join('')+'</div>':'')
@@ -471,6 +471,14 @@ function paintBar(){
    +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
  paintHost();paintChat();paintAway();
 }
+/* clicar fora de qualquer caixinha da sala (participantes, reações, chat) fecha a caixinha */
+document.addEventListener('pointerdown',e=>{
+ const R=S.room;if(!R)return;const t=e.target;if(!t||!t.closest)return;
+ const tg=t.closest('[data-tg]'),on=tg&&tg.dataset.tg;
+ if(R.listOpen&&on!=='list'&&!t.closest('#es-panel')){R.listOpen=false;const p=$('es-panel');if(p)p.hidden=true}
+ if(R.rxOpen&&on!=='rx'&&!t.closest('.es-rxp')){R.rxOpen=false;paintBar()}
+ if(R.chatOpen&&on!=='chat'&&!t.closest('#es-chat')&&!t.closest('#es-exp,.es-expw,#sm-ask,.iad-ov,.iad-box')){R.chatOpen=false;paintBar();paintChat()}
+},true);
 function togglePanel(){const R=S.room;if(!R)return;R.listOpen=!R.listOpen;const p=$('es-panel');if(p)p.hidden=!R.listOpen}
 function toggleRx(){const R=S.room;if(!R)return;R.rxOpen=!R.rxOpen;paintBar()}
 async function leaveAsk(){const R=S.room;if(!R)return;
