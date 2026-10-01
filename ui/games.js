@@ -20,7 +20,7 @@ let S=null,libPromise=null;
 function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector('script[data-g="'+src+'"]'))return ok();const s=document.createElement('script');s.src=src;s.dataset.g=src;s.onload=ok;s.onerror=()=>no(Error('Falha ao carregar '+src));document.head.appendChild(s)})}
 function lib(){
  if(window.IASDGameEngine&&window.IASDGameAudio)return Promise.resolve();
- if(!libPromise)libPromise=(async()=>{const v='?v=4';for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js'+v);await loadScript('/games/engine.js'+v)})().catch(e=>{libPromise=null;throw e});
+ if(!libPromise)libPromise=(async()=>{const v='?v=5';for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js'+v);await loadScript('/games/engine.js'+v)})().catch(e=>{libPromise=null;throw e});
  return libPromise;
 }
 

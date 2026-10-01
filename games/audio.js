@@ -59,12 +59,15 @@ const TRACKS={
  victory:{bpm:120,chords:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],bass:true,arp:true,drums:true,lead:true,wave:'triangle',vol:.6}
 };
 let cur=null,want=null,timer=null,step=0,nextT=0,musicT0=0;
-const lite=(()=>{try{return matchMedia('(max-width:900px)').matches||(navigator.hardwareConcurrency||8)<=4}catch(e){return false}})();
+const lite=false;
 /* só toca enquanto existir uma tela de jogo aberta (jogo coletivo ou jogo individual) */
 const alive=()=>!!(document.getElementById('lg2')||document.querySelector('.sg'));
 function sched(tr){
  const x=C();if(!x)return;const spb=60/tr.bpm/2; /* colcheias */
- while(nextT<x.currentTime+.25){
+ /* se o aparelho engasgou e o relógio ficou para trás, não agenda o atraso de uma vez (isso soltava centenas de notas juntas e travava) */
+ if(nextT<x.currentTime-.1)nextT=x.currentTime+.05;
+ let guard=0;
+ while(nextT<x.currentTime+.25&&guard++<4){
   const i=step%8,bar=Math.floor(step/8)%tr.chords.length,ch=tr.chords[bar],t=nextT-x.currentTime;
   if(tr.arp){const pat=[0,1,2,1,2,1,2,1],m=ch[pat[i]]+(i%4===3?12:0);tone(n2f(m+12),spb*.9,tr.wave,.055*tr.vol,t,mGain)}
   if(tr.bass&&i%4===0)tone(n2f(ch[0]-12),spb*3.6,'sine',.16*tr.vol,t,mGain);
@@ -114,7 +117,7 @@ function wake(){
   if(!alive())return;const now=Date.now();if(now-lastWake<400)return;lastWake=now;
   const x=C();if(!x)return;
   if(x.state!=='running')x.resume&&x.resume();
-  const b=x.createBuffer(1,1,22050),n=x.createBufferSource();n.buffer=b;n.connect(x.destination);n.start(0);
+  if(!mute){const b=x.createBuffer(1,1,22050),n=x.createBufferSource();n.buffer=b;n.connect(x.destination);n.start(0)}
   if(!mute){
    /* WAV mudo de 1 s com amostras de verdade. (O antigo tinha 0 amostras: em loop, o Chrome ficava girando sem parar e travava o computador.) */
    const sr=8000,n=sr,buf=new ArrayBuffer(44+n*2),v=new DataView(buf),w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};

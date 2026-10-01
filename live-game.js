@@ -7,7 +7,7 @@
 'use strict';
 const URL='https://gtsaaixuampeaivugxdm.supabase.co',KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
 const H={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'};
-const api=async(path,opt={})=>{const r=await fetch(URL+'/rest/v1/'+path,{...opt,headers:{...H,...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());const t=await r.text();return t?JSON.parse(t):null};
+const api=async(path,opt={})=>{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),8000);try{const r=await fetch(URL+'/rest/v1/'+path,{...opt,signal:ac.signal,headers:{...H,...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}finally{clearTimeout(to)}};
 const rpc=(name,body)=>api('rpc/'+name,{method:'POST',body:JSON.stringify(body)});
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -18,9 +18,10 @@ const A=()=>window.IASDGameAudio||new Proxy({},{get:()=>()=>{}});
 const BC=('BroadcastChannel' in window)?new BroadcastChannel('iasd-live-telao'):null;
 let snapT=null;
 function snapSend(){if(!BC)return;const b=document.querySelector('#lg2 .lg2-body');if(!b)return;try{BC.postMessage({t:'snap',sid:S.sid,cls:b.className,style:b.getAttribute('style')||'',html:b.innerHTML})}catch(e){}}
-function snapSoon(now){if(!BC||!S.host)return;if(now){clearTimeout(snapT);snapT=null;return snapSend()}if(snapT)return;snapT=setTimeout(()=>{snapT=null;snapSend()},120)}
+let TL=false;
+function snapSoon(now){if(!BC||!S.host)return;if(!now&&!TL)return;if(now){clearTimeout(snapT);snapT=null;return snapSend()}if(snapT)return;snapT=setTimeout(()=>{snapT=null;snapSend()},220)}
 function bcSend(m){if(BC&&S.host)try{BC.postMessage(m)}catch(e){}}
-if(BC)BC.onmessage=e=>{if(e.data?.t==='hello'&&S.host)snapSoon(true)};
+if(BC)BC.onmessage=e=>{if(e.data?.t==='hello'&&S.host){TL=true;snapSoon(true)}};
 /* atualiza só o que mudou (não reinicia as animações) */
 function syncNode(a,b){
  const ac=Array.from(a.childNodes),bc=Array.from(b.childNodes);
@@ -39,7 +40,7 @@ let libP=null;
 const loadScript=src=>new Promise((ok,no)=>{if(document.querySelector('script[data-g="'+src+'"]'))return ok();const s=document.createElement('script');s.src=src;s.dataset.g=src;s.onload=ok;s.onerror=()=>no(Error('Falha ao carregar '+src));document.head.appendChild(s)});
 function libs(){
  if(window.IASDGameEngine&&window.IASDGameAudio)return Promise.resolve();
- if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=4');await loadScript('/games/engine.js?v=4')})().catch(e=>{libP=null;throw e});
+ if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=5');await loadScript('/games/engine.js?v=5')})().catch(e=>{libP=null;throw e});
  return libP;
 }
 
@@ -174,7 +175,7 @@ function syPhaseIn(m){
 const syHealthy=()=>!S.host&&SY.on&&SY.lastMsg&&Date.now()-SY.lastMsg<7000;
 
 /* ---------- casca da tela ---------- */
-function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');if(!window.__lgBg){window.__lgBg=1;try{const im=new Image();im.onload=()=>document.documentElement.style.setProperty('--lgbg','url(/games/bg-igreja.jpg) center/cover no-repeat');im.src='/games/bg-igreja.jpg'}catch(e){}}try{document.documentElement.classList.toggle('lg2-lite',matchMedia('(max-width:900px)').matches||(navigator.hardwareConcurrency||8)<=4)}catch(e){}try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
+function root(){let r=$('lg2');if(!r){r=document.createElement('div');r.id='lg2';r.className='lg2';document.body.appendChild(r);document.documentElement.classList.add('lg2-open');if(!window.__lgBg){window.__lgBg=1;try{const im=new Image();im.onload=()=>document.documentElement.style.setProperty('--lgbg','url(/games/bg-igreja.jpg) center/cover no-repeat');im.src='/games/bg-igreja.jpg'}catch(e){}}try{new MutationObserver(()=>snapSoon()).observe(r,{subtree:true,childList:true,attributes:true,characterData:true})}catch(e){}}return r}
 function screen(html,cls,opts){
  css();const r=root();
  r.innerHTML='<div class="lg2-bg"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="lg2-chrome"><button class="lg2-ic sair" onclick="IASDLive.exit()" aria-label="Sair" title="'+(S.host?'Encerrar a sala':'Sair da sala')+'">‹ Sair</button><span class="lg2-sp"></span>'+(S.host?'<button class="lg2-ic" onclick="IASDLive.telao()" aria-label="Projetar no telão" title="Projetar no telão">📽</button><button class="lg2-ic" onclick="IASDLive.fullscreen()" aria-label="Tela cheia" title="Tela cheia">⛶</button>':'')+'<button class="lg2-ic" id="lg2-snd" onclick="IASDLive.sndMenu(this)" aria-label="Som" title="Som">'+((A().state?.().sfx||A().state?.().music)&&A().state?.().vol>0?'🔊':'🔇')+'</button></div><div class="lg2-body '+(cls||'')+'" style="'+((opts&&opts.style)||'')+'">'+html+'</div>';
@@ -215,7 +216,7 @@ function confetti(ms=5200){
  bcSend({t:'confetti',ms});
  const c=document.createElement('canvas');c.className='lg2-confetti';document.body.appendChild(c);const x=c.getContext('2d');
  const W=c.width=innerWidth,Hh=c.height=innerHeight,cols=['#f5b73a','#38bdf8','#fb7185','#34d399','#a78bfa','#fff'];
- const ps=Array.from({length:document.documentElement.classList.contains('lg2-lite')?60:150},()=>({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)]}));
+ const ps=Array.from({length:150},()=>({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)]}));
  const t0=performance.now();(function f(t){x.clearRect(0,0,W,Hh);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.6);x.restore()});if(t-t0<ms&&c.isConnected)requestAnimationFrame(f);else c.remove()})(t0);
 }
 function floatPts(text,el){if(!el)return;const s=document.createElement('b');s.className='lg2-float';s.textContent=text;el.appendChild(s);setTimeout(()=>s.remove(),1600)}
@@ -414,8 +415,6 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lb-intro h1{margin:0;font-size:calc(var(--u)*6.4);line-height:1.05;font-weight:900;color:var(--tc);text-shadow:0 0 calc(var(--u)*1.4) var(--tc);overflow-wrap:anywhere}
 .lb-intro p{margin:0;font-size:calc(var(--u)*2.3);opacity:.85;line-height:1.3}
 .lb-chip{padding:calc(var(--u)*.6) calc(var(--u)*1.8);border-radius:999px;font-weight:800;font-size:calc(var(--u)*1.5);letter-spacing:.12em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25)}
-.lg2-lite .lg2-bg i{animation:none!important;filter:none!important}
-.lg2-lite *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 @media(max-width:900px){.lb-intro{--u:min(1vw,.9vh);}.lb-bar{display:none}}
 .lb-brand{position:absolute;left:50%;top:calc(var(--u)*1);transform:translateX(-50%);display:grid;justify-items:center;text-align:center;line-height:1}
 .lb-brand .pe svg{height:calc(var(--u)*4.7);width:auto;display:block;filter:drop-shadow(0 0 calc(var(--u)*.7) rgba(248,170,40,.55))}
@@ -749,8 +748,9 @@ async function phoneFinal(){
 }
 /* ---------- sincronização ---------- */
 function clearTimers(){clearInterval(S.clock);clearTimeout(S.auto);clearTimeout(S.flashT)}
+let tickBusy=0;
 async function tick(){
- if(!S.room)return;
+ if(!S.room||(tickBusy&&Date.now()-tickBusy<9000))return;tickBusy=Date.now();
  try{
   const r=await rpc('live_room_state',{p_room:S.room.id});if(!r.length)return;
   const old=S.room.status+'|'+S.room.current_question,hold=syHealthy()?{status:S.room.status,current_question:S.room.current_question}:{};S.room={...S.room,...r[0],...hold};const now=S.room.status+'|'+S.room.current_question;if(!S.host&&!hold.status)PS.at=0;
@@ -761,11 +761,11 @@ async function tick(){
     if(HS.n&&c>=HS.n&&!S.allIn){S.allIn=true;setTimeout(()=>{if(S.phase==='question')reveal()},1200/speed())}}
    if(S.phase!=='question')S.allIn=false;
   }else if(old!==now||(S.room.status==='reveal'&&S.phase==='p-question'))playerView();
- }catch(e){}
+ }catch(e){}finally{tickBusy=0}
 }
 function poll(){clearInterval(S.poll);S.poll=setInterval(tick,1000/Math.min(3,speed()))}
 function closeAll(){clearInterval(S.poll);clearTimers();syClose();S.poll=null;$('lg2-menu')?.remove();$('lg2')?.remove();document.documentElement.classList.remove('lg2-open');try{A().music(null);A().stopAll&&A().stopAll()}catch(e){}}
-function leave(){bcSend({t:'end'});closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
+function leave(){bcSend({t:'end'});TL=false;closeAll();try{localStorage.removeItem('iasd_live_ans')}catch(e){}if(S.host)localStorage.removeItem('iasd_live_host');else localStorage.removeItem('iasd_live_player');S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null}}
 function fullscreen(){const el=$('lg2');if(!document.fullscreenElement)el?.requestFullscreen?.();else document.exitFullscreen?.()}
 let recBusy=false;
 async function reconnect(tries=3,wanted){
