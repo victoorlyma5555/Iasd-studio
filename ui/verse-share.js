@@ -42,19 +42,30 @@ function draw(cv){
 }
 function toBlob(){return new Promise(res=>{const cv=document.createElement('canvas');draw(cv);cv.toBlob(b=>res(b),'image/png')})}
 function toast(m){const m0=document.getElementById('vs-toast');if(!m0)return;m0.textContent=m;m0.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>m0.classList.remove('on'),2200)}
-async function shareImage(){
+function setFmt(f){S.fmt=f;const ov=document.getElementById('vs-ov');ov?.querySelectorAll('[data-fmt]').forEach(b=>b.classList.toggle('on',b.dataset.fmt===f));paint()}
+/* Só a imagem (sem texto): Instagram e WhatsApp tratam melhor assim e mostram "Stories"/"Status" na lista */
+async function shareImage(withText){
  const b=await toBlob(),f=new File([b],'versiculo-iasd-app.png',{type:'image/png'});
- try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:plainText()});return true}}catch(e){if(e&&e.name==='AbortError')return true}
+ try{
+  const data=withText?{files:[f],text:plainText()}:{files:[f]};
+  if(navigator.canShare&&navigator.canShare(data)){await navigator.share(data);return true}
+ }catch(e){if(e&&e.name==='AbortError')return true}
  download(b);return false;
+}
+function openWhatsApp(){
+ const url=encodeURIComponent(plainText());let left=false;
+ const onHide=()=>{if(document.hidden)left=true};document.addEventListener('visibilitychange',onHide);
+ const a=document.createElement('a');a.href='whatsapp://send?text='+url;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>{document.removeEventListener('visibilitychange',onHide);if(!left)window.location.href='https://wa.me/?text='+url},1300);
 }
 function download(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='versiculo-iasd-app.png';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800)}
 async function act(k){
- if(k==='wa'){window.open('https://wa.me/?text='+encodeURIComponent(plainText()),'_blank','noopener')}
- else if(k==='ig'){const ok=await shareImage();if(!ok)toast('Imagem salva. Abra o Instagram e poste nos Stories.')}
- else if(k==='img'){const ok=await shareImage();if(!ok)toast('Imagem salva na galeria/downloads.')}
+ if(k==='wa')openWhatsApp();
+ else if(k==='ws'){setFmt('story');await new Promise(r=>setTimeout(r,60));const ok=await shareImage(false);if(!ok)toast('Imagem salva. Abra o WhatsApp › Status e escolha a imagem.');else toast('Escolha WhatsApp › Meu status')}
+ else if(k==='ig'){setFmt('story');await new Promise(r=>setTimeout(r,60));const ok=await shareImage(false);if(!ok)toast('Imagem salva. Abra o Instagram › Stories e escolha a imagem.');else toast('Escolha Instagram › Stories')}
+ else if(k==='img'){const ok=await shareImage(true);if(!ok)toast('Imagem salva na galeria/downloads.')}
  else if(k==='dl'){download(await toBlob());toast('Imagem salva')}
  else if(k==='copy'){try{await navigator.clipboard.writeText(plainText());toast('Texto copiado ✓')}catch(e){toast('Não foi possível copiar')}}
- else if(k==='more'){if(navigator.share)navigator.share({text:plainText()}).catch(()=>{});else act('copy')}
 }
 function paint(){const cv=document.getElementById('vs-cv');if(cv){draw(cv);cv.parentElement.className='vs-prev '+S.fmt}}
 function close(){document.getElementById('vs-ov')?.remove();document.body.classList.remove('vs-lock')}
@@ -64,8 +75,8 @@ function open(o){
  ov.innerHTML='<div class="vs-card"><button class="vs-x" data-vs="close" aria-label="Fechar">✕</button><h3>'+esc(S.title)+'</h3><div class="vs-prev feed"><canvas id="vs-cv"></canvas></div>'+
  '<div class="vs-row" role="group" aria-label="Formato">'+Object.entries(FORMATS).map(([k,v])=>'<button class="vs-chip'+(S.fmt===k?' on':'')+'" data-fmt="'+k+'">'+v.n+(k==='feed'?' · 1:1':' · 9:16')+'</button>').join('')+'</div>'+
  '<div class="vs-row sw" role="group" aria-label="Estilo">'+Object.entries(THEMES).map(([k,v])=>'<button class="vs-sw'+(S.theme===k?' on':'')+'" data-th="'+k+'" title="'+v.n+'" aria-label="'+v.n+'" style="background:linear-gradient(135deg,'+v.a+','+v.b+')"></button>').join('')+'</div>'+
- '<div class="vs-act"><button class="vs-b wa" data-vs="wa"><b>WhatsApp</b><small>texto + link</small></button><button class="vs-b ig" data-vs="ig"><b>Instagram</b><small>imagem para Stories</small></button><button class="vs-b" data-vs="img"><b>Enviar imagem</b><small>qualquer app</small></button><button class="vs-b" data-vs="dl"><b>Baixar</b><small>salvar PNG</small></button><button class="vs-b" data-vs="copy"><b>Copiar texto</b><small>com a referência</small></button></div>'+
- '<p class="vs-foot">O cartão leva só uma assinatura discreta do IASD APP.</p><div id="vs-toast" class="vs-toast" role="status"></div></div>';
+ '<div class="vs-act"><button class="vs-b wa" data-vs="wa"><b>WhatsApp</b><small>texto + link</small></button><button class="vs-b wa2" data-vs="ws"><b>Status do WhatsApp</b><small>imagem vertical</small></button><button class="vs-b ig" data-vs="ig"><b>Stories do Instagram</b><small>imagem vertical</small></button><button class="vs-b" data-vs="img"><b>Enviar imagem</b><small>qualquer app</small></button><button class="vs-b" data-vs="dl"><b>Baixar</b><small>salvar PNG</small></button><button class="vs-b" data-vs="copy"><b>Copiar texto</b><small>com a referência</small></button></div>'+
+ '<p class="vs-foot">Stories e Status: o celular abre a lista de compartilhar. Escolha Instagram › Stories ou WhatsApp › Status. O cartão leva só uma assinatura discreta do IASD APP.</p><div id="vs-toast" class="vs-toast" role="status"></div></div>';
  document.body.appendChild(ov);document.body.classList.add('vs-lock');
  if(!S.logo){S.logo=new Image();S.logo.onload=paint;S.logo.src=LOGO}
  paint();

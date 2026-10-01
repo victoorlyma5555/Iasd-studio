@@ -536,3 +536,6 @@ html[data-theme="dark"] .pf-link{color:#7db0ff}
  .pf-st b{font-size:17px}.pf-st>div{gap:6px}.pf-st .pgi{width:24px;height:24px}
  .pf-nx .pg-gold{width:100%;margin-left:0;justify-content:center}
 }
+
+/* Bíblia no celular: uma rolagem só (a do site). O texto não prende mais o dedo numa caixa com rolagem própria. */
+@media (max-width:900px){.bb-main>.bb-paper{max-height:none!important;overflow:visible!important;overscroll-behavior:auto}}

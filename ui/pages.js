@@ -270,7 +270,7 @@ function bible(){
  const max=bibleChapterCounts[index]||1,name=bibleBooks[index][0];
  const options=bibleBooks.map(([pt,en])=>'<option value="'+esc(en)+'" '+(en===readerState.book?'selected':'')+'>'+esc(pt)+'</option>').join('');
  const chapters=Array.from({length:max},(_,i)=>'<option value="'+(i+1)+'" '+(i+1===Number(readerState.chapter)?'selected':'')+'>'+(i+1)+'</option>').join('');
- const tr=[['acf','Almeida Corrigida e Fiel (ACF)'],['aa','Almeida Revisada (AA)'],['nvi','Nova Versão Internacional (NVI)'],['almeida','Almeida 1911'],['kjv','King James (inglês)'],['web','World English Bible (inglês)']];
+ const tr=[['acf','ACF — Almeida Corrigida e Fiel'],['aa','AA — Almeida Revisada'],['nvi','NVI — Nova Versão Internacional'],['almeida','ALM — Almeida 1911'],['kjv','KJV — King James (inglês)'],['web','WEB — World English Bible (inglês)']];
  const cur=readerState.translation||'almeida';
  const v=VOTD[new Date().getDate()%VOTD.length];
  const fav=(readerState.bookmarks||[]).includes(readerState.book+'|'+readerState.chapter);
