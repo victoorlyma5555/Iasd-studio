@@ -543,5 +543,77 @@ function esBody(){
  return filter+chips+'<div class="es-grid">'+cal+side+'</div>'+add;
 }
 
-window.IASDPages={rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+
+/* ====================== MEU PERFIL ====================== */
+const PF={scope:'week'};
+function pfDayKey(d){return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'})}
+function pfStreak(){
+ try{
+  const days=new Set();for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||'';const m=/^iasd-daily-(\d{4}-\d{2}-\d{2})-/.exec(k);if(m)days.add(m[1])}
+  let d=new Date(),n=0;if(!days.has(pfDayKey(d)))d=new Date(Date.now()-864e5);
+  while(days.has(pfDayKey(d))){n++;d=new Date(d.getTime()-864e5)}return n;
+ }catch(e){return 0}
+}
+function pfMe(){const id=typeof cloudUser!=='undefined'&&cloudUser?cloudUser.id:'';const rank=(typeof gameRanking!=='undefined'?gameRanking:[])||[];const i=rank.findIndex(x=>x.user_id===id);return {row:i>=0?rank[i]:null,pos:i>=0?i+1:0,id}}
+const PF_BADGES=[
+ ['Primeiros passos','Concluiu seu primeiro desafio','📖','#c2762b','#7a3f12',c=>c.played>=1],
+ ['3 dias seguidos','Voltou 3 dias em sequência','🔥','#2f7bff','#13328c',c=>c.streak>=3],
+ ['7 dias seguidos','Manteve a sequência semanal','🔥','#3b82f6','#0b2a7a',c=>c.streak>=7],
+ ['Top 20','Está entre os 20 melhores do site','🏆','#7c3aed','#3b1478',c=>c.pos>0&&c.pos<=20],
+ ['Pódio','Está entre os 3 primeiros','🥇','#f5b73a','#8a5a07',c=>c.pos>0&&c.pos<=3],
+ ['1.000 pontos','Passou de mil pontos','⭐','#16a34a','#0b4a24',c=>c.score>=1000],
+ ['5.000 pontos','Passou de cinco mil pontos','💎','#06b6d4','#0a4a58',c=>c.score>=5000],
+ ['Precisão','80% de acertos em 20+ respostas','🎯','#ef4444','#7a1414',c=>c.total>=20&&c.acc>=80]
+];
+function pfCtx(){const m=pfMe(),r=m.row||{};const total=Number(r.total_answers||0),ok=Number(r.correct_answers||0);
+ return {score:Number(r.score||0),pos:m.pos,streak:pfStreak(),played:Number(r.games_played||0)||(Number(r.score||0)>0||pfStreak()?1:0),total,acc:total?Math.round(ok*100/total):0}}
+function pfBadge(b,on){return '<div class="pf-bd'+(on?'':' off')+'" title="'+esc(b[1])+'"><span class="pf-hex" style="--c1:'+b[3]+';--c2:'+b[4]+'"><i>'+(on?b[2]:'🔒')+'</i></span><b>'+esc(b[0])+'</b><small>'+esc(b[1])+'</small></div>'}
+function pfRankRows(){
+ const me=pfMe();let rows=[];
+ if(PF.scope==='week'){rows=(typeof DR!=='undefined'&&DR.rows.week)||[]}else{rows=(typeof gameRanking!=='undefined'?gameRanking:[])||[]}
+ const av=x=>{const p=x.iasd_profiles||{};return p.avatar_path&&typeof profileMediaUrl==='function'?'<img src="'+esc(profileMediaUrl(p.avatar_path))+'" alt="">':'<span>'+esc((p.full_name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase())+'</span>'};
+ const medal=i=>['<b class="pf-m g">1</b>','<b class="pf-m s">2</b>','<b class="pf-m b">3</b>'][i]||'<b class="pf-n">'+(i+1)+'</b>';
+ const one=(x,i,you)=>'<div class="pf-rk'+(you?' me':'')+'">'+medal(i)+'<span class="pf-av">'+av(x)+'</span><strong>'+esc((x.iasd_profiles||{}).full_name||'Participante')+(you?' <em>· Você</em>':'')+'</strong><span class="pf-pts">'+Number(x.score||0).toLocaleString('pt-BR')+' pts</span></div>';
+ if(PF.scope==='week'&&typeof DR!=='undefined'&&!DR.loaded.week)return '<p class="pg-empty">Carregando ranking…</p>';
+ if(!rows.length)return '<p class="pg-empty">'+(PF.scope==='week'?'Ninguém pontuou nesta semana ainda. Faça um Desafio do dia!':'O ranking começa com a primeira partida.')+'</p>';
+ const top=rows.slice(0,3).map((x,i)=>one(x,i,x.user_id===me.id)).join('');
+ const mi=rows.findIndex(x=>x.user_id===me.id);
+ const mine=mi>=3?'<div class="pf-gap"></div>'+one(rows[mi],mi,true):(mi<0?'<p class="pf-nopts">Você ainda não pontuou '+(PF.scope==='week'?'nesta semana':'no ranking')+'. Jogue um Desafio do dia para entrar!</p>':'');
+ return top+mine;
+}
+function pfNext(c){
+ let done=false;try{done=(typeof DAILY_GAMES!=='undefined'?DAILY_GAMES:[]).every(g=>drDone(g[0]))}catch(e){}
+ if(!c.played)return ['Faça seu primeiro desafio','Jogue o Desafio do dia e entre no ranking da semana.','Jogar agora','Jogo'];
+ if(!done)return ['Complete o Desafio do dia','Ainda há desafios de hoje esperando por você.','Ir para Jogos','Jogo'];
+ return ['Chame a turma no Jogo Coletivo','Crie uma sala e jogue ao vivo com os celulares.','Ir para Jogos','Jogo'];
+}
+function profile(){
+ const c=pfCtx(),lvl=Math.max(1,Math.floor(c.score/500)+1),into=c.score%500,left=500-into;
+ const un=PF_BADGES.filter(b=>b[5](c)),lk=PF_BADGES.filter(b=>!b[5](c));
+ const p=(typeof myProfile!=='undefined'&&myProfile)||{};
+ const cover=p.cover_path?'<img src="'+esc(profileMediaUrl(p.cover_path))+'" style="'+profileImageStyle('cover')+'" alt="Foto de capa">':'';
+ const role=typeof roleLabel==='function'?roleLabel():'';
+ const nx=pfNext(c);
+ const showAll=PF.all?PF_BADGES:un.slice(0,3).concat(un.length<3?lk.slice(0,3-un.length):[]);
+ return '<div class="pg pg-perfil">'+
+ '<section class="pf-hero"><div class="pf-cover">'+cover+'<button class="pf-pen" onclick="editProfileMedia(\'cover\')" aria-label="Editar capa">'+I('pen')+'</button></div>'+
+ '<div class="pf-id"><div class="pf-avatar"><div class="pf-ai">'+profileAvatarMarkup()+'</div><button class="pf-pen sm" onclick="editProfileMedia(\'avatar\')" aria-label="Editar foto">'+I('pen')+'</button></div>'+
+ '<div class="pf-nm"><h2>'+esc(p.full_name||'Meu perfil')+'</h2><p>'+esc(p.church_position||p.ministry||'Membro da comunidade')+'</p><span class="pf-role">'+I('crown')+esc(role)+'</span></div>'+
+ '<button class="pf-edit" onclick="openProfileEditor()">'+I('pen')+'Editar perfil</button></div></section>'+
+ '<section class="pg-card pf-jr"><div class="pf-jh"><div><h3>Minha jornada</h3><small>Sua evolução na comunidade.</small></div><div class="pf-lv"><div><b>Nível '+lvl+'</b><small>'+c.score.toLocaleString('pt-BR')+' pontos</small></div><span class="pf-hex gold"><i>'+lvl+'</i></span></div></div>'+
+ '<div class="pf-bar" role="progressbar" aria-valuenow="'+into+'" aria-valuemin="0" aria-valuemax="500"><i style="width:'+Math.round(into/5)+'%"></i></div><small class="pf-left">'+left+' pts para o próximo nível</small>'+
+ '<div class="pf-st"><div>'+I('chart','blue')+'<span><b>'+(c.pos?c.pos+'º':'—')+'</b><small>Posição</small></span></div><div><span class="pf-fire">🔥</span><span><b>'+c.streak+' '+(c.streak===1?'dia':'dias')+'</b><small>Sequência</small></span></div><div>'+I('star','gold')+'<span><b>'+un.length+'</b><small>Conquistas</small></span></div></div></section>'+
+ '<section class="pg-card pf-rank"><div class="pf-rh"><span class="pf-tr">'+I('trophy','gold')+'</span><div><h3>Ranking do site</h3><small>Sua evolução na comunidade.</small></div><div class="pf-seg" role="tablist"><button class="'+(PF.scope==='week'?'on':'')+'" onclick="IASDPages.pfScope(\'week\')">Semanal</button><button class="'+(PF.scope==='all'?'on':'')+'" onclick="IASDPages.pfScope(\'all\')">Geral</button></div></div><div id="pf-rows">'+pfRankRows()+'</div><button class="pf-link" onclick="go(\'Jogo\')">Ver ranking completo '+I('right')+'</button></section>'+
+ '<section class="pg-card pf-ach"><div class="pf-ah"><span>'+I('star','gold')+'</span><div><h3>Minhas conquistas</h3><small>Medalhas que mostram a sua dedicação.</small></div><button class="pf-link inl" onclick="IASDPages.pfAll()">'+(PF.all?'Ver menos':'Ver todas')+' '+I('right')+'</button></div><div class="pf-bds">'+showAll.map(b=>pfBadge(b,b[5](c))).join('')+'</div></section>'+
+ '<section class="pg-card pf-nx"><span class="pf-tg">🎯</span><div><h3>Seu próximo passo</h3><small>'+esc(nx[1])+'</small></div><button class="pg-gold" onclick="go(\''+nx[3]+'\')">'+esc(nx[2])+' '+I('right')+'</button></section>'+
+ '<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
+}
+function pfRepaint(){if(typeof current!=='undefined'&&current==='Perfil'&&document.querySelector('.pg-perfil')&&typeof render==='function')render()}
+function pfScope(sc){PF.scope=sc;if(sc==='week'&&typeof dailyLoad==='function')dailyLoad('week',true).then(pfRepaint);pfRepaint()}
+function pfAll(){PF.all=!PF.all;pfRepaint()}
+function pfLoad(){
+ try{if(typeof loadGameRanking==='function')loadGameRanking();if(typeof dailyLoad==='function'&&typeof DR!=='undefined'&&!DR.loaded.week)Promise.resolve(dailyLoad('week')).then(pfRepaint)}catch(e){}
+}
+
+window.IASDPages={profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();
