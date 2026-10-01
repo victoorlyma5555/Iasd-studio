@@ -60,7 +60,7 @@ function parseRef(t){try{return IASDBibleRef.parse(t,bibleBooks)}catch(e){return
 async function verseHtml(ref){
  const r=parseRef(ref);if(!r)return '<em>Referência não reconhecida.</em>';
  try{
-  const vs=await fetchBibleChapter(r.book,r.chapter);
+  const vs=await fetchBibleChapter(r.book,r.chapter,"nvi");
   const from=r.from||1,to=r.from?(r.to||r.from):Math.min(vs.length?vs[vs.length-1].verse:1,40);
   const pick=vs.filter(v=>v.verse>=from&&v.verse<=to);
   if(!pick.length)return '<em>Versículo não encontrado.</em>';
