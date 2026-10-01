@@ -374,3 +374,13 @@ html[data-theme="light"] .rm-verse{color:#fff}
 .fv-a{display:flex;gap:6px;flex-wrap:wrap}.fv-a button{min-height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--iu-bd,#2b3c66);background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}
 .fv-a .fv-open{background:var(--iu-pr,#2563eb);border-color:transparent;color:#fff}.fv-a .del{margin-left:auto;color:#ef4444}
 .fv-empty{text-align:center;display:grid;gap:8px;padding:14px 6px}.fv-empty h4{margin:0;font-size:20px}.fv-empty p{margin:0;opacity:.75;line-height:1.45}
+
+/* botões de compartilhar coloridos em qualquer tema (o tema claro não pode apagar as cores) */
+.vs-card .vs-b.wa,.vs-card .vs-b.wa2,.vs-card .vs-b.ig,.vs-card .vs-b.img,.vs-card .vs-b.dl,.vs-card .vs-b.cp{border-color:transparent!important;color:#fff!important;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.vs-card .vs-b.wa{background:linear-gradient(135deg,#25d366,#128c7e)!important}
+.vs-card .vs-b.wa2{background:linear-gradient(135deg,#34c759,#0b8f4f)!important}
+.vs-card .vs-b.ig{background:linear-gradient(135deg,#7c3aed,#db2777 60%,#f59e0b)!important}
+.vs-card .vs-b.img{background:linear-gradient(135deg,#2563eb,#1d4ed8)!important}
+.vs-card .vs-b.dl{background:linear-gradient(135deg,#f5b73a,#e08a12)!important;color:#1b1608!important}
+.vs-card .vs-b.cp{background:linear-gradient(135deg,#64748b,#475569)!important}
+.vs-card .vs-b small{opacity:.9!important}
