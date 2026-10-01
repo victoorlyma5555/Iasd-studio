@@ -75,7 +75,7 @@ function guide(k){
 }
 async function act(k){
  if(k==='wa')openWhatsApp();
- else if(k==='ws'||k==='ig'){setFmt('story');guide(k)}
+ else if(k==='ig'){setFmt('story');guide(k)}
  else if(k==='img'){const ok=await shareImage(true);if(!ok)toast('Imagem salva na galeria/downloads.')}
  else if(k==='dl'){download(await toBlob());toast('Imagem salva')}
  else if(k==='copy'){try{await navigator.clipboard.writeText(plainText());toast('Texto copiado ✓')}catch(e){toast('Não foi possível copiar')}}
@@ -88,8 +88,8 @@ function open(o){
  ov.innerHTML='<div class="vs-card"><button class="vs-x" data-vs="close" aria-label="Fechar">✕</button><h3>'+esc(S.title)+'</h3><div class="vs-prev feed"><canvas id="vs-cv"></canvas></div>'+
  '<div class="vs-row" role="group" aria-label="Formato">'+Object.entries(FORMATS).map(([k,v])=>'<button class="vs-chip'+(S.fmt===k?' on':'')+'" data-fmt="'+k+'">'+v.n+(k==='feed'?' · 1:1':' · 9:16')+'</button>').join('')+'</div>'+
  '<div class="vs-row sw" role="group" aria-label="Estilo">'+Object.entries(THEMES).map(([k,v])=>'<button class="vs-sw'+(S.theme===k?' on':'')+'" data-th="'+k+'" title="'+v.n+'" aria-label="'+v.n+'" style="background:linear-gradient(135deg,'+v.a+','+v.b+')"></button>').join('')+'</div>'+
- '<div class="vs-act"><button class="vs-b wa" data-vs="wa"><b>WhatsApp</b><small>texto + link</small></button><button class="vs-b wa2" data-vs="ws"><b>Status do WhatsApp</b><small>guia em 2 passos</small></button><button class="vs-b ig" data-vs="ig"><b>Stories do Instagram</b><small>guia em 2 passos</small></button><button class="vs-b img" data-vs="img"><b>Enviar imagem</b><small>qualquer app</small></button><button class="vs-b dl" data-vs="dl"><b>Baixar</b><small>salvar PNG</small></button><button class="vs-b cp" data-vs="copy"><b>Copiar texto</b><small>com a referência</small></button></div>'+
- '<p class="vs-foot">Stories e Status: o celular abre a lista de compartilhar. Para Status e Stories o site mostra um guia: salve a imagem e abra o app com um toque. O cartão leva só uma assinatura discreta do IASD APP.</p><div id="vs-toast" class="vs-toast" role="status"></div></div>';
+ '<div class="vs-act"><button class="vs-b wa" data-vs="wa"><b>WhatsApp</b><small>contatos, grupos ou Meu status</small></button><button class="vs-b ig" data-vs="ig"><b>Stories do Instagram</b><small>guia em 2 passos</small></button><button class="vs-b img" data-vs="img"><b>Enviar imagem</b><small>qualquer app</small></button><button class="vs-b dl" data-vs="dl"><b>Baixar</b><small>salvar PNG</small></button><button class="vs-b cp" data-vs="copy"><b>Copiar texto</b><small>com a referência</small></button></div>'+
+ '<p class="vs-foot">Stories e Status: o celular abre a lista de compartilhar. WhatsApp: na tela que abrir, escolha contatos, grupos ou “Meu status” no topo. Instagram Stories: o site mostra um guia de 2 passos. O cartão leva só uma assinatura discreta do IASD APP.</p><div id="vs-toast" class="vs-toast" role="status"></div></div>';
  document.body.appendChild(ov);document.body.classList.add('vs-lock');
  if(!S.logo){S.logo=new Image();S.logo.onload=paint;S.logo.src=LOGO}
  paint();
