@@ -40,7 +40,7 @@ let libP=null;
 const loadScript=src=>new Promise((ok,no)=>{if(document.querySelector('script[data-g="'+src+'"]'))return ok();const s=document.createElement('script');s.src=src;s.dataset.g=src;s.onload=ok;s.onerror=()=>no(Error('Falha ao carregar '+src));document.head.appendChild(s)});
 function libs(){
  if(window.IASDGameEngine&&window.IASDGameAudio)return Promise.resolve();
- if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=5');await loadScript('/games/engine.js?v=5')})().catch(e=>{libP=null;throw e});
+ if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=6');await loadScript('/games/engine.js?v=6')})().catch(e=>{libP=null;throw e});
  return libP;
 }
 
@@ -71,7 +71,9 @@ const EMO=['🕊️','🐑','🐟','🍞','🍇','🌾','🐫','🦁','🌳','�
 
 /* ---------- baralho determinístico (mesmo em todos os aparelhos) ---------- */
 const decks={};
-function cfgOf(code){code=String(code||'');return{mode:MODES[+code[0]]||MODES[0],total:ROUNDS[+code[1]]||15}}
+const FORMATS=[{id:0,n:'Individual',e:'🧍',d:'Cada um por si, pódio no final'},{id:1,n:'Time × Time',e:'⚔️',d:'Azul contra Vermelho: some os pontos do time'},{id:2,n:'Cabo de Guerra',e:'🪢',d:'Cada rodada vencida puxa a corda para o seu lado'}];
+const TEAMS={A:{n:'Azul',e:'🔵',c:'#38bdf8',c2:'#1d6fd8'},B:{n:'Dourado',e:'🟡',c:'#ffc83d',c2:'#e8860c'}};
+function cfgOf(code){code=String(code||'');const f=[1,2].includes(+code[2])?+code[2]:0;return{mode:MODES[+code[0]]||MODES[0],total:ROUNDS[+code[1]]||15,fmt:f,teams:f>0}}
 function flashQ(r,E){
  if(r()<.5){
   const target=E.pick(EMO,r),n=3+Math.floor(r()*6),others=E.sample(EMO.filter(x=>x!==target),5,r);
@@ -108,18 +110,27 @@ function deckFor(code){
   if(!q)continue;const key=E.fold(q.q)+'|'+E.fold(q.a);if(seen.has(key)){continue}seen.add(key);out.push(q);i=0}
  return decks[code]=out;
 }
+const specialOf=(i,total)=>i===total-1&&total>=10?{n:'BATALHA FINAL',e:'🔥',m:2}:(i===Math.floor(total/2)-1&&total>=10?{n:'RODADA DUPLA',e:'✨',m:2}:null);
+const spOf=i=>cfgOf(code()).teams?specialOf(i,cfgOf(code()).total):null;
 const roundSecs=q=>Math.round((TYPES[q.ltype].t)/speed());
 
 /* ---------- estado ---------- */
 let S={room:null,player:null,host:false,poll:null,clock:null,auto:null,phase:'',me:null};
-let HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[]};
+let HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};
 let PS={answered:-1,lastScore:0,sawQ:-1,revealFor:-1};
 const code=()=>S.room?.code;
 const qi=()=>Number(S.room?.current_question)||0;
 const curQ=()=>deckFor(code())[qi()];
 
 /* ---------- nomes com avatar ("🦁 Maria") ---------- */
-function splitName(n){const m=/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)\s+(.+)$/u.exec(String(n||''));return m?{av:m[1],name:m[2]}:{av:'🙂',name:String(n||'')}}
+const teamTag=n=>(/\u200B([AB])$/.exec(String(n||''))||[])[1]||'';
+function splitName(n){n=String(n||'').replace(/\u200B[AB]$/,'');const m=/^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*)\s+(.+)$/u.exec(n);return m?{av:m[1],name:m[2]}:{av:'🙂',name:n}}
+/* times: a escolha vai junto do nome; o apresentador equilibra ao começar e avisa todos pelo canal em tempo real */
+function loadTm(){if(S.tm||!S.room)return;try{const o=JSON.parse(localStorage.getItem('iasd_live_tm')||'null');if(o&&o.room===S.room.id){S.tm=o.tm;if(S.host){HS.rw=o.rw||HS.rw;HS.bonus=o.bonus||HS.bonus}}}catch(e){}}
+function saveTm(){try{localStorage.setItem('iasd_live_tm',JSON.stringify({room:S.room.id,tm:S.tm,rw:HS.rw,bonus:HS.bonus}))}catch(e){}}
+const teamOf=p=>{loadTm();return(S.tm&&S.tm[p.id])||teamTag(p.name)||'A'};
+const teamTotals=(ps,bonus)=>{const t={A:{pts:0,n:0},B:{pts:0,n:0}};ps.forEach(p=>{const k=teamOf(p);t[k].pts+=Number(p.score)||0;t[k].n++});const mx=Math.max(1,t.A.n,t.B.n);['A','B'].forEach(k=>{t[k].pts=Math.round(t[k].pts*(t[k].n?mx/t[k].n:0))+((bonus&&bonus[k])||0)});return t};
+const teamBadge=k=>'<span class="tm-b '+k+'">'+TEAMS[k].e+' Time '+TEAMS[k].n+'</span>';
 const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+'">'+esc(splitName(n).av)+'</span>';
 
 
@@ -147,7 +158,7 @@ function syClose(){
 /* apresentador: anuncia a fase que vai aparecer no instante T (horário do próprio apresentador) */
 function syPhase(status,q,at){
  if(!SY.last||SY.last.status!==status||SY.last.q!==q)SY.seq++;
- SY.last={t:'phase',seq:SY.seq,status,q,at};
+ SY.last={t:'phase',seq:SY.seq,status,q,at,tm:S.tm||undefined};
  sySend(SY.last);
  clearInterval(SY.hb);SY.hb=setInterval(()=>{if(SY.last)sySend({...SY.last,hb:1})},2000);
 }
@@ -159,6 +170,8 @@ function syRecv(m){
  SY.lastMsg=Date.now();
  if(m.t==='pong'){if(m.id!==SY.pid)return;const c1=Date.now(),rtt=c1-m.c0;if(rtt<SY.rtt){SY.rtt=rtt;SY.off=m.h+rtt/2-c1}}
  else if(m.t==='phase')syPhaseIn(m);
+ else if(m.t==='tt')PS.tt=m.tt;
+ else if(m.t==='vs'){S.tm=m.tm||S.tm;phoneVs()}
  else if(m.t==='closed')closedScreen();
 }
 function syPing(){
@@ -167,6 +180,7 @@ function syPing(){
 }
 /* jogador: aplica a fase no instante T (convertido para o relógio do próprio aparelho) */
 function syPhaseIn(m){
+ if(m.tm){S.tm=m.tm}
  if(m.seq<=SY.seq||!S.room||S.host)return;SY.seq=m.seq;
  const delay=m.at-hostClock();
  clearTimeout(SY.tm);
@@ -416,6 +430,67 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lb-intro p{margin:0;font-size:calc(var(--u)*2.3);opacity:.85;line-height:1.3}
 .lb-chip{padding:calc(var(--u)*.6) calc(var(--u)*1.8);border-radius:999px;font-weight:800;font-size:calc(var(--u)*1.5);letter-spacing:.12em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25)}
 @media(max-width:900px){.lb-intro{--u:min(1vw,.9vh);}.lb-bar{display:none}}
+/* ---- times ---- */
+.lb-fmt{display:flex;gap:calc(var(--u)*1);justify-content:center;flex-wrap:wrap;margin-bottom:calc(var(--u)*1.2)}
+.lb-f{display:grid;justify-items:center;gap:2px;padding:calc(var(--u)*1) calc(var(--u)*2);min-width:calc(var(--u)*17);border-radius:calc(var(--u)*1.6);border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:#fff;font-family:inherit;cursor:pointer}
+.lb-f span{font-size:calc(var(--u)*3)}.lb-f b{font-size:calc(var(--u)*1.8)}.lb-f small{font-size:calc(var(--u)*1.1);opacity:.7;max-width:calc(var(--u)*17)}
+.lb-f.on{border-color:#ffc83d;background:rgba(255,200,61,.16);box-shadow:0 0 calc(var(--u)*2) rgba(255,200,61,.35)}
+@media(max-width:900px){.lb-f{min-width:0;flex:1;padding:8px 10px}.lb-f span{font-size:24px}.lb-f b{font-size:14px}.lb-f small{font-size:11px}}
+.lb-teams{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.2);width:100%}
+.lb-tm{border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1);background:rgba(255,255,255,.06);border:2px solid var(--tc)}
+.lb-tm.A{--tc:#38bdf8}.lb-tm.B{--tc:#ffc83d}
+.lb-tm h4{margin:0 0 calc(var(--u)*.6);font-size:calc(var(--u)*1.5);letter-spacing:.08em;color:var(--tc);display:flex;justify-content:space-between}
+.lb-tm .lg2-ppl{justify-content:flex-start}
+.tm-b{display:inline-block;padding:.25em .8em;border-radius:99px;font-weight:900;font-size:14px;letter-spacing:.04em;border:2px solid currentColor}
+.tm-b.A{color:#38bdf8;background:rgba(56,189,248,.14)}.tm-b.B{color:#ffc83d;background:rgba(255,200,61,.14)}
+.tm-pick{display:grid;gap:8px;text-align:center}.tm-pick[hidden]{display:none}.tm-pick div{display:flex;gap:10px}
+.tm-pick button{flex:1;padding:14px;border-radius:16px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font-weight:900;font-size:18px;font-family:inherit}
+.tm-pick button.A.on{border-color:#38bdf8;background:rgba(56,189,248,.25)}.tm-pick button.B.on{border-color:#ffc83d;background:rgba(255,200,61,.25)}
+.tm-ln{margin-top:10px;font-size:18px;text-align:center;line-height:1.6}.tm-ln b{font-size:1.3em}
+.tm-head{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:calc(var(--u)*1.5);align-items:center;width:100%;margin:calc(var(--u)*.6) 0 calc(var(--u)*1)}
+.tm-side{display:grid;justify-items:center;gap:calc(var(--u)*.2);padding:calc(var(--u)*1) 0;border-radius:calc(var(--u)*1.6);background:rgba(255,255,255,.07);border:2px solid transparent;position:relative}
+.tm-side.A{--tc:#38bdf8}.tm-side.B{--tc:#ffc83d}.tm-side b{font-size:calc(var(--u)*1.7);letter-spacing:.1em;color:var(--tc)}
+.tm-side.lead{border-color:var(--tc);box-shadow:0 0 calc(var(--u)*2.4) var(--tc)}
+.tm-sc{font-size:calc(var(--u)*5.6);font-weight:900;line-height:1;text-shadow:0 0 calc(var(--u)*1) var(--tc)}
+.tm-side em{font-style:normal;font-weight:900;color:#34d399;font-size:calc(var(--u)*2)}
+.tm-side i{font-style:normal;font-weight:900;color:#ffd24a;font-size:calc(var(--u)*1.2);animation:lgpop .5s both}
+.tm-side small{font-size:calc(var(--u)*1.2);opacity:.7}
+.tm-split{height:calc(var(--u)*2.6);border-radius:99px;background:#ffc83d;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}
+.tm-split i{display:block;height:100%;background:#38bdf8;transition:width 1.2s cubic-bezier(.2,1,.3,1)}
+.tm-rope{position:relative;height:calc(var(--u)*7)}
+.tm-rope .tm-line{position:absolute;left:4%;right:4%;top:50%;height:calc(var(--u)*.7);border-radius:99px;background:repeating-linear-gradient(90deg,#e7c27a 0 calc(var(--u)*.8),#b98a3e calc(var(--u)*.8) calc(var(--u)*1.6));transform:translateY(-50%)}
+.tm-rope .tm-mid{position:absolute;left:50%;top:15%;bottom:15%;width:3px;background:rgba(255,255,255,.55);transform:translateX(-50%)}
+.tm-flag{position:absolute;top:50%;transform:translateY(-50%);font-size:calc(var(--u)*3)}.tm-flag.A{left:0}.tm-flag.B{right:0}
+.tm-knot{position:absolute;top:50%;font-size:calc(var(--u)*4.4);transform:translate(-50%,-50%);transition:left 1.4s cubic-bezier(.3,1.4,.4,1);filter:drop-shadow(0 0 calc(var(--u)*.8) #ffd24a)}
+.lg2-lane.tA{border-left:calc(var(--u)*.6) solid #38bdf8}.lg2-lane.tB{border-left:calc(var(--u)*.6) solid #ffc83d}
+.tf-h{margin:calc(var(--u)*.4) 0 calc(var(--u)*1.2);font-size:calc(var(--u)*6.2);font-weight:900;line-height:1.05;text-align:center}
+.tf-h.A{color:#38bdf8;text-shadow:0 0 calc(var(--u)*2) #38bdf8}.tf-h.B{color:#ffc83d;text-shadow:0 0 calc(var(--u)*2) #ffc83d}
+.tf-two{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*2);width:100%}
+.tf-card{position:relative;padding:calc(var(--u)*1.4);border-radius:calc(var(--u)*2);background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.14);text-align:center;opacity:.82}
+.tf-card.A{--tc:#38bdf8}.tf-card.B{--tc:#ffc83d}.tf-card.win{opacity:1;border-color:var(--tc);box-shadow:0 0 calc(var(--u)*3) var(--tc);animation:lgin .6s both}
+.tf-card .crown{position:absolute;left:50%;top:calc(var(--u)*-3.2);transform:translateX(-50%);font-size:calc(var(--u)*4);animation:lgfloat 2s ease-in-out infinite}
+.tf-card h3{margin:0;font-size:calc(var(--u)*1.8);letter-spacing:.1em;color:var(--tc)}.tf-pts{font-size:calc(var(--u)*7);font-weight:900;line-height:1.05}
+.tf-card small{font-size:calc(var(--u)*1.2);opacity:.75}
+.tf-ms{display:grid;gap:calc(var(--u)*.4);margin-top:calc(var(--u)*.8)}.tf-ms div{display:flex;align-items:center;gap:calc(var(--u)*.8);font-size:calc(var(--u)*1.5);font-weight:700;padding:calc(var(--u)*.3) calc(var(--u)*1);border-radius:99px;background:rgba(255,255,255,.07)}.tf-ms span{flex:1;text-align:left}.tf-ms .lg2-av{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);font-size:calc(var(--u)*1.7)}
+.tm-fin{display:grid;gap:8px;justify-items:center;margin:12px 0}.tm-win{font-size:22px;font-weight:900}.tm-win.A{color:#38bdf8}.tm-win.B{color:#ffc83d}
+.tm-two{display:flex;gap:12px;font-size:26px;font-weight:900}.tm-two .A{color:#38bdf8}.tm-two .B{color:#ffc83d}
+.lg2-board.tmb .lg2-lane{padding-top:calc(var(--u)*.5);padding-bottom:calc(var(--u)*.5)}
+.lb-tm h4{font-size:calc(var(--u)*1.25)!important;white-space:nowrap}
+.lb-chip.sp,.tm-b.sp{background:linear-gradient(180deg,#ffe27a,#f5a623);color:#3a2300;border-color:#ffd24a}
+.lb-intro .lb-chip.sp{font-size:calc(var(--u)*1.7)}
+.vs{margin:auto;display:grid;justify-items:center;gap:calc(var(--u)*2);width:100%}
+.vs-row{display:grid;grid-template-columns:1fr auto 1fr;gap:calc(var(--u)*3);align-items:center;width:min(100%,calc(var(--u)*90))}
+.vs-t{display:grid;gap:calc(var(--u)*.7);padding:calc(var(--u)*1.6);border-radius:calc(var(--u)*2);border:2px solid var(--tc);background:rgba(255,255,255,.07);box-shadow:0 0 calc(var(--u)*2.5) var(--tc);animation:vsIn .7s cubic-bezier(.2,1.1,.3,1) both}
+.vs-t.A{--tc:#38bdf8;--from:-60px}.vs-t.B{--tc:#ffc83d;--from:60px}
+@keyframes vsIn{from{opacity:0;transform:translateX(var(--from))}to{opacity:1;transform:none}}
+.vs-t h3{margin:0;text-align:center;font-size:calc(var(--u)*2.2);letter-spacing:.1em;color:var(--tc)}
+.vs-t div{display:flex;align-items:center;gap:calc(var(--u)*1);font-size:calc(var(--u)*2);font-weight:800;animation:lgin .5s both}
+.vs-x{font-size:calc(var(--u)*8);font-weight:900;color:#fff;text-shadow:0 0 calc(var(--u)*2) #ffd24a;animation:lgboing .9s .4s both}
+.vs-n{font-size:calc(var(--u)*30);font-weight:900;line-height:1;color:#ffd24a;text-shadow:0 0 calc(var(--u)*3) rgba(255,200,61,.8);animation:lgboing .6s both}
+.lg2-phone .vs-n{font-size:140px}.vs-n.A{color:#38bdf8}.vs-n.B{color:#ffc83d}
+.ph-vs{display:grid;justify-items:center;gap:6px;padding:20px;border-radius:24px;border:2px solid var(--tc);background:rgba(255,255,255,.07)}
+.ph-vs.A{--tc:#38bdf8}.ph-vs.B{--tc:#ffc83d}.ph-vs .e{font-size:90px;animation:lgboing .8s both}.ph-vs h2{margin:0;color:var(--tc)}
+@media(max-width:900px){.vs-row{grid-template-columns:1fr}}
 .lb-brand{position:absolute;left:50%;top:calc(var(--u)*1);transform:translateX(-50%);display:grid;justify-items:center;text-align:center;line-height:1}
 .lb-brand .pe svg{height:calc(var(--u)*4.7);width:auto;display:block;filter:drop-shadow(0 0 calc(var(--u)*.7) rgba(248,170,40,.55))}
 .lb-brand h1{margin:calc(var(--u)*.6) 0 0;font-size:calc(var(--u)*4.7);font-weight:900;letter-spacing:.005em;white-space:nowrap;line-height:1}
@@ -509,21 +584,24 @@ async function home(){
  screen(barHTML()+'<div class="lg2-center lb-panel"><span class="lg2-pill">🎮 JOGO COLETIVO</span><h1 class="lg2-hero">Desafio Bíblico Ao Vivo</h1><p class="lg2-sub">Projete no telão e jogue com todos pelo celular. Vários jogos, pontos, sequências e um pódio final.</p><div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.setup()">📺 Criar sala no telão</button><button class="lg2-btn" onclick="IASDLive.joinForm()">📱 Entrar com código</button></div><small class="lg2-sub">'+fmt(window.IASDGameEngine.stats().total)+'+ perguntas e desafios para sortear.</small></div>','bgx cl');
  A().music('menu');
 }
-let SET={mode:0,rounds:1};
+let SET={mode:0,rounds:1,fmt:0};
 function setup(){
  A().sfx('click');
- const paint=()=>screen(barHTML()+'<div class="lg2-center lb-panel"><span class="lg2-pill">📺 NOVA SALA</span><h2 class="lg2-hero" style="font-size:clamp(28px,5vw,48px)">Escolha o jogo</h2><div class="lg2-modes">'+MODES.map(m=>'<button class="lg2-mode '+(SET.mode===m.id?'on':'')+'" onclick="IASDLive._set(\'mode\','+m.id+')"><span>'+m.e+'</span><b>'+m.n+'</b><small>'+m.d+'</small></button>').join('')+'</div><div class="lg2-row" style="align-items:center"><small class="lg2-sub" style="margin:0">Rodadas:</small>'+ROUNDS.map((n,i)=>'<button class="lg2-chip '+(SET.rounds===i?'on':'')+'" onclick="IASDLive._set(\'rounds\','+i+')">'+n+'</button>').join('')+'</div><div class="lg2-row"><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button><button class="lg2-btn gold" onclick="IASDLive.create()">Criar sala</button></div></div>','bgx cl');
+ const paint=()=>screen(barHTML()+'<div class="lg2-center lb-panel"><span class="lg2-pill">📺 NOVA SALA</span><div class="lb-fmt">'+FORMATS.map(f=>'<button class="lb-f '+(SET.fmt===f.id?'on':'')+'" onclick="IASDLive._set(\'fmt\','+f.id+')"><span>'+f.e+'</span><b>'+f.n+'</b><small>'+f.d+'</small></button>').join('')+'</div><h2 class="lg2-hero" style="font-size:clamp(28px,5vw,48px)">Escolha o jogo</h2><div class="lg2-modes">'+MODES.map(m=>'<button class="lg2-mode '+(SET.mode===m.id?'on':'')+'" onclick="IASDLive._set(\'mode\','+m.id+')"><span>'+m.e+'</span><b>'+m.n+'</b><small>'+m.d+'</small></button>').join('')+'</div><div class="lg2-row" style="align-items:center"><small class="lg2-sub" style="margin:0">Rodadas:</small>'+ROUNDS.map((n,i)=>'<button class="lg2-chip '+(SET.rounds===i?'on':'')+'" onclick="IASDLive._set(\'rounds\','+i+')">'+n+'</button>').join('')+'</div><div class="lg2-row"><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button><button class="lg2-btn gold" onclick="IASDLive.create()">Criar sala</button></div></div>','bgx cl');
  API._set=(k,v)=>{SET[k]=v;A().sfx('tap');paint()};paint();
 }
 function joinForm(pre){
  A().sfx('click');const av=AVATARS[Math.floor(Math.random()*AVATARS.length)];let pick=av;
- screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">📱 ENTRAR NA PARTIDA</span><h2>Quem é você?</h2><div class="lg2-row" id="lg2-avs" style="gap:8px">'+AVATARS.map(a=>'<button class="lg2-chip '+(a===av?'on':'')+'" style="font-size:24px;padding:6px 12px" data-a="'+a+'">'+a+'</button>').join('')+'</div><input class="lg2-input" id="lg-code" inputmode="numeric" maxlength="6" placeholder="Código da sala" value="'+esc(pre||'')+'"><input class="lg2-input" id="lg-name" maxlength="24" placeholder="Seu nome"><button class="lg2-btn gold" style="width:100%" onclick="IASDLive.join()">Entrar</button><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button></div>','');
+ screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">📱 ENTRAR NA PARTIDA</span><h2>Quem é você?</h2><div class="lg2-row" id="lg2-avs" style="gap:8px">'+AVATARS.map(a=>'<button class="lg2-chip '+(a===av?'on':'')+'" style="font-size:24px;padding:6px 12px" data-a="'+a+'">'+a+'</button>').join('')+'</div><input class="lg2-input" id="lg-code" inputmode="numeric" maxlength="6" placeholder="Código da sala" value="'+esc(pre||'')+'" oninput="IASDLive._teamPick()"><div class="tm-pick" id="lg-tm" hidden><small>Esta sala é de times! Escolha o seu:</small><div><button data-t="A" class="A on">🔵 Azul</button><button data-t="B" class="B">🟡 Dourado</button></div></div><input class="lg2-input" id="lg-name" maxlength="24" placeholder="Seu nome"><button class="lg2-btn gold" style="width:100%" onclick="IASDLive.join()">Entrar</button><button class="lg2-btn" onclick="IASDLive.home()">← Voltar</button></div>','');
  $('lg2-avs').onclick=e=>{const b=e.target.closest('button');if(!b)return;pick=b.dataset.a;$('lg2-avs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));A().sfx('tap');API._av=pick};API._av=pick;
+ API._team=Math.random()<.5?'A':'B';
+ const tp=()=>{const c=($('lg-code').value||'').replace(/\D/g,''),box=$('lg-tm');if(!box)return;const on=c.length===6&&cfgOf(c).teams;box.hidden=!on;box.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===API._team))};
+ API._teamPick=tp;$('lg-tm').onclick=e=>{const b=e.target.closest('button');if(!b)return;API._team=b.dataset.t;A().sfx('tap');tp()};tp();
 }
 async function join(){
  const c=($('lg-code').value||'').replace(/\D/g,''),nm=($('lg-name').value||'').trim();
  if(c.length!==6||!nm)return alert('Informe o código de 6 dígitos e seu nome.');
- const full=(API._av||'🙂')+' '+nm;
+ const full=(API._av||'🙂')+' '+nm+(cfgOf(c).teams?'\u200B'+(API._team||'A'):'');
  try{
   const p=await rpc('live_join_room',{p_code:c,p_name:full});
   if(!p?.length)return alert('Sala não encontrada ou a partida já começou.');
@@ -536,9 +614,9 @@ async function join(){
 /* ---------- APRESENTADOR ---------- */
 async function create(){
  try{
-  const c=String(SET.mode)+String(SET.rounds)+String(Math.floor(1000+Math.random()*9000));
+  const c=String(SET.mode)+String(SET.rounds)+String(SET.fmt)+String(Math.floor(100+Math.random()*900));
   const r=await rpc('live_create_room',{p_code:c});if(!r?.length)throw Error('room_not_created');
-  S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[]};
+  S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};S.tm=null;try{localStorage.removeItem('iasd_live_tm')}catch(e){}
   localStorage.setItem('iasd_live_host',JSON.stringify({id:S.room.id,token:S.room.host_token,code:c}));
   deckFor(c);A().sfx('join');lobby();poll();syOpen();
  }catch(e){console.error('IASDLive create room:',e);alert('Não foi possível criar a sala. Tente novamente.')}
@@ -565,21 +643,33 @@ async function lobby(){
  const step=(n,ic,t,d)=>'<div class="lb-st"><span class="lb-n">'+n+'</span><span class="lb-ic">'+LBI[ic]+'</span><div><b>'+t+'</b><small>'+d+'</small></div></div>';
  screen('<div class="lg2-lb">'+
   '<div class="lb-hd">'+iasdLogo()+brandHTML(false)+
-  '<div class="lb-ac"><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button><div class="lb-r2"><button class="lg2-btn" onclick="IASDLive.telao()">📽 Projetar no telão</button><button class="lg2-btn" onclick="IASDLive.exit()">✕ Cancelar sala</button></div><em class="lb-mode">'+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</em></div></div>'+
+  '<div class="lb-ac"><button class="lg2-btn gold" id="lg-start" onclick="IASDLive.start()">▶ COMEÇAR PARTIDA</button><div class="lb-r2"><button class="lg2-btn" onclick="IASDLive.telao()">📽 Projetar no telão</button><button class="lg2-btn" onclick="IASDLive.exit()">✕ Cancelar sala</button></div><em class="lb-mode">'+(cfgOf(code()).teams?FORMATS[cfgOf(code()).fmt].e+' '+FORMATS[cfgOf(code()).fmt].n+' · ':'')+mode.e+' '+esc(mode.n)+' · '+total+' rodadas</em></div></div>'+
   '<section class="lb-card lb-cd"><h3>CÓDIGO DA SALA</h3><div class="lg2-code">'+esc(code())+'</div><div class="lb-qb"><img class="lg2-qr" alt="QR Code para entrar" src="'+qr+'"></div><div class="lb-sc">'+LBI.phone+'<div><b>ESCANEIE O QR CODE</b><small>PARA ENTRAR NA SALA</small></div></div></section>'+
   '<section class="lb-rt"><div class="lb-card lb-ct">'+LBI.group+'<b id="lg-player-count">'+ps.length+'</b><span>jogador(es) na sala</span></div>'+
-  '<small class="lb-wt" id="lg-wait">AGUARDANDO OS PARTICIPANTES...</small><div class="lg2-ppl" id="lg-player-list"></div>'+
+  '<small class="lb-wt" id="lg-wait">AGUARDANDO OS PARTICIPANTES...</small>'+(cfgOf(code()).teams?'<div class="lb-teams">'+['A','B'].map(k=>'<div class="lb-tm '+k+'"><h4>'+TEAMS[k].e+' TIME '+TEAMS[k].n.toUpperCase()+' <b id="tc-'+k+'">0</b></h4><div class="lg2-ppl" id="lg-list-'+k+'"></div></div>').join('')+'</div><div class="lg2-ppl" id="lg-player-list" hidden></div>':'<div class="lg2-ppl" id="lg-player-list"></div>')+
   '<div class="lb-card lb-hw"><h3>COMO PARTICIPAR?</h3>'+step(1,'phone','ABRA O IASD APP','No seu celular ou computador.')+step(2,'pad','ACESSE O JOGO COLETIVO','Vá até a aba “Jogos” e toque em “Entrar com código”.')+step(3,'scan','DIGITE O CÓDIGO OU<br>ESCANEIE O QR CODE','Use o código ao lado para entrar na sala.')+'</div></section></div>','lb cl');
  paintLobbyPlayers(ps,true);
 }
 function paintLobbyPlayers(ps,first){
  const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;document.querySelector('.lg2-lb')?.classList.toggle('many',ps.length>6);const wt=$('lg-wait');if(wt)wt.textContent=ps.length?'TUDO PRONTO? É SÓ COMEÇAR!':'AGUARDANDO OS PARTICIPANTES...';
- ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);box.appendChild(d);if(!first)A().sfx('join')}});
+ if(cfgOf(code()).teams)['A','B'].forEach(k=>{const e=$('tc-'+k);if(e)e.textContent=ps.filter(p=>teamTag(p.name)===k).length});
+ ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);(cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box).appendChild(d);if(!first)A().sfx('join')}});
 }
 async function start(){
  const ps=await players();if(!ps.length&&!confirm('Ninguém entrou ainda. Começar assim mesmo?'))return;
+ if(cfgOf(code()).teams){const tm={};ps.forEach(p=>tm[p.id]=teamTag(p.name)||'A');const cnt=k=>ps.filter(p=>tm[p.id]===k).length;for(let g=0;g<40&&Math.abs(cnt('A')-cnt('B'))>1;g++){const big=cnt('A')>cnt('B')?'A':'B',small=big==='A'?'B':'A',mv=ps.slice().reverse().find(p=>tm[p.id]===big);tm[mv.id]=small}S.tm=tm;HS.rw={A:0,B:0};HS.bonus={A:0,B:0};saveTm()}
  A().sfx('start');HS.prev={};ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});
+ if(cfgOf(code()).teams){if(!await teamIntro(ps))return}
  intro(0);
+}
+/* formação das equipes: VS + contagem 3-2-1 (celulares recebem o aviso pelo canal em tempo real) */
+async function teamIntro(ps){
+ S.phase='vs';const sp=speed(),side=k=>'<div class="vs-t '+k+'"><h3>'+TEAMS[k].e+' TIME '+TEAMS[k].n.toUpperCase()+'</h3>'+ps.filter(p=>teamOf(p)===k).slice(0,8).map((p,n)=>'<div style="animation-delay:'+(.25+n*.12)+'s">'+avatarHTML(p.name)+'<span>'+esc(splitName(p.name).name)+'</span></div>').join('')+'</div>';
+ sySend({t:'vs',tm:S.tm,at:hostClock()});
+ screen(barHTML()+'<div class="vs"><span class="lb-chip">AS EQUIPES ESTÃO FORMADAS</span><div class="vs-row">'+side('A')+'<div class="vs-x">VS</div>'+side('B')+'</div></div>','bgx qz');
+ A().sfx('whoosh');await sleep(3000/sp);
+ for(const n of [3,2,1]){if(S.phase!=='vs'||!S.room)return false;screen(barHTML()+'<div class="vs"><span class="lb-chip">PREPAREM-SE!</span><div class="vs-n" key="'+n+'">'+n+'</div></div>','bgx qz');A().sfx('count');await sleep(900/sp)}
+ A().sfx('go');return S.phase==='vs'&&!!S.room;
 }
 async function patchRoom(obj){
  const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');if(!h?.token)throw Error('host_not_authorized');
@@ -588,7 +678,7 @@ async function patchRoom(obj){
 }
 function intro(i){
  clearTimers();S.phase='intro';S.qn=i;const q=deckFor(code())[i],t=TYPES[q.ltype];A().music('play');A().sfx('whoosh');
- screen(barHTML()+'<div class="lb-intro" style="--tc:'+t.c+'"><span class="lb-chip">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span><div class="e">'+t.e+'</div><h1>'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','bgx qz',{style:'--tc:'+t.c});
+ screen(barHTML()+'<div class="lb-intro" style="--tc:'+t.c+'"><span class="lb-chip">RODADA '+(i+1)+' DE '+cfgOf(code()).total+'</span>'+(spOf(i)?'<span class="lb-chip sp">'+spOf(i).e+' '+spOf(i).n+' · PONTOS ×'+spOf(i).m+'</span>':'')+'<div class="e">'+t.e+'</div><h1>'+esc(t.n)+'</h1><p>'+esc(t.d)+'</p></div>','bgx qz',{style:'--tc:'+t.c});
  S.auto=setTimeout(async()=>{const T=Date.now()+LEAD();syPhase('question',i,T);try{await Promise.all([patchRoom({status:'question',current_question:i}),sleep(T-Date.now())])}catch(e){console.error(e);return}await sleep(T-Date.now());hostQuestion(T)},2300/speed());
 }
 function ringHTML(t){return '<div class="lg2-ring" id="lg-ring" style="--tc:'+t.c+'"><svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="44"/><circle class="pg" id="lg-pg" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/></svg><b id="lg-timer">'+0+'</b></div>'}
@@ -645,23 +735,47 @@ async function reveal(){
  A().music('play');A().sfx('reveal');
  await scoreboard(i,q);
 }
+function teamResult(ps){const cfg=cfgOf(code()),bonus=S.host?HS.bonus:((PS.tt&&PS.tt.bonus)||{A:0,B:0}),rw=S.host?HS.rw:((PS.tt&&PS.tt.rw)||{A:0,B:0}),t=teamTotals(ps,bonus);let w;
+ if(cfg.fmt===2)w=rw.A>rw.B?'A':rw.B>rw.A?'B':(t.A.pts>t.B.pts?'A':t.B.pts>t.A.pts?'B':'');else w=t.A.pts>t.B.pts?'A':t.B.pts>t.A.pts?'B':'';
+ return{t,rw,w,fmt:cfg.fmt}}
+function teamHeader(tt,dA,pb,win,fmt,spc,spx){
+ const side=k=>'<div class="tm-side '+k+(win===k?' lead':'')+'"><b>'+TEAMS[k].e+' '+TEAMS[k].n.toUpperCase()+'</b><span class="tm-sc">'+fmt_(tt.t[k].pts)+'</span>'+(dA[k]>0?'<em>+'+fmt_(dA[k])+'</em>':'')+(spc&&spx&&spx[k]?'<i>'+spc.e+' '+spc.n+' +'+fmt_(spx[k])+'</i>':'')+(pb[k]?'<i>⭐ TIME PERFEITO +'+pb[k]+'</i>':'')+'<small>'+(fmt===2?tt.rw[k]+(tt.rw[k]===1?' rodada vencida':' rodadas vencidas'):tt.t[k].n+' jogador(es)')+'</small></div>';
+ const tot=Math.max(1,tt.t.A.pts+tt.t.B.pts);
+ let mid;
+ if(fmt===2){const K=Math.max(2,Math.ceil(cfgOf(code()).total/2)),x=Math.max(6,Math.min(94,50-(tt.rw.A-tt.rw.B)/K*44));
+  mid='<div class="tm-rope"><div class="tm-line"></div><div class="tm-flag A">🔵</div><div class="tm-flag B">🟡</div><div class="tm-mid"></div><div class="tm-knot" style="left:'+x+'%">🪢</div></div>'}
+ else mid='<div class="tm-split"><i class="A" style="width:'+(tt.t.A.pts+tt.t.B.pts?Math.max(4,Math.round(tt.t.A.pts/tot*100)):50)+'%"></i><i class="B"></i></div>';
+ return '<div class="tm-head">'+side('A')+'<div class="tm-center">'+mid+'</div>'+side('B')+'</div>'}
+const fmt_=n=>Number(n||0).toLocaleString('pt-BR');
 async function scoreboard(i,q){
  const ps=(await players()).map(p=>({...p,score:Number(p.score)||0}));
  const before=HS.order.slice();
  ps.forEach(p=>{const d=p.score-(HS.prev[p.id]||0);p.delta=d;if(d>0){HS.streak[p.id]=(HS.streak[p.id]||0)+1;HS.correct[p.id]=(HS.correct[p.id]||0)+1;HS.best[p.id]=Math.max(HS.best[p.id]||0,HS.streak[p.id])}else HS.streak[p.id]=0});
  ps.sort((a,b)=>b.score-a.score);
+ const cfgB=cfgOf(code());let TH='';
+ if(cfgB.teams){
+  const dA={A:0,B:0},nn={A:0,B:0},perf={A:true,B:true},pb={A:0,B:0};
+  ps.forEach(p=>{const k=teamOf(p);dA[k]+=p.delta;nn[k]++;if(!(p.delta>0))perf[k]=false});
+  const mx=Math.max(1,nn.A,nn.B);['A','B'].forEach(k=>{dA[k]=Math.round(dA[k]*(nn[k]?mx/nn[k]:0))});
+  const win=dA.A>dA.B?'A':dA.B>dA.A?'B':'';
+  const spc=spOf(i),spx={A:0,B:0};
+  if(HS.tq!==i){HS.tq=i;['A','B'].forEach(k=>{if(nn[k]>=2&&perf[k]){HS.bonus[k]+=300;pb[k]=300}if(spc){spx[k]=dA[k]*(spc.m-1);HS.bonus[k]+=spx[k]}});if(win)HS.rw[win]++;saveTm();HS.spx=spx}else if(spc)Object.assign(spx,HS.spx||{});
+  const tt={t:teamTotals(ps,HS.bonus),rw:HS.rw};
+  sySend({t:'tt',tt:{rw:HS.rw,bonus:HS.bonus,win,round:dA,pb}});
+  TH=teamHeader(tt,dA,pb,win,cfgB.fmt,spc,spx);
+ }
  const maxD=Math.max(0,...ps.map(p=>p.delta)),max=Math.max(1,...ps.map(p=>p.score));
  HS.order=ps.map(p=>p.id);
  const t=TYPES[q.ltype],gotIt=ps.filter(p=>p.delta>0).length;
  const lane=(p,k)=>{const n=splitName(p.name),moved=before.length?before.indexOf(p.id)-k:0,prev=HS.prev[p.id]||0;
   const badges=[];if(p.delta>0&&p.delta===maxD&&ps.length>1)badges.push('<em>⚡ Mais veloz</em>');if(HS.streak[p.id]>=2)badges.push('<em>🔥 '+HS.streak[p.id]+' seguidas</em>');if(moved>0)badges.push('<em>🚀 subiu '+moved+'</em>');
-  return '<div class="lg2-lane '+(k===0?'first':'')+'" style="animation-delay:'+(k*.07)+'s"><span class="rk">'+(k===0?'🥇':k===1?'🥈':k===2?'🥉':(k+1)+'º')+'</span>'+avatarHTML(p.name)+'<span class="nm">'+esc(n.name)+'</span><div class="tk"><i data-w="'+Math.max(3,Math.round(p.score/max*100))+'" style="width:'+Math.max(3,Math.round(prev/Math.max(1,max)*100))+'%"></i></div><span class="sc">'+fmt(p.score)+'</span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+(badges.length?'<div class="bd">'+badges.join('')+'</div>':'')+'</div>'};
+  return '<div class="lg2-lane '+(k===0?'first':'')+(cfgB.teams?' t'+teamOf(p):'')+'" style="animation-delay:'+(k*.07)+'s"><span class="rk">'+(k===0?'🥇':k===1?'🥈':k===2?'🥉':(k+1)+'º')+'</span>'+avatarHTML(p.name)+'<span class="nm">'+esc(n.name)+'</span><div class="tk"><i data-w="'+Math.max(3,Math.round(p.score/max*100))+'" style="width:'+Math.max(3,Math.round(prev/Math.max(1,max)*100))+'%"></i></div><span class="sc">'+fmt(p.score)+'</span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+(badges.length?'<div class="bd">'+badges.join('')+'</div>':'')+'</div>'};
  const isLast=i+1>=cfgOf(code()).total;
  const ansHTML=ansTiles(q,'host');
  S.phase='board';
  screen(barHTML()+'<div class="lg2-top"><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span><span class="lg2-pill">✓ '+gotIt+' de '+ps.length+' acertaram</span></div>'+
   '<div class="lg2-ansbar">Resposta: <b>'+esc(q.a)+'</b>'+(q.ref?'<small style="opacity:.6;font-weight:600;font-size:.55em">'+esc(q.ref)+'</small>':'')+'</div>'+
-  '<div class="lg2-board">'+(ps.slice(0,7).map(lane).join('')||'<p class="lg2-sub">Sem jogadores.</p>')+(ps.length>7?'<small class="lg2-sub" style="text-align:center">+'+(ps.length-7)+' jogadores</small>':'')+'</div>'+
+  TH+'<div class="lg2-board'+(cfgB.teams?' tmb':'')+'">'+(ps.slice(0,cfgB.teams?4:7).map(lane).join('')||'<p class="lg2-sub">Sem jogadores.</p>')+(ps.length>(cfgB.teams?4:7)?'<small class="lg2-sub" style="text-align:center">+'+(ps.length-(cfgB.teams?4:7))+' jogadores</small>':'')+'</div>'+
   '<div class="lg2-row" style="margin-top:auto;padding-top:14px;flex-direction:column;align-items:center"><button class="lg2-btn gold" onclick="IASDLive.next()">'+(isLast?'🏆 Ver o pódio':'Próxima rodada →')+'</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div>','bgx qz',{style:'--tc:'+t.c});
  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.lg2-lane .tk i').forEach(el=>el.style.width=el.dataset.w+'%')));
  ps.forEach(p=>{HS.prev[p.id]=p.score});
@@ -678,6 +792,7 @@ async function finalPodium(){
  {const T=Date.now()+LEAD();syPhase('finished',qi(),T);try{await Promise.all([patchRoom({status:'finished'}),sleep(T-Date.now())])}catch(e){}await sleep(T-Date.now())}
  const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);
  A().music('victory');setTimeout(()=>A().sfx('drum'),200);setTimeout(()=>{A().sfx('win');confetti(8000)},3400/ (speed()>1?1:1));
+ if(cfgOf(code()).teams)return teamFinal(ps);
  const top3=[ps[1],ps[0],ps[2]],cls=['p2','p1','p3'],pos=['2','1','3'];
  const bestStreak=ps.slice().sort((a,b)=>(HS.best[b.id]||0)-(HS.best[a.id]||0))[0],mostOk=ps.slice().sort((a,b)=>(HS.correct[b.id]||0)-(HS.correct[a.id]||0))[0];
  const total=cfgOf(code()).total;
@@ -687,11 +802,20 @@ async function finalPodium(){
   (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,12).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
   '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','bgx qz');
 }
+function teamFinal(ps){
+ const R=teamResult(ps),total=cfgOf(code()).total,w=R.w,mvp=ps[0];
+ const card=k=>{const ms=ps.filter(p=>teamOf(p)===k).slice(0,6);return '<div class="tf-card '+k+(w===k?' win':'')+'">'+(w===k?'<span class="crown">👑</span>':'')+'<h3>'+TEAMS[k].e+' TIME '+TEAMS[k].n.toUpperCase()+'</h3><div class="tf-pts">'+fmt_(R.t[k].pts)+'</div><small>'+(R.fmt===2?R.rw[k]+' rodadas vencidas · ':'')+(HS.bonus[k]?'⭐ '+HS.bonus[k]+' de bônus · ':'')+R.t[k].n+' jogador(es)</small><div class="tf-ms">'+ms.map(p=>'<div>'+avatarHTML(p.name)+'<span>'+esc(splitName(p.name).name)+'</span><b>'+fmt_(p.score)+'</b></div>').join('')+'</div></div>'};
+ const bestStreak=ps.slice().sort((a,b)=>(HS.best[b.id]||0)-(HS.best[a.id]||0))[0];
+ A().music('victory');setTimeout(()=>A().sfx('drum'),200);setTimeout(()=>{A().sfx('win');confetti(8000)},2600);
+ screen(barHTML()+'<div class="lg2-center tf" style="width:min(1200px,100%)"><span class="lg2-pill">🏁 FIM DE JOGO · '+total+' RODADAS</span><h1 class="tf-h '+(w||'')+'">'+(w?'🏆 TIME '+TEAMS[w].n.toUpperCase()+' VENCEU!':'🤝 EMPATE!')+'</h1><div class="tf-two">'+card('A')+card('B')+'</div>'+
+  '<div class="lg2-awards">'+(mvp?'<div>⭐ Craque da partida<small>'+esc(splitName(mvp.name).name)+' · '+fmt_(mvp.score)+' pts</small></div>':'')+(bestStreak&&HS.best[bestStreak.id]>=2?'<div>🔥 Sequência de fogo<small>'+esc(splitName(bestStreak.name).name)+' · '+HS.best[bestStreak.id]+' seguidas</small></div>':'')+'</div>'+
+  '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','bgx qz');
+}
 /* ---------- JOGADOR (celular) ---------- */
 async function playerView(){
  const st=S.room.status,i=qi();
  if(st==='finished'&&(i>=cfgOf(code()).total||(i===0&&PS.sawQ<0)))return closedScreen();
- if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">🎉 VOCÊ ENTROU!</span><div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div><button class="lg2-btn" onclick="IASDLive.exit()">Sair da sala</button></div>','')}
+ if(st==='lobby'){S.phase='p-lobby';return screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">🎉 VOCÊ ENTROU!</span>'+(cfgOf(code()).teams?teamBadge(teamOf(S.player)):'')+'<div class="lg2-me">'+avatarHTML(S.player.name,'big')+'</div><h2>'+esc(splitName(S.player.name).name)+'</h2><div class="lg2-code" style="font-size:54px">'+esc(code())+'</div><p class="lg2-sub">Olhe para o telão. Quando o apresentador começar, é só responder aqui!</p><div class="lg2-wait"><i></i><i></i><i></i></div><button class="lg2-btn" onclick="IASDLive.exit()">Sair da sala</button></div>','')}
  if(st==='question'){
   if(PS.sawQ===i&&S.phase==='p-question')return;
   if(PS.answered===i){S.phase='p-sent';return sentScreen()}
@@ -703,12 +827,19 @@ function closedScreen(){
  clearTimers();clearTimeout(SY.tm);S.phase='p-final';try{localStorage.removeItem('iasd_live_player')}catch(e){}A().music(null);
  screen('<div class="lg2-phone">'+phBrand()+'<div class="lg2-res"><div class="big">🚪</div><h2>Sala encerrada</h2><p class="lg2-sub">O apresentador encerrou esta sala.</p><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Voltar</button></div></div>','');
 }
+async function phoneVs(){
+ if(S.phase!=='p-lobby')return;S.phase='p-vs';const k=teamOf(S.player),sp=speed();
+ screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">AS EQUIPES ESTÃO FORMADAS</span><div class="ph-vs '+k+'"><small>VOCÊ ESTÁ NO</small><div class="e">'+TEAMS[k].e+'</div><h2>TIME '+TEAMS[k].n.toUpperCase()+'</h2></div><div class="lg2-wait"><i></i><i></i><i></i></div></div>','');
+ A().sfx('whoosh');await sleep(3000/sp);
+ for(const n of [3,2,1]){if(S.phase!=='p-vs')return;screen('<div class="lg2-phone">'+phBrand()+'<span class="lg2-pill">PREPAREM-SE!</span><div class="vs-n '+k+'">'+n+'</div></div>','');A().sfx('count');await sleep(900/sp)}
+ if(S.phase==='p-vs')S.phase='p-lobby';
+}
 function sentScreen(){screen('<div class="lg2-phone">'+phBrand()+'<div class="lg2-res"><div class="big">✅</div><h2>Resposta enviada!</h2><p class="lg2-sub">Aguardando os outros jogadores…</p><div class="lg2-wait"><i></i><i></i><i></i></div></div></div>','')}
 function phoneQuestion(i){
  const q=deckFor(code())[i],t=TYPES[q.ltype],secs=roundSecs(q);clearTimers();PS.sawQ=i;S.phase='p-question';S.qStart=PS.at||Date.now();PS.at=0;S.shownClues=1;
  A().sfx('whoosh');
  const flash=q.ltype==='flash';
- screen('<div class="lg2-phone" style="--tc:'+t.c+'"><div class="lg2-tbar"><i id="lg-pbar" style="width:100%"></i></div><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span>'+
+ screen('<div class="lg2-phone" style="--tc:'+t.c+'"><div class="lg2-tbar"><i id="lg-pbar" style="width:100%"></i></div><span class="lg2-pill" style="color:'+t.c+'">'+t.e+' '+esc(t.n)+' · '+(i+1)+'/'+cfgOf(code()).total+'</span>'+(cfgOf(code()).teams?teamBadge(teamOf(S.player)):'')+(spOf(i)?'<span class="tm-b sp">'+spOf(i).e+' '+spOf(i).n+' ×'+spOf(i).m+'</span>':'')+
   (q.ltype==='who'?'<div class="lg2-clues" style="--tc:'+t.c+'">'+q.clues.map((c,k)=>'<p data-c="'+k+'" class="'+(k===0?'on':'off')+'" style="font-size:clamp(15px,4.4vw,20px)"><b>'+(k+1)+'</b><span>'+(k===0?esc(c):'…')+'</span></p>').join('')+'</div>':flash?'<div class="lg2-flash" id="lg-flash"></div><div class="lg2-ph-q" id="lg-flash-q" style="visibility:hidden">'+esc(q.q)+'</div>':'<div class="lg2-ph-q">'+esc(q.q)+'</div>')+
   '<div class="lg2-ph-ans '+(q.type==='tf'?'':'')+'" id="lg-ans" style="'+(flash?'visibility:hidden':'')+'">'+ansTiles(q,'player','IASDLive.answer')+'</div></div>','',{style:'--tc:'+t.c});
  requestAnimationFrame(fitPhone);
@@ -729,22 +860,22 @@ async function answer(i){
 }
 async function phoneReveal(i){
  clearTimers();const q=deckFor(code())[i],mine=PS.pickFor===i?PS.lastPick:-1,ok=mine===q.ans;
- screen('<div class="lg2-phone"><div class="lg2-res '+(ok?'':'bad')+'"><div class="big">'+(ok?'🎉':mine<0?'⏰':'😅')+'</div><h2>'+(ok?'Acertou!':mine<0?'Tempo esgotado':'Quase!')+'</h2><div class="pts" id="lg-pts">'+(ok?'calculando…':'')+'</div><p class="lg2-sub">Resposta certa: <b>'+esc(q.a)+'</b></p><div id="lg-rank" class="lg2-pill" style="visibility:hidden"></div></div></div>','');
+ screen('<div class="lg2-phone"><div class="lg2-res '+(ok?'':'bad')+'"><div class="big">'+(ok?'🎉':mine<0?'⏰':'😅')+'</div><h2>'+(ok?'Acertou!':mine<0?'Tempo esgotado':'Quase!')+'</h2><div class="pts" id="lg-pts">'+(ok?'calculando…':'')+'</div><p class="lg2-sub">Resposta certa: <b>'+esc(q.a)+'</b></p><div id="lg-rank" class="lg2-pill" style="visibility:hidden"></div><div id="lg-team" class="tm-ln"></div></div></div>','');
  A().sfx(ok?'correct':'wrong');if(navigator.vibrate)navigator.vibrate(ok?[60,40,60]:200);if(ok)confetti(1800);
  for(const wait of [1300,1600]){
   await new Promise(r=>setTimeout(r,wait/speed()));if(S.phase!=='p-reveal'||PS.revealFor!==i)return;
   try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score),me=ps.find(p=>p.id===S.player.id);
-   if(me){const d=me.score-PS.lastScore;const pts=$('lg-pts');if(pts)pts.textContent=d>0?'+'+fmt(d)+' pontos':(ok?'':'+0');PS.cur=me.score;
+   if(me){const d=me.score-PS.lastScore;const pts=$('lg-pts');if(pts)pts.textContent=d>0?'+'+fmt(d)+' pontos':(ok?'':'+0');PS.cur=me.score;if(cfgOf(code()).teams){const R=teamResult(ps),el=$('lg-team'),m=teamOf(S.player),o=m==='A'?'B':'A';if(el)el.innerHTML=teamBadge(m)+' <b>'+fmt_(R.t[m].pts)+'</b> × <b>'+fmt_(R.t[o].pts)+'</b> '+TEAMS[o].e+(R.fmt===2&&PS.tt?'<br><small>🪢 rodadas: '+R.rw[m]+' × '+R.rw[o]+'</small>':'')}
     const pos=ps.findIndex(p=>p.id===S.player.id)+1,r=$('lg-rank');if(r){r.style.visibility='visible';r.textContent=pos+'º lugar · '+fmt(me.score)+' pts'+(pos>1?' · faltam '+fmt(ps[pos-2].score-me.score+1)+' p/ subir':'')}}}catch(e){}
  }
  PS.lastScore=PS.cur??PS.lastScore;
 }
 async function phoneFinal(){
  clearTimers();S.phase='p-final';
- let pos='',pts=0,n=0;
- try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);n=ps.length;pos=ps.findIndex(p=>p.id===S.player.id)+1;pts=ps[pos-1]?.score||0}catch(e){}
+ let pos='',pts=0,n=0,tl='';
+ try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);n=ps.length;if(cfgOf(code()).teams){const R=teamResult(ps),m=teamOf(S.player);tl='<div class="tm-fin"><div class="tm-win '+(R.w||'')+'">'+(R.w?(R.w===m?'🏆 Seu time venceu!':'😅 O time '+TEAMS[R.w].n+' venceu'):'🤝 Empate!')+'</div><div class="tm-two"><span class="A">🔵 '+fmt_(R.t.A.pts)+'</span><span class="B">🟡 '+fmt_(R.t.B.pts)+'</span></div>'+(R.fmt===2?'<small>🪢 rodadas vencidas: '+R.rw.A+' × '+R.rw.B+'</small>':'')+'</div>'}pos=ps.findIndex(p=>p.id===S.player.id)+1;pts=ps[pos-1]?.score||0}catch(e){}
  A().sfx(pos&&pos<=3?'win':'level');if(pos&&pos<=3)confetti(6000);
- screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">'+(pos===1?'🏆':pos===2?'🥈':pos===3?'🥉':'🎖️')+'</div><h2>Fim de jogo!</h2><div class="pts" style="color:#f5b73a">'+(pos?pos+'º lugar':'')+'</div><p class="lg2-sub">'+fmt(pts)+' pontos'+(n?' · '+n+' jogadores':'')+'</p><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Jogar de novo</button></div></div>','');
+ screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">'+(pos===1?'🏆':pos===2?'🥈':pos===3?'🥉':'🎖️')+'</div><h2>Fim de jogo!</h2><div class="pts" style="color:#f5b73a">'+(pos?pos+'º lugar':'')+'</div><p class="lg2-sub">'+fmt(pts)+' pontos'+(n?' · '+n+' jogadores':'')+'</p>'+tl+'<button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Jogar de novo</button></div></div>','');
 }
 /* ---------- sincronização ---------- */
 function clearTimers(){clearInterval(S.clock);clearTimeout(S.auto);clearTimeout(S.flashT)}
@@ -776,7 +907,7 @@ async function reconnect(tries=3,wanted){
     await libs();
     const h=JSON.parse(localStorage.getItem('iasd_live_host')||'null');
     if(h?.id){const rr=await rpc('live_room_state',{p_room:h.id});
-     if(rr.length&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.host=true;HS.prev={};poll();syOpen();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return true}
+     if(rr.length&&rr[0].status!=='finished'&&(!wanted||rr[0].code===wanted)){S.room=rr[0];S.host=true;HS.prev={};loadTm();poll();syOpen();deckFor(code());if(S.room.status==='lobby')lobby();else{S.phase='board';const ps=await players();ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});if(S.room.status==='question'){S.phase='question';hostQuestion()}else{S.phase='board';scoreboard(qi(),deckFor(code())[qi()])}}return true}
      if(!rr.length||rr[0].status==='finished')localStorage.removeItem('iasd_live_host')}
     const p=JSON.parse(localStorage.getItem('iasd_live_player')||'null');
     if(p?.room&&p?.player){const rr=await rpc('live_room_state',{p_room:p.room}),pp=await rpc('live_room_players',{p_room:p.room}),me=pp.find(x=>x.id===p.player);
