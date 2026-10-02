@@ -879,6 +879,28 @@ button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255
 .lg2 .lg2-row{flex-direction:column;width:100%}.lg2 .lg2-row .lg2-btn{width:100%}
 }
 
+/* pódio final: tamanhos presos à ALTURA da tela, para caber inteiro sem rolar (telão, notebook e celular) */
+.lg2-pod{min-height:0;align-items:end}
+.lg2-pod .lg2-av.big{font-size:clamp(24px,min(4.6vw,5.6vh),76px)}
+.lg2-pod .nm{font-size:clamp(15px,min(2.6vw,3.4vh),44px)}.lg2-pod .pt{font-size:clamp(13px,min(1.7vw,2.3vh),28px)}
+.lg2-pod .crown{font-size:clamp(26px,min(4vw,5vh),64px)}
+.lg2-pod .s{gap:clamp(3px,.8vh,8px)}
+.lg2-pod .bar{font-size:clamp(28px,min(5vw,7.5vh),90px);padding-top:clamp(4px,1vh,10px)}
+.lg2-pod .p1 .bar{height:clamp(90px,17vh,190px)}.lg2-pod .p2 .bar{height:clamp(68px,12.5vh,140px)}.lg2-pod .p3 .bar{height:clamp(52px,9vh,105px)}
+.lg2-center:has(.lg2-pod){gap:clamp(6px,1.6vh,18px)}
+.lg2-center:has(.lg2-pod) .lg2-awards{margin:0}
+.lg2-center:has(.lg2-pod) .lg2-pill{font-size:clamp(11px,min(1.5vw,2.2vh),24px);padding:.35em .85em}
+.lg2-center:has(.lg2-pod) .lg2-hero{font-size:clamp(24px,min(5vw,5.6vh),52px)!important;line-height:1.05}
+.lg2-center:has(.lg2-pod) .lg2-awards div{font-size:clamp(11px,min(1.4vw,2.1vh),22px);padding:.4em .9em}
+.lg2-center:has(.lg2-pod) .lg2-ppl{gap:clamp(4px,1vh,10px)}
+.lg2-center:has(.lg2-pod) .lg2-pp{font-size:clamp(11px,min(1.4vw,2.2vh),22px);padding:.3em .8em}
+.lg2-center:has(.lg2-pod) .lg2-btn{font-size:clamp(13px,min(1.7vw,2.6vh),26px);padding:.55em 1.2em}
+.lg2-pod .p1 .bar{height:clamp(80px,15vh,170px)}.lg2-pod .p2 .bar{height:clamp(60px,11vh,124px)}.lg2-pod .p3 .bar{height:clamp(46px,8vh,92px)}
+.lg2-body:has(.lg2-pod){padding-top:clamp(44px,5.5vh,64px);padding-bottom:clamp(8px,1.6vh,24px)}
+.lg2-center:has(.lg2-pod){gap:clamp(4px,1.1vh,14px)}
+.lg2-center:has(.lg2-pod) .lg2-pill{margin:0}
+@media (max-height:760px){.lg2-pod .p1 .bar{height:clamp(50px,13vh,100px)}.lg2-pod .p2 .bar{height:clamp(40px,9.5vh,80px)}.lg2-pod .p3 .bar{height:clamp(32px,7vh,60px)}.lg2-pod .lg2-av.big{font-size:clamp(18px,4.4vh,40px)}.lg2-center:has(.lg2-pod) .lg2-ppl{display:none}}
+@media (max-height:620px){.lg2-center:has(.lg2-pod) .lg2-awards{display:none}}
 `;document.head.appendChild(s);
  if(!document.getElementById('lg2-font')){const l=document.createElement('link');l.id='lg2-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap';document.head.appendChild(l)}
 }
