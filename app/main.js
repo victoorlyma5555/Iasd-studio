@@ -25,14 +25,14 @@ function setupSoundAlertsRealtime(){setupAlertReplyRealtime();const user=cloudUs
  })}
 async function soundHeartbeat(){if(!cloudUser||!canUseSound()||!companionToken)return;try{const avatar=myProfile?.avatar_path?profileMediaUrl(myProfile.avatar_path):String(cloudUser.user_metadata?.avatar_url||'');await companionRequest('/heartbeat',{name:loggedUserName(),email:cloudUser.email||'',role:cloudRole||'usuário',avatar});void flushQueuedAlertReplies();void startAlertReplyLoop()}catch{}}
 let alertReplyLoopOn=false;
-async function submitQueuedReplies(list){for(const x of (list||[])){const q=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:x.id,p_reply:x.text});if(q.error)console.warn('Resposta guardada não enviada:',q.error.message);else void pushNotify(x.id,'reply')}}
+async function submitQueuedReplies(list){for(const x of (list||[])){const q=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:x.id,p_reply:x.text});if(q.error)console.warn('Resposta guardada não enviada:',q.error.message);}}
 /* o Projetor segura o pedido até haver resposta (resposta imediata, sem timers); se o Projetor for antigo, volta a consultar a cada 3 s */
 async function startAlertReplyLoop(){if(alertReplyLoopOn)return;alertReplyLoopOn=true;let legacy=false;
  try{while(cloud&&cloudUser&&companionToken){
   try{const r=await companionRequest(legacy?'/alert-replies':'/alert-replies/wait',{});await submitQueuedReplies(r.replies);if(legacy)await new Promise(z=>setTimeout(z,3000))}
   catch(e){if(!legacy&&/não encontrad|not found|Rota|404/i.test(e.message||''))legacy=true;await new Promise(z=>setTimeout(z,legacy?3000:4000))}}}
  finally{alertReplyLoopOn=false}}
-async function flushQueuedAlertReplies(){if(!cloud||!cloudUser)return;try{const r=await companionRequest('/alert-replies',{});for(const x of (r.replies||[])){const q=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:x.id,p_reply:x.text});if(q.error)console.warn('Resposta guardada não enviada:',q.error.message);else void pushNotify(x.id,'reply')}}catch{}}
+async function flushQueuedAlertReplies(){if(!cloud||!cloudUser)return;try{const r=await companionRequest('/alert-replies',{});for(const x of (r.replies||[])){const q=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:x.id,p_reply:x.text});if(q.error)console.warn('Resposta guardada não enviada:',q.error.message)}}catch{}}
 setInterval(()=>{void soundHeartbeat()},12000);setInterval(()=>{void soundAlertsPoll()},5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){void soundHeartbeat();void soundAlertsPoll()}});
 function canEditSchedule(){return !!cloudUser&&(window.IASDAccess?.canEditSchedule(cloudRole)??['founder','cofounder','admin','editor','operator'].includes(cloudRole))}
@@ -141,7 +141,7 @@ async function refreshSoundAlertThread(){const box=document.getElementById('soun
 async function replySoundAlert(id,text){text=String(text||'').trim();if(!text)return alert('Escreva uma resposta.');if(!cloud||!cloudUser)return;
  const r=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:id,p_reply:text});
  if(r.error){alert(/function|schema cache|does not exist/i.test(r.error.message||'')?'As respostas ainda não foram ativadas no banco. Rode docs/supabase-alertas-resposta.sql no Supabase.':r.error.message);return}
- void pushNotify(id,'reply');refreshSoundAlertThread()}
+ refreshSoundAlertThread()}
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-alert-reply]');if(!b)return;const id=b.dataset.alertReply;if(b.dataset.quick!==undefined)return void replySoundAlert(id,SOUND_QUICK_REPLIES[+b.dataset.quick]);const input=b.parentElement.querySelector('[data-alert-input]');void replySoundAlert(id,input?.value)});
 let replyChan=null,replyChanUser=null,replyQueue=[],replyShowing=false;
 function replySeenKey(x){return x.id+'|'+x.replied_at}
@@ -155,7 +155,7 @@ function showAlertReplyPopup(){if(replyShowing||!replyQueue.length)return;const 
  const close=()=>{ov.remove();replyShowing=false;setTimeout(showAlertReplyPopup,300)};
  ov.querySelector('.arp-ok').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});document.body.append(ov);
  try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch{}
- try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification('Resposta da sonoplastia',{body:(x.replied_by_name||'Sonoplastia')+': '+x.reply_message,icon:'/icon-192.png?v=4',tag:'iasd-reply-'+x.id})}catch{}}
+ try{if(document.hidden&&pushState()!=='on'&&window.Notification&&Notification.permission==='granted')new Notification('Resposta da sonoplastia',{body:(x.replied_by_name||'Sonoplastia')+': '+x.reply_message,icon:'/icon-192.png?v=4',tag:'iasd-reply-'+x.id})}catch{}}
 function enqueueAlertReply(x,quiet){if(!x||!x.reply_message||!x.replied_at||x.created_by!==cloudUser?.id)return;if(replySeenGet().has(replySeenKey(x)))return;if(quiet){replySeenAdd(x);return}if(replyQueue.some(q=>replySeenKey(q)===replySeenKey(x)))return;replyQueue.push(x);showAlertReplyPopup()}
 async function catchUpAlertReplies(){if(!cloud||!cloudUser)return;try{const r=await cloud.from('iasd_sound_alerts').select('id,message,created_by,reply_message,replied_by_name,replied_at').eq('created_by',cloudUser.id).not('reply_message','is',null).order('replied_at',{ascending:false}).limit(10);if(r.error)return;const first=!localStorage.getItem('iasd-reply-seen');for(const x of (r.data||[]).reverse()){const old=first||Date.now()-864e5>Date.parse(x.replied_at);enqueueAlertReply(x,old)}}catch{}}
 function setupAlertReplyRealtime(){const u=cloudUser?.id||null;if(replyChan&&replyChanUser===u)return;if(replyChan){cloud.removeChannel(replyChan);replyChan=null}replyChanUser=u;if(!cloud||!u)return;
