@@ -592,8 +592,9 @@ function watchLevel(id,ms){const V=S.room&&S.room.voice;if(!V)return;const n=ms.
  const c=actx();if(!c||!n)return;dropLevel(id);
  try{const src=c.createMediaStreamSource(ms),an=c.createAnalyser();an.fftSize=512;an.smoothingTimeConstant=.3;src.connect(an);V.an[id]={ms,src,an,n,buf:new Uint8Array(an.fftSize),fb:new Uint8Array(an.frequencyBinCount),hw:0,on:false}}catch(e){}}
 function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.remove('talk'))}
-/* Mesmo ambiente: quando a conexão entre dois aparelhos é direta pela mesma rede (candidatos 'host' dos dois lados), as duas pessoas estão quase certamente
-   juntas e já se ouvem ao vivo. Então cada aparelho deixa de tocar a voz do outro — é isso que impede o ciclo alto-falante → microfone → alto-falante. */
+/* Mesmo ambiente: conexão direta pela mesma rede (candidatos 'host' dos dois lados) = as duas pessoas quase certamente estão juntas e já se ouvem ao vivo.
+   Cada aparelho deixa de tocar a voz do outro (só dessa pessoa — todo o resto da sala continua normal): é isso que quebra o ciclo alto-falante → microfone.
+   Quem tocar em 🔈 para ouvir fica com a escolha dele (não mexemos mais). */
 async function colocScan(){
  const R=S.room,V=R&&R.voice;if(!V)return;
  for(const id of Object.keys(V.pcs)){
@@ -605,7 +606,7 @@ async function colocScan(){
    const near=!!(l&&m&&l.candidateType==='host'&&m.candidateType==='host');
    R.vauto=R.vauto||{};R.vman=R.vman||{};
    if(near&&!R.vauto[id]&&!R.vman[id]){R.vauto[id]=true;R.vmute[id]=true;applyAudio(id);paintDock();paintBar();
-    toast('Você e '+((R.peers[id]||{}).name||'outra pessoa')+' parecem estar no mesmo ambiente. Silenciei o som dela aqui para não dar microfonia: vocês já se ouvem ao vivo. Se não estiverem juntos, toque em 🔈 ao lado do nome.')}
+    toast('Você e '+((R.peers[id]||{}).name||'outra pessoa')+' estão no mesmo ambiente. Silenciei só o som dela aqui, para não dar microfonia — vocês se ouvem ao vivo e os dois seguem falando e ouvindo o resto da sala. Se estiverem em cômodos diferentes, toque em 🔈 ao lado do nome.')}
    else if(!near&&R.vauto[id]&&!R.vman[id]){delete R.vauto[id];R.vmute[id]=false;applyAudio(id);paintDock();paintBar()}
   }catch(e){}
  }}
