@@ -51,7 +51,7 @@ window.IASDAccess=Object.freeze({
  canDeleteSchedule:role=>has('management',role)||can('cron.delete'),
  hasAssignedRole:role=>has('assigned',role)||perms.size>0,
  canUseSound:role=>has('sound',role)||can('sound.use'),
- canSendSoundAlert:role=>has('assigned',role)||can('alert.send_sound')||can('alert.send_members'),
+ canSendSoundAlert:role=>has('assigned',role)||can('alert.send_sound')||can('sound.use'),
  canSendMemberAlert:role=>has('sound',role)||can('alert.send_members')
 });
 })();

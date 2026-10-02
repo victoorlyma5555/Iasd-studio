@@ -33,6 +33,8 @@ const S={
   sound:()=>!!g(()=>canUseSound()),
   manage:()=>!!g(()=>canManageSite()),
   assigned:()=>!!g(()=>hasAssignedRole()),
+  alerts:()=>!!g(()=>canSendSoundAlert()),
+  give:()=>!!g(()=>cloudUser)&&!!g(()=>window.IASDAccess.canGivePerms(cloudRole)),
   founder:()=>!!g(()=>cloudUser)&&g(()=>cloudRole)==='founder'
 };
 const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
@@ -46,7 +48,7 @@ const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="no
 const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
 function mainPages(){return MAIN.filter(x=>x[0]!=='Projeção'||S.sound())}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
-const TITLES={Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+const TITLES={Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
   if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
   return TITLES[cur]||cur;
@@ -60,6 +62,7 @@ function searchable(){
   if(S.founder())out.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
   if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
+  if(S.give())out.push({id:'Cargos',icon:'users',label:'Cargos e acessos'});
   return out;
 }
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -71,7 +74,8 @@ function sideHTML(){
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
   h+=mainPages().map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
-  if(S.assigned())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
+  if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
+  if(S.give())h+='<div class="iu-sec">ACESSOS</div>'+navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
   if(S.manage()){
     h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
     if(S.founder())h+=navBtn('Estudo',ic('book',19),'Sala de Estudo',cur)+navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
@@ -477,7 +481,7 @@ function backToRank(){
   const bk=document.querySelector('.iu-sd-back');if(bk)bk.hidden=true;
 }
 function quickHTML(){
-  const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.assigned()));
+  const items=QUICK.filter(x=>x[5]===''||(x[5]==='sound'&&S.sound())||(x[5]==='assigned'&&S.alerts()));
   if(!items.length)return '';
   return `<section class="iu-pan iu-quick"><div class="iu-ph">${ic('bolt',20)}<h2>Acessos rápidos</h2></div><div class="iu-qg">${items.map(([go,icon,label,c1,c2])=>`<button class="iu-q" style="background:linear-gradient(135deg,${c1},${c2})" data-go="${E(go)}">${ic(icon,22)}<span>${E(label)}</span>${ic('chev',16)}</button>`).join('')}</div></section>`;
 }
