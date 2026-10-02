@@ -15,6 +15,7 @@ const ANIMS=[['fade','Suave','Dissolve delicado entre as estrofes'],['rise','Sub
 const SPEEDS=[[550,'Rápida'],[900,'Normal'],[1500,'Lenta']];
 S.anim={a:'fade',ms:900};
 try{const v=JSON.parse(localStorage.getItem('iasd-sth-anim')||'null');if(v&&ANIMS.some(x=>x[0]===v.a))S.anim.a=v.a;if(v&&SPEEDS.some(x=>x[0]===+v.ms))S.anim.ms=+v.ms}catch(e){}
+S.op=1;try{const v=parseFloat(localStorage.getItem('iasd-sth-op'));if(v>=0&&v<=1)S.op=v}catch(e){}
 const pad=n=>String(n).padStart(3,'0');
 function clean(s){return String(s||'').replace(/\s+([,.;:!?])/g,'$1').replace(/^\s*\d+\.\s*/,'').trim()}
 function norm(raw){return (Array.isArray(raw)?raw:[]).map(x=>{let v=(x.v||[]).map(clean).filter(Boolean);if(v.length>1&&fold(v[0])===fold(x.t))v.shift();return{n:Number(x.n),t:String(x.t||'').trim(),est:v,key:fold(x.t),body:fold(v.join(' '))}}).filter(h=>h.n)}
@@ -273,7 +274,7 @@ async function fillCovers(){
   const u=await thumbFor(n);if(u&&el.isConnected){el.style.backgroundImage='url("'+u+'")';el.classList.add('has')}
  }
 }
-function sendLyric(o){if(typeof window.project!=='function')return;o.anim=S.anim.a;o.ms=S.anim.ms;window.project('IASD_LYRIC:'+JSON.stringify(o))}
+function sendLyric(o){if(typeof window.project!=='function')return;o.anim=S.anim.a;o.ms=S.anim.ms;o.op=S.op;window.project('IASD_LYRIC:'+JSON.stringify(o))}
 function mkEntry(ed,n){const h=find(ed,n);return h&&h.est&&h.est.length?{name:h.t,img:'',L:h.est.map(x=>[0,0,x,'',''])}:null}
 function startSync(ed,n,fileName,opt){
  const manual=!!(opt&&opt.manual);let e=entryOf(ed,find(ed,n));
@@ -347,6 +348,8 @@ function next(dir){
 /* ---------- ações ---------- */
 function saveAnim(){try{localStorage.setItem('iasd-sth-anim',JSON.stringify(S.anim))}catch(e){}}
 const api={
+ opInput(v){S.op=Math.min(1,Math.max(0,+v/100));const l=$('sthOpV');if(l)l.textContent=Math.round(S.op*100)+'%'},
+ opSave(){try{localStorage.setItem('iasd-sth-op',String(S.op))}catch(e){}const sy=S.sync;if(sy)sendStanza(sy,sy.last)},
  anim(a){S.anim.a=a;saveAnim();paintMode()},animMs(ms){S.anim.ms=+ms;saveAnim();paintMode()},
  testAnim(){const sy=S.sync;if(sy)sendStanza(sy,sy.last)},
  mode(m){S.mode=m;try{localStorage.setItem('iasd-sth-mode',m)}catch(e){}paintMode();paintBody()},
@@ -427,10 +430,11 @@ const MODES=[['cantado','Slide Cantado','Toca a música cantada e mostra cada es
 function paintMode(){
  const el=$('sth-mode');if(!el)return;
  el.innerHTML='<div class="seg s3" role="radiogroup" aria-label="Tipo de slide">'+MODES.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.mode===k)+'" class="'+(S.mode===k?'on':'')+'" onclick="STHymn.mode(\''+k+'\')">'+l+'</button>').join('')+'</div><p class="sth-hint">'+MODES.find(m=>m[0]===S.mode)[2]+'</p>'
-  +'<details class="sth-tr"'+(S.stOpen.tr?' open':'')+' ontoggle="STHymn.tg(\'tr\',this.open)"><summary><span>Transição da letra</span><b>'+ANIMS.find(x=>x[0]===S.anim.a)[1]+(S.anim.a==='none'?'':' · '+SPEEDS.find(x=>x[0]===S.anim.ms)[1])+'</b></summary>'
+  +'<details class="sth-tr"'+(S.stOpen.tr?' open':'')+' ontoggle="STHymn.tg(\'tr\',this.open)"><summary><span>Transição e fundo da letra</span><b>'+ANIMS.find(x=>x[0]===S.anim.a)[1]+(S.anim.a==='none'?'':' · '+SPEEDS.find(x=>x[0]===S.anim.ms)[1])+'</b></summary>'
   +'<div class="sth-trb"><div class="amb-chips">'+ANIMS.map(([k,l,d])=>'<button type="button" class="'+(S.anim.a===k?'on':'')+'" title="'+esc(d)+'" onclick="STHymn.anim(\''+k+'\')">'+l+'</button>').join('')+'</div>'
   +'<p class="sth-hint">'+ANIMS.find(x=>x[0]===S.anim.a)[2]+'. Vale só para as estrofes do hinário; as outras telas seguem a transição geral.</p>'
   +(S.anim.a==='none'?'':'<div class="seg s3 sth-sp" role="radiogroup" aria-label="Velocidade">'+SPEEDS.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.anim.ms===k)+'" class="'+(S.anim.ms===k?'on':'')+'" onclick="STHymn.animMs('+k+')">'+l+'</button>').join('')+'</div>')
+  +'<label class="sth-op"><span>Opacidade do fundo da letra</span><input type="range" min="0" max="100" step="5" value="'+Math.round(S.op*100)+'" oninput="STHymn.opInput(this.value)" onchange="STHymn.opSave()" aria-label="Opacidade do fundo da letra"><b id="sthOpV">'+Math.round(S.op*100)+'%</b></label>'
   +'<button type="button" class="mp-btn" '+(S.sync?'':'disabled ')+'onclick="STHymn.testAnim()">Ver no telão</button></div></details>'
 }
 /* 3) lista */
@@ -502,7 +506,7 @@ function mount(){
  +'.sth-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}.sth-sc{display:grid;gap:4px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);font-size:12.5px}.sth-sc span{color:var(--mu)}.sth-sc summary{cursor:pointer;color:#7fa6ff}.sth-miss{max-height:140px;overflow:auto;padding:4px 0 2px 10px;color:var(--mu)}.sth-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
  +'.sth-busy{display:flex;align-items:center;gap:10px;font-size:13.5px}.sth-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd2);border-top-color:#5b93ff;animation:sthspin .8s linear infinite;flex:none}@keyframes sthspin{to{transform:rotate(360deg)}}'
  +'.sth-cols{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.sth-cols button{height:auto;min-height:44px;padding:6px 8px!important;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px!important}.sth-cols button span{white-space:normal;text-align:center}.sth-cols .cnt{flex:none}'
- +'#sth .amb-search{display:flex}#sth-mode .seg{margin:0}.sth-tr{border:1px solid var(--bd);border-radius:10px;background:var(--sf2);padding:0 12px;margin-top:8px}.sth-tr summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:13px;font-weight:600;color:var(--tx)}.sth-tr summary b{color:#7fa6ff;font-weight:600}.sth-trb{display:grid;gap:10px;padding:2px 0 12px}.sth-trb .sth-hint{margin:0}.sth-trb .mp-btn{justify-self:start}.sth-trb .mp-btn[disabled]{opacity:.45;cursor:not-allowed}.sth-sp button{height:36px!important}.sth-hint{margin:8px 2px 0;font-size:12.5px;color:var(--mu)}#sth-mode .seg.s3 button{height:42px}'
+ +'#sth .amb-search{display:flex}#sth-mode .seg{margin:0}.sth-tr{border:1px solid var(--bd);border-radius:10px;background:var(--sf2);padding:0 12px;margin-top:8px}.sth-tr summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:13px;font-weight:600;color:var(--tx)}.sth-tr summary b{color:#7fa6ff;font-weight:600}.sth-trb{display:grid;gap:10px;padding:2px 0 12px}.sth-trb .sth-hint{margin:0}.sth-op{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mu)}.sth-op span{flex:none}.sth-op input{flex:1}.sth-op b{min-width:38px;text-align:right;color:var(--tx)}.sth-trb .mp-btn{justify-self:start}.sth-trb .mp-btn[disabled]{opacity:.45;cursor:not-allowed}.sth-sp button{height:36px!important}.sth-hint{margin:8px 2px 0;font-size:12.5px;color:var(--mu)}#sth-mode .seg.s3 button{height:42px}'
  +'.sth-r.no{opacity:.55}.sth-r .amb-play[disabled]{opacity:.4;cursor:not-allowed}.sth-no{min-width:34px;text-align:center;font-weight:700;font-size:15px;color:#f5b73a;flex:none}.sth-pz{font-size:15px;letter-spacing:-1px}.sth-r .amb-info small{font-size:12px}'
  +'.sth-albs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}.sth-ab{display:flex!important;flex-direction:column;gap:6px;align-items:stretch;text-align:left;padding:8px!important;border-radius:12px!important;background:var(--sf2)!important;border:1px solid var(--bd)!important;height:auto!important;cursor:pointer}.sth-ab:hover{border-color:#5b93ff!important}.sth-ab b{font-size:13px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:600}.sth-ab small{color:var(--mu);font-size:11.5px}'
  +'.sth-cv{display:block;aspect-ratio:1/1;border-radius:9px;background:linear-gradient(135deg,#1d3a6e,#0e1f3d) center/cover no-repeat;position:relative;overflow:hidden}.sth-cv i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:34px;font-weight:800;color:#fff;opacity:.4}.sth-cv.has i{display:none}'
