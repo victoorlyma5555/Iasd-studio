@@ -743,7 +743,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 }
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
-if(current==='Projeção'&&canUseSound())out='<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=27" class="projection-studio-frame" scrolling="no" loading="eager"></iframe>';
+if(current==='Projeção'&&canUseSound())out=document.getElementById('iasd-studio-frame')?'':'<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=27" class="projection-studio-frame" scrolling="no" loading="eager" allow="autoplay;fullscreen"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');
@@ -764,7 +764,17 @@ if(current==='Estudo'){out=window.IASDEstudo?IASDEstudo.page():'';setTimeout(()=
 if(current==='Fundador')out=window.IASDModules?.render('admin',{founderDashboard})??founderDashboard();
 if(current==='Mais')out=window.IASDModules?.render('menu',{mobileMenuPage})??mobileMenuPage();
 if(!out)out='<div class="panel"><h2>Em breve</h2><p class="muted">Esta área ainda não está disponível.</p><button class="primary" onclick="go(\'Painel\')">Voltar ao início</button></div>';
-$('content').innerHTML=out;if(current==='Painel')startHomeCarousel();positionDashboardAccount();applyInlineEditors();if(current==='Projeção')updateProjectionConsole();
+{/* o Studio de Projeção (iframe) fica vivo ao navegar pelo site: não é recarregado, então hino, áudio e telão continuam tocando */
+ const box=$('content'),keep=document.getElementById('iasd-studio-frame'),want=current==='Projeção'&&canUseSound();
+ if(keep&&!canUseSound()){keep.remove();box.innerHTML=out}
+ else if(keep&&keep.parentNode===box){
+  [...box.childNodes].forEach(n=>{if(n!==keep)n.remove()});
+  keep.classList.toggle('st-bg',!want);
+  if(want)keep.removeAttribute('aria-hidden');else keep.setAttribute('aria-hidden','true');
+  if(!want&&out)keep.insertAdjacentHTML('beforebegin',out)
+ }else box.innerHTML=out;
+ const nf=document.getElementById('iasd-studio-frame');if(nf&&!keep){nf.classList.toggle('st-bg',!want)}}
+if(current==='Painel')startHomeCarousel();positionDashboardAccount();applyInlineEditors();if(current==='Projeção')updateProjectionConsole();
 try{window.IASDUI?.afterRender?.()}catch(e){console.error('IASD UI',e)}
 }
 const SABBATH_API='https://sabbath-school.adventech.io/api/v1';

@@ -1223,5 +1223,6 @@ button.primary,.auth-submit,.game-main-action{background:linear-gradient(135deg,
 }
 
 /* Studio: sem painel de fundo atrás do iframe */
-#content:has(.projection-studio-frame),#content:has(.projection-studio-frame)>*{background:transparent!important;border:0!important;box-shadow:none!important}
+#content:has(.projection-studio-frame:not(.st-bg)),#content:has(.projection-studio-frame:not(.st-bg))>*{background:transparent!important;border:0!important;box-shadow:none!important}
+#iasd-studio-frame.st-bg{max-height:2px!important;max-width:2px!important;position:fixed!important;left:0!important;bottom:0!important;width:2px!important;height:2px!important;min-height:0!important;opacity:0!important;pointer-events:none!important;border:0!important;z-index:-1!important;margin:0!important}
 .projection-studio-frame{background:transparent!important}
