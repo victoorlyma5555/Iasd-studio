@@ -268,24 +268,62 @@ async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())ret
 async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 async function projectPreparedYoutube(ms=0){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed()){windowRef.setAlwaysOnTop(false);windowRef.hide()}youtubeRef.setBounds(display.bounds);youtubeRef.webContents.setAudioMuted(false);try{youtubeRef.setOpacity(ms?0:1)}catch{}youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();youtubeShown=true;void youtubeVideoDo('v.play()');if(ms)void fadeWin(youtubeRef,1,ms);return display}
+let alertCurrent=null,pendingAlertReplies=[];
+function queueAlertReply(id,text){pendingAlertReplies=pendingAlertReplies.filter(x=>x.id!==id);pendingAlertReplies.push({id,text,at:Date.now()});if(pendingAlertReplies.length>30)pendingAlertReplies.shift()}
+async function sendAlertReply(id,text){
+ text=String(text||'').trim().slice(0,300);
+ if(!id||!text)return {error:'Escreva uma resposta.'};
+ if(alertAccount){
+  const {error}=await alertCloud.rpc('iasd_reply_sound_alert',{p_alert_id:id,p_reply:text});
+  if(!error)return {ok:true};
+  if(!/fetch|network|timeout/i.test(error.message||''))return {error:error.message};
+ }
+ // Sem conta no Projetor (ou sem internet): guarda e o site entrega a resposta quando estiver aberto.
+ queueAlertReply(id,text);return {ok:true,queued:true};
+}
+ipcMain.handle('iasd:alert-reply',async(event,text)=>{if(!alertRef||alertRef.isDestroyed()||event.sender!==alertRef.webContents||!alertCurrent)return {error:'Alerta indisponível.'};const r=await sendAlertReply(alertCurrent,text);return r});
+ipcMain.handle('iasd:alert-close',event=>{if(alertRef&&!alertRef.isDestroyed()&&event.sender===alertRef.webContents)alertRef.close();return {ok:true}});
 function showSoundAlert(payload){
- // Janela própria do IASD Projetor: sem notificação duplicada do Windows.
- // Sempre no monitor principal, preservando o conteúdo do telão secundário.
+ // Janela própria do IASD Projetor: sempre no monitor principal, preservando o conteúdo do telão secundário.
  const area=screen.getPrimaryDisplay().workArea;
  if(alertRef&&!alertRef.isDestroyed())alertRef.close();
- const width=Math.min(540,area.width-36),height=Math.min(350,area.height-36);
+ const width=Math.min(560,area.width-36),height=Math.min(640,area.height-36);
  const x=Math.round(area.x+(area.width-width)/2),y=Math.round(area.y+(area.height-height)/2);
- const win=new BrowserWindow({x,y,width,height,show:false,frame:true,title:'IASD APP · Alerta da Sonoplastia',autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,minimizable:false,maximizable:false,backgroundColor:'#0b1730',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
- alertRef=win;
+ const win=new BrowserWindow({x,y,width,height,show:false,frame:false,title:'IASD APP · Alerta da Sonoplastia',autoHideMenuBar:true,alwaysOnTop:true,skipTaskbar:true,resizable:false,minimizable:false,maximizable:false,backgroundColor:'#0b1730',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,preload:path.join(__dirname,'alert-preload.js')}});
+ alertRef=win;alertCurrent=/^[a-f0-9-]{36}$/.test(String(payload.id||''))?payload.id:null;
  const escape=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const sender=escape(payload.sender_name||'Direção do culto'),message=escape(payload.message||''),schedule=escape(payload.schedule_name||'IASD Studio');
- const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
- *{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 95% 0%,#244b79 0%,transparent 43%),linear-gradient(145deg,#0b1730,#122743);color:#f6f9ff;padding:25px 28px;overflow:hidden}
- .top{display:flex;align-items:center;gap:13px}.bell{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(135deg,#f9d777,#d7a83d);box-shadow:0 7px 26px #e5b94d33;color:#17243c;font-size:24px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.7px;color:#f4d88a}.brand{font-size:13px;color:#c3d4e9;margin-top:4px}.rule{height:1px;background:linear-gradient(90deg,#dfba5b88,transparent);margin:18px 0 14px}h1{font-size:21px;line-height:1.25;margin:0 0 11px;font-weight:750;overflow-wrap:anywhere}.message{font-size:17px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:116px;overflow:auto;color:#f0f5ff;margin:0}.bottom{position:absolute;bottom:0;left:0;right:0;padding:13px 28px 17px;background:linear-gradient(transparent,#0b1730 30%);display:flex;align-items:center;justify-content:space-between;gap:12px}.context{color:#a9c0d9;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hint{font-size:11px;color:#f0d68c;white-space:nowrap}
- </style></head><body><div class="top"><div class="bell">🔔</div><div><div class="eyebrow">ALERTA PARA A SONOPLASTIA</div><div class="brand">IASD APP · Comunicação em tempo real</div></div></div><div class="rule"></div><h1>${sender}</h1><p class="message">${message}</p><div class="bottom"><span class="context">${schedule}</span><span class="hint">Feche no X após ler</span></div></body></html>`;
+ const sender=escape(payload.sender_name||'Direção do culto'),message=escape(payload.message||''),schedule=escape(payload.schedule_name||'');
+ const when=new Date(payload.created_at||Date.now()),time=(isNaN(when)?new Date():when).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ const canReply=!!alertCurrent;
+ const quick=['Entendido!','Já estou preparando','Preciso de mais tempo','Não será possível'];
+ const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+ *{box-sizing:border-box}html,body{height:100%;margin:0}body{font-family:Segoe UI,Arial,sans-serif;color:#f6f9ff;background:linear-gradient(180deg,rgba(7,15,38,.55),rgba(8,16,40,.93)),radial-gradient(circle at 50% 0%,#2d4f86 0%,#0d1b3a 60%,#070d20 100%);padding:22px 24px;display:flex;flex-direction:column;gap:14px;overflow:hidden;-webkit-app-region:drag}
+ button,input{-webkit-app-region:no-drag;font:inherit}.x{position:absolute;right:14px;top:12px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-size:16px}.x:hover{background:rgba(255,255,255,.22)}
+ .top{display:flex;align-items:center;gap:14px;padding-right:34px}.bell{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(135deg,#f9d777,#d7a83d);box-shadow:0 7px 26px #e5b94d44;font-size:26px;flex:none}.ey{font-size:15px;font-weight:800;letter-spacing:1.4px;color:#f4d88a}.br{font-size:12.5px;color:#c3d4e9;margin-top:3px}
+ .card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px}.who{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.who b{font-size:17px}.who span{font-size:12px;color:#aebfd8;white-space:nowrap}.ctx{font-size:12px;color:#f0d68c;margin-top:2px}.msg{margin:8px 0 0;font-size:18px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto}
+ .lab{font-size:11px;font-weight:800;letter-spacing:1.6px;color:#f4d88a}.q{display:grid;grid-template-columns:1fr 1fr;gap:9px}.q button{padding:12px 10px;border-radius:12px;border:1px solid rgba(244,216,138,.45);background:rgba(244,216,138,.08);color:#fff;cursor:pointer;font-size:14px}.q button:hover{background:rgba(244,216,138,.22)}
+ .in{display:flex;gap:8px}.in input{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.28);color:#fff;font-size:14px}.in button{width:46px;border:0;border-radius:12px;background:linear-gradient(135deg,#f9d777,#d7a83d);color:#17243c;font-size:18px;cursor:pointer}
+ .act{display:flex;gap:10px;margin-top:auto}.act button{flex:1;padding:13px;border-radius:12px;font-weight:700;cursor:pointer;font-size:14px}.sec{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff}.pri{background:linear-gradient(135deg,#f9d777,#d7a83d);border:0;color:#17243c}
+ .st{min-height:18px;font-size:12.5px;color:#9be7b0;text-align:center}.st.err{color:#ff9d9d}button:disabled,input:disabled{opacity:.5;cursor:default}
+ </style></head><body><button class="x" id="x" title="Fechar">✕</button>
+ <div class="top"><div class="bell">🔔</div><div><div class="ey">ALERTA PARA A SONOPLASTIA</div><div class="br">IASD APP • Comunicação em tempo real</div></div></div>
+ <div class="card"><div class="who"><b>${sender}</b><span>Hoje, ${time}</span></div>${schedule?`<div class="ctx">${schedule}</div>`:''}<p class="msg">${message}</p></div>
+ ${canReply?`<div class="lab">RESPOSTA RÁPIDA</div><div class="q">${quick.map(t=>`<button data-q="${escape(t)}">${escape(t)}</button>`).join('')}</div>
+ <div class="in"><input id="t" maxlength="300" placeholder="Digite sua resposta..."><button id="s" title="Enviar">➤</button></div><div class="st" id="st"></div>`:'<div class="st" id="st"></div>'}
+ <div class="act"><button class="sec" id="c">Fechar</button>${canReply?'<button class="pri" id="rc">Responder e fechar</button>':''}</div>
+ <script>
+ const $=i=>document.getElementById(i),st=$('st');let busy=false;
+ async function send(text,closeAfter){text=String(text||'').trim();if(!text){st.className='st err';st.textContent='Escreva uma resposta.';return}if(busy)return;busy=true;document.querySelectorAll('button,input').forEach(e=>e.disabled=true);
+  const r=await window.iasdAlert.reply(text).catch(e=>({error:e.message}));busy=false;document.querySelectorAll('button,input').forEach(e=>e.disabled=false);
+  if(r&&r.error){st.className='st err';st.textContent=r.error;return}
+  st.className='st';st.textContent=r.queued?'Resposta guardada: será enviada quando o site estiver aberto.':'✓ Resposta enviada';if(closeAfter)setTimeout(()=>window.iasdAlert.close(),700);else $('t').value=''}
+ $('x').onclick=$('c').onclick=()=>window.iasdAlert.close();
+ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>send(b.dataset.q,true));
+ if($('s')){$('s').onclick=()=>send($('t').value,false);$('rc').onclick=()=>{const v=$('t').value.trim();if(v)send(v,true);else{st.className='st err';st.textContent='Digite ou escolha uma resposta.'}};$('t').onkeydown=e=>{if(e.key==='Enter')send($('t').value,false)}}
+ </script></body></html>`;
  win.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html)).catch(e=>console.warn('Falha ao abrir alerta:',e.message));
  win.once('ready-to-show',()=>{if(!win.isDestroyed()){win.showInactive();win.setAlwaysOnTop(true,'floating');win.moveTop()}});
- win.on('closed',()=>{if(alertRef===win)alertRef=null});
+ win.on('closed',()=>{if(alertRef===win){alertRef=null;alertCurrent=null}});
 }
 /* janelinha "Abrindo o IASD APP" enquanto o programa sobe (cobre o vazio entre abrir e o painel aparecer, inclusive depois de uma atualização) */
 let splashRef=null,splashTimer=null;
@@ -454,6 +492,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   reply(res,200,{ok:true,paired:pairedTokens.size>0});return;
  }
  if(req.url==='/heartbeat'&&req.method==='POST'){lastSiteContact=Date.now();siteIdentity={name:String(data.name||'Usuário autenticado').slice(0,90),email:String(data.email||'').slice(0,150),role:String(data.role||'').slice(0,40),avatar:String(data.avatar||data.avatar_url||'').slice(0,1000)};reply(res,200,{ok:true});return}
+ if(req.url==='/alert-replies'&&req.method==='POST'){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}const code={play:'v.play()',pause:'v.pause()',mute:'v.muted=true',unmute:'v.muted=false'}[data.action];if(!await youtubeVideoDo(code)){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
