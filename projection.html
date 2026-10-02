@@ -185,10 +185,18 @@ function drawStyle(t){
  if(m.tpl&&TPLS.includes(m.tpl)&&m.tpl!==box.dataset.tpl){const txt=box.getAttribute('aria-label')||'0';TPLS.forEach(x=>box.classList.remove('tpl-'+x));box.classList.add('tpl-'+m.tpl);box.dataset.tpl=m.tpl;box.replaceChildren();drawSet(box,txt)}
 }
 /* ---- transições: o conteúdo antigo sai e o novo entra (sem corte seco) ---- */
-let curTr={type:'fade',ms:600},trSeq=0,trFam='';
+let curTr={type:'fade',ms:600,ease:'soft',exit:'mirror'},trSeq=0,trFam='';
 const trFamily=t=>t===''?'':t.startsWith('IASD_TIMER:')?'timer':t.startsWith('IASD_DRAW')?'draw':(t.match(/^IASD_[A-Z_]+/)||['text'])[0];
-const TR_OUT={fade:[{opacity:1},{opacity:0}],zoom:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.07)'}],slide:[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-7vw)'}],blur:[{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(26px)'}],wipe:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 100%)'}]};
-const TR_IN={fade:[{opacity:0},{opacity:1}],zoom:[{opacity:0,transform:'scale(.93)'},{opacity:1,transform:'scale(1)'}],slide:[{opacity:0,transform:'translateX(7vw)'},{opacity:1,transform:'translateX(0)'}],blur:[{opacity:0,filter:'blur(26px)'},{opacity:1,filter:'blur(0px)'}],wipe:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}]};
+const TR_OUT={fade:[{opacity:1},{opacity:0}],zoom:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.07)'}],zoomout:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.94)'}],slide:[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-7vw)'}],slideup:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-7vh)'}],slidedown:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(7vh)'}],blur:[{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(26px)'}],glow:[{opacity:1,filter:'brightness(1) blur(0px)'},{opacity:0,filter:'brightness(2.2) blur(10px)'}],wipe:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 100%)'}],curtain:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 50% 0 50%)'}],iris:[{clipPath:'circle(75% at 50% 50%)'},{clipPath:'circle(0% at 50% 50%)'}],flip:[{opacity:1,transform:'perspective(1200px) rotateY(0deg)'},{opacity:0,transform:'perspective(1200px) rotateY(70deg)'}],corner:[{clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'},{clipPath:'polygon(100% 100%,100% 100%,100% 100%,100% 100%)'}]};
+const TR_IN={fade:[{opacity:0},{opacity:1}],zoom:[{opacity:0,transform:'scale(.93)'},{opacity:1,transform:'scale(1)'}],zoomout:[{opacity:0,transform:'scale(1.08)'},{opacity:1,transform:'scale(1)'}],slide:[{opacity:0,transform:'translateX(7vw)'},{opacity:1,transform:'translateX(0)'}],slideup:[{opacity:0,transform:'translateY(7vh)'},{opacity:1,transform:'translateY(0)'}],slidedown:[{opacity:0,transform:'translateY(-7vh)'},{opacity:1,transform:'translateY(0)'}],blur:[{opacity:0,filter:'blur(26px)'},{opacity:1,filter:'blur(0px)'}],glow:[{opacity:0,filter:'brightness(2.2) blur(10px)'},{opacity:1,filter:'brightness(1) blur(0px)'}],wipe:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],curtain:[{clipPath:'inset(0 50% 0 50%)'},{clipPath:'inset(0 0 0 0)'}],iris:[{clipPath:'circle(0% at 50% 50%)'},{clipPath:'circle(75% at 50% 50%)'}],flip:[{opacity:0,transform:'perspective(1200px) rotateY(-70deg)'},{opacity:1,transform:'perspective(1200px) rotateY(0deg)'}],corner:[{clipPath:'polygon(0 0,0 0,0 0,0 0)'},{clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'}]};
+const TR_EASE={soft:'ease-out',lin:'linear',dyn:'cubic-bezier(.16,1,.3,1)',ela:'cubic-bezier(.34,1.56,.64,1)'};
+/* o código do prefixo é só letras: tipo + ritmo (lin|dyn|ela) + saída (xf = só dissolve) */
+function parseTr(tok){
+ if(tok==='none')return{type:'none',ease:'soft',exit:'mirror'};
+ const types=Object.keys(TR_IN).sort((a,b)=>b.length-a.length);
+ for(const ty of types){if(tok.startsWith(ty)){const m=/^(lin|dyn|ela)?(xf)?$/.exec(tok.slice(ty.length));if(m)return{type:ty,ease:m[1]||'soft',exit:m[2]?'fade':'mirror'}}}
+ return null;
+}
 /* ---- letra do hinário: animação própria (não usa a transição geral do telão; o fundo faz dissolve e só o texto se move) ---- */
 const LYR={
  fade:{d:0,out:[{opacity:1},{opacity:0}],in:[{opacity:0},{opacity:1}]},
@@ -244,7 +252,7 @@ function show(value){
  let t=typeof value==='string'?value:'';
  cancelEnd();
  const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(t);
- if(m){if(TR_IN[m[1]]||m[1]==='none')curTr={type:m[1],ms:Math.min(2000,+m[2])};t=t.slice(m[0].length)}
+ if(m){const pt=parseTr(m[1]);if(pt)curTr=Object.assign(pt,{ms:Math.min(2000,+m[2])});t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
  if(fam==='IASD_LYRIC'){
   let d=null;try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){}
@@ -258,9 +266,9 @@ function show(value){
  const seq=++trSeq;
  if(instant){return showRaw(t)}
  const half=Math.round(curTr.ms*.45),full=curTr.ms-half;
- const enter=()=>{if(seq!==trSeq)return;try{out.animate(TR_IN[curTr.type],{duration:full,easing:'ease-out'})}catch(e){}};
+ const enter=()=>{if(seq!==trSeq)return;try{out.animate(TR_IN[curTr.type],{duration:full,easing:TR_EASE[curTr.ease]||'ease-out'})}catch(e){}};
  if(prev===''){showRaw(t);enter();return}
- let ex;try{ex=out.animate(TR_OUT[curTr.type],{duration:half,easing:'ease-in',fill:'forwards'})}catch(e){return showRaw(t)}
+ let ex;try{ex=out.animate(TR_OUT[curTr.exit==='fade'?'fade':curTr.type],{duration:half,easing:'ease-in',fill:'forwards'})}catch(e){return showRaw(t)}
  ex.onfinish=()=>{if(seq!==trSeq){try{ex.cancel()}catch(e){}return}showRaw(t);try{ex.cancel()}catch(e){}if(t!=='')enter()};
 }
 function showRaw(value){
