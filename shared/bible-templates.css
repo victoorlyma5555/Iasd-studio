@@ -1,0 +1,33 @@
+/* Modelos da Bíblia de Projeção — usados no telão (#out.btx) e nas prévias do popup (.btp).
+   Cada modelo só define variáveis; as regras abaixo aplicam nos dois lugares. */
+
+/* ---------- variáveis por modelo ---------- */
+.bt-default{--bg:#0b1220;--bgi:radial-gradient(ellipse at 50% 0%,#14233d 0%,#080e19 70%);--fg:#f7f8fb;--rf:#e9c990;--vr:#8c9cae;--ff:Inter,system-ui,Arial,sans-serif;--ln:linear-gradient(90deg,#b18a4e,#f5dba0,#b18a4e)}
+.bt-pergaminho{--bg:#f2e4c3;--bgi:radial-gradient(ellipse at center,#f8edd2 0%,#ead9ac 68%,#d4ba84 100%);--fg:#3b2a14;--rf:#8a3b1c;--vr:#7a6240;--ff:Georgia,'Palatino Linotype','Times New Roman',serif;--fw:500;--ln:linear-gradient(90deg,#8a3b1c,#c9894a,#8a3b1c);--frame:inset 0 0 0 clamp(8px,1vw,18px) rgba(120,80,30,.16)}
+.bt-estrelada{--bg:#050b24;--bgi:radial-gradient(1.6px 1.6px at 12% 22%,#fff 98%,transparent),radial-gradient(1px 1px at 28% 68%,#fff 98%,transparent),radial-gradient(1.4px 1.4px at 44% 14%,#fff 98%,transparent),radial-gradient(1px 1px at 63% 80%,#fff 98%,transparent),radial-gradient(1.8px 1.8px at 78% 26%,#fff 98%,transparent),radial-gradient(1px 1px at 90% 62%,#fff 98%,transparent),radial-gradient(1.2px 1.2px at 6% 84%,#fff 98%,transparent),radial-gradient(1.2px 1.2px at 54% 46%,#cdd8ff 98%,transparent),linear-gradient(180deg,#050b24 0%,#0e1e55 100%);--fg:#f4f6ff;--rf:#ffd978;--vr:#9fb0e6;--ff:Georgia,'Times New Roman',serif;--fw:400;--ln:linear-gradient(90deg,#c9a24a,#ffe9a8,#c9a24a)}
+.bt-aurora{--bg:#17306b;--bgi:linear-gradient(135deg,#0f766e 0%,#3b3f9e 55%,#7c2f94 100%);--fg:#ffffff;--rf:#c9fff0;--vr:rgba(255,255,255,.72);--ff:'Segoe UI',system-ui,Arial,sans-serif;--fw:600;--sh:0 2px 18px rgba(0,0,0,.35);--ln:linear-gradient(90deg,rgba(255,255,255,.2),#fff,rgba(255,255,255,.2))}
+.bt-minimalista{--bg:#fbfbfa;--bgi:none;--fg:#111111;--rf:#555555;--vr:#9a9a9a;--ff:'Segoe UI',system-ui,Arial,sans-serif;--fw:400;--ln:#111}
+.bt-dourado{--bg:#000;--bgi:none;--fg:#f3d58a;--rf:#d6a84a;--vr:#8f7a49;--ff:Georgia,'Times New Roman',serif;--fw:500;--ln:linear-gradient(90deg,transparent,#d6a84a,transparent);--frame:inset 0 0 0 clamp(10px,1.2vw,22px) #000,inset 0 0 0 clamp(13px,1.6vw,28px) #c9a24a,inset 0 0 0 clamp(18px,2.1vw,38px) #000}
+.bt-amanhecer{--bg:#ff7a5a;--bgi:linear-gradient(160deg,#ff9a5a 0%,#ff5e7e 50%,#7b3fa0 100%);--fg:#ffffff;--rf:#fff3c4;--vr:rgba(255,255,255,.75);--ff:Georgia,'Times New Roman',serif;--fs:italic;--fw:500;--sh:0 2px 20px rgba(80,20,40,.45);--ln:linear-gradient(90deg,rgba(255,255,255,.25),#fff3c4,rgba(255,255,255,.25))}
+.bt-floresta{--bg:#143524;--bgi:radial-gradient(ellipse at 30% 20%,#2f6b45 0%,#143524 60%,#0a1f15 100%);--fg:#f3ecd6;--rf:#e5c777;--vr:#94b39c;--ff:Georgia,'Times New Roman',serif;--fw:500;--ln:linear-gradient(90deg,#8a6d2b,#e5c777,#8a6d2b)}
+.bt-oceano{--bg:#06305f;--bgi:radial-gradient(ellipse at 50% 125%,#1b8fd1 0%,transparent 62%),linear-gradient(180deg,#041c3d 0%,#08508f 100%);--fg:#ffffff;--rf:#bfe8ff;--vr:#8bbbe0;--ff:'Segoe UI',system-ui,Arial,sans-serif;--fw:500;--ln:linear-gradient(90deg,transparent,#7fd0ff,transparent)}
+.bt-contraste{--bg:#000;--bgi:none;--fg:#ffe600;--rf:#ffffff;--vr:#cfcfcf;--ff:'Arial Black','Segoe UI Black',Arial,sans-serif;--fw:800;--lnd:none}
+.bt-editorial{--bg:#111827;--bgi:linear-gradient(120deg,#0f172a 0%,#1f2937 100%);--fg:#f9fafb;--rf:#38bdf8;--vr:#9ca3af;--ff:'Segoe UI',system-ui,Arial,sans-serif;--fw:500;--ai:flex-start;--ta:left;--ln:linear-gradient(90deg,#38bdf8,#818cf8);--quote:1}
+
+/* ---------- aplicação no telão ---------- */
+#out.btx{background-color:var(--bg)!important;background-image:var(--bgi,none)!important;box-shadow:var(--frame,none)}
+#out.btx .bible-slide{align-items:var(--ai,center);text-align:var(--ta,center)}
+#out.btx .bible-slide:before{background:var(--ln,none);display:var(--lnd,block)}
+#out.btx .bible-text{color:var(--fg)!important;font-family:var(--ff);font-weight:var(--fw,560);font-style:var(--fs,normal);text-shadow:var(--sh,none)}
+#out.btx .bible-reference{color:var(--rf)!important;font-family:var(--ff)}
+#out.btx .bible-version{color:var(--vr)!important}
+#out.btx.bt-editorial .bible-text:before{content:'\201C';display:block;font-size:2.4em;line-height:.55;margin-bottom:.12em;color:var(--rf)}
+
+/* ---------- prévias no popup do Studio ---------- */
+.btp{container-type:inline-size;position:relative;aspect-ratio:16/9;overflow:hidden;display:flex;padding:7% 8%;border-radius:10px;background-color:var(--bg);background-image:var(--bgi,none);box-shadow:var(--frame,none);width:100%}
+.btp .bible-slide{width:100%;display:flex;flex-direction:column;align-items:var(--ai,center);justify-content:center;gap:2.4cqw;margin:auto;text-align:var(--ta,center)}
+.btp .bible-slide:before{content:'';display:var(--lnd,block);width:10cqw;height:.9cqw;min-height:2px;border-radius:9px;background:var(--ln,none);flex:none}
+.btp .bible-text{margin:0;color:var(--fg);font-family:var(--ff);font-weight:var(--fw,560);font-style:var(--fs,normal);text-shadow:var(--sh,none);font-size:5.3cqw;line-height:1.3}
+.btp .bible-reference{color:var(--rf);font-family:var(--ff);font-size:3.8cqw;font-weight:700;letter-spacing:.05em}
+.btp .bible-version{color:var(--vr);font-size:2.7cqw;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.btp.bt-editorial .bible-text:before{content:'\201C';display:block;font-size:2.2em;line-height:.55;margin-bottom:.1em;color:var(--rf)}
