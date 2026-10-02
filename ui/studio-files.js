@@ -34,7 +34,7 @@ const api={
      const r=await c.from('iasd_media_files').insert({title,mime:f.type||'',storage_path:path,size_bytes:f.size}).select().single();if(r.error)throw r.error;S.rows.unshift(r.data);ok++}
     catch(e){say('Falha em '+f.name+': '+(e.message||e))}}
    S.busy='';say(ok+' arquivo'+(ok===1?'':'s')+' enviado'+(ok===1?'':'s')+'.');paint()};i.click()},
- async play(id){const r=S.rows.find(x=>x.id===id);if(!r)return;try{const u=await url(r);S.cur=r;const box=$('sfPlayer');box.hidden=false;box.innerHTML='<b>'+esc(r.title)+'</b>';const el=document.createElement(isVideo(r)?'video':'audio');el.controls=true;el.src=u;el.style.width='100%';if(isVideo(r))el.style.maxHeight='160px';box.append(el);el.play().catch(()=>{});say('Tocando aqui: '+r.title)}catch(e){say('Não foi possível tocar: '+(e.message||e))}},
+ async play(id){const r=S.rows.find(x=>x.id===id);if(!r)return;window.stTakeover&&stTakeover('');try{const u=await url(r);S.cur=r;const box=$('sfPlayer');box.hidden=false;box.innerHTML='<b>'+esc(r.title)+'</b>';const el=document.createElement(isVideo(r)?'video':'audio');el.controls=true;el.src=u;el.style.width='100%';if(isVideo(r))el.style.maxHeight='160px';box.append(el);el.play().catch(()=>{});say('Tocando aqui: '+r.title)}catch(e){say('Não foi possível tocar: '+(e.message||e))}},
  async project(id){const r=S.rows.find(x=>x.id===id);if(!r)return;try{const u=await url(r);const vol=(typeof window.muted!=='undefined'&&window.muted)?0:(typeof window.volume==='number'?window.volume:.75);
    const pl='IASD_LOCAL_MEDIA:'+JSON.stringify({kind:isVideo(r)?'video':'audio',url:u,name:r.title,volume:vol});
    if(typeof window.prepare==='function')try{window.prepare(pl,'Mídia: '+r.title)}catch(e){}

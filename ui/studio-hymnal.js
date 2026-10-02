@@ -386,6 +386,7 @@ async function urlFor(ed,n,mode){
 function audioEl(){return $('sthAudio')}
 async function play(ed,n,opts){
  const a=audioEl();if(!a)return;const h=find(ed,n);
+ window.stTakeover&&stTakeover('hymn');
  S.endTok++;
  try{
   S.sync=null;
