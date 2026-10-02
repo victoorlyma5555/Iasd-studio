@@ -10,8 +10,8 @@ body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-seri
 /* Projection typography — clean, responsive, legible from a distance */
 body{background:#080e19}
 #out{padding:5vw 7vw;white-space:normal;overflow:hidden}
-#out.lyric-mode{padding:0!important;background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-image .4s}
-.lyric-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6vh 6vw}
+#out.lyric-mode{position:relative;overflow:hidden;padding:0!important;background-size:cover;background-position:center;background-repeat:no-repeat}
+.lyric-bgold{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#0b1620;pointer-events:none}.lyric-old{pointer-events:none}.lyric-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6vh 6vw}
 .lyric-box{max-width:min(92%,1500px);padding:.45em .9em;border-radius:.18em;background:rgba(10,18,24,.72);color:#fff;text-align:center;font-weight:700;line-height:1.28;font-size:clamp(28px,5.2vw,104px);letter-spacing:-.01em;text-wrap:balance;overflow-wrap:break-word;text-shadow:0 2px 8px rgba(0,0,0,.45)}
 .lyric-box.lyric-title{color:#f6c62e;text-transform:uppercase;font-size:clamp(34px,6.2vw,120px);letter-spacing:.01em}
 .lyric-box .lyric-aux{display:block;margin-top:.35em;font-size:.55em;font-weight:500;color:#dfe7ee}
@@ -189,11 +189,41 @@ let curTr={type:'fade',ms:600},trSeq=0,trFam='';
 const trFamily=t=>t===''?'':t.startsWith('IASD_TIMER:')?'timer':t.startsWith('IASD_DRAW')?'draw':(t.match(/^IASD_[A-Z_]+/)||['text'])[0];
 const TR_OUT={fade:[{opacity:1},{opacity:0}],zoom:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.07)'}],slide:[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-7vw)'}],blur:[{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(26px)'}],wipe:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 100%)'}]};
 const TR_IN={fade:[{opacity:0},{opacity:1}],zoom:[{opacity:0,transform:'scale(.93)'},{opacity:1,transform:'scale(1)'}],slide:[{opacity:0,transform:'translateX(7vw)'},{opacity:1,transform:'translateX(0)'}],blur:[{opacity:0,filter:'blur(26px)'},{opacity:1,filter:'blur(0px)'}],wipe:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}]};
+/* ---- letra do hinário: animação própria (não usa a transição geral do telão; o fundo faz dissolve e só o texto se move) ---- */
+const LYR={
+ fade:{d:0,out:[{opacity:1},{opacity:0}],in:[{opacity:0},{opacity:1}]},
+ rise:{d:.18,out:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-3.5vh)'}],in:[{opacity:0,transform:'translateY(4.5vh)'},{opacity:1,transform:'translateY(0)'}]},
+ mist:{d:.12,out:[{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(24px)'}],in:[{opacity:0,filter:'blur(24px)'},{opacity:1,filter:'blur(0px)'}]},
+ glow:{d:.18,out:[{opacity:1,filter:'brightness(1) blur(0px)'},{opacity:0,filter:'brightness(1.9) blur(8px)'}],in:[{opacity:0,filter:'brightness(1.9) blur(8px)',transform:'scale(.97)'},{opacity:1,filter:'brightness(1) blur(0px)',transform:'scale(1)'}]},
+ curtain:{d:.42,out:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 50% 0 50%)'}],in:[{clipPath:'inset(0 50% 0 50%)'},{clipPath:'inset(0 0 0 0)'}]}
+};
+function lyricShow(t){
+ let d={};try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){return showRaw(t)}
+ const A=LYR[d.anim],ms=Math.min(2500,Math.max(0,+d.ms||0));
+ const oldSlide=out.querySelector('.lyric-slide'),oldBg=out.style.backgroundImage;
+ const oldClone=oldSlide?oldSlide.cloneNode(true):null;
+ showRaw(t);
+ if(!A||!ms||!out.animate)return;
+ const slide=out.querySelector('.lyric-slide');
+ const outMs=Math.round(ms*(.45+A.d)),inMs=Math.round(ms*(1-A.d)),delay=Math.round(ms*A.d);
+ try{
+  if(oldBg&&oldBg!=='none'&&oldBg!==out.style.backgroundImage){
+   const b=document.createElement('div');b.className='lyric-bgold';b.style.backgroundImage=oldBg;out.prepend(b);
+   b.animate([{opacity:1},{opacity:0}],{duration:Math.max(300,ms),easing:'ease-in-out',fill:'forwards'}).onfinish=()=>b.remove();
+  }
+  if(oldClone&&slide){
+   oldClone.classList.add('lyric-old');out.append(oldClone);
+   oldClone.animate(A.out,{duration:outMs,easing:'ease-in',fill:'forwards'}).onfinish=()=>oldClone.remove();
+  }
+  if(slide)slide.animate(A.in,{duration:inMs,delay,easing:'cubic-bezier(.22,.61,.36,1)',fill:'backwards'});
+ }catch(e){}
+}
 function show(value){
  let t=typeof value==='string'?value:'';
  const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(t);
  if(m){if(TR_IN[m[1]]||m[1]==='none')curTr={type:m[1],ms:Math.min(2000,+m[2])};t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
+ if(fam==='IASD_LYRIC'&&prev==='IASD_LYRIC'){trFam=fam;++trSeq;return lyricShow(t)}
  const instant=!out.animate||curTr.type==='none'||!TR_IN[curTr.type]||!curTr.ms||t.startsWith('IASD_GAME:')||t.startsWith('IASD_DRAW_STYLE:')||(fam===prev&&(fam==='timer'||fam==='draw'))||(prev===''&&fam==='');
  if(t.startsWith('IASD_DRAW_STYLE:')){return showRaw(t)}
  trFam=t.startsWith('IASD_GAME:')?'game':fam;
