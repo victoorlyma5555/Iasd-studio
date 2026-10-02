@@ -407,6 +407,7 @@ function project(t){
  void guardedProjection(async()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao IASD Projetor.');});
 }
 function stopProjection(){
+ try{const w=document.getElementById('iasd-studio-frame')?.contentWindow;w&&w.stHymnFadeStop&&w.stHymnFadeStop(900)}catch(e){}
  // Fechar projeção: só atualiza o estado local e pede o fechamento real. Nunca envia conteúdo vazio
  // ao aplicativo (isso recriaria a janela do telão em preto logo após fechá-la).
  sendProjection('',{localOnly:true});
