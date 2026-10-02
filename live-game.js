@@ -139,7 +139,14 @@ function saveTm(){try{localStorage.setItem('iasd_live_tm',JSON.stringify({room:S
 const teamOf=p=>{loadTm();return(S.tm&&S.tm[p.id])||teamTag(p.name)||'A'};
 const teamTotals=(ps,bonus)=>{const t={A:{pts:0,n:0},B:{pts:0,n:0}};ps.forEach(p=>{const k=teamOf(p);t[k].pts+=Number(p.score)||0;t[k].n++});const mx=Math.max(1,t.A.n,t.B.n);['A','B'].forEach(k=>{t[k].pts=Math.round(t[k].pts*(t[k].n?mx/t[k].n:0))+((bonus&&bonus[k])||0)});return t};
 const teamBadge=k=>'<span class="tm-b '+k+'">'+TEAMS[k].e+' Time '+TEAMS[k].n+'</span>';
-const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+'">'+esc(splitName(n).av)+'</span>';
+/* foto de perfil (opcional): o jogador logado manda o caminho da foto pelo canal em tempo real; o apresentador guarda por nome */
+const PHOTO={};
+const CU=()=>{try{return typeof cloudUser!=='undefined'?cloudUser:null}catch(e){return null}},MP=()=>{try{return typeof myProfile!=='undefined'?myProfile:null}catch(e){return null}};
+const photoBase=()=>{try{return typeof profileMediaUrl==='function'?profileMediaUrl('x/').replace(/x\/$/,''):''}catch(e){return ''}};
+function photoOk(u){u=String(u||'');const b=photoBase();return u.length<400&&/^https:\/\//.test(u)&&((b&&u.startsWith(b))||u.startsWith('https://lh3.googleusercontent.com/'))}
+function myPhoto(){try{const p=MP(),u=CU();if(!u)return null;const url=p&&p.avatar_path?profileMediaUrl(p.avatar_path):String((u.user_metadata||{}).avatar_url||(u.user_metadata||{}).picture||'');if(!photoOk(url))return null;const c=v=>Math.max(0,Math.min(100,Number(v)||50));return{u:url,x:p&&p.avatar_path?c(p.avatar_x):50,y:p&&p.avatar_path?c(p.avatar_y):50,z:Math.max(1,Math.min(3,Number(p&&p.avatar_path?p.avatar_zoom:1)||1))}}catch(e){return null}}
+const avIn=n=>{const f=PHOTO[n];return f&&photoOk(f.u)?'<img src="'+esc(f.u)+'" alt="" draggable="false" style="object-position:'+f.x+'% '+f.y+'%;transform:scale('+f.z+')">':esc(splitName(n).av)};
+const avatarHTML=(n,cls)=>'<span class="lg2-av '+(cls||'')+(PHOTO[n]?' ph':'')+'">'+avIn(n)+'</span>';
 
 
 /* ---------- sincronização: canal em tempo real + relógio do apresentador ----------
@@ -155,9 +162,10 @@ function syOpen(){
  try{
   SY.ch=cl.channel('iasd-live-'+code(),{config:{broadcast:{self:false,ack:false}}});
   SY.ch.on('broadcast',{event:'m'},ev=>syRecv(ev&&ev.payload||{}));
-  SY.ch.subscribe(st=>{if(st==='SUBSCRIBED'){SY.on=true;if(S.host){if(SY.last)sySend({...SY.last,hb:1})}else{syPing();sySend({t:'hello'})}}else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT')SY.on=false});
+  SY.ch.subscribe(st=>{if(st==='SUBSCRIBED'){SY.on=true;if(S.host){if(SY.last)sySend({...SY.last,hb:1})}else{syPing();sySend({t:'hello'});pfSend()}}else if(st==='CLOSED'||st==='CHANNEL_ERROR'||st==='TIMED_OUT')SY.on=false});
  }catch(e){SY.ch=null;SY.on=false}
 }
+function pfSend(){if(!PS.pf){try{const o=JSON.parse(localStorage.getItem('iasd_live_pf')||'null');if(o&&S.room&&o.room===S.room.id)PS.pf={n:o.n,f:o.f}}catch(e){}}if(!PS.pf)return;const go=()=>{if(S.host||!S.room)return;sySend({t:'pf',n:PS.pf.n,f:PS.pf.f})};go();setTimeout(go,2500);setTimeout(go,9000)}
 function syClose(){
  clearInterval(SY.hb);clearInterval(SY.pingT);clearTimeout(SY.tm);clearTimeout(SY.helloT);clearTimeout(SY.pqT);SY.helloT=SY.pqT=0;SY.pq=[];
  try{if(SY.ch&&window.iasdCloud?.removeChannel)window.iasdCloud.removeChannel(SY.ch)}catch(e){}
@@ -174,6 +182,7 @@ function syRecv(m){
  if(S.host){
   if(m.t==='ping'){SY.pq=SY.pq||[];if(SY.pq.length<120)SY.pq.push({id:m.id,c0:m.c0,hr:Date.now()});
    if(!SY.pqT)SY.pqT=setTimeout(()=>{SY.pqT=0;const l=SY.pq.splice(0,80);if(l.length)sySend({t:'pong',l,h:Date.now()});if(SY.pq.length&&!SY.pqT)SY.pqT=setTimeout(()=>{SY.pqT=0;const l2=SY.pq.splice(0,80);if(l2.length)sySend({t:'pong',l:l2,h:Date.now()})},250)},250)}
+  else if(m.t==='pf'){const f=m.f||{};if(m.n&&photoOk(f.u)&&String(m.n).length<80){const c=v=>Math.max(0,Math.min(100,Number(v)||50));PHOTO[m.n]={u:f.u,x:c(f.x),y:c(f.y),z:Math.max(1,Math.min(3,Number(f.z)||1))};try{const l=document.getElementById('lg-player-list');if(l&&S.phase!=='board'){l.querySelectorAll('.lg2-pp').forEach(el=>{if(el.classList.contains('more'))return;const t=el.textContent.trim();const k=Object.keys(PHOTO).find(k=>splitName(k).name===t);if(k&&PHOTO[k]){const av=el.querySelector('.lg2-av');if(av&&!av.classList.contains('ph')){av.classList.add('ph');av.innerHTML=avIn(k)}}})}}catch(e){}}}
   else if(m.t==='hello'&&SY.last){if(!SY.helloT)SY.helloT=setTimeout(()=>{SY.helloT=0;if(SY.last)sySend({...SY.last,hb:1})},500+Math.random()*500)}
   return}
  SY.lastMsg=Date.now();
@@ -292,7 +301,7 @@ html.lg2-open{overflow:hidden}
 .lg2-pp{display:flex;align-items:center;gap:10px;padding:8px 18px 8px 8px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-weight:800;font-size:clamp(15px,2vw,22px);animation:lgpop .5s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes lgpop{from{transform:scale(0) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
 .lg2-av{display:grid;place-items:center;width:1.9em;height:1.9em;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:1.05em;flex:none}
-.lg2-av.big{font-size:clamp(34px,5vw,54px)}
+.lg2-av.big{font-size:clamp(34px,5vw,54px)}.lg2-av.ph{overflow:hidden;background:#1b1b4b}.lg2-av.ph img,.gr .av.ph img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}.gp-av.ph>span{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:block}.gp-av.ph>span img{width:100%;height:100%;object-fit:cover;display:block}.gr .av.ph{overflow:hidden}
 /* intro da rodada */
 .lg2-intro{margin:auto;text-align:center;display:grid;gap:14px;justify-items:center}
 .lg2-intro .e{font-size:clamp(90px,18vw,190px);animation:lgboing 1s ease both}
@@ -588,6 +597,11 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .gj-f label{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;color:#7fb2ff;margin-bottom:6px}
 .gj-in{display:flex;align-items:center;gap:10px;padding:0 14px;height:52px;border-radius:12px;background:rgba(8,18,60,.8);border:1.5px solid rgba(140,172,255,.4)}.gj-in:focus-within{border-color:#4aa3ff;box-shadow:0 0 14px rgba(74,163,255,.5)}
 .gj-in svg{height:22px;width:auto;color:#6aa7ff;flex:none}.gj-in input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:inherit;font-size:20px}.gj-in input::placeholder{color:rgba(190,205,255,.45)}
+.gj-ph{grid-column:1/-1;display:flex;align-items:center;gap:12px;width:min(760px,100%);margin:10px auto 0;padding:10px 14px;border-radius:14px;background:rgba(20,36,100,.7);border:1.5px solid rgba(140,172,255,.3);color:#fff;text-align:left;font:inherit;cursor:default}
+button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255,200,61,.55)}.gj-ph.on{border-color:#34d399;box-shadow:0 0 14px rgba(52,211,153,.25)}
+.gj-ph .pi{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:rgba(255,255,255,.12);overflow:hidden}.gj-ph .pi img{width:100%;height:100%;object-fit:cover;display:block}
+.gj-ph .pt{flex:1;min-width:0;display:grid;gap:2px}.gj-ph .pt b{font-size:15px}.gj-ph .pt small{font-size:12px;opacity:.75}.gj-ph>i{font-style:normal;font-weight:800;font-size:13px;color:#ffc83d}
+.gj-ph .sw{flex:none;width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.2);position:relative;transition:.2s}.gj-ph .sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}.gj-ph.on .sw{background:#34d399}.gj-ph.on .sw:after{left:21px}
 .gj-av{grid-column:1/-1;display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}.gj-av::-webkit-scrollbar{display:none}
 .gj-av button{flex:none;width:46px;height:46px;border-radius:12px;font-size:24px;background:rgba(20,36,100,.8);border:1.5px solid rgba(140,172,255,.3);cursor:pointer}.gj-av button.on{border-color:#ffc83d;box-shadow:0 0 12px rgba(255,200,61,.6)}
 .gj-go{margin-top:14px;padding:14px;font-size:clamp(20px,4.6vw,30px)!important;border-radius:16px}
@@ -888,13 +902,23 @@ function setup(){
   '<div class="gx-cta"><button class="gx-go" onclick="IASDLive.create()">▶ Criar sala</button><button class="gx-ghost" onclick="IASDLive.joinForm()">'+LBI.scan+' Entrar com código</button></div></div></div></div>','lb qz');
  API._set=(k,v)=>{SET[k]=v;A().sfx('tap');paint()};paint();
 }
+function phBlock(){
+ const u=CU(),ph=myPhoto();API._ph=!!ph;
+ if(!u)return '<button type="button" class="gj-ph off" onclick="IASDLive.login()"><span class="pi">🔒</span><span class="pt"><b>Conecte-se para aparecer com sua foto</b><small>Toque para entrar na sua conta</small></span><i>Entrar ›</i></button>';
+ const nm=esc(String((MP()&&MP().full_name)||(u.user_metadata||{}).full_name||u.email||'').split(' ')[0]);
+ if(!ph)return '<div class="gj-ph"><span class="pi">👤</span><span class="pt"><b>Conectado'+(nm?' como '+nm:'')+'</b><small>Coloque uma foto no seu Perfil para aparecer no jogo</small></span></div>';
+ return '<button type="button" class="gj-ph on" id="lg-ph" onclick="IASDLive.togglePhoto()"><span class="pi"><img src="'+esc(ph.u)+'" alt="" style="object-position:'+ph.x+'% '+ph.y+'%;transform:scale('+ph.z+')"></span><span class="pt"><b>Usar minha foto de perfil</b><small>Conectado'+(nm?' como '+nm:'')+' · aparece no telão</small></span><i class="sw"></i></button>'}
+function togglePhoto(){API._ph=!API._ph;const b=$('lg-ph');if(b)b.classList.toggle('on',API._ph);A().sfx('tap')}
+function loginForPhoto(){try{sessionStorage.setItem('iasd_live_code',($('lg-code')?.value||'').replace(/\D/g,''))}catch(e){}if(typeof openAuthModal==='function')openAuthModal()}
 function joinForm(pre){
+ try{pre=pre||sessionStorage.getItem('iasd_live_code')||''}catch(e){}
  A().sfx('click');const av=AVATARS[Math.floor(Math.random()*AVATARS.length)];let pick=av;
  screen('<div class="gx gx-join"><div class="gx-iasd">'+iasdLogo()+'</div>'+brandPx()+
   '<div class="gj-hd"><span class="gj-ic">'+LBI.phone+'</span><div><h2>ENTRAR NA <b>PARTIDA</b></h2><p>Informe o código da sala e seu nome para participar</p></div></div>'+
   '<div class="gj-card"><div class="gj-f"><label>CÓDIGO DA SALA</label><div class="gj-in">'+LBI.group+'<input id="lg-code" inputmode="numeric" maxlength="6" placeholder="123456" value="'+esc(pre||'')+'" oninput="IASDLive._teamPick()"></div></div>'+
   '<div class="gj-f"><label>SEU NOME</label><div class="gj-in"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.2"/><path d="M4 21c0-4.400 3.600-7 8-7s8 2.600 8 7z"/></svg><input id="lg-name" maxlength="24" placeholder="Digite seu nome" autocomplete="off"></div></div>'+
   '<div class="gj-av" id="lg2-avs">'+AVATARS.map(a=>'<button class="'+(a===av?'on':'')+'" data-a="'+a+'">'+a+'</button>').join('')+'</div></div>'+
+  phBlock()+
   '<div class="tm-pick" id="lg-tm" hidden><small>Esta sala é de times! Escolha o seu:</small><div><button data-t="A" class="A on">🔵 Azul</button><button data-t="B" class="B">🟡 Dourado</button></div></div>'+
   '<button class="gx-go gj-go" onclick="IASDLive.join()">▶ Entrar na partida</button>'+
   '<div class="gj-bt"><span class="gj-wait">'+LBI.group+'<span><b>Já entrou na sala?</b><small>Aguarde o início da partida</small></span></span><button class="gx-ghost" onclick="IASDLive.home()">← Voltar<small>Escolher outro jogo</small></button></div></div>','lb qz');
@@ -912,6 +936,8 @@ async function join(){
   if(!p?.length)return alert('Sala não encontrada ou a partida já começou.');
   S.player=p[0];const rooms=await rpc('live_room_state',{p_room:S.player.room_id});if(!rooms?.length)throw Error('room_state_missing');
   S.room=rooms[0];S.host=false;PS={answered:-1,lastScore:0,sawQ:-1,revealFor:-1};
+  try{sessionStorage.removeItem('iasd_live_code')}catch(e){}
+  {const ph=API._ph?myPhoto():null;PS.pf=ph?{n:full,f:ph}:null;try{ph?localStorage.setItem('iasd_live_pf',JSON.stringify({room:S.room.id,n:full,f:ph})):localStorage.removeItem('iasd_live_pf')}catch(e){}}
   try{window.IASDLivePresence?.log('player',nm,c)}catch(e){}
   A().sfx('join');localStorage.setItem('iasd_live_player',JSON.stringify({room:S.room.id,player:S.player.id,token:S.player.player_token}));
   deckFor(code());playerView();poll();syOpen();
@@ -922,7 +948,7 @@ async function create(){
  try{
   const c=String(SET.mode)+String(SET.rounds)+String(SET.fmt)+String(Math.floor(100+Math.random()*900));
   const r=await rpc('live_create_room',{p_code:c});if(!r?.length)throw Error('room_not_created');
-  S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};S.tm=null;try{localStorage.removeItem('iasd_live_tm')}catch(e){}
+  Object.keys(PHOTO).forEach(k=>delete PHOTO[k]);S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};S.tm=null;try{localStorage.removeItem('iasd_live_tm')}catch(e){}
   localStorage.setItem('iasd_live_host',JSON.stringify({id:S.room.id,token:S.room.host_token,code:c}));
   try{window.IASDLivePresence?.log('host','Anfitrião',c)}catch(e){}
   deckFor(c);A().sfx('join');lobby();poll();syOpen();
@@ -965,7 +991,7 @@ function paintLobbyPlayers(ps,first){
  const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;{const lb=document.querySelector('.lg2-lb');if(lb){lb.classList.toggle('many',ps.length>6);lb.classList.toggle('d1',ps.length>12);lb.classList.toggle('d2',false)}}const wt=$('lg-wait');if(wt)wt.textContent=ps.length?'TUDO PRONTO? É SÓ COMEÇAR!':'AGUARDANDO OS PARTICIPANTES...';
  if(cfgOf(code()).teams)['A','B'].forEach(k=>{const e=$('tc-'+k);if(e)e.textContent=ps.filter(p=>teamTag(p.name)===k).length});
  const LIM=cfgOf(code()).teams?8:15;
- ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);const tgt=cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box;if(tgt.querySelectorAll('.lg2-pp:not(.more)').length<LIM)tgt.appendChild(d);if(!first)A().sfx('join')}});
+ ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av'+(PHOTO[p.name]?' ph':'')+'">'+avIn(p.name)+'</span>'+esc(n.name);const tgt=cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box;if(tgt.querySelectorAll('.lg2-pp:not(.more)').length<LIM)tgt.appendChild(d);if(!first)A().sfx('join')}});
  /* acima do limite não mostra todos: um chip "+N" resume o resto (o total está no contador) */
  const lists=cfgOf(code()).teams?['A','B'].map(k=>$('lg-list-'+k)).filter(Boolean):[box];
  lists.forEach(l=>{const tot=cfgOf(code()).teams?ps.filter(p=>teamOf(p)===l.id.slice(-1)).length:ps.length,extra=tot-l.querySelectorAll('.lg2-pp:not(.more)').length;let m=l.querySelector('.more');if(extra>0){if(!m){m=document.createElement('div');m.className='lg2-pp more';l.appendChild(m)}m.textContent='+'+extra+' jogadores'}else if(m)m.remove()});
@@ -1073,9 +1099,9 @@ const fmt_=n=>Number(n||0).toLocaleString('pt-BR');
 function gxBoard(ps,i,q,t,gotIt,isLast){
  const total=cfgOf(code()).total,max=Math.max(1,...ps.map(p=>p.score));
  const pod=(p,k)=>{if(!p)return '<div class="gp '+['s','g','b'][k]+'"></div>';const n=splitName(p.name),cl=['s','g','b'][k],pos=[2,1,3][k];
-  return '<div class="gp '+cl+'">'+(cl==='g'?'<span class="crown">👑</span>':'')+'<div class="gp-av"><span>'+esc(n.av)+'</span><i>'+pos+'</i></div><div class="gp-nm">'+esc(n.name)+'</div><div class="gp-pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small>'+(p.delta>0?'<em>+'+fmt(p.delta)+'</em>':'')+'</div><div class="gp-bs"></div></div>'};
+  return '<div class="gp '+cl+'">'+(cl==='g'?'<span class="crown">👑</span>':'')+'<div class="gp-av'+(PHOTO[p.name]?' ph':'')+'"><span>'+avIn(p.name)+'</span><i>'+pos+'</i></div><div class="gp-nm">'+esc(n.name)+'</div><div class="gp-pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small>'+(p.delta>0?'<em>+'+fmt(p.delta)+'</em>':'')+'</div><div class="gp-bs"></div></div>'};
  const top=[ps[1],ps[0],ps[2]];
- const rest=ps.slice(3,7).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av">'+esc(n.av)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
+ const rest=ps.slice(3,7).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av'+(PHOTO[p.name]?' ph':'')+'">'+avIn(p.name)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
  const side=rest||'<div class="gr-empty"><b>✓ '+gotIt+' de '+ps.length+'</b><small>acertaram esta rodada</small></div>';
  const lead=ps[0];
  return '<div class="gx gx-board">'+gxTop()+
@@ -1314,7 +1340,7 @@ function install(){
  if(gameCode){setTimeout(async()=>{if(await reconnect(1,gameCode))return;await home();joinForm(gameCode)},300)}
  else if(location.pathname==='/jogos'&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player')))reconnect();
 }
-const API={home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
+const API={login:loginForPhoto,togglePhoto,home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
  sound:new Proxy({},{get:(_,k)=>()=>{try{window.IASDGameAudio?.sfx(k)}catch(e){}}}),
  _state:()=>({S,HS,PS}),_deck:c=>deckFor(c)};
 window.IASDLive=API;
