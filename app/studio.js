@@ -149,6 +149,8 @@ function tmShow(){tmSend()}
 function tmSetTotal(sec,fromPreset){sec=Math.max(1,Math.min(36000,Math.round(sec)));TM.total=sec;TM.remaining=sec;TM.state='idle';TM.endsAt=0;$('tmMin').value=Math.floor(sec/60);$('tmSec').value=sec%60;tmSync();tmRender()}
 function tmFromInputs(){tmSetTotal((+$('tmMin').value||0)*60+(+$('tmSec').value||0)||60)}
 function tmToggle(){if(TM.state==='running'){TM.remaining=tmLeft();TM.state='paused';tmSync();tmRender();return}if(TM.remaining<=0)TM.remaining=TM.total;TM.endsAt=Date.now()+TM.remaining*1000;TM.state='running';tmSend();tmRender()}
+/* fecha o telão e já reinicia o cronômetro (fecha primeiro, assim o reinício não reaparece no telão) */
+function tmClose(){closeScreen();tmReset()}
 function tmReset(){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;tmSync();tmRender()}
 function tmAdjust(delta){const left=tmLeft(),next=Math.max(1,Math.min(36000,left+delta));if(TM.state==='running')TM.endsAt=Date.now()+next*1000;else{TM.remaining=next;if(TM.state==='idle')TM.total=next}TM.total=Math.max(TM.total,Math.ceil(next));tmSync();tmRender()}
 let tmPrev=null;
