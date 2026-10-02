@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>IASD Projetor</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;user-select:none;-webkit-app-region:drag}
+body{display:grid;place-items:center;background:radial-gradient(120% 120% at 30% 0%,#14306b 0%,#09152d 60%,#060d1e 100%);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;border:1px solid rgba(140,172,255,.28)}
+.box{text-align:center;padding:0 28px}
+.ring{position:relative;width:92px;height:92px;margin:0 auto 18px;animation:pulse 1.8s ease-in-out infinite}
+.ring img{position:absolute;inset:17px;width:58px;height:58px;object-fit:contain}
+.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);animation:spin 1.5s linear infinite}
+.ring circle{fill:none;stroke:#4ea1ff;stroke-width:5;stroke-linecap:round;stroke-dasharray:90 200;filter:drop-shadow(0 0 6px #4ea1ff)}
+h1{margin:0 0 4px;font-size:19px;font-weight:700}p{margin:0;font-size:13px;opacity:.7}
+.bar{width:240px;height:5px;border-radius:5px;background:rgba(255,255,255,.12);margin:18px auto 0;overflow:hidden}
+.bar i{display:block;height:100%;width:40%;border-radius:5px;background:linear-gradient(90deg,#4ea1ff,#8b5cf6,#4ea1ff);background-size:200% 100%;animation:sweep 1.3s ease-in-out infinite,shine 1.5s linear infinite}
+@keyframes spin{to{transform:rotate(450deg)}}@keyframes pulse{50%{transform:scale(1.06)}}@keyframes sweep{0%{margin-left:-40%}100%{margin-left:100%}}@keyframes shine{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:4s!important}}
+</style></head><body><div class="box"><div class="ring"><img src="assets/logo.png" alt=""><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg></div><h1 id="t">Abrindo o IASD APP…</h1><p id="s">Só um instante.</p><div class="bar"><i></i></div></div>
+<script>try{const q=new URLSearchParams(location.search);if(q.get('t'))t.textContent=q.get('t').slice(0,80);if(q.get('s'))s.textContent=q.get('s').slice(0,100)}catch(e){}</script></body></html>

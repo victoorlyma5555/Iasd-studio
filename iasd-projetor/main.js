@@ -287,8 +287,24 @@ function showSoundAlert(payload){
  win.once('ready-to-show',()=>{if(!win.isDestroyed()){win.showInactive();win.setAlwaysOnTop(true,'floating');win.moveTop()}});
  win.on('closed',()=>{if(alertRef===win)alertRef=null});
 }
+/* janelinha "Abrindo o IASD APP" enquanto o programa sobe (cobre o vazio entre abrir e o painel aparecer, inclusive depois de uma atualização) */
+let splashRef=null,splashTimer=null;
+function showStartSplash(){
+ try{
+  if(splashRef&&!splashRef.isDestroyed())return;
+  let t='Abrindo o IASD APP…',s='Só um instante.';
+  try{const r=JSON.parse(fs.readFileSync(updateReceiptFile,'utf8'));if(r&&r.to&&r.from!==app.getVersion()&&Date.now()-r.time<86400000){t='Atualizado para a versão '+app.getVersion();s='Abrindo o IASD APP…'}}catch{}
+  splashRef=new BrowserWindow({width:440,height:250,frame:false,resizable:false,maximizable:false,minimizable:false,fullscreenable:false,movable:true,center:true,show:false,alwaysOnTop:true,skipTaskbar:true,title:'IASD Projetor',backgroundColor:'#09152d',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});
+  splashRef.setMenuBarVisibility(false);
+  splashRef.once('ready-to-show',()=>{if(splashRef&&!splashRef.isDestroyed())splashRef.show()});
+  splashRef.on('closed',()=>{splashRef=null});
+  splashRef.loadFile(path.join(__dirname,'splash.html'),{query:{t,s}}).catch(()=>closeStartSplash());
+  clearTimeout(splashTimer);splashTimer=setTimeout(closeStartSplash,15000)
+ }catch(e){splashRef=null}
+}
+function closeStartSplash(){clearTimeout(splashTimer);try{if(splashRef&&!splashRef.isDestroyed())splashRef.close()}catch{}splashRef=null}
 function showDashboard(){
- if(dashboardRef&&!dashboardRef.isDestroyed()){dashboardRef.show();dashboardRef.focus();return}
+ if(dashboardRef&&!dashboardRef.isDestroyed()){closeStartSplash();dashboardRef.show();dashboardRef.focus();return}
  const wa=screen.getPrimaryDisplay().workArea;dashboardRef=new BrowserWindow({width:Math.min(1400,wa.width),height:Math.min(860,wa.height),minWidth:980,minHeight:650,maximizable:false,fullscreenable:false,frame:false,title:'IASD Projetor — IASD APP',autoHideMenuBar:true,backgroundColor:'#091527',icon:path.join(__dirname,'assets','iasd-app.ico'),webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:false,webviewTag:true}});
  dashboardRef.setMenuBarVisibility(false);
  const localPanel=()=>{if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.loadFile(path.join(__dirname,'dashboard.html'))};
@@ -306,7 +322,7 @@ function showDashboard(){
   wc.setWindowOpenHandler(({url})=>{const u=safeLink(url);if(u)shell.openExternal(u);return{action:'deny'}});
   dashboardRef.loadURL(remotePanel,{extraHeaders:'pragma: no-cache\n'}).catch(()=>{});
  }
- dashboardRef.once('ready-to-show',()=>{if(!dashboardRef||dashboardRef.isDestroyed())return;dashboardRef.show();dashboardRef.moveTop();dashboardRef.focus()});
+ dashboardRef.once('ready-to-show',()=>{closeStartSplash();if(!dashboardRef||dashboardRef.isDestroyed())return;dashboardRef.show();dashboardRef.moveTop();dashboardRef.focus()});
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
 function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
@@ -443,6 +459,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
+ if(!process.argv.includes('--hidden'))showStartSplash();
  loadCachedRemoteConfig();
  loadPairing();
  void alertRestore();
