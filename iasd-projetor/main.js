@@ -137,7 +137,7 @@ function installDownloadedUpdate(){
  try{
   fs.writeFileSync(updateReceiptFile,JSON.stringify({from:app.getVersion(),to:downloadedUpdate.version,time:Date.now()}));
   installingUpdate=true;
-  updateProgress('installing','Instalando a versão '+downloadedUpdate.version+'. O aplicativo abrirá novamente.');
+  updateProgress('installing','Atualizando para a versão '+downloadedUpdate.version+'…',{latest:downloadedUpdate.version});
   setTimeout(()=>autoUpdater.quitAndInstall(true,true),2500);
   return {ok:true}
  }catch(e){installingUpdate=false;return {error:e.message}}
@@ -172,7 +172,7 @@ async function checkAutomaticUpdate({startup=false}={}){
 }
 autoUpdater.autoDownload=true;autoUpdater.autoInstallOnAppQuit=false;autoUpdater.allowPrerelease=false;
 autoUpdater.on('download-progress',p=>updateProgress('downloading','Baixando atualização: '+Math.round(p.percent)+'%',{percent:Math.round(p.percent)}));
-autoUpdater.on('update-downloaded',info=>{downloadedUpdate={version:info.version};updateProgress('downloaded','Versão '+info.version+' baixada. Pronta para instalar e reiniciar.',{latest:info.version});showDashboard()});
+autoUpdater.on('update-downloaded',info=>{downloadedUpdate={version:info.version};updateProgress('downloaded','Versão '+info.version+' baixada. Pronta para instalar.',{latest:info.version});showDashboard()});
 autoUpdater.on('update-not-available',()=>updateProgress('current','Você já tem a versão mais recente.'));
 autoUpdater.on('error',e=>updateProgress('error','Falha na atualização: '+e.message));
 const mediaFiles=new Map();const MEDIA_LIMIT=250*1024*1024;
