@@ -87,7 +87,7 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
- if(keep!=='hymn'){try{const ha=document.getElementById('sthAudio');if(keep==='yt'&&ha&&ha.src&&!ha.paused){stFadePause(ha,700);setTimeout(()=>{try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}},stFm(700)+80)}else{window.STHymn&&STHymn.stop&&STHymn.stop()}}catch(e){}}
+ if(keep!=='hymn'){try{const ha=document.getElementById('sthAudio');if(keep&&ha&&ha.src&&!ha.paused){stFadePause(ha,700);setTimeout(()=>{try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}},stFm(700)+80)}else{window.STHymn&&STHymn.stop&&STHymn.stop()}}catch(e){}}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
  if(keep!=='yt'){window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
