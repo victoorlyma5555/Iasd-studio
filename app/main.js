@@ -718,7 +718,7 @@ function iconSvg(name){return '<svg class="iasd-icon" viewBox="0 0 24 24" aria-h
 /* aviso: o Studio segue tocando em segundo plano; páginas com som próprio vão tocar junto */
 let _stNotePage='',_stNoteT=0;
 function studioPlaying(){try{const f=document.getElementById('iasd-studio-frame'),w=f&&f.contentWindow;return !!(w&&[...w.document.querySelectorAll('audio,video')].some(a=>!a.paused&&!a.ended&&a.readyState>2))}catch(e){return false}}
-function studioPauseAll(){try{const w=document.getElementById('iasd-studio-frame').contentWindow;w.document.querySelectorAll('audio,video').forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}hideStudioNote()}
+function studioPauseAll(){try{const w=document.getElementById('iasd-studio-frame').contentWindow;w.document.querySelectorAll('audio,video').forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}hideStudioNote();stMiniUpdate()}
 function hideStudioNote(){clearTimeout(_stNoteT);const n=document.getElementById('st-sound-note');if(n)n.classList.remove('on')}
 function studioSoundNote(){
  const page=current;if(page===_stNotePage)return;_stNotePage=page;
@@ -731,6 +731,24 @@ function studioSoundNote(){
  n.innerHTML='<span>'+(withSound?'🔊 O áudio da Projeção continua tocando. Esta página também tem som, então os dois vão tocar juntos.':'🎵 O áudio da Projeção continua tocando em segundo plano.')+'</span><button type="button" onclick="studioPauseAll()">Pausar</button><button type="button" class="x" onclick="hideStudioNote()" aria-label="Fechar">✕</button>';
  requestAnimationFrame(()=>n.classList.add('on'));clearTimeout(_stNoteT);_stNoteT=setTimeout(hideStudioNote,withSound?14000:7000)
 }
+/* mini player flutuante: controla o áudio da Projeção de qualquer página */
+function stAudioEl(){try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow.document.getElementById('sthAudio')}catch(e){return null}}
+function stMiniToggle(){const a=stAudioEl();if(!a)return;if(a.paused)a.play().catch(()=>{});else a.pause();stMiniUpdate()}
+function stMiniStop(){const a=stAudioEl();if(!a)return;try{a.pause();a.currentTime=0}catch(e){}stMiniUpdate()}
+function stMiniUpdate(){
+ let m=document.getElementById('st-mini');
+ const a=canUseSound()&&current!=='Projeção'?stAudioEl():null;
+ const active=!!(a&&a.src&&!a.ended&&(a.currentTime>0||!a.paused));
+ if(!active){if(m)m.classList.remove('on');return}
+ if(!m){const st=document.createElement('style');st.textContent='#st-mini{position:fixed;right:14px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:9997;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(10,24,52,.96);color:#fff;border:1px solid rgba(140,172,255,.4);box-shadow:0 10px 28px rgba(0,0,0,.45);font:700 12px Inter,system-ui,sans-serif;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}#st-mini.on{opacity:1;transform:none;pointer-events:auto}#st-mini .t{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#st-mini .b{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:#2f6bff;color:#fff;font-size:13px;cursor:pointer}#st-mini .b.s{background:rgba(255,255,255,.14)}#st-mini .b.g{background:transparent;width:auto;padding:0 4px;color:#9db4ff;font:700 11px inherit}#st-mini i{width:8px;height:8px;border-radius:50%;background:#3ddc84;animation:stmp 1.2s infinite}@keyframes stmp{50%{opacity:.25}}';document.head.appendChild(st);
+  m=document.createElement('div');m.id='st-mini';m.innerHTML='<i></i><span class="t">Projeção</span><button class="b" type="button" data-k="p" onclick="stMiniToggle()"></button><button class="b s" type="button" aria-label="Parar" title="Parar" onclick="stMiniStop()">■</button><button class="b g" type="button" onclick="go(\'Projeção\')">Abrir</button>';document.body.appendChild(m)}
+ const pb=m.querySelector('[data-k=p]');pb.textContent=a.paused?'▶':'❚❚';pb.setAttribute('aria-label',a.paused?'Tocar':'Pausar');
+ m.querySelector('i').style.visibility=a.paused?'hidden':'visible';
+ const mm=Math.floor(a.currentTime/60),ss=String(Math.floor(a.currentTime%60)).padStart(2,'0');
+ m.querySelector('.t').textContent='Projeção · '+mm+':'+ss;
+ m.classList.add('on')
+}
+setInterval(()=>{if(document.getElementById('iasd-studio-frame'))stMiniUpdate()},1000);
 function render(){
 if(current==='Sonoplastia'&&canUseSound()){current='Projeção';try{sessionStorage.setItem('iasd-current-page','Projeção');window.IASDRouter?.sync?.('Projeção',{replace:true})}catch(e){}}
 const headerActions=document.querySelector('body > header .header-actions');if(!headerActions){const detached=document.querySelector('#dashboard-account-slot .header-actions');if(detached)document.querySelector('body > header').appendChild(detached)}

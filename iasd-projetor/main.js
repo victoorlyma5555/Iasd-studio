@@ -361,11 +361,28 @@ ipcMain.handle('iasd:clear-backgrounds',()=>{try{const a=loadAppearance();a.imag
 ipcMain.handle('iasd:set-background',async(_,v)=>{try{const a=loadAppearance();if(v?.background)a.background=String(v.background);if(v?.fit)a.fit=String(v.fit);a.image=v?.image||'';saveAppearance(a);await applyDesktopProjectionAppearance(a);return{ok:true}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:set-wallpaper',async(_,file)=>new Promise(resolve=>{if(typeof file!=='string'||!fs.existsSync(file))return resolve({error:'Imagem não encontrada'});const safe=file.replace(/'/g,"''");const ps=`$p='${safe}'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name WallpaperStyle -Value '10'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name TileWallpaper -Value '0'; Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class W { [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int SystemParametersInfo(int a,int b,string c,int d); }'; $r=[W]::SystemParametersInfo(20,0,$p,3); if(-not $r){exit 1}`;execFile('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',ps],{windowsHide:true},e=>resolve(e?{error:'O Windows não conseguiu aplicar esta imagem como papel de parede.'}:{ok:true}))}));
 // Atualizações são verificadas online; a instalação requer confirmação do usuário.
-function latestWindowsRelease(){return new Promise((resolve,reject)=>{const req=https.get('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion(),'Accept':'application/vnd.github+json'}},res=>{let body='';res.on('data',chunk=>{body+=chunk;if(body.length>250000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>{try{if(res.statusCode!==200)throw Error('GitHub indisponível ('+res.statusCode+')');const releases=JSON.parse(body);
-   /* o GitHub não lista as versões em ordem (0.5.10 pode vir depois da 0.5.9): escolhe a MAIOR versão, não a primeira da lista */
-   const verOf=x=>{const k=/^iasd-projetor-v(\d+)\.(\d+)\.(\d+)/i.exec(x.tag_name||'');return k?[+k[1],+k[2],+k[3]]:null};
-   const cmp=(p,q)=>{for(let i=0;i<3;i++){if(p[i]!==q[i])return p[i]-q[i]}return 0};
-   const release=releases.filter(x=>verOf(x)&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name))).sort((x,y)=>cmp(verOf(y),verOf(x)))[0];if(!release){resolve({available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'});return}const match=/^iasd-projetor-v(\d+\.\d+\.\d+)/i.exec(release.tag_name),current=app.getVersion().split('.').map(Number),latest=match?match[1].split('.').map(Number):null;const newer=!!latest&&cmp(latest,current)>0;resolve({available:!!newer,current:app.getVersion(),latest:match?.[1]||release.tag_name,url:release.html_url,downloadUrl:release.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url,tag:release.tag_name,hasMetadata:release.assets.some(a=>a.name==='latest.yml')})}catch(e){reject(e)}})});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
+function httpGetText(url,headers){return new Promise((resolve,reject)=>{const req=https.get(url,{headers:Object.assign({'User-Agent':'IASD-Projetor/'+app.getVersion()},headers||{})},res=>{if(res.statusCode>=300&&res.statusCode<400&&res.headers.location){res.resume();httpGetText(new URL(res.headers.location,url).href,headers).then(resolve,reject);return}let body='';res.on('data',c=>{body+=c;if(body.length>400000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>res.statusCode===200?resolve(body):reject(Error('GitHub indisponível ('+res.statusCode+')')))});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
+/* o GitHub não lista as versões em ordem: escolhe a MAIOR versão. A API tem limite de 60 consultas/hora por rede (403); nesse caso usa o feed público, sem limite. */
+async function latestWindowsRelease(){
+ const verOf=t=>{const k=/^iasd-projetor-v(\d+)\.(\d+)\.(\d+)/i.exec(t||'');return k?[+k[1],+k[2],+k[3]]:null};
+ const cmp=(p,q)=>{for(let i=0;i<3;i++){if(p[i]!==q[i])return p[i]-q[i]}return 0};
+ const cur=app.getVersion().split('.').map(Number),base='https://github.com/victoorlyma5555/Iasd-studio/releases/';
+ let tag,url,downloadUrl,hasMetadata=true;
+ try{
+  const releases=JSON.parse(await httpGetText('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{Accept:'application/vnd.github+json'}));
+  const r=releases.filter(x=>verOf(x.tag_name)&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name))).sort((x,y)=>cmp(verOf(y.tag_name),verOf(x.tag_name)))[0];
+  if(!r)return{available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'};
+  tag=r.tag_name;url=r.html_url;downloadUrl=r.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url;hasMetadata=r.assets.some(a=>a.name==='latest.yml')
+ }catch(e){
+  const m=/\((403|429)\)/.exec(e.message||'');if(!m)throw e;
+  const atom=await httpGetText(base.replace('/releases/','/releases.atom'));
+  const tags=[...atom.matchAll(/releases\/tag\/(iasd-projetor-v\d+\.\d+\.\d+)/gi)].map(x=>x[1]).filter(t=>verOf(t)).sort((a,b)=>cmp(verOf(b),verOf(a)));
+  if(!tags.length)return{available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'};
+  tag=tags[0];url=base+'tag/'+tag;downloadUrl=base+'download/'+tag+'/IASD-Projetor-Setup.exe'
+ }
+ const v=verOf(tag);
+ return{available:cmp(v,cur)>0,current:app.getVersion(),latest:v.join('.'),url,downloadUrl,tag,hasMetadata}
+}
 let _lja=null;const ljaStore=()=>_lja||(_lja=ljaLib.create(app.getPath('userData')));
 function reply(res,code,data,req){const origin=req?allowedOrigin(req):(res.__iasdOrigin||SITE);res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':origin||SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
