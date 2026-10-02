@@ -220,11 +220,14 @@ function renderTsDraw(){
  seen.slice(-4).reverse().forEach(id=>box.append(vrow('testimony',{id,title:titleOf(id)},{noQueue:false})));
 }
 let tsQ='';
+let tsRecent=false;
+window.tsToggleRecent=function(){tsRecent=!tsRecent;const b=$('tsRecentBtn');if(b){b.classList.toggle('on',tsRecent);b.setAttribute('aria-pressed',tsRecent)}renderTsLib();const l=$('tsLibList');if(l)l.scrollTop=0};
 function renderTsLib(){
  const box=$('tsLibList');if(!box)return;box.replaceChildren();const ql=($('tsLibQ').value||'').trim().toLowerCase();
  const extras=lib('testimony'),all=[...BUILTIN.map(v=>({id:v.id,title:v.title,sub:String(v.year||''),builtin:true})),...extras.filter(x=>!builtinOf(x.id)).map(x=>({...x,title:titleOf(x.id,x.title),sub:'Adicionado',builtin:false}))];
  $('tsLibN').textContent=String(all.length);
- const view=all.filter(x=>!ql||x.title.toLowerCase().includes(ql));
+ let view=all.filter(x=>!ql||x.title.toLowerCase().includes(ql));
+ if(tsRecent){/* mais novos primeiro: ano (maior) e, no mesmo ano, a ordem do canal; adicionados por você vêm antes; mostra os 20 mais novos */const ix=new Map(all.map((x,i)=>[x.id,i]));view=view.sort((a,b)=>((a.builtin===false?1:0)!==(b.builtin===false?1:0))?(a.builtin===false?-1:1):((+b.sub||0)-(+a.sub||0))||(ix.get(a.id)-ix.get(b.id))).slice(0,20)}
  if(!view.length){box.append(h('p','amb-empty muted','Nenhum vídeo encontrado.'));return}
  view.forEach(it=>{
   const extra=[];
