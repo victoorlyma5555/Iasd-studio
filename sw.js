@@ -9,7 +9,7 @@ self.addEventListener('push',e=>{
 });
 self.addEventListener('notificationclick',e=>{
  e.notification.close();
- const url=new URL(e.notification.data&&e.notification.data.url||'/',self.location.origin).href;
+ let u=new URL(e.notification.data&&e.notification.data.url||'/',self.location.origin);if(u.origin!==self.location.origin)u=new URL('/',self.location.origin);const url=u.href;
  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
   for(const c of list){if(c.url.startsWith(self.location.origin)&&'focus' in c){return c.focus()}}
   return self.clients.openWindow(url)}));

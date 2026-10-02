@@ -4,6 +4,7 @@
 (()=>{
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const short=(v,n=70)=>{v=v==null?'':typeof v==='object'?JSON.stringify(v):String(v);return v.length>n?v.slice(0,n)+'…':v};
 const T=[
  {k:'iasd_schedules',n:'Cronogramas',e:'🗓️',t:r=>r.name,s:r=>[r.service_date,(r.items||[]).length+' itens'].filter(Boolean).join(' · '),o:'service_date'},
@@ -73,9 +74,9 @@ function body(){
  if(D.loading&&!rows.length)h+='<div class="fdx-empty">Carregando…</div>';
  else if(!rows.length)h+='<div class="fdx-empty">Nenhum registro'+(D.q?' para esta pesquisa':'')+'.</div>';
  else h+='<div class="fdx-list">'+rows.map(r=>{const id=rid(r),sel=D.sel.has(String(id));
-  return '<div class="fdx-row '+(sel?'sel':'')+'"><input type="checkbox" '+(sel?'checked':'')+' onchange="IASDData.toggle(\''+esc(id)+'\')" aria-label="Selecionar"><div class="fdx-tx"><b>'+esc(short(c.t(r)||id,80))+'</b><small>'+esc(short(c.s(r)||String(id),100))+'</small></div><div class="fdx-act">'+
-  (c.move?'<button class="fdx-b" title="Mover para cima" onclick="IASDData.move(\''+esc(id)+'\',-1)">↑</button><button class="fdx-b" title="Mover para baixo" onclick="IASDData.move(\''+esc(id)+'\',1)">↓</button>':'')+
-  '<button class="fdx-b" onclick="IASDData.edit(\''+esc(id)+'\')">Editar</button><button class="fdx-b" onclick="IASDData.dup(\''+esc(id)+'\')">Duplicar</button><button class="fdx-b dan" onclick="IASDData.del(\''+esc(id)+'\')">Excluir</button></div></div>'}).join('')+'</div>';
+  return '<div class="fdx-row '+(sel?'sel':'')+'"><input type="checkbox" '+(sel?'checked':'')+' onchange="IASDData.toggle('+jq(id)+')" aria-label="Selecionar"><div class="fdx-tx"><b>'+esc(short(c.t(r)||id,80))+'</b><small>'+esc(short(c.s(r)||String(id),100))+'</small></div><div class="fdx-act">'+
+  (c.move?'<button class="fdx-b" title="Mover para cima" onclick="IASDData.move('+jq(id)+',-1)">↑</button><button class="fdx-b" title="Mover para baixo" onclick="IASDData.move('+jq(id)+',1)">↓</button>':'')+
+  '<button class="fdx-b" onclick="IASDData.edit('+jq(id)+')">Editar</button><button class="fdx-b" onclick="IASDData.dup('+jq(id)+')">Duplicar</button><button class="fdx-b dan" onclick="IASDData.del('+jq(id)+')">Excluir</button></div></div>'}).join('')+'</div>';
  if(D.more[c.k]&&!D.q)h+='<div style="text-align:center;margin-top:10px"><button class="fdx-b" onclick="IASDData.loadMore()">'+(D.loading?'Carregando…':'Carregar mais')+'</button></div>';
  return h;
 }

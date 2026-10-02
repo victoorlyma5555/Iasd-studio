@@ -3,6 +3,7 @@
 (function(){
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const cloud=()=>window.iasdCloud||null;
 const user=()=>{try{return typeof window.iasdCurrentUser==='function'?window.iasdCurrentUser():null}catch(e){return null}};
 const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canStudy(cloudRole)}catch(e){return false}};
@@ -110,7 +111,7 @@ function homeHTML(){
  const cs=S.courses||[];
  return '<div class="es-hero"><div><span class="es-kick">ESTUDO BÍBLICO</span><h1>Sala de <em>Estudo</em></h1><p>Estude sozinho ou ao vivo com sua classe — no PC ou no celular, com voz e vídeo, tudo sincronizado.</p></div><span class="es-beta">TESTE · só fundador</span></div>'
  +'<div class="es-grid">'
- +'<section class="pg-card"><h2 class="es-h">📚 Meus cursos</h2>'+(cs.length?cs.map(c=>{const n=c.lessons.length;return '<button class="es-course" onclick="IASDEstudo.openCourse(\''+c.id+'\')"><b>'+esc(c.title)+'</b><small>'+n+' lição(ões)</small><span>›</span></button>'}).join(''):'<p class="muted">Nenhum curso ainda.</p>')
+ +'<section class="pg-card"><h2 class="es-h">📚 Meus cursos</h2>'+(cs.length?cs.map(c=>{const n=c.lessons.length;return '<button class="es-course" onclick="IASDEstudo.openCourse('+jq(c.id)+')"><b>'+esc(c.title)+'</b><small>'+n+' lição(ões)</small><span>›</span></button>'}).join(''):'<p class="muted">Nenhum curso ainda.</p>')
  +'<button class="pg-ghost es-wide" onclick="IASDEstudo.newCourse()">＋ Novo curso</button></section>'
  +'<section class="pg-card"><h2 class="es-h">🎥 Sala ao vivo</h2>'
  +(S.room?'<p class="muted">Você está na sala <b>'+esc(S.room.code)+'</b>.</p><button class="pg-gold es-wide" onclick="IASDEstudo.backToRoom()">Voltar à sala</button>'
@@ -159,7 +160,7 @@ function optVals(b,P){const v=((P.a||{})[b.id]||'');if(b.kind==='vf'){const a=v.
 function fmtAns(b,v){if(b.kind==='vf')return b.opts.map((o,i)=>(v.split(',')[i]||'—')+' · '+o).join('\n');if(b.kind==='x'){const i=+v;return isNaN(i)||v===''?'':b.opts[i]}return v}
 function optsHTML(b,P,editing){
  const v=optVals(b,P),dis=editing?' disabled':'';
- if(b.kind==='vf')return '<div class="es-opts">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
+ if(b.kind==='vf')return '<div class="es-opts">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
  return '<div class="es-opts">'+b.opts.map((o,i)=>'<label class="es-opt"><input type="radio"'+dis+' name="o-'+esc(b.id)+'" '+(String(v)===String(i)?'checked':'')+' onchange="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
 }
 function guideHTML(b){
@@ -174,10 +175,10 @@ function blockHTML(b,i,li,P,editing){
  let ctl;
  if(editing)ctl=gl(b,i);
  else{ctl='<span class="es-bctl">';if(R&&R.host){ctl+='<button onclick="IASDEstudo.setPos('+i+')" title="Levar a turma para cá">▶ Levar a turma</button>';if(b.t==='q')ctl+='<button onclick="IASDEstudo.challenge(\'auto\','+i+')" title="Soltar um desafio sobre esta pergunta">🎯 Desafio</button>'}
- if(host&&b.t==='q'&&!editing)ctl+='<button class="es-exb" onclick="IASDEstudo.explain(\''+esc(b.id)+'\')" title="Explicação pronta com o ensino adventista">💡 Explicação</button>';ctl+='</span>'}
+ if(host&&b.t==='q'&&!editing)ctl+='<button class="es-exb" onclick="IASDEstudo.explain('+jq(b.id)+')" title="Explicação pronta com o ensino adventista">💡 Explicação</button>';ctl+='</span>'}
  const cls='es-b es-'+b.t+(cur?' es-cur':'');
  if(b.t==='q'){
-  const chips=(b.refs||[]).length?'<div class="es-chips">'+b.refs.map((r,ri)=>'<button class="es-chip'+(S.openV[li+':'+b.id+':'+ri]?' on':'')+'" onclick="IASDEstudo.toggleVerse(\''+li+':'+b.id+':'+ri+'\',\''+esc(r).replace(/'/g,'')+'\')">📖 '+esc(r)+'</button>').join('')+'</div>'+b.refs.map((r,ri)=>'<div class="es-vt" data-vk="'+li+':'+b.id+':'+ri+'"></div>').join(''):'';
+  const chips=(b.refs||[]).length?'<div class="es-chips">'+b.refs.map((r,ri)=>'<button class="es-chip'+(S.openV[li+':'+b.id+':'+ri]?' on':'')+'" onclick="IASDEstudo.toggleVerse('+jq(li+':'+b.id+':'+ri)+','+jq(r)+')">📖 '+esc(r)+'</button>').join('')+'</div>'+b.refs.map((r,ri)=>'<div class="es-vt" data-vk="'+li+':'+b.id+':'+ri+'"></div>').join(''):'';
   const ans=(P.a||{})[b.id]||'';
   return '<div class="'+cls+'" data-bi="'+i+'"><div class="es-bh"><b>❓ '+esc(b.text)+'</b>'+ctl+'</div>'+chips
    +(host?guideHTML(b):'')
@@ -187,7 +188,7 @@ function blockHTML(b,i,li,P,editing){
  }
  if(b.t==='v'){
   const key=li+':'+b.id,open=S.openV[key];
-  return '<div class="'+cls+'" data-bi="'+i+'"><div class="es-bh"><button class="es-vbtn" onclick="IASDEstudo.toggleVerse(\''+key+'\',\''+esc(b.ref).replace(/'/g,'')+'\')">📖 '+esc(b.ref)+'</button>'+ctl+'</div><div class="es-vt" data-vk="'+esc(key)+'">'+(open||'')+'</div></div>';
+  return '<div class="'+cls+'" data-bi="'+i+'"><div class="es-bh"><button class="es-vbtn" onclick="IASDEstudo.toggleVerse('+jq(key)+','+jq(b.ref)+')">📖 '+esc(b.ref)+'</button>'+ctl+'</div><div class="es-vt" data-vk="'+esc(key)+'">'+(open||'')+'</div></div>';
  }
  if(b.t==='note')return '<div class="'+cls+'" data-bi="'+i+'"><div class="es-bh"><b>'+esc(b.h||'')+'</b>'+ctl+'</div><p class="es-nt-p">'+esc(b.text).replace(/\n/g,'<br>')+'</p></div>';
  if(b.t==='check'){const on=(((P.a||{})[b.id])||'').split(',');return '<div class="'+cls+'" data-bi="'+i+'"><div class="es-bh"><b>✅ '+esc(b.h||'')+'</b>'+ctl+'</div>'+(b.items||[]).map((t,k)=>'<label class="es-ck"><input type="checkbox" '+(on.includes(String(k))?'checked':'')+' onchange="IASDEstudo.toggleCheck(\''+b.id+'\','+k+')"><span>'+esc(t)+'</span></label>').join('')+'</div>'}
@@ -202,7 +203,7 @@ function sendState(b,P){
 function sendBar(b,P){
  const st=sendState(b,P),R=S.room,lbl=R?'Enviar':'Salvar no perfil';
  const vd=st==='ok'&&S.verdict[b.id]?S.verdict[b.id].r:'';
- return '<div class="es-sendbar" data-sb="'+esc(b.id)+'" data-st="'+st+'" data-v="'+vd+'"><button class="es-send" onclick="IASDEstudo.sendAns(\''+esc(b.id)+'\')"'+(st==='empty'?' disabled':'')+'>'+(st==='ok'?'✔ ':'➤ ')+(st==='ok'?(R?'Enviado':'Salvo'):(st==='chg'?(R?'Enviar de novo':'Salvar de novo'):lbl))+'</button><small>'+(st==='empty'?'Escreva ou escolha sua resposta.':st==='ok'?(S.verdict[b.id]?S.verdict[b.id].msg:(R?'O dirigente já pode ver.':'Guardado no seu perfil.')):st==='chg'?'Você mudou a resposta.':(R?'O dirigente só vê quando você envia.':'Guarde no seu perfil.'))+'</small></div>'}
+ return '<div class="es-sendbar" data-sb="'+esc(b.id)+'" data-st="'+st+'" data-v="'+vd+'"><button class="es-send" onclick="IASDEstudo.sendAns('+jq(b.id)+')"'+(st==='empty'?' disabled':'')+'>'+(st==='ok'?'✔ ':'➤ ')+(st==='ok'?(R?'Enviado':'Salvo'):(st==='chg'?(R?'Enviar de novo':'Salvar de novo'):lbl))+'</button><small>'+(st==='empty'?'Escreva ou escolha sua resposta.':st==='ok'?(S.verdict[b.id]?S.verdict[b.id].msg:(R?'O dirigente já pode ver.':'Guardado no seu perfil.')):st==='chg'?'Você mudou a resposta.':(R?'O dirigente só vê quando você envia.':'Guarde no seu perfil.'))+'</small></div>'}
 function paintSend(bid){
  const L=lessonSrc();if(!L)return;const li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;
  document.querySelectorAll('[data-sb="'+bid+'"]').forEach(el=>{el.outerHTML=sendBar(b,lp(li))})}
@@ -379,7 +380,7 @@ async function startRoom(code,host,opts){
   R.hpT=setTimeout(()=>{if(S.room!==R||Object.values(R.peers).some(p=>p.host))return;try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}clearRoom();leave(true);S.view='home';paint();toast('Sala fechada: o dirigente ficou suspenso por mais de '+SUSP_MIN+' min.')},ms)});
  ch.on('broadcast',{event:'rx'},({payload})=>floatReact(payload.e,payload.name));
  ch.on('broadcast',{event:'sig'},({payload})=>{if(payload.to===me)onSig(payload)});
- const onSync=()=>{R.syncT=0;const st=ch.presenceState(),prev=R.peers;R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&st[k][0])R.peers[k]=st[k][0]});
+ const onSync=()=>{R.syncT=0;const st=ch.presenceState(),prev=R.peers;R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&/^[\w-]{1,64}$/.test(k)&&st[k][0])R.peers[k]=st[k][0]});
   Object.keys(R.peers).forEach(k=>{const p=R.peers[k];if(p.host){R.hostSeen=true;if(R.hpT){clearTimeout(R.hpT);R.hpT=0;toast('O dirigente voltou à sala.')}}if(p.hand&&!(prev[k]&&prev[k].hand))handFx(p.name||'Alguém',false)});
   Object.keys(R.voice?R.voice.pcs:{}).forEach(id=>{if(!R.peers[id])closePeer(id)});
   paintBar();paintDock();syncVoicePeers()};
@@ -418,8 +419,8 @@ function paintReveals(){
  document.querySelectorAll('[data-rv]').forEach(el=>{
   const bid=el.dataset.rv,n=ansCount(bid);
   let h=n?'<small>'+n+(n===1?' enviou':' enviaram')+(R.host?' de '+(Object.keys(R.peers).length+1):'')+'</small>':'<small>Ninguém enviou ainda</small>';
-  if(R.host)h+=' <button class="es-rvb" onclick="IASDEstudo.revealToggle(\''+bid+'\')">🎬 '+(R.rev[bid]?'Revelar de novo':'Revelar respostas')+'</button>';
-  else if(R.rev[bid])h+=' <button class="es-rvb" onclick="IASDEstudo.openStage(\''+bid+'\')">👁 Ver respostas</button>';
+  if(R.host)h+=' <button class="es-rvb" onclick="IASDEstudo.revealToggle('+jq(bid)+')">🎬 '+(R.rev[bid]?'Revelar de novo':'Revelar respostas')+'</button>';
+  else if(R.rev[bid])h+=' <button class="es-rvb" onclick="IASDEstudo.openStage('+jq(bid)+')">👁 Ver respostas</button>';
   el.innerHTML=h;
  });
 }
@@ -474,9 +475,9 @@ function paintBar(){
   +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" data-tg="rx" aria-label="Reações"><i>😊</i><small>Reações</small></button>')
   +(R.host?'<button class="es-bt es-gear'+(R.hostOpen?' on':'')+'" onclick="IASDEstudo.toggleHost()" aria-label="Painel do dirigente" title="Painel do dirigente"><i>⚙</i><small>Painel</small></button>':'')
   +'<button class="es-bt es-exit" onclick="IASDEstudo.leaveAsk()" aria-label="'+(R.host?'Encerrar a sala':'Sair da sala')+'" title="'+(R.host?'Encerrar a sala':'Sair da sala')+'">'+(R.host?'Encerrar':'Sair')+'</button></div>'
-  +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react(\''+e+'\')">'+e+'</button>').join('')+'</div>':'')
+  +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react('+jq(e)+')">'+e+'</button>').join('')+'</div>':'')
   +'<div class="es-panel" id="es-panel" '+(R.listOpen?'':'hidden')+'>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.mic?' 🎙':'')+(p.cam?' 📷':'')+(p.away?' <small class="es-aw">fora da lição</small>':'')
-   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
+   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom('+jq(p.id)+')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
  paintHost();paintChat();paintAway();
 }
 /* clicar fora de qualquer caixinha da sala (participantes, reações, chat) fecha a caixinha */
@@ -599,7 +600,7 @@ function dropAudio(id){const V=S.room&&S.room.voice;if(!V)return;const a=V.aud[i
 function watchLevel(id,ms){const V=S.room&&S.room.voice;if(!V)return;const n=ms.getAudioTracks().length;const old=V.an[id];if(old&&old.ms===ms&&old.n===n)return;
  const c=actx();if(!c||!n)return;dropLevel(id);
  try{const src=c.createMediaStreamSource(ms),an=c.createAnalyser();an.fftSize=512;an.smoothingTimeConstant=.3;src.connect(an);V.an[id]={ms,src,an,n,buf:new Uint8Array(an.fftSize),fb:new Uint8Array(an.frequencyBinCount),hw:0,on:false}}catch(e){}}
-function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.remove('talk'))}
+function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+esc(id)+'"]').forEach(el=>el.classList.remove('talk'))}
 /* Mesmo ambiente: conexão direta pela mesma rede (candidatos 'host' dos dois lados). Os dois microfones continuam ligados;
    só baixamos o volume com que cada aparelho toca a voz do outro, o que reduz o ganho do ciclo alto-falante → microfone. */
 async function colocScan(){
@@ -646,7 +647,7 @@ function handleMf(stage,fromId){
 setInterval(()=>{const R=S.room,V=R&&R.voice;if(!V)return;Object.keys(V.an).forEach(id=>{const o=V.an[id];try{o.an.getByteTimeDomainData(o.buf)}catch(e){return}
  let m=0;for(let i=0;i<o.buf.length;i++){const d=Math.abs(o.buf[i]-128);if(d>m)m=d}const on=m>9&&!R.susp;
   if(id!=='me')howl(id,o,m,R);
- if(on!==o.on){o.on=on;document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.toggle('talk',on))}})},180);
+ if(on!==o.on){o.on=on;document.querySelectorAll('.es-tile[data-t="'+esc(id)+'"]').forEach(el=>el.classList.toggle('talk',on))}})},180);
 function unlockAudio(){const R=S.room,V=R&&R.voice;try{if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}catch(e){}
  if(V){if(Object.values(V.aud).some(a=>a.paused)){R.needTap=false;applyAudio()}}
  document.querySelectorAll('.es-tile video').forEach(v=>{if(v.paused&&v.play)v.play().catch(()=>{})})}
@@ -668,7 +669,7 @@ function paintDock0(){
  box.innerHTML=((lobby||mine)?tileHTML('me',myName()+' (você)',V&&V.mic,V&&V.cam,true,R.host):'')+ids.map(id=>tileHTML(id,R.peers[id].name,R.peers[id].mic,R.peers[id].cam,false,R.peers[id].host)).join('');
  bindTiles(box);
 }
-function tileHTML(id,name,mic,cam,self,host){const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';return '<div class="es-tile'+(cam?' cam':'')+'" data-t="'+id+'"><div class="es-pic"><video autoplay playsinline muted></video><span class="es-av" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="4.3"/><path d="M3.4 21.5c.5-4.8 4.2-7.3 8.6-7.3s8.1 2.5 8.6 7.3z"/></svg></span>'
+function tileHTML(id,name,mic,cam,self,host){const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby';return '<div class="es-tile'+(cam?' cam':'')+'" data-t="'+esc(id)+'"><div class="es-pic"><video autoplay playsinline muted></video><span class="es-av" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="4.3"/><path d="M3.4 21.5c.5-4.8 4.2-7.3 8.6-7.3s8.1 2.5 8.6 7.3z"/></svg></span>'
   +(self?'':'<span class="es-tc"><button type="button" data-a="m" title="Silenciar só no seu aparelho" aria-label="Silenciar esta pessoa">'+(R.vmute[id]?'🔇':'🔈')+'</button><button type="button" data-a="v" title="Ocultar o vídeo" aria-label="Ocultar vídeo desta pessoa">'+(R.vhide[id]?'👁':'🙈')+'</button></span>')
   +'</div><small class="es-nm">'+((cam||mic)?'<i class="es-dot" title="Ao vivo" aria-label="Ao vivo"></i>':'')+'<span class="es-nt">'+esc(name||'?')+(host?' · dirigente':'')+(!mic&&!cam&&lobby?' · só assistindo':'')+(!self&&V&&V.pcs[id]&&V.pcs[id].connectionState!=='connected'&&V.pcs[id].connectionState!=='new'?' ⏳':'')+'</span></small></div>'}
 function openGal(){const R=S.room;if(!R||R.mode==='lobby')return;R.gal=true;paintGal()}
@@ -747,10 +748,10 @@ function paintHost(){
   +'<section><h4>Momento da sala · '+(peers.length+1)+' pessoa'+(peers.length?'s':'')+'</h4><div class="es-ptg">'+tile('💬','Bate-papo com câmeras','IASDEstudo.setMode(\'lobby\')',lobby?'on':'')+tile('📖','Estudo da lição','IASDEstudo.setMode(\'study\')',lobby?'':'on')+'</div></section>'
   +'<section><h4>Atividades</h4><p class="es-pq">'+(q?'Pergunta atual: <b>'+esc(q.text.length>90?q.text.slice(0,90)+'…':q.text)+'</b>':'Toque em “▶ Levar a turma” numa pergunta da lição para ligar as atividades a ela.')+'</p>'
   +'<div class="es-ptg">'+tile('🎯','Soltar desafio','IASDEstudo.setChooser()',R.chOpen?'on':'')+tile('🎬','Revelar respostas','IASDEstudo.revealCur()')+tile('☕','Intervalo 5 min','IASDEstudo.breakGo(300)')+tile('☕','Intervalo 10 min','IASDEstudo.breakGo(600)')+'</div>'
-  +(R.chOpen?'<div class="es-scope"><span>Sobre</span><button type="button" class="'+(sc0==='tema'?'':'on')+'" onclick="IASDEstudo.setScope(\'q\')">Esta pergunta</button><button type="button" class="'+(sc0==='tema'?'on':'')+'" onclick="IASDEstudo.setScope(\'tema\')">Tema da lição</button></div><div class="es-pchips">'+[['auto','🎲','Surpresa'],['verso','✍️','Completar o versículo'],['ref','📍','Qual é a referência?'],['vf','✔✖','Verdadeiro ou falso'],['quiz','🧠','Múltipla escolha da lição'],['ord','🔢','Colocar na ordem'],['cloud','☁️','Nuvem de palavras']].map(a=>'<button type="button" onclick="IASDEstudo.challenge(\''+a[0]+'\')"><i>'+a[1]+'</i>'+a[2]+'</button>').join('')+'</div>':'')+'</section>'
+  +(R.chOpen?'<div class="es-scope"><span>Sobre</span><button type="button" class="'+(sc0==='tema'?'':'on')+'" onclick="IASDEstudo.setScope(\'q\')">Esta pergunta</button><button type="button" class="'+(sc0==='tema'?'on':'')+'" onclick="IASDEstudo.setScope(\'tema\')">Tema da lição</button></div><div class="es-pchips">'+[['auto','🎲','Surpresa'],['verso','✍️','Completar o versículo'],['ref','📍','Qual é a referência?'],['vf','✔✖','Verdadeiro ou falso'],['quiz','🧠','Múltipla escolha da lição'],['ord','🔢','Colocar na ordem'],['cloud','☁️','Nuvem de palavras']].map(a=>'<button type="button" onclick="IASDEstudo.challenge('+jq(a[0])+')"><i>'+a[1]+'</i>'+a[2]+'</button>').join('')+'</div>':'')+'</section>'
   +'<section><h4>Controle dos alunos</h4>'+sw('Travar versículos','Só veem os versículos que você abrir.',L.v,'v')+sw('Travar a lição','Ficam onde você estiver, sem leitura livre.',L.f,'f')+sw('Pausar o chat','Só você escreve no chat.',L.c,'c')+sw('Pausar as reações','Esconde o botão de reações.',L.r,'r')
   +'<div class="es-ptg">'+tile('🔇','Pedir silêncio a todos','IASDEstudo.muteAll()')+'</div></section>'
-  +'<section><h4>Mãos levantadas</h4>'+(hands.length?hands.map(([id,p])=>'<div class="es-hand"><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b><button type="button" onclick="IASDEstudo.callPeer(\''+id+'\')">🙋 Chamar</button></div>').join(''):'<p class="es-note">Ninguém pediu a palavra.</p>')+'</section>'
+  +'<section><h4>Mãos levantadas</h4>'+(hands.length?hands.map(([id,p])=>'<div class="es-hand"><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b><button type="button" onclick="IASDEstudo.callPeer('+jq(id)+')">🙋 Chamar</button></div>').join(''):'<p class="es-note">Ninguém pediu a palavra.</p>')+'</section>'
   +'<section><h4>Convidar</h4><div class="es-code">'+esc(R.code)+'</div><div class="es-ptg">'+tile('🟢','Enviar pelo WhatsApp','IASDEstudo.shareWA()','wa')+tile('🔗','Copiar link','IASDEstudo.copyInvite()')+(navigator.share?tile('📤','Mais opções…','IASDEstudo.shareNative()'):'')+'</div></section>'
   +'<section><div class="es-ptg">'+tile('⛔','Encerrar sala para todos','IASDEstudo.endRoom()','danger')+'</div></section></div>';
  if(!ov){ov=document.createElement('div');ov.id='es-hdr';ov.className='es-pop-ov';ov.addEventListener('click',e=>{if(e.target===ov)toggleHost()});document.body.appendChild(ov)}

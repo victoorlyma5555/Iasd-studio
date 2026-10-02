@@ -4,6 +4,7 @@
 (function(){
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const P={
  bell:'M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0',
  send:'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
@@ -112,7 +113,7 @@ function alerts(){
 }
 const alStaff=()=>typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.canSendSoundAlert(cloudRole);
 const alDelOk=()=>typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.canDeleteAlert(cloudRole);
-const delBtn=x=>alDelOk()?'<button type="button" class="pg-danger" style="margin-top:8px" onclick="IASDPages.alDel(\''+esc(x.id)+'\')">'+I('trash')+'Apagar este alerta</button>':'';
+const delBtn=x=>alDelOk()?'<button type="button" class="pg-danger" style="margin-top:8px" onclick="IASDPages.alDel('+jq(x.id)+')">'+I('trash')+'Apagar este alerta</button>':'';
 async function alDel(id){
  if(!alDelOk()||!(await IASDDialog.confirm('Apagar este alerta?')))return;
  const r=await cloud.from('iasd_sound_alerts').delete().eq('id',id).select();
@@ -597,7 +598,7 @@ function esBody(){
  const extra=[...new Set(all.map(e=>e.area).filter(a=>!AREAS.some(x=>x[0].toLowerCase()===a.toLowerCase())))];
  const areas=[...AREAS,...extra.map(a=>[a,'users','#64748b'])];
  const fld=(ic,label,id,html,ch)=>'<label class="es-f">'+I(ic,'blue')+'<span>'+label+'</span><div class="pg-sel"><select id="'+id+'" onchange="'+ch+'">'+html+'</select></div></label>';
- const chips='<div class="es-areas">'+areas.map(a=>{const n=all.filter(e=>e.area.toLowerCase()===a[0].toLowerCase()&&inMonth(e)).length;return '<button class="es-area '+(ES.area.toLowerCase()===a[0].toLowerCase()?'on':'')+'" style="--ac:'+a[2]+'" onclick="IASDPages.esSet(\'area\',\''+esc(a[0])+'\')"><span class="es-ai">'+I(a[1])+'</span><span><b>'+esc(a[0])+'</b><small>'+n+' escalado'+(n===1?'':'s')+'</small></span></button>'}).join('')+'</div>';
+ const chips='<div class="es-areas">'+areas.map(a=>{const n=all.filter(e=>e.area.toLowerCase()===a[0].toLowerCase()&&inMonth(e)).length;return '<button class="es-area '+(ES.area.toLowerCase()===a[0].toLowerCase()?'on':'')+'" style="--ac:'+a[2]+'" onclick="IASDPages.esSet(\'area\','+jq(a[0])+')"><span class="es-ai">'+I(a[1])+'</span><span><b>'+esc(a[0])+'</b><small>'+n+' escalado'+(n===1?'':'s')+'</small></span></button>'}).join('')+'</div>';
  const aName=ES.area==='all'?'todas as áreas':ES.area;
  const seg=(v,l)=>'<button class="'+(ES.view===v?'on':'')+'" onclick="IASDPages.esSet(\'view\',\''+v+'\')">'+l+'</button>';
  let title=MESES[ES.m]+' de '+ES.y,body='';

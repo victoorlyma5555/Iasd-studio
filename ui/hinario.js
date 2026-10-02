@@ -3,6 +3,7 @@
 (function(){
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
 const FALLBACK={versao:2,edicoes:[
  {id:'antigo',nome:'Hinário Adventista',sub:'Edição antiga (1996)',adapter:'local',urls:['/data/hinario-hasd.json']},
@@ -104,7 +105,7 @@ function detailHTML(){
 function page(){
  setTimeout(mount,0);
  const m=(S.manifest||FALLBACK).edicoes;
- return '<div class="pg pg-hinario hn"><div class="hn-head"><div><span class="hn-kick">HINÁRIO ADVENTISTA</span><h1>Letras dos hinos</h1><p>Pesquise pelo número, pelo nome ou por um trecho da letra.</p></div><div class="hn-eds" id="hn-eds">'+m.map(e=>'<button class="'+(e.id===S.ed?'on':'')+'" onclick="IASDHinario.edition(\''+esc(e.id)+'\')"><b>'+esc(e.nome)+'</b><small>'+esc(e.sub||'')+'</small></button>').join('')+'</div></div>'+
+ return '<div class="pg pg-hinario hn"><div class="hn-head"><div><span class="hn-kick">HINÁRIO ADVENTISTA</span><h1>Letras dos hinos</h1><p>Pesquise pelo número, pelo nome ou por um trecho da letra.</p></div><div class="hn-eds" id="hn-eds">'+m.map(e=>'<button class="'+(e.id===S.ed?'on':'')+'" onclick="IASDHinario.edition('+jq(e.id)+')"><b>'+esc(e.nome)+'</b><small>'+esc(e.sub||'')+'</small></button>').join('')+'</div></div>'+
  '<div class="hn-bar"><label class="hn-search"><span>⌕</span><input id="hn-q" type="search" inputmode="search" autocomplete="off" placeholder="Número (ex.: 123) ou nome do hino" value="'+esc(S.q)+'" oninput="IASDHinario.q(this.value)"></label><label class="hn-chk"><input type="checkbox" '+(S.deep?'checked':'')+' onchange="IASDHinario.deep(this.checked)"> Buscar dentro das letras</label><label class="hn-chk"><input type="checkbox" '+(S.favOnly?'checked':'')+' onchange="IASDHinario.favOnly(this.checked)"> Só favoritos</label></div>'+
  '<div class="hn-main"><aside class="hn-list" id="hn-list">'+listHTML()+'</aside><section class="hn-view" id="hn-view">'+detailHTML()+'</section></div>'+
  '<p class="hn-note">As letras vêm de fontes abertas da internet e ficam guardadas neste aparelho. Os direitos dos textos pertencem aos seus titulares.</p></div>';

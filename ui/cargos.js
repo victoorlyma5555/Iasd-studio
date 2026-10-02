@@ -3,6 +3,7 @@
 (function(){
 'use strict';
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jq=v=>E(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 let data=null,loading=false,err='',tab='pessoas',q='',modal=null;
 const cat=()=>(window.IASDAccess&&IASDAccess.catalog)||[];
 const flat=()=>cat().flatMap(g=>g.items);
@@ -23,11 +24,11 @@ function pessoas(){const list=(data.members||[]).filter(m=>{const t=(m.full_name
  const ini=n=>E((String(n||'?').trim()[0]||'?').toUpperCase());
  return '<div class="cg-bar"><label class="pg-search cg-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="cg-q" type="search" placeholder="Buscar pessoa…" value="'+E(q)+'" oninput="IASDCargos.search(this.value)"></label><span class="pg-sub">'+list.length+' pessoa'+(list.length===1?'':'s')+'</span></div>'+
   (list.length?'<div class="cg-list">'+list.map(m=>'<article class="pg-card cg-card"><div class="cg-who"><span class="cg-av">'+ini(m.full_name)+'</span><div><b>'+E(m.full_name)+'</b><small>'+E(m.email||'')+'</small></div>'+(adm.includes(m.role)?'<span class="cg-badge">'+RL[m.role]+'</span>':'')+'</div>'+
-   (adm.includes(m.role)?'<p class="cg-note">Cargo administrativo: o acesso vem do próprio cargo.</p>':'<div class="cg-chips">'+chips(m)+'</div><button type="button" class="pg-ghost cg-btn" onclick="IASDCargos.editMember(\''+E(m.user_id)+'\')">Editar acessos</button>')+'</article>').join('')+'</div>':'<p class="pg-empty">Ninguém encontrado.</p>')}
+   (adm.includes(m.role)?'<p class="cg-note">Cargo administrativo: o acesso vem do próprio cargo.</p>':'<div class="cg-chips">'+chips(m)+'</div><button type="button" class="pg-ghost cg-btn" onclick="IASDCargos.editMember('+jq(m.user_id)+')">Editar acessos</button>')+'</article>').join('')+'</div>':'<p class="pg-empty">Ninguém encontrado.</p>')}
 function cargos(){const cs=data.cargos||[];
  return '<div class="cg-bar"><button type="button" class="pg-blue" onclick="IASDCargos.editCargo()">＋ Novo cargo</button><span class="pg-sub">Opcional: agrupe funções que você repete muito.</span></div>'+
   (cs.length?cs.map(c=>{const n=(data.members||[]).filter(m=>(m.cargo_ids||[]).includes(c.id)).length;
-   return '<article class="pg-card cg-card"><div class="cg-who"><div><b>'+E(c.name)+'</b><small>'+n+' pessoa'+(n===1?'':'s')+'</small></div></div><div class="cg-chips">'+((c.perms||[]).map(k=>'<span class="cg-chip">'+E(label(k))+'</span>').join('')||'<span class="cg-none">Sem permissões</span>')+'</div><div class="cg-act"><button type="button" class="cg-btn" onclick="IASDCargos.editCargo(\''+E(c.id)+'\')">Editar</button><button type="button" class="cg-btn cg-del" onclick="IASDCargos.delCargo(\''+E(c.id)+'\')">Apagar</button></div></article>'}).join(''):'<p class="cg-none">Nenhum cargo ainda. Crie o primeiro, como “Diretor do Culto”.</p>')}
+   return '<article class="pg-card cg-card"><div class="cg-who"><div><b>'+E(c.name)+'</b><small>'+n+' pessoa'+(n===1?'':'s')+'</small></div></div><div class="cg-chips">'+((c.perms||[]).map(k=>'<span class="cg-chip">'+E(label(k))+'</span>').join('')||'<span class="cg-none">Sem permissões</span>')+'</div><div class="cg-act"><button type="button" class="cg-btn" onclick="IASDCargos.editCargo('+jq(c.id)+')">Editar</button><button type="button" class="cg-btn cg-del" onclick="IASDCargos.delCargo('+jq(c.id)+')">Apagar</button></div></article>'}).join(''):'<p class="cg-none">Nenhum cargo ainda. Crie o primeiro, como “Diretor do Culto”.</p>')}
 function page(){
  if(!canGive())return '<div class="pg"><div class="pg-card"><h2 class="pg-h">Acesso restrito</h2><p class="pg-sub">Somente fundador, cofundador e administrador gerenciam cargos e acessos.</p></div></div>';
  if(!data&&!loading&&!err)setTimeout(load,0);

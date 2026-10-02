@@ -3,6 +3,7 @@
 (function(){
 'use strict';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const $=id=>document.getElementById(id);
 const stage=()=>$('game-stage');
 const E=()=>window.IASDGameEngine;

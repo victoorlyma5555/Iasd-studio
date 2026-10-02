@@ -9,8 +9,8 @@
 // POST /api/push {alert_id,kind:'alert'|'reply'|'member'} com "Authorization: Bearer <token do usuário>"
 const SB=(process.env.SUPABASE_URL||'https://gtsaaixuampeaivugxdm.supabase.co').replace(/\/$/,'');
 const TARGET_RE=/⁣@@([0-9a-f-]{36})\|([^⁣]*)⁣/;
-const UUID=/^[0-9a-f-]{36}$/i;
-function cors(req,res){const o=String(req.headers.origin||'');if(/^https:\/\/(www\.)?iasdapp\.com\.br$/.test(o)||/^https:\/\/iasd-studio[\w-]*\.vercel\.app$/.test(o)){res.setHeader('Access-Control-Allow-Origin',o);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Headers','authorization,content-type');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS')}}
+const UUID=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+function cors(req,res){const o=String(req.headers.origin||'');if(/^https:\/\/(www\.)?iasdapp\.com\.br$/.test(o)){res.setHeader('Access-Control-Allow-Origin',o);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Headers','authorization,content-type');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS')}}
 async function sb(path,key,opt={}){const r=await fetch(SB+path,{...opt,headers:{apikey:key,...((opt.token||!/^sb_/.test(key))?{Authorization:'Bearer '+(opt.token||key)}:{}),'Content-Type':'application/json',...(opt.headers||{})}});const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch{}return {ok:r.ok,status:r.status,json:j}}
 module.exports=async function handler(req,res){
  cors(req,res);res.setHeader('Cache-Control','no-store');

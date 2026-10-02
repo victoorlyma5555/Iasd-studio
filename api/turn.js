@@ -13,6 +13,7 @@ const FALLBACK=[
 async function withTimeout(url,opt,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{return await fetch(url,{...opt,signal:c.signal})}finally{clearTimeout(t)}}
 module.exports=async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
+ if(req.method!=='GET'&&req.method!=='HEAD'){res.setHeader('Allow','GET, HEAD');return res.status(405).end()}
  try{
   const md=process.env.METERED_DOMAIN,mk=process.env.METERED_API_KEY;
   if(md&&mk&&/^[\w.-]+$/.test(md)){
@@ -26,7 +27,7 @@ module.exports=async function handler(req,res){
   ],source:'metered-user'});
   const cid=process.env.CF_TURN_KEY_ID,ct=process.env.CF_TURN_API_TOKEN;
   if(cid&&ct&&/^[\w-]+$/.test(cid)){
-   const r=await withTimeout('https://rtc.live.cloudflare.com/v1/turn/keys/'+cid+'/credentials/generate-ice-servers',{method:'POST',headers:{Authorization:'Bearer '+ct,'Content-Type':'application/json'},body:JSON.stringify({ttl:86400})},5000);
+   const r=await withTimeout('https://rtc.live.cloudflare.com/v1/turn/keys/'+cid+'/credentials/generate-ice-servers',{method:'POST',headers:{Authorization:'Bearer '+ct,'Content-Type':'application/json'},body:JSON.stringify({ttl:3600})},5000);
    if(r.ok){const j=await r.json();const list=Array.isArray(j.iceServers)?j.iceServers:(j.iceServers?[j.iceServers]:[]);if(list.length)return res.status(200).json({iceServers:list,source:'cloudflare'})}
   }
  }catch(e){}
