@@ -537,22 +537,56 @@ function parseEsc(str,i){
  let time='';rest=rest.filter(x=>{const t=x.match(/^(\d{1,2}:\d{2})$/);if(t){time=t[1];return false}return true});
  return {i,raw:str,date:dt,name:rest[0]||str,area:rest[1]||'Outras',time};
 }
+/* ---- escalas compartilhadas (Supabase): data.escalas continua sendo a lista de textos; ESC_IDS guarda o id de cada linha ---- */
+let ESC_IDS=[],ESC_CLOUD=false,ESC_UID=null,ESC_CH=null,ESC_BUSY=false;
+const escLogged=()=>typeof cloudUser!=='undefined'&&cloudUser&&typeof cloud!=='undefined'&&cloud;
+const escSave=()=>{try{localStorage.setItem('iasd-studio',JSON.stringify(data))}catch(e){}};
+async function escSync(){
+ if(ESC_BUSY)return;
+ if(!escLogged()){if(ESC_CLOUD){ESC_CLOUD=false;ESC_IDS=[];ESC_UID=null;data.escalas=[];escSave();try{if(ES)esRender()}catch(e){}}return}
+ ESC_BUSY=true;
+ try{
+  const uid=cloudUser.id;
+  let r=await cloud.from('iasd_escalas').select('id,line').order('created_at',{ascending:true}).order('id',{ascending:true});
+  if(r.error)return;
+  /* uma vez por aparelho: quem pode adicionar leva para o servidor o que já tinha salvo aqui */
+  const flag='iasd-esc-imported:'+uid;let done=false;try{done=localStorage.getItem(flag)==='1'}catch(e){}
+  if(!done&&escCan('add')){
+   const have=new Set((r.data||[]).map(x=>x.line)),local=(Array.isArray(data.escalas)&&!ESC_CLOUD?data.escalas:[]).filter(x=>typeof x==='string'&&x.trim().length>=8&&!have.has(x));
+   if(local.length){const ins=await cloud.from('iasd_escalas').insert(local.map(line=>({line})));if(!ins.error)r=await cloud.from('iasd_escalas').select('id,line').order('created_at',{ascending:true}).order('id',{ascending:true});else return}
+   try{localStorage.setItem(flag,'1')}catch(e){}
+  }
+  if(r.error)return;
+  ESC_IDS=(r.data||[]).map(x=>x.id);data.escalas=(r.data||[]).map(x=>x.line);ESC_CLOUD=true;ESC_UID=uid;escSave();
+  try{if(document.getElementById('es-root'))esRender()}catch(e){}
+  if(!ESC_CH&&cloud.channel){try{ESC_CH=cloud.channel('iasd-escalas').on('postgres_changes',{event:'*',schema:'public',table:'iasd_escalas'},()=>escSync()).subscribe()}catch(e){}}
+ }finally{ESC_BUSY=false}
+}
+setInterval(()=>{const u=escLogged()?cloudUser.id:null;if(u!==ESC_UID||(!ESC_CLOUD&&u))escSync();},3000);
+setInterval(()=>{if(ESC_CLOUD)escSync()},60000);
+window.addEventListener('iasd-access-changed',()=>escSync());
 function escList(){return (typeof data!=='undefined'&&Array.isArray(data.escalas)?data.escalas:[]).map(parseEsc).filter(e=>e.date)}
 const escCan=k=>!!(typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.canEscala(k,cloudRole));
 const todayD=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
 function escFiltered(list){const today=todayD();return list.filter(e=>(ES.area==='all'||e.area.toLowerCase()===ES.area.toLowerCase())&&(ES.status==='all'||(ES.status==='next'?e.date>=today:e.date<today)))}
-function escalas(){return '<div class="pg pg-escalas"><div id="es-root">'+esBody()+'</div></div>'}
+function escalas(){setTimeout(escSync,0);return '<div class="pg pg-escalas"><div id="es-root">'+esBody()+'</div></div>'}
 function esRender(){const r=document.getElementById('es-root');if(r)r.innerHTML=esBody()}
 function esSet(k,v){if(k==='m'||k==='y')ES[k]=+v;else ES[k]=v;if(k==='m'||k==='y')ES.anchor=new Date(ES.y,ES.m,1);esRender()}
 function esNav(d){if(ES.view==='week'){ES.anchor=new Date(ES.anchor.getFullYear(),ES.anchor.getMonth(),ES.anchor.getDate()+7*d);ES.m=ES.anchor.getMonth();ES.y=ES.anchor.getFullYear()}else{const x=new Date(ES.y,ES.m+d,1);ES.m=x.getMonth();ES.y=x.getFullYear();ES.anchor=x}esRender()}
 function esToday(){const t=new Date();ES.m=t.getMonth();ES.y=t.getFullYear();ES.anchor=new Date(t.getFullYear(),t.getMonth(),t.getDate());esRender()}
 function esAdd(){const ed=ES.editing;if(!escCan(ed!=null?'edit':'add'))return alert('Você não tem permissão para isso.');const g=id=>document.getElementById(id);const d=g('es-d').value,n=g('es-n').value.trim(),a=g('es-a').value.trim(),t=g('es-t').value;if(!d||!n||!a){alert('Preencha data, nome e área.');return}
- const line=d+' — '+n+' — '+a+(t?' — '+t:'');let at;if(ed!=null&&data.escalas[ed]!==undefined){data.escalas[ed]=line;at=ed}else{data.escalas.push(line);at=data.escalas.length-1}ES.editing=null;localStorage.setItem('iasd-studio',JSON.stringify(data));
+ const line=d+' — '+n+' — '+a+(t?' — '+t:'');let at;
+ if(ESC_CLOUD){const bt=document.querySelector('.es-add .pg-blue,.es-add .pg-gold');if(bt)bt.disabled=true;
+  const q=ed!=null&&ESC_IDS[ed]?cloud.from('iasd_escalas').update({line}).eq('id',ESC_IDS[ed]).select('id'):cloud.from('iasd_escalas').insert({line}).select('id');
+  return q.then(async r=>{if(bt)bt.disabled=false;if(r.error||!(r.data||[]).length){alert('Não foi possível salvar: '+(r.error?r.error.message:'sem permissão no servidor'));return}
+   ES.editing=null;await escSync();const dt0=parseEsc(line).date;if(dt0){ES.m=dt0.getMonth();ES.y=dt0.getFullYear();ES.anchor=dt0}
+   ES.area=(AREAS.find(x=>x[0].toLowerCase()===a.toLowerCase())||[a])[0];ES.status='all';esRender();const nn=g('es-n');if(nn)nn.focus()})}
+ if(ed!=null&&data.escalas[ed]!==undefined){data.escalas[ed]=line;at=ed}else{data.escalas.push(line);at=data.escalas.length-1}ES.editing=null;localStorage.setItem('iasd-studio',JSON.stringify(data));
  const dt=parseEsc(data.escalas[at]).date;if(dt){ES.m=dt.getMonth();ES.y=dt.getFullYear();ES.anchor=dt}
  ES.area=(AREAS.find(x=>x[0].toLowerCase()===a.toLowerCase())||[a])[0];ES.status='all';esRender();const nn=g('es-n');if(nn)nn.focus()}
 function esEdit(i){if(!escCan('edit'))return;ES.editing=i;esRender();const f=document.getElementById('es-n');if(f){try{f.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}f.focus()}}
 function esCancel(){ES.editing=null;esRender()}
-async function esDel(i){if(!escCan('delete'))return;if(!(await IASDDialog.confirm('Remover este escalado?')))return;data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
+async function esDel(i){if(!escCan('delete'))return;if(!(await IASDDialog.confirm('Remover este escalado?')))return;if(ESC_CLOUD){const r=await cloud.from('iasd_escalas').delete().eq('id',ESC_IDS[i]).select('id');if(r.error||!(r.data||[]).length){alert('Não foi possível remover: '+(r.error?r.error.message:'sem permissão no servidor'));return}await escSync();esRender();return}data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
 function esExport(){const rows=escFiltered(escList()).filter(e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y).sort((a,b)=>a.date-b.date);const csv='Data;Horário;Nome;Área\n'+rows.map(e=>[isoOf(e.date),e.time,e.name,e.area].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='escalas-'+ES.y+'-'+pad(ES.m+1)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del&&escCan('delete')?'<button class="es-x" onclick="IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
 function esBody(){
