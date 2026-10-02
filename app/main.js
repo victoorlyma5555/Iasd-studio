@@ -21,7 +21,7 @@ async function soundAlertsPoll(){if(!cloud||!cloudUser||!canUseSound()||!compani
 function setupSoundAlertsRealtime(){setupAlertReplyRealtime();const user=cloudUser?.id||null;if(soundAlertChannel&&soundAlertChannelUser===user)return;if(soundAlertChannel){cloud.removeChannel(soundAlertChannel);soundAlertChannel=null}soundAlertChannelUser=user;soundAlertSeen.clear();soundAlertsInitialized=false;if(!cloud||!user||!canUseSound())return;
  // Inicializar histórico antes de assinar para não repetir alertas antigos.
  void soundAlertsPoll().finally(()=>{if(soundAlertChannelUser!==user||!cloudUser||!canUseSound())return;
- soundAlertChannel=cloud.channel('iasd-sound-alerts-'+user).on('postgres_changes',{event:'INSERT',schema:'public',table:'iasd_sound_alerts'},payload=>{void deliverSoundAlert(payload.new)}).subscribe(status=>{if(status==='SUBSCRIBED')void soundAlertsPoll();if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Alertas em tempo real: reconectando; consulta de reserva permanece ativa.')});
+ soundAlertChannel=cloud.channel('iasd-sound-alerts-'+user).on('postgres_changes',{event:'INSERT',schema:'public',table:'iasd_sound_alerts'},payload=>{try{window.dispatchEvent(new CustomEvent('iasd-alert-new',{detail:payload.new}))}catch(e){}void deliverSoundAlert(payload.new)}).subscribe(status=>{if(status==='SUBSCRIBED')void soundAlertsPoll();if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Alertas em tempo real: reconectando; consulta de reserva permanece ativa.')});
  })}
 async function soundHeartbeat(){if(!cloudUser||!canUseSound()||!companionToken)return;try{const avatar=myProfile?.avatar_path?profileMediaUrl(myProfile.avatar_path):String(cloudUser.user_metadata?.avatar_url||'');await companionRequest('/heartbeat',{name:loggedUserName(),email:cloudUser.email||'',role:cloudRole||'usuário',avatar});void flushQueuedAlertReplies();void startAlertReplyLoop()}catch{}}
 let alertReplyLoopOn=false;
@@ -141,7 +141,7 @@ async function refreshSoundAlertThread(){const box=document.getElementById('soun
 async function replySoundAlert(id,text){text=String(text||'').trim();if(!text)return alert('Escreva uma resposta.');if(!cloud||!cloudUser)return;
  const r=await cloud.rpc('iasd_reply_sound_alert',{p_alert_id:id,p_reply:text});
  if(r.error){alert(/function|schema cache|does not exist/i.test(r.error.message||'')?'As respostas ainda não foram ativadas no banco. Rode docs/supabase-alertas-resposta.sql no Supabase.':r.error.message);return}
- refreshSoundAlertThread()}
+ try{window.dispatchEvent(new Event('iasd-alert-changed'))}catch(e){}refreshSoundAlertThread()}
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-alert-reply]');if(!b)return;const id=b.dataset.alertReply;if(b.dataset.quick!==undefined)return void replySoundAlert(id,SOUND_QUICK_REPLIES[+b.dataset.quick]);const input=b.parentElement.querySelector('[data-alert-input]');void replySoundAlert(id,input?.value)});
 let replyChan=null,replyChanUser=null,replyQueue=[],replyShowing=false;
 function replySeenKey(x){return x.id+'|'+x.replied_at}
@@ -156,7 +156,7 @@ function showAlertReplyPopup(){if(replyShowing||!replyQueue.length)return;const 
  ov.querySelector('.arp-ok').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});document.body.append(ov);
  try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch{}
  try{if(document.hidden&&pushState()!=='on'&&window.Notification&&Notification.permission==='granted')new Notification('Resposta da sonoplastia',{body:(x.replied_by_name||'Sonoplastia')+': '+x.reply_message,icon:'/icon-192.png?v=4',tag:'iasd-reply-'+x.id})}catch{}}
-function enqueueAlertReply(x,quiet){if(!x||!x.reply_message||!x.replied_at||x.created_by!==cloudUser?.id)return;if(replySeenGet().has(replySeenKey(x)))return;if(quiet){replySeenAdd(x);return}if(replyQueue.some(q=>replySeenKey(q)===replySeenKey(x)))return;replyQueue.push(x);showAlertReplyPopup()}
+function enqueueAlertReply(x,quiet){if(!x||!x.reply_message||!x.replied_at||x.created_by!==cloudUser?.id)return;if(replySeenGet().has(replySeenKey(x)))return;if(quiet){replySeenAdd(x);return}try{window.dispatchEvent(new CustomEvent('iasd-alert-new',{detail:{reply:true}}))}catch(e){}if(replyQueue.some(q=>replySeenKey(q)===replySeenKey(x)))return;replyQueue.push(x);showAlertReplyPopup()}
 async function catchUpAlertReplies(){if(!cloud||!cloudUser)return;try{const r=await cloud.from('iasd_sound_alerts').select('id,message,created_by,reply_message,replied_by_name,replied_at').eq('created_by',cloudUser.id).not('reply_message','is',null).order('replied_at',{ascending:false}).limit(10);if(r.error)return;const first=!localStorage.getItem('iasd-reply-seen');for(const x of (r.data||[]).reverse()){const old=first||Date.now()-864e5>Date.parse(x.replied_at);enqueueAlertReply(x,old)}}catch{}}
 function setupAlertReplyRealtime(){const u=cloudUser?.id||null;if(replyChan&&replyChanUser===u)return;if(replyChan){cloud.removeChannel(replyChan);replyChan=null}replyChanUser=u;if(!cloud||!u)return;
  replyChan=cloud.channel('iasd-alert-replies-'+u).on('postgres_changes',{event:'UPDATE',schema:'public',table:'iasd_sound_alerts'},p=>{enqueueAlertReply(p.new);if(document.getElementById('sound-alert-thread'))void refreshSoundAlertThread()}).subscribe(st=>{if(st==='SUBSCRIBED')void catchUpAlertReplies()})}
@@ -310,7 +310,7 @@ async function companionRequest(route,payload,token=companionToken){
 async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{targetAddressSpace:'loopback',headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
 async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');const tr=window.IASDTr&&IASDTr.get();return companionRequest('/youtube/project',{ms:tr&&tr.type!=='none'?tr.ms:0})}
-async function closePreparedYoutube(ms){if(!companionToken)return;return companionRequest('/youtube/close',{ms:ms==null?900:ms})}
+async function closePreparedYoutube(ms){if(!companionToken)return;return companionRequest('/youtube/close',{ms:ms==null?(window.stFadeMs?stFadeMs(900):900):ms})}
 async function youtubeStateRequest(){if(!companionToken)return null;try{return await companionRequest('/youtube/state',{})}catch{return null}}
 async function youtubeSkipAdRequest(){if(!companionToken)return;return companionRequest('/youtube/skip',{})}
 async function youtubeMoveRequest(to){if(!companionToken)return;return companionRequest('/youtube/move',{to})}
@@ -408,7 +408,7 @@ function stopProjection(){
  // ao aplicativo (isso recriaria a janela do telão em preto logo após fechá-la).
  sendProjection('',{localOnly:true});
  if(canReachProjection())projectionWindow.close();
- if(companionToken)void companionRequest('/close',{ms:900}).catch(e=>projectionFeedback(e.message,true));
+ if(companionToken)void companionRequest('/close',{ms:window.stFadeMs?stFadeMs(900):900}).catch(e=>projectionFeedback(e.message,true));
  projectionWindow=null;
  projectionFeedback('Projeção encerrada.');
  render();
@@ -815,7 +815,7 @@ function studioSoundNote(){
 /* mini player flutuante: controla o áudio da Projeção de qualquer página */
 function stAudioEl(){try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow.document.getElementById('sthAudio')}catch(e){return null}}
 function stMiniToggle(){const a=stAudioEl();if(!a)return;if(a.paused)a.play().catch(()=>{});else a.pause();stMiniUpdate()}
-function stMiniStop(){const a=stAudioEl();if(!a)return;try{const w=document.getElementById('iasd-studio-frame')?.contentWindow;if(w&&w.stFadePause){w.stFadePause(a,700);setTimeout(()=>{try{a.currentTime=0}catch(e){}stMiniUpdate()},800)}else{a.pause();a.currentTime=0}}catch(e){}stMiniUpdate()}
+function stMiniStop(){const a=stAudioEl();if(!a)return;try{const w=document.getElementById('iasd-studio-frame')?.contentWindow;if(w&&w.stFadePause){w.stFadePause(a,700);setTimeout(()=>{try{a.currentTime=0}catch(e){}stMiniUpdate()},window.stFadeMs?stFadeMs(700)+100:800)}else{a.pause();a.currentTime=0}}catch(e){}stMiniUpdate()}
 function stMiniUpdate(){
  let m=document.getElementById('st-mini');
  const a=canUseSound()&&current!=='Projeção'?stAudioEl():null;

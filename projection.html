@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IASD APP · Tela de projeção</title><link rel="stylesheet" href="/shared/bible-templates.css?v=2"><script src="/shared/page-turn.js?v=2"></script><style>
+<title>IASD APP · Tela de projeção</title><link rel="stylesheet" href="/shared/bible-templates.css?v=2"><script src="/shared/page-turn.js?v=3"></script><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
 body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-serif}
 #out{width:100%;height:100%;display:grid;place-items:center;padding:4vw;text-align:center;font-size:clamp(28px,4.8vw,88px);line-height:1.25;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -255,7 +255,7 @@ function show(value){
  if(m){const pt=parseTr(m[1]);if(pt)curTr=Object.assign(pt,{ms:Math.min(2000,+m[2])});t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
  /* Bíblia: ao trocar de versículo, a página vira (só quando o Studio manda pt:1) */
- if(fam==='IASD_BIBLE'&&prev==='IASD_BIBLE'&&window.IASDPageTurn&&/"pt":1/.test(t)&&out.classList.contains('bible-mode')){if(t===lastBibleT)return;/* a mesma passagem chega por 3 canais (mensagem, canal e storage): só a primeira vira a página */++trSeq;trFam=fam;return IASDPageTurn.run(out,()=>showRaw(t),{ms:1250})}
+ if(fam==='IASD_BIBLE'&&prev==='IASD_BIBLE'&&window.IASDPageTurn&&/"pt":1/.test(t)&&out.classList.contains('bible-mode')){if(t===lastBibleT)return;/* a mesma passagem chega por 3 canais (mensagem, canal e storage): só a primeira vira a página */++trSeq;trFam=fam;return IASDPageTurn.run(out,()=>showRaw(t),{ms:1250,force:true})}
  if(fam==='IASD_LYRIC'){
   let d=null;try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){}
   if(d&&d.end){trFam='';const seq=++trSeq;if(prev==='IASD_LYRIC')lyricEnd(d,seq);else showRaw('');return}
@@ -275,7 +275,7 @@ function show(value){
 }
 function showRaw(value){
  /* mídia local que estava tocando sai com fade (o novo conteúdo já aparece) */
- if(!isPreview){try{out.querySelectorAll('audio,video').forEach(m=>{if(m.paused||m.dataset.fo)return;m.dataset.fo='1';m.controls=false;m.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';document.body.append(m);const v0=m.volume,t0=performance.now(),st=()=>{const k=Math.min(1,(performance.now()-t0)/900);try{m.volume=v0*(1-k)}catch(e){}if(k<1)setTimeout(st,30);else{try{m.pause()}catch(e){}m.remove()}};st()})}catch(e){}}
+ if(!isPreview){try{out.querySelectorAll('audio,video').forEach(m=>{if(m.paused||m.dataset.fo)return;m.dataset.fo='1';m.controls=false;m.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';document.body.append(m);let FD=900;try{const c=Object.assign({on:true,f:1},JSON.parse(localStorage.getItem('iasd-fade')||'{}'));FD=c.on===false?0:Math.round(900*(c.f||1))}catch(e){}if(!FD){try{m.pause()}catch(e){}m.remove();return}const v0=m.volume,t0=performance.now(),st=()=>{const k=Math.min(1,(performance.now()-t0)/FD);try{m.volume=v0*(1-k)}catch(e){}if(k<1)setTimeout(st,30);else{try{m.pause()}catch(e){}m.remove()}};st()})}catch(e){}}
  const t=typeof value==='string'?value:'';
  if(t.startsWith('IASD_GAME:'))return gameShow(t);
  if(t.startsWith('IASD_DRAW_STYLE:'))return drawStyle(t);

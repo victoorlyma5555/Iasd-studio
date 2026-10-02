@@ -9,7 +9,8 @@ const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
 function cleanup(){if(live){live.stop();live=null}}
 function run(out,render,o){
  o=o||{};cleanup();
- const reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ /* no telão o efeito é uma escolha explícita (botão no Studio): ignora o "reduzir animações" do Windows, que costuma estar ativo em PCs simples */
+ const reduced=!o.force&&window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  const box=out.getBoundingClientRect(),W=Math.round(box.width),H=Math.round(box.height);
  if(reduced||!W||!H){render();return}
  const ms=Math.min(2200,Math.max(500,o.ms||1250));
