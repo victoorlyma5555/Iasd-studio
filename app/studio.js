@@ -17,6 +17,8 @@ function closeScreen(){const tr=window.IASDTr?IASDTr.get():{type:'none',ms:0};if
 window.stTakeover=function(keep){
  if(keep!=='hymn'){try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}}
  if(keep!=='yt'&&window.__ytLive){window.__ytLive=false;try{const r=window.parent.closePreparedYoutube&&window.parent.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
+ /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: troca o conteúdo do telão para encerrá-lo (sem fechar a janela) */
+ if(keep==='yt'||keep==='hymn'||keep===''){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}if(st.startsWith('IASD_LOCAL_MEDIA:')){try{window.parent.project&&window.parent.project('')}catch(e){}}}
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{a.pause()}catch(e){}}})}catch(e){}
 };
 function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
