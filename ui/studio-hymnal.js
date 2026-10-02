@@ -1,6 +1,6 @@
-/* Hinário no Studio — biblioteca de hinos em ÁUDIO (antigo e novo) + letras sempre à mão.
-   Áudios: arquivos da própria igreja, guardados no Supabase (bucket privado iasd-hymn-audio). Sem YouTube.
-   Letras: /data/hinario-hasd.json e /data/hinario-nha.json. */
+/* Hinário no Studio — músicas do Louvor JA tocando direto dos arquivos deste computador (nada vai para a internet).
+   Coleções: Hinário Adventista (novo), Hinário 1996, JA/Min. Música, Coletâneas Diversas e Músicas Infantis.
+   Slides: Cantado, Playback ou Sem áudio, com a letra sincronizada e o fundo do programa. */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
@@ -9,12 +9,9 @@ const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const ED={novo:{nome:'Hinário Adventista',sub:'Novo · 2022',url:'/data/hinario-nha.json',hy:true},antigo:{nome:'Hinário 1996',sub:'Antigo',url:'/data/hinario-hasd.json',hy:true},jamin:{nome:'JA/Min. Música',sub:'CDs oficiais',coll:true},misc:{nome:'Coletâneas Diversas',sub:'',coll:true},kids:{nome:'Músicas Infantis',sub:'',coll:true}};
 const HY=['novo','antigo'];
 const KEYS=Object.keys(ED);
-const BUCKET='iasd-hymn-audio';
-const S={ed:'novo',mode:'cantado',album:null,data:{},status:{},q:'',sel:null,idx:-1,recent:[],view:'lib',filter:'all',audio:{},aStatus:{},aErr:'',limit:80,queue:[],cur:null,withLyrics:false,busy:'',msg:''};
-try{S.ed=localStorage.getItem('iasd-sth-ed')||'novo';if(!ED[S.ed])S.ed='novo';S.mode=localStorage.getItem('iasd-sth-mode')||'cantado';S.recent=JSON.parse(localStorage.getItem('iasd-sth-recent')||'[]');S.withLyrics=localStorage.getItem('iasd-sth-wl')==='1'}catch(e){}
+const S={ed:'novo',mode:'cantado',album:null,data:{},status:{},q:'',limit:80,queue:[],cur:null,busy:'',msg:''};
+try{S.ed=localStorage.getItem('iasd-sth-ed')||'novo';if(!ED[S.ed])S.ed='novo';S.mode=localStorage.getItem('iasd-sth-mode')||'cantado';if(!['cantado','pb','sem'].includes(S.mode))S.mode='cantado'}catch(e){}
 const pad=n=>String(n).padStart(3,'0');
-const cloud=()=>{try{return window.parent&&window.parent.iasdCloud||null}catch(e){return null}};
-const me=()=>{try{return window.parent.iasdCurrentUser&&window.parent.iasdCurrentUser()}catch(e){return null}};
 function clean(s){return String(s||'').replace(/\s+([,.;:!?])/g,'$1').replace(/^\s*\d+\.\s*/,'').trim()}
 function norm(raw){return (Array.isArray(raw)?raw:[]).map(x=>{let v=(x.v||[]).map(clean).filter(Boolean);if(v.length>1&&fold(v[0])===fold(x.t))v.shift();return{n:Number(x.n),t:String(x.t||'').trim(),est:v,key:fold(x.t),body:fold(v.join(' '))}}).filter(h=>h.n)}
 const list=(ed)=>S.data[ed||S.ed]||[];
@@ -34,23 +31,11 @@ async function loadLyrics0(id){
  }catch(e){S.status[id]='err'}
  paint();
 }
-async function loadAudio(force){
- const c=cloud();if(!c){S.aStatus.all='nocloud';paint();return}
- if(S.aStatus.all==='ok'&&!force)return;S.aStatus.all='loading';paint();
- try{
-  const r=await c.from('iasd_hymn_audio').select('edition,number,storage_path,file_name,size_bytes');
-  if(r.error)throw r.error;
-  S.audio={antigo:{},novo:{}};(r.data||[]).forEach(a=>{(S.audio[a.edition]||(S.audio[a.edition]={}))[a.number]=a});
-  S.aStatus.all='ok';S.aErr='';
- }catch(e){S.aStatus.all='err';S.aErr=/relation|does not exist|schema cache/i.test(e.message||'')?'Falta rodar o SQL docs/supabase-hinario-audio.sql no Supabase.':(e.message||'Falha ao carregar os áudios.')}
- paint();
-}
 /* ---------- pasta do computador (sem enviar nada: toca direto dos arquivos da igreja) ---------- */
 S.local={};KEYS.forEach(k=>S.local[k]={});S.lstat={};S.files=[];S.aidx=new Map();
 const hasLocal=(ed,n)=>!!(S.local[ed]&&S.local[ed][n]);
-const hasAudio=(ed,n)=>hasLocal(ed,n)||!!(S.audio[ed]&&S.audio[ed][n]);
+const hasAudio=(ed,n)=>hasLocal(ed,n);
 const playable=(ed,h)=>S.mode==='sem'?!!(h.est&&h.est.length):hasAudio(ed,h.n);
-const countAudio=ed=>{const k=new Set(Object.keys(S.audio[ed]||{}));Object.keys(S.local[ed]||{}).forEach(x=>k.add(x));return k.size};
 const IMG=/\.(jpe?g|png|webp|bmp)$/i;
 S.imgs={};
 const AUD=/\.(mp3|m4a|aac|wav|ogg|opus|flac|mp4|m4v|webm)$/i;
@@ -176,58 +161,6 @@ async function restoreLocal(){
  paint()
 }
 function ago(t){if(!t)return 'nunca';const m=Math.round((Date.now()-t)/60000);return m<1?'agora há pouco':m<60?'há '+m+' min':'há '+Math.round(m/60)+' h'}
-let _stHtml='';
-function paintStat(){
- const el=$('sth-stat');if(!el)return;
- const hasAny=S.rootH||S.dbH||S.ljaMeta||S.files.length;
- if(!hasAny){_stHtml='';el.innerHTML='<div class="sth-tip"><b>Conecte o Louvor JA deste computador.</b> Toque em <b>📁 Conectar pasta do Louvor JA</b> e escolha a pasta <code>config</code> do programa (com <code>musicas</code> e <code>imagens</code>). Depois toque em <b>🗂 Conectar banco</b> e escolha o <code>database.db</code>. Depois é só tocar em <b>🔄 Sincronizar agora</b> quando baixar coisas novas no programa. Cada computador faz isso uma vez.</div>';return}
- if(!S.cnt){const h='<div class="sth-tip">Conectado. Toque em <b>🔄 Sincronizar agora</b> para contar o que há nesta pasta.<div class="sth-sa" style="margin-top:8px"><span></span><button onclick="STHymn.sync()">🔄 Sincronizar agora</button></div></div>';if(h!==_stHtml){_stHtml=h;el.innerHTML=h}return}
- const perm=S.lstat.novo==='perm'||S.lstat.db==='perm';
- const det=(id,t,arr)=>arr.length?'<details'+(S.stOpen[id+t]?' open':'')+' ontoggle="STHymn.tg(\''+id+t+'\',this.open)"><summary>'+arr.length+' '+t+'</summary><div class="sth-miss">'+arr.slice(0,80).map(esc).join('<br>')+(arr.length>80?'<br>…e mais '+(arr.length-80):'')+'</div></details>':'';
- const card=id=>{const x=S.cnt[id];if(!x||!x.total)return '';
-  const ln=[x.found+' de '+x.total+' com áudio'];
-  if(x.prog!==null)ln.push(x.synced+' com letra sincronizada');else if(x.synced!==x.found)ln.push(x.synced+' com letra');
-  if(x.noBg)ln.push(x.noBg+' sem fundo');
-  return '<div class="sth-sc"><b>'+esc(ED[id].nome)+(ED[id].sub?' <i>'+esc(ED[id].sub)+'</i>':'')+'</b><span>'+ln.join(' · ')+'</span>'+det(id,' faltando na pasta',x.miss)+det(id,' sem correspondência no programa',x.noProg)+'</div>'};
- const tot=KEYS.reduce((a,k)=>a+(S.cnt[k]?S.cnt[k].found:0),0),all=KEYS.reduce((a,k)=>a+(S.cnt[k]?S.cnt[k].total:0),0);
- const html='<div class="sth-stat"><details'+(S.stOpen.all?' open':'')+' ontoggle="STHymn.tg(\'all\',this.open)"><summary>📊 '+tot+' de '+all+' itens com áudio nesta pasta · ver por coleção</summary>'+KEYS.map(card).join('')+'</details><div class="sth-sa"><small>Atualizado '+ago(S.syncAt)+(S.ljaMeta&&S.ljaMeta.meta?' · banco '+new Date(S.ljaMeta.meta.mod).toLocaleDateString('pt-BR'):'')+'</small><button onclick="STHymn.sync()">🔄 Sincronizar agora</button>'+(perm?'<button onclick="STHymn.reconnect()">🔓 Reconectar</button>':'')+'</div></div>';
- if(html!==_stHtml){_stHtml=html;el.innerHTML=html}
-}
-
-/* ---------- envio ---------- */
-const extOf=f=>{const m=/\.(mp3|m4a|aac|wav|ogg|webm|mp4)$/i.exec(f.name||'');return m?m[1].toLowerCase():(/mpeg/.test(f.type)?'mp3':'mp3')};
-async function uploadOne(ed,n,file){
- const c=cloud(),u=me();if(!c)throw Error('Conexão com o site indisponível. Abra o Studio pelo IASD APP.');if(!u)throw Error('Entre na conta de sonoplasta para enviar áudios.');
- if(file.size>50*1024*1024)throw Error('O limite é 50 MB por arquivo.');
- const path=ed+'/'+pad(n)+'.'+extOf(file);
- const old=S.audio[ed]&&S.audio[ed][n];
- const up=await c.storage.from(BUCKET).upload(path,file,{upsert:true,contentType:file.type||'audio/mpeg',cacheControl:'3600'});
- if(up.error)throw up.error;
- if(old&&old.storage_path!==path)try{await c.storage.from(BUCKET).remove([old.storage_path])}catch(e){}
- const row={edition:ed,number:n,storage_path:path,file_name:String(file.name||'').slice(0,160),size_bytes:file.size};
- const r=await c.from('iasd_hymn_audio').upsert(row,{onConflict:'edition,number'});if(r.error)throw r.error;
- (S.audio[ed]||(S.audio[ed]={}))[n]=row;delete urlCache[ed+'|'+n];
-}
-async function removeOne(ed,n){
- const a=S.audio[ed]&&S.audio[ed][n];if(!a)return;
- const ok=window.IASDDialog?await IASDDialog.confirm('Remover o áudio do hino '+n+' · '+((find(ed,n)||{}).t||'')+'?',{ok:'Remover áudio'}):confirm('Remover o áudio?');
- if(!ok)return;
- const c=cloud();try{await c.storage.from(BUCKET).remove([a.storage_path]);const r=await c.from('iasd_hymn_audio').delete().eq('edition',ed).eq('number',n);if(r.error)throw r.error;delete S.audio[ed][n];delete urlCache[ed+'|'+n];say('Áudio removido.')}catch(e){say('Não foi possível remover: '+(e.message||e))}
- paint();
-}
-async function bulk(files){
- const ed=S.ed;const arr=[...files];let ok=0;const bad=[];
- for(let i=0;i<arr.length;i++){
-  const f=arr[i],m=/(\d{1,3})/.exec(f.name);S.busy='Enviando '+(i+1)+' de '+arr.length+'…';paintBar();
-  if(!m||+m[1]<1){bad.push(f.name+' (sem número no nome)');continue}
-  const n=+m[1];if(list(ed).length&&!find(ed,n)){bad.push(f.name+' (hino '+n+' não existe)');continue}
-  try{await uploadOne(ed,n,f);ok++}catch(e){bad.push(f.name+' ('+(e.message||'erro')+')')}
- }
- S.busy='';
- say(ok+' áudio'+(ok===1?'':'s')+' enviado'+(ok===1?'':'s')+(bad.length?'. Falharam: '+bad.slice(0,4).join('; ')+(bad.length>4?'…':''):'.'));
- paint();
-}
-
 /* ---------- banco do Louvor JA (coletâneas, letra com tempo, capas e fundos), lido no próprio computador ---------- */
 S.ljaMeta=null;S.bgc={};S.sync=null;S.colx={};S.hy={};S.lmap={};S.alb={};S.thumbs={};
 async function colAlbums(id){if(S.colx[id])return S.colx[id];S.colx[id]=(await idbGet('lja:'+id))||[];return S.colx[id]}
@@ -252,7 +185,7 @@ async function loadCol(id){
 async function connectDb(){
  const run=async f=>{
   try{S.busy='Lendo o banco do Louvor JA…';paintBar();const ix=await window.LJADB.buildIndex(f,m=>{S.busy=m;paintBar()});
-   await applyIndex(ix,f);try{if(localStorage.getItem('iasd-sth-wl')===null){S.withLyrics=true;localStorage.setItem('iasd-sth-wl','1')}}catch(e){}
+   await applyIndex(ix,f);
    S.busy='';await Promise.all(KEYS.map(loadLyrics));if(S.aidx.size)await computeCounts();
    const c=S.ljaMeta.counts;say('Banco lido: '+KEYS.map(k=>ED[k].nome+' '+c[k]).join(' · ')+'. Fica guardado neste navegador.');paint()}
   catch(e){S.busy='';say('Não consegui ler o banco: '+(e.message||e));paint()}
@@ -321,7 +254,6 @@ document.addEventListener('timeupdate',ev=>{if(ev.target&&ev.target.id==='sthAud
 document.addEventListener('seeked',ev=>{if(ev.target&&ev.target.id==='sthAudio'){if(S.sync)S.sync.last=-9;tick()}},true);
 
 /* ---------- player ---------- */
-const urlCache={};
 let objUrl='';
 async function urlFor(ed,n,mode){
  const L=S.local[ed]&&S.local[ed][n];
@@ -331,10 +263,7 @@ async function urlFor(ed,n,mode){
   const f=r.file||await r.handle.getFile();if(objUrl)try{URL.revokeObjectURL(objUrl)}catch(e){}objUrl=URL.createObjectURL(f);
   return{url:objUrl,name:r.name,pb:(mode==='pb'&&!!L.pb)||(r===L&&!!L.onlyPb),note}
  }
- const k=ed+'|'+n,hit=urlCache[k];if(hit&&hit.exp>Date.now())return{url:hit.url,name:'',pb:false,note:''};
- const a=S.audio[ed]&&S.audio[ed][n];if(!a)throw Error('Este item ainda não tem áudio.');
- const r=await cloud().storage.from(BUCKET).createSignedUrl(a.storage_path,3600);
- if(r.error)throw r.error;urlCache[k]={url:r.data.signedUrl,exp:Date.now()+50*60*1000};return{url:r.data.signedUrl,name:'',pb:false,note:''};
+ throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
 }
 function audioEl(){return $('sthAudio')}
 async function play(ed,n,opts){
@@ -349,14 +278,10 @@ async function play(ed,n,opts){
   }
   const u=await urlFor(ed,n,S.mode);
   S.cur={ed,n};a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
-  if(S.withLyrics&&h&&!(opts&&opts.silent)){if(!startSync(ed,n,u.name,{pb:u.pb}))projectLyrics(h,ed)}
+  if(!(opts&&opts.silent))startSync(ed,n,u.name,{pb:u.pb});
   say(u.note||('Tocando: '+(ED[ed].coll?'':n+' · ')+(h?h.t:'')))
  }catch(e){say('Não foi possível tocar: '+(e&&e.message||e))}
  paintPlayer();paint();
-}
-function projectLyrics(h,ed){
- if(typeof window.project!=='function'||!h)return;
- window.project('IASD_BIBLE:'+JSON.stringify({ref:'Hino '+h.n+' · '+h.t,text:h.est.map((e,i)=>(i+1)+'. '+e).join('\n\n')}));
 }
 function next(dir){
  if(S.queue.length&&dir>0){const q=S.queue.shift();play(q.ed,q.n);return}
@@ -364,170 +289,159 @@ function next(dir){
 }
 
 /* ---------- ações ---------- */
-function pick(n,ed){
- const e=ed||S.ed,h=find(e,n);if(!h)return;S.ed=e;S.sel=h;S.idx=-1;S.view='lyr';
- S.recent=[{ed:e,n:h.n,t:h.t}].concat(S.recent.filter(r=>!(r.ed===e&&r.n===h.n))).slice(0,8);
- try{localStorage.setItem('iasd-sth-recent',JSON.stringify(S.recent));localStorage.setItem('iasd-sth-ed',e)}catch(x){}
- const hn=$('hymnNumber'),nm=$('hymnName');if(hn)hn.value=h.n;if(nm)nm.value=h.t;paint();
-}
-function send(text,ref){if(typeof window.project!=='function')return;window.project('IASD_BIBLE:'+JSON.stringify({ref,text}));say('Enviado ao telão: '+ref)}
-const refOf=(h,tag)=>'Hino '+h.n+' · '+h.t+(tag?' · '+tag:'');
 const api={
- mode(m){S.mode=m;try{localStorage.setItem('iasd-sth-mode',m)}catch(e){}paint()},
- album(i){S.album=i;S.limit=80;S.q='';paint()},albumBack(){S.album=null;S.limit=80;paint()},
- ed(id){S.ed=id;S.album=null;S.q='';S.sel=null;S.idx=-1;S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paint()},
- view(v){S.view=v;if(v==='lib')S.sel=null;paint()},
- input(v){S.q=v;S.limit=80;if(S.view==='lyr'&&S.sel){S.sel=null}paintBody(true)},
- filter(f){S.filter=f;S.limit=80;paint()},
+ mode(m){S.mode=m;try{localStorage.setItem('iasd-sth-mode',m)}catch(e){}paintMode();paintBody()},
+ album(i){S.album=i;S.limit=80;S.q='';setQ('');paintBody();scrollTop()},albumBack(){S.album=null;S.limit=80;paintBody()},
+ ed(id){S.ed=id;S.album=null;S.q='';setQ('');S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
+ input(v){S.q=v;S.limit=80;paintBody()},
  more(){S.limit+=120;paintBody()},
- pick,
- recent(ed,n){S.ed=ed;loadLyrics(ed).then(()=>pick(n,ed));if(S.data[ed])pick(n,ed)},
- all(){const h=S.sel;if(!h)return;S.idx=-2;send(h.est.map((e,i)=>(i+1)+'. '+e).join('\n\n'),refOf(h));paint()},
- verse(i){const h=S.sel;if(!h||!h.est[i])return;S.idx=i;send(h.est[i],refOf(h,'Estrofe '+(i+1)));paint()},
- step(d){const h=S.sel;if(!h)return;const i=S.idx<0?(d>0?0:h.est.length-1):Math.max(0,Math.min(h.est.length-1,S.idx+d));api.verse(i)},
- title(){const h=S.sel;if(!h)return;S.idx=-3;send('♬ '+h.t,'Hino '+h.n);paint()},
  play(ed,n){play(ed,n)},
- queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});say('Na fila: '+n+' · '+(h?h.t:''));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paint()},
- unqueue(i){S.queue.splice(i,1);paint()},
- clearQueue(){S.queue=[];paint()},
+ rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
+ queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
+ unqueue(i){S.queue.splice(i,1);paintPlayer()},
+ clearQueue(){S.queue=[];paintPlayer()},
  toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
  next(){next(1)},prev(){next(-1)},
- stop(){const a=audioEl();if(a){a.pause();a.removeAttribute('src');a.load()}S.cur=null;paintPlayer();paint()},
+ stop(){const a=audioEl();if(a){a.pause();a.removeAttribute('src');a.load()}S.cur=null;S.sync=null;paintPlayer();paintBody()},
  seek(v){const a=audioEl();if(a&&a.duration)a.currentTime=a.duration*(+v/1000)},
  vol(v){const a=audioEl();if(a)a.volume=+v/100},
- wl(on){S.withLyrics=!!on;try{localStorage.setItem('iasd-sth-wl',on?'1':'0')}catch(e){}},
- lyr(ed,n){const h=find(ed,n);if(h)projectLyrics(h,ed)},
- upload(ed,n){const i=document.createElement('input');i.type='file';i.accept='audio/*';i.onchange=async()=>{const f=i.files[0];if(!f)return;S.busy='Enviando '+pad(n)+'…';paintBar();try{await uploadOne(ed,n,f);say('Áudio do hino '+n+' salvo.')}catch(e){say('Falha no envio: '+(e.message||e))}S.busy='';paint()};i.click()},
  stz(d){stanzaJump(d)},sync(){syncAll('manual')},tg(k,o){S.stOpen[k]=o},db(){connectDb()},
- folder(){connectFolder()},reconnect(){reconnectFolder()},indexFiles(ed,files){return indexFiles(ed,files)},numOf,
- bulk(){const i=document.createElement('input');i.type='file';i.accept='audio/*';i.multiple=true;i.onchange=()=>{if(i.files.length)bulk(i.files)};i.click()},
- remove(ed,n){removeOne(ed,n)},
- reload(){S.aStatus.all='';loadAudio(true)}
+ folder(){connectFolder()},reconnect(){reconnectFolder()},indexFiles(ed,files){return indexFiles(ed,files)},numOf
 };
 window.STHymn=api;
 
 /* ---------- desenho ---------- */
+const ico=n=>'<svg class="ti"><use href="#i-'+n+'"/></svg>';
+const hasFolder=()=>!!(S.rootH||S.files.length),hasDb=()=>!!(S.dbH||S.ljaMeta),connected=()=>hasFolder()||hasDb();
+function setQ(v){const i=$('sthq');if(i)i.value=v}
+function scrollTop(){const b=$('sth-body');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest'})}
 function filtered(){
  const c=!!ED[S.ed].coll,q=S.q.trim();let r=list();
  if(c&&S.album!==null&&!q)r=r.filter(h=>h.ai===S.album);
  if(q){
   if(/^\d+$/.test(q)){const n=+q;if(c)r=r.filter(h=>h.tr===n&&(S.album===null||h.ai===S.album));else r=r.filter(h=>h.n===n).concat(r.filter(h=>h.n!==n&&String(h.n).startsWith(q)))}
   else{const f=fold(q);r=r.filter(h=>h.key.includes(f)).concat(r.filter(h=>!h.key.includes(f)&&h.body.includes(f)))}}
- if(S.filter==='with')r=r.filter(h=>hasAudio(S.ed,h.n));else if(S.filter==='without')r=r.filter(h=>!hasAudio(S.ed,h.n));
  return r;
 }
-function paintNav(){
- const nav=$('sth-nav');if(!nav)return;
- nav.innerHTML='<div class="sth-tabs"><button class="'+(S.view==='lib'?'on':'')+'" onclick="STHymn.view(\'lib\')">🎵 Músicas</button><button class="'+(S.view==='lyr'?'on':'')+'" onclick="STHymn.view(\'lyr\')">📖 Letras</button></div>'
-  +'<div class="sth-top"><div class="sth-ed">'+KEYS.map(k=>{const f=S.cnt&&S.cnt[k]?S.cnt[k].found:countAudio(k);return '<button class="'+(S.ed===k?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><b>'+esc(ED[k].nome)+'</b><small>'+(ED[k].sub?esc(ED[k].sub)+' · ':'')+f+' com áudio</small></button>'}).join('')+'</div>'
-  +'<div class="sth-search"><input id="sthq" inputmode="search" autocomplete="off" placeholder="Digite o nome ou o número…" value="'+esc(S.q)+'" oninput="STHymn.input(this.value)"></div></div>'
-  +'<div class="sth-mode" role="radiogroup" aria-label="Tipo de slide">'+[['cantado','Slide Cantado'],['pb','Slide Playback'],['sem','Slide sem Áudio']].map(([k,l])=>'<button role="radio" aria-checked="'+(S.mode===k)+'" class="'+(S.mode===k?'on':'')+'" onclick="STHymn.mode(\''+k+'\')">'+l+'</button>').join('')+'</div>';
+/* 1) conexão: três passos na primeira vez; depois, uma linha só */
+let _cnHtml='';
+function paintConn(){
+ const el=$('sth-conn');if(!el)return;let html;
+ if(S.busy){html='<div class="sth-conn"><div class="sth-busy"><i class="sth-spin"></i><span>'+esc(S.busy)+'</span></div></div>'}
+ else if(!(hasFolder()&&hasDb()&&S.cnt)){
+  const st=(n,done,t,d,btn,fn,pri)=>'<li class="'+(done?'ok':'')+'"><span class="n">'+(done?ico('check'):n)+'</span><div class="t"><b>'+t+'</b><small>'+d+'</small></div><button type="button" class="'+(pri?'mp-blue':'mp-btn')+'" onclick="STHymn.'+fn+'()"'+(fn==='sync'&&!(hasFolder()||hasDb())?' disabled':'')+'>'+btn+'</button></li>';
+  html='<div class="sth-conn"><div class="sth-ch"><b>Conectar o Louvor JA</b><small>Só na primeira vez neste computador. Nada é enviado para a internet.</small></div><ol class="sth-steps">'
+   +st(1,hasFolder(),'Pasta do programa','Escolha a pasta <code>config</code> (a que tem <code>musicas</code> e <code>imagens</code>).',hasFolder()?'Trocar':'Escolher pasta','folder',!hasFolder())
+   +st(2,hasDb(),'Banco de dados','Escolha o arquivo <code>database.db</code> do programa.',hasDb()?'Trocar':'Escolher arquivo','db',hasFolder()&&!hasDb())
+   +st(3,!!S.cnt,'Sincronizar','Confere o que já está neste computador.','Sincronizar agora','sync',hasFolder()&&hasDb()&&!S.cnt)
+   +'</ol><details class="sth-help"><summary>O Chrome disse que a pasta contém arquivos do sistema?</summary><p>O Chrome não deixa abrir pastas como <code>Program Files</code>, <code>ProgramData</code>, <code>Windows</code> ou a raiz do disco. Se o Louvor JA estiver em uma delas, escolha uma pasta de outro lugar (por exemplo, em <code>Documentos</code>) que contenha os mesmos arquivos.</p></details></div>'
+ }else{
+  const c=S.cnt,tot=KEYS.reduce((a,k)=>a+(c[k]?c[k].found:0),0),all=KEYS.reduce((a,k)=>a+(c[k]?c[k].total:0),0);
+  const perm=S.lstat.novo==='perm'||S.lstat.db==='perm';
+  const det=(id,t,arr)=>arr.length?'<details'+(S.stOpen[id+t]?' open':'')+' ontoggle="STHymn.tg(\''+id+t+'\',this.open)"><summary>'+arr.length+' '+t+'</summary><div class="sth-miss">'+arr.slice(0,80).map(esc).join('<br>')+(arr.length>80?'<br>…e mais '+(arr.length-80):'')+'</div></details>':'';
+  const card=id=>{const x=c[id];if(!x||!x.total)return '';const ln=[x.found+' de '+x.total+' com áudio'];
+   if(x.prog!==null)ln.push(x.synced+' com letra sincronizada');else if(x.synced!==x.found)ln.push(x.synced+' com letra');
+   if(x.noBg)ln.push(x.noBg+' sem fundo');
+   return '<div class="sth-sc"><b>'+esc(ED[id].nome)+'</b><span>'+ln.join(' · ')+'</span>'+det(id,'faltando na pasta',x.miss)+det(id,'sem correspondência no programa',x.noProg)+'</div>'};
+  html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'Sincronizado '+ago(S.syncAt))+'</small></div>'
+   +(perm?'<button type="button" class="mp-blue" onclick="STHymn.reconnect()">Reconectar</button>':'<button type="button" class="mp-btn" onclick="STHymn.sync()">'+ico('shuffle')+'Sincronizar agora</button>')+'</div>'
+   +'<details class="sth-more-d"'+(S.stOpen.all?' open':'')+' ontoggle="STHymn.tg(\'all\',this.open)"><summary>Detalhes por coleção</summary><div class="sth-cards">'+KEYS.map(card).join('')+'</div><div class="sth-acts"><button type="button" class="mp-btn" onclick="STHymn.folder()">Trocar pasta</button><button type="button" class="mp-btn" onclick="STHymn.db()">Trocar banco</button>'+(perm?'':'<button type="button" class="mp-btn" onclick="STHymn.reconnect()">Reconectar</button>')+'</div></details></div>'
+ }
+ if(html!==_cnHtml){_cnHtml=html;el.innerHTML=html}
 }
+function paintBar(){paintConn()}
+/* 2) coleções, busca e tipo de slide */
+function colCount(k){const x=S.cnt&&S.cnt[k];if(x)return x.found;const m=S.ljaMeta&&S.ljaMeta.counts;return m?m[k]:0}
+function paintCols(){
+ const el=$('sth-cols');if(!el)return;
+ el.innerHTML=KEYS.map(k=>'<button type="button" role="tab" class="'+(S.ed===k?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><span>'+esc(ED[k].nome)+'</span><i class="cnt">'+colCount(k)+'</i></button>').join('')
+}
+const MODES=[['cantado','Slide Cantado','Toca a música cantada e mostra cada estrofe na hora certa.'],['pb','Slide Playback','Toca só o instrumental e mostra a letra na hora certa.'],['sem','Slide sem Áudio','Não toca nada: você passa as estrofes com os botões ◀ ▶.']];
+function paintMode(){
+ const el=$('sth-mode');if(!el)return;
+ el.innerHTML='<div class="seg s3" role="radiogroup" aria-label="Tipo de slide">'+MODES.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.mode===k)+'" class="'+(S.mode===k?'on':'')+'" onclick="STHymn.mode(\''+k+'\')">'+l+'</button>').join('')+'</div><p class="sth-hint">'+MODES.find(m=>m[0]===S.mode)[2]+'</p>'
+}
+/* 3) lista */
 function row(h){
- const coll=!!ED[S.ed].coll,has=playable(S.ed,h),cur=S.cur&&S.cur.ed===S.ed&&S.cur.n===h.n;
- const sub=coll&&(S.q||S.album===null)&&h.album?'<em>'+esc(h.album)+'</em>':'';
- return '<div class="sth-row'+(cur?' cur':'')+(has?'':' no')+'"><span class="sth-no">'+(coll?(h.tr||'·'):h.n)+'</span><span class="sth-tt" onclick="STHymn.pick('+h.n+')" title="Abrir a letra">'+esc(h.t)+sub+(has?'':'<i>sem áudio</i>')+'</span>'
-  +'<span class="sth-bt">'
-  +(has?'<button class="pl" onclick="STHymn.play(\''+S.ed+'\','+h.n+')" title="'+(S.mode==='sem'?'Projetar o slide':'Tocar')+'">'+(cur?'♪':'▶')+'</button><button onclick="STHymn.queue(\''+S.ed+'\','+h.n+')" title="Adicionar à fila">＋</button>':'')
-  +'<button onclick="STHymn.pick('+h.n+')" title="Letra">📖</button>'
-  +(coll?'':'<button class="up" onclick="STHymn.upload(\''+S.ed+'\','+h.n+')" title="'+(hasAudio(S.ed,h.n)?'Trocar o áudio':'Enviar áudio')+'">'+(hasAudio(S.ed,h.n)?'⟳':'⬆')+'</button>'+(hasAudio(S.ed,h.n)&&S.audio[S.ed]&&S.audio[S.ed][h.n]?'<button class="rm" onclick="STHymn.remove(\''+S.ed+'\','+h.n+')" title="Remover o áudio da nuvem">✕</button>':''))
-  +'</span></div>';
-}
-function paintBar(){
- const el=$('sth-bar');if(!el)return;
- if(S.busy){el.innerHTML='<span class="sth-busy">⏳ '+esc(S.busy)+'</span>';return}
- el.innerHTML='<div class="sth-fl">'+[['all','Todos'],['with','Com áudio'],['without','Sem áudio']].map(([k,l])=>'<button class="'+(S.filter===k?'on':'')+'" onclick="STHymn.filter(\''+k+'\')">'+l+'</button>').join('')+'</div>'
-  +'<button class="sth-bulk sth-fold" onclick="STHymn.folder()" title="Escolha a pasta do computador onde estão os hinos. Nada é enviado: toca direto dos arquivos, sem internet.">📁 '+(S.rootH||Object.keys(S.local[S.ed]||{}).length?'Trocar pasta do Louvor JA':'Conectar pasta do Louvor JA')+'</button>'
-  +'<button class="sth-bulk sth-fold" onclick="STHymn.db()" title="Escolha o arquivo database.db do Louvor JA (fica na pasta do programa). Ele traz as letras com os tempos e os fundos. Nada é enviado: é lido neste computador.">🗂 '+(S.ljaMeta?'Trocar banco ✓':'Conectar banco (database.db)')+'</button>'
-  +(S.lstat.novo==='perm'||S.lstat.db==='perm'?'<button class="sth-bulk sth-fold" onclick="STHymn.reconnect()">🔓 Reconectar</button>':'')
-  +(ED[S.ed].coll?'':'<button class="sth-bulk" onclick="STHymn.bulk()" title="Envia para a nuvem. O número do hino é lido do começo do nome (025.mp3, 25 - Nome.mp3).">⬆ Enviar para a nuvem</button>');
+ const coll=!!ED[S.ed].coll,has=playable(S.ed,h),c=S.cur,cur=c&&c.ed===S.ed&&c.n===h.n,a=audioEl(),pl=cur&&a&&!a.paused&&S.mode!=='sem';
+ const loc=S.local[S.ed]&&S.local[S.ed][h.n];let sub='';
+ if(!has)sub='Sem arquivo neste computador';
+ else if(S.mode==='pb'&&loc&&!loc.pb&&!loc.onlyPb)sub='Sem playback · toca o cantado';
+ else if(S.mode==='cantado'&&loc&&loc.onlyPb)sub='Só playback';
+ else if(coll&&h.album&&(S.q||S.album===null))sub=h.album;
+ return '<div class="amb-row sth-r'+(cur?' is-sel':'')+(has?'':' no')+'"><button type="button" class="amb-play" '+(has?'onclick="STHymn.rowPlay(\''+S.ed+'\','+h.n+')"':'disabled')+' title="'+(S.mode==='sem'?'Projetar':'Tocar')+'">'+(pl?'<b class="sth-pz">Ⅱ</b>':ico('play'))+'</button>'
+  +'<span class="sth-no">'+(coll?(h.tr||'·'):h.n)+'</span><div class="amb-info"><b>'+esc(h.t)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div>'
+  +(has?'<button type="button" class="amb-x" onclick="STHymn.queue(\''+S.ed+'\','+h.n+')" title="Adicionar à fila">'+ico('plus')+'</button>':'')+'</div>';
 }
 function albumGrid(al){
- return '<div class="sth-albs">'+al.map((a,i)=>'<button class="sth-ab" onclick="STHymn.album('+i+')"><span class="sth-cv" data-cv="'+esc(a.cover||'')+'"><i>'+esc(String(a.name||'?').slice(0,1))+'</i></span><b>'+esc(a.name)+'</b><small>'+a.tracks.length+' música'+(a.tracks.length===1?'':'s')+(a.cat&&a.cat!==a.name&&a.cat!=='CDs Oficiais/Ano'?' · '+esc(a.cat):'')+'</small></button>').join('')+'</div>'
+ const cnt={};(S.data[S.ed]||[]).forEach(h=>{if(playable(S.ed,h))cnt[h.ai]=(cnt[h.ai]||0)+1});
+ return '<div class="sth-albs">'+al.map((a,i)=>'<button type="button" class="sth-ab" onclick="STHymn.album('+i+')"><span class="sth-cv" data-cv="'+esc(a.cover||'')+'"><i>'+esc(String(a.name||'?').slice(0,1))+'</i></span><b>'+esc(a.name)+'</b><small>'+a.tracks.length+' música'+(a.tracks.length===1?'':'s')+(S.cnt?' · '+(cnt[i]||0)+' com áudio':'')+'</small></button>').join('')+'</div>'
 }
-function paintBody(keepFocus){
+const empty=(t,b)=>'<div class="amb-empty"><span>'+t+'</span>'+(b||'')+'</div>';
+function paintBody(){
  const b=$('sth-body');if(!b)return;
- if(S.view==='lib'){
-  const st=S.status[S.ed],a=S.aStatus.all;let html='';
-  if(st==='loading')html+='<p class="muted">Carregando hinos…</p>';else if(st==='err')html+='<p class="muted">Não foi possível carregar o hinário. Verifique a conexão.</p>';
-  if(a==='err'&&!S.files.length)html+='<p class="sth-warn">'+esc(S.aErr)+' <button onclick="STHymn.reload()">Tentar de novo</button></p>';
-  const coll=!!ED[S.ed].coll,albs=S.alb[S.ed]||[],q0=S.q.trim();
-  if(coll&&st==='nodb')html+='<p class="sth-tip">Conecte o banco do Louvor JA (<b>🗂 Conectar banco</b>) para ver esta coleção.</p>';
-  if(coll&&albs.length>1&&S.album===null&&!q0){b.innerHTML=html+albumGrid(albs);fillCovers();return}
-  if(coll&&S.album!==null&&!q0&&albs[S.album])html+='<div class="sth-albhd"><button onclick="STHymn.albumBack()">← Álbuns</button><b>'+esc(albs[S.album].name)+'</b></div>';
-  const L=filtered(),shown=L.slice(0,S.limit);
-  html+='<div class="sth-list">'+shown.map(row).join('')+(L.length>shown.length?'<button class="sth-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length&&st==='ok'?'<p class="muted">Nenhum hino encontrado.</p>':'')+'</div>';
-  b.innerHTML=html;
- }else{
-  const h=S.sel;let html='';
-  if(!h){const res=filtered().slice(0,12);
-   if(S.q.trim()&&res.length)html+='<div class="sth-res">'+res.map(x=>'<button onclick="STHymn.pick('+x.n+')"><b>'+x.n+'</b><span>'+esc(x.t)+'</span></button>').join('')+'</div>';
-   else if(S.q.trim())html+='<p class="muted">Nenhum hino encontrado nesta edição.</p>';
-   else if(S.recent.length)html+='<div class="sth-rec"><small>Recentes</small>'+S.recent.map(r=>'<button onclick="STHymn.recent(\''+r.ed+'\','+r.n+')"><b>'+r.n+'</b> '+esc(r.t)+'<i>'+(r.ed==='novo'?'novo':'antigo')+'</i></button>').join('')+'</div>';
-   else html+='<p class="muted">Digite o número do hino para abrir a letra. Ex.: 1, 25, 188.</p>';
-  }else{
-   const has=hasAudio(S.ed,h.n);
-   html+='<div class="sth-card"><div class="sth-hd"><span class="sth-n">'+h.n+'</span><div><h3>'+esc(h.t)+'</h3><small>'+ED[S.ed].nome+' · '+h.est.length+' estrofes</small></div><button class="sth-x" onclick="STHymn.view(\'lib\')" title="Voltar à biblioteca">✕</button></div>'
-    +'<div class="sth-acts">'+(has?'<button onclick="STHymn.play(\''+S.ed+'\','+h.n+')">▶ Tocar o hino</button>':'')+'<button class="primary" onclick="STHymn.all()">▣ Projetar letra completa</button><button onclick="STHymn.title()">Só o número e título</button></div>'
-    +'<div class="sth-vs">'+h.est.map((e,i)=>'<button class="'+(S.idx===i?'on':'')+'" onclick="STHymn.verse('+i+')"><b>'+(i+1)+'</b><span>'+esc(e.split('\n').slice(0,2).join(' / '))+'</span></button>').join('')+'</div>'
-    +'<div class="sth-nav"><button onclick="STHymn.step(-1)">◀ Anterior</button><button class="primary" onclick="STHymn.step(1)">Próxima estrofe ▶</button></div></div>';
-  }
-  b.innerHTML=html;
- }
- if(keepFocus){const i=$('sthq');if(i){i.focus();const l=i.value.length;i.setSelectionRange(l,l)}}
+ if(!connected()){b.innerHTML=empty('Conecte o Louvor JA acima para ver e tocar as músicas.');return}
+ const st=S.status[S.ed],coll=!!ED[S.ed].coll,albs=S.alb[S.ed]||[],q0=S.q.trim();let html='';
+ if(st==='loading'||(!st&&!S.data[S.ed])){b.innerHTML=empty('Carregando…');return}
+ if(st==='err'){b.innerHTML=empty('Não foi possível carregar esta coleção.','<button type="button" class="mp-btn" onclick="STHymn.ed(\''+S.ed+'\')">Tentar de novo</button>');return}
+ if(coll&&st==='nodb'){b.innerHTML=empty(hasDb()?'Esta coleção está vazia no banco do programa.':'Escolha o arquivo <code>database.db</code> no passo 2 para ver esta coleção.');return}
+ if(coll&&albs.length>1&&S.album===null&&!q0){b.innerHTML=albumGrid(albs);fillCovers();return}
+ if(coll&&S.album!==null&&!q0&&albs[S.album])html+='<div class="sth-albhd"><button type="button" class="mp-btn" onclick="STHymn.albumBack()">← Álbuns</button><b>'+esc(albs[S.album].name)+'</b></div>';
+ const L=filtered(),shown=L.slice(0,S.limit);
+ html+='<div class="amb-list">'+shown.map(row).join('')+'</div>'+(L.length>shown.length?'<button type="button" class="amb-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length?empty('Nenhuma música encontrada.'):'');
+ b.innerHTML=html;
 }
+/* 4) tocando agora */
 function paintPlayer(){
  const el=$('sthp');if(!el)return;
- const c=S.cur,h=c&&find(c.ed,c.n),a=audioEl(),playing=a&&!a.paused;
- if(!c){el.hidden=!S.queue.length;if(el.hidden){el.innerHTML='';return}}
- else el.hidden=false;
- el.innerHTML=(c?'<div class="sthp-main"><button class="sthp-b" onclick="STHymn.prev()" title="Anterior">⏮</button><button class="sthp-b big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'⏸':'▶')+'</button><button class="sthp-b" onclick="STHymn.next()" title="Próximo">⏭</button><button class="sthp-b" onclick="STHymn.stop()" title="Parar">⏹</button>'
-   +'<div class="sthp-info"><b>'+c.n+' · '+esc(h?h.t:'')+'</b><div class="sthp-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)"><span id="sthpD">0:00</span></div></div>'
-   +'<label class="sthp-v" title="Volume">🔊<input type="range" min="0" max="100" value="'+Math.round((a?a.volume:1)*100)+'" oninput="STHymn.vol(this.value)"></label></div>':'')
-  +'<div class="sthp-opt"><label><input type="checkbox" '+(S.withLyrics?'checked':'')+' onchange="STHymn.wl(this.checked)"> Projetar a letra ao tocar</label>'+(c?'<button onclick="STHymn.lyr(\''+c.ed+'\','+c.n+')">▣ Projetar letra agora</button>':'')+'</div>'
-  +'<div id="sth-sync" class="sthp-q"></div>'
-  +(S.queue.length?'<div class="sthp-q"><small>Fila (' +S.queue.length+')</small>'+S.queue.map((q,i)=>'<span><b>'+q.n+'</b> '+esc(q.t)+'<button onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></span>').join('')+'<button class="sthp-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div>':'');
+ const c=S.cur,h=c&&find(c.ed,c.n),a=audioEl(),playing=a&&!a.paused,sem=S.mode==='sem';
+ if(!c&&!S.queue.length){el.hidden=true;el.innerHTML='';return}
+ el.hidden=false;
+ const q=S.queue.length?'<div class="sth-q"><small>Fila · '+S.queue.length+'</small>'+S.queue.map((x,i)=>'<span>'+esc(x.t)+'<button type="button" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">'+ico('x')+'</button></span>').join('')+'<button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar</button></div>':'';
+ el.innerHTML=(c?'<div class="sth-now"><div class="amb-info"><small>TOCANDO AGORA · '+esc(MODES.find(m=>m[0]===S.mode)[1].toUpperCase())+'</small><b>'+(ED[c.ed].coll?'':c.n+' · ')+esc(h?h.t:'')+'</b></div>'
+   +'<div class="sth-ctl"><button type="button" class="sthb" onclick="STHymn.prev()" title="Anterior">⏮</button>'+(sem?'':'<button type="button" class="sthb big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'Ⅱ':'▶')+'</button>')+'<button type="button" class="sthb" onclick="STHymn.next()" title="Próximo">⏭</button><button type="button" class="sthb" onclick="STHymn.stop()" title="Parar">■</button></div></div>'
+   +(sem?'':'<div class="sth-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)" aria-label="Posição"><span id="sthpD">0:00</span><label class="sth-vol" title="Volume">🔊<input type="range" min="0" max="100" value="'+Math.round((a?a.volume:1)*100)+'" oninput="STHymn.vol(this.value)" aria-label="Volume"></label></div>')
+   +'<div id="sth-sync" class="sth-stz"></div>':'')+q;
  paintSync();
 }
-function paint(){paintNav();paintStat();paintBar();paintBody();paintPlayer()}
+function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n){el.innerHTML='';return}
+ el.className='sth-stz'+(sy.manual?' big':'');
+ el.innerHTML='<button type="button" class="mp-btn" onclick="STHymn.stz(-1)">◀ Estrofe</button><span>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</span><button type="button" class="mp-btn" onclick="STHymn.stz(1)">Estrofe ▶</button>'}
+function paint(){paintCols();paintMode();paintConn();paintBody();paintPlayer()}
 
 function mount(){
  const sec=$('hymnal');if(!sec||$('sth'))return;
- const old=Array.from(sec.children).slice(1);
- const det=document.createElement('details');det.className='sth-manual';
- det.innerHTML='<summary>Letra manual e áudio avulso (arquivos fora da biblioteca)</summary>';
- old.forEach(n=>det.appendChild(n));
- const p=sec.querySelector('.mp-tt p');if(p)p.textContent='Hinários, JA/Min. Música, Coletâneas Diversas e Músicas Infantis do Louvor JA: toque, coloque na fila e projete a letra junto.';
  const box=document.createElement('div');box.id='sth';
- box.innerHTML='<div id="sth-nav"></div><div id="sth-stat"></div><div id="sthp" class="sthp" hidden></div><div id="sth-bar" class="sth-barr"></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
- sec.appendChild(box);sec.appendChild(det);
+ box.innerHTML='<div id="sth-conn"></div><div class="seg sth-cols" id="sth-cols" role="tablist"></div>'
+  +'<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar por nome ou número…" oninput="STHymn.input(this.value)"></label></div>'
+  +'<div id="sth-mode"></div><div id="sthp" class="amb-sel has sth-player" hidden></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
+ sec.appendChild(box);
  const a=$('sthAudio');
  a.addEventListener('timeupdate',()=>{const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
- a.addEventListener('play',paintPlayer);a.addEventListener('pause',paintPlayer);
- a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paint()}});
- a.addEventListener('error',()=>{if(S.cur&&a.src){delete urlCache[S.cur.ed+'|'+S.cur.n];say('Falha ao carregar o áudio. Tente de novo.')}});
+ a.addEventListener('play',()=>{paintPlayer();paintBody()});a.addEventListener('pause',()=>{paintPlayer();paintBody()});
+ a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paintBody()}});
+ a.addEventListener('error',()=>{if(S.cur&&a.src)say('Falha ao carregar o áudio. Tente de novo.')});
  const style=document.createElement('style');style.textContent=
- '#sth{margin-top:8px;display:grid;gap:10px;min-width:0;max-width:100%}#sth *{box-sizing:border-box;min-width:0}#sth input[type=range]{width:auto}.sth-tabs{display:flex;gap:6px;margin-bottom:8px}.sth-tabs button{flex:1;padding:10px;font-weight:800}.sth-tabs button.on{background:var(--primary,#2563eb);color:#fff;border-color:transparent}'
- +'.sth-top{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}.sth-ed{display:flex;gap:6px}.sth-ed button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px}.sth-ed button small{opacity:.7;font-size:11px}.sth-ed button.on{background:rgba(37,99,235,.28);border-color:#2563eb}.sth-search{flex:1;min-width:150px}@media(max-width:700px){.sth-top{flex-direction:column}.sth-ed{width:100%}.sth-ed button{flex:1}.sth-tabs button{font-size:13px;padding:9px 4px}.sth-barr{flex-direction:column;align-items:stretch}.sth-fl button{flex:1}.sthp-main{flex-wrap:wrap}.sthp-v{width:100%}.sthp-v input{flex:1}.sth-row{gap:6px;padding:6px}.sth-bt button{min-width:30px;height:32px;padding:0 5px}}.sth-search input{width:100%;height:100%;font-size:17px;padding:10px 14px}'
- +'.sth-barr{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}.sth-fl{display:flex;gap:6px}.sth-fl button{padding:7px 12px;font-size:13px}.sth-fl button.on{background:rgba(245,183,58,.2);border-color:#f5b73a}.sth-bulk{padding:8px 12px;font-size:13px}.sth-busy{opacity:.85}'
- +'.sth-list{display:grid;gap:5px;max-height:300px;overflow:auto;padding-right:4px}.sth-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid transparent}.sth-row.cur{border-color:#22c55e;background:rgba(34,197,94,.1)}.sth-row.no{opacity:.72}'
- +'.sth-no{min-width:38px;text-align:center;font-weight:800;font-size:16px;color:#f5b73a}.sth-tt{flex:1;min-width:0;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sth-tt i{margin-left:8px;font-size:11px;opacity:.6;font-style:normal}'
- +'.sth-bt{display:flex;gap:4px}.sth-bt button{min-width:34px;height:34px;padding:0 8px;font-size:14px}.sth-bt .pl{background:#16a34a;color:#fff;border-color:transparent}.sth-bt .rm:hover{background:#e5484d;color:#fff}.sth-more{padding:10px}'
- +'.sth-warn{padding:10px 12px;border-radius:12px;background:rgba(229,72,77,.14);border:1px solid rgba(229,72,77,.4);margin:0}.sth-tip{padding:10px 12px;border-radius:12px;background:rgba(245,183,58,.1);border:1px solid rgba(245,183,58,.35);margin:0;font-size:13px;line-height:1.5}.sth-tip code{background:rgba(255,255,255,.1);padding:1px 5px;border-radius:5px}'
- +'.sth-res,.sth-rec{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}.sth-rec small{grid-column:1/-1;opacity:.7}.sth-res button,.sth-rec button{display:flex;gap:10px;align-items:center;text-align:left;padding:8px 12px}.sth-res b{min-width:34px;font-size:18px}.sth-rec i{margin-left:auto;font-size:11px;opacity:.6;font-style:normal}'
- +'.sth-card{display:flex;flex-direction:column;gap:10px}.sth-hd{display:flex;gap:12px;align-items:center}.sth-hd h3{margin:0}.sth-hd small{opacity:.7}.sth-n{font-size:30px;font-weight:800;min-width:64px;text-align:center;padding:6px 10px;border-radius:12px;background:rgba(37,99,235,.18)}.sth-x{margin-left:auto}'
- +'.sth-acts,.sth-nav{display:flex;gap:8px;flex-wrap:wrap}.sth-acts button,.sth-nav button{flex:1;min-width:150px;padding:10px}.sth-vs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px;max-height:190px;overflow:auto}.sth-vs button{display:flex;gap:10px;align-items:center;text-align:left;padding:8px 10px;font-size:13px}.sth-vs b{min-width:22px}.sth-vs button.on{outline:2px solid #22c55e}'
- +'.sthp[hidden]{display:none!important}.sthp{padding:10px 12px;border-radius:14px;background:rgba(10,24,52,.96);border:1px solid rgba(34,197,94,.55);display:grid;gap:8px}.sthp-main{display:flex;align-items:center;gap:6px}.sthp-b{width:38px;height:38px;padding:0;font-size:16px}.sthp-b.big{width:46px;height:46px;font-size:20px;background:#16a34a;color:#fff;border-color:transparent}'
- +'.sthp-info{flex:1;min-width:0;display:grid;gap:2px}.sthp-info b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.sthp-seek{display:flex;gap:8px;align-items:center;font-size:11px;opacity:.85}.sthp-seek input{flex:1}.sthp-v{display:flex;gap:4px;align-items:center;width:110px}.sthp-v input{width:80px}'
- +'.sthp-opt{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px;justify-content:space-between}.sthp-opt label{display:flex;flex-direction:row;gap:6px;align-items:center}.sthp-opt input[type=checkbox]{width:auto;min-height:0;margin:0}.sthp-opt button{padding:6px 10px;font-size:12px}.sthp-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sthp-q small{opacity:.7}.sthp-q span{display:flex;gap:6px;align-items:center;padding:3px 4px 3px 9px;border-radius:99px;background:rgba(255,255,255,.08)}.sthp-q span button{width:22px;height:22px;padding:0;border-radius:50%;font-size:10px}.sthp-cl{padding:4px 9px;font-size:11px}'
- +'.sth-stat{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);font-size:12.5px}.sth-sc{display:grid;gap:3px}.sth-sc i{font-style:normal;opacity:.65;font-weight:500}.sth-sc span{opacity:.88}.sth-sc details{opacity:.9}.sth-sc summary{cursor:pointer;color:#f5b73a}.sth-miss{max-height:140px;overflow:auto;padding:4px 0 2px 10px;font-size:12px;opacity:.85}.sth-sa{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sth-sa button{padding:6px 12px;font-size:12.5px}'
- +'.sth-ed{flex-wrap:wrap}.sth-mode{display:flex;gap:6px;flex-wrap:wrap}.sth-mode button{flex:1;min-width:120px;padding:8px 10px;font-size:13px;font-weight:700}.sth-mode button.on{background:rgba(34,197,94,.22);border-color:#22c55e}'
- +'.sth-albs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-height:460px;overflow:auto;padding-right:4px}.sth-ab{display:flex;flex-direction:column;gap:5px;align-items:stretch;text-align:left;padding:8px;border-radius:12px}.sth-ab b{font-size:13px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.sth-ab small{opacity:.65;font-size:11px}'
- +'.sth-cv{display:block;aspect-ratio:1/1;border-radius:9px;background:linear-gradient(135deg,#1d3a6e,#0e1f3d) center/cover no-repeat;position:relative;overflow:hidden}.sth-cv i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:34px;font-weight:800;opacity:.45}.sth-cv.has i{display:none}'
- +'.sth-albhd{display:flex;gap:10px;align-items:center}.sth-albhd button{padding:7px 12px;font-size:13px}.sth-tt em{display:block;font-style:normal;font-size:11px;opacity:.6}'
- +'.sth-manual{margin-top:14px}.sth-manual summary{cursor:pointer;opacity:.8;padding:6px 0}';
+ '#sth{display:grid;gap:14px;min-width:0;max-width:100%}#sth *{box-sizing:border-box;min-width:0}#sth code{background:rgba(127,150,200,.18);padding:1px 6px;border-radius:5px;font-size:12px}#sth input[type=range]{width:auto;accent-color:#3574f3}'
+ +'.sth-conn{border:1px solid var(--bd);border-radius:12px;background:var(--sf2);padding:14px;display:grid;gap:12px}.sth-ch{display:grid;gap:2px}.sth-ch small,.sth-conn small{color:var(--mu);font-size:12.5px}'
+ +'.sth-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}.sth-steps li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--sf)}.sth-steps .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;background:var(--sf3);color:var(--tx)}.sth-steps .n .ti{width:16px;height:16px}.sth-steps li.ok .n{background:#16a34a;color:#fff}.sth-steps .t{flex:1;display:grid;gap:2px}.sth-steps .t b{font-size:14px}.sth-steps button{flex:none}.sth-steps button[disabled]{opacity:.45;cursor:not-allowed}'
+ +'.sth-help summary,.sth-more-d summary{cursor:pointer;color:#7fa6ff;font-size:13px;font-weight:600}.sth-help p{margin:8px 0 0;font-size:13px;color:var(--mu);line-height:1.5}'
+ +'.sth-conn.ok{padding:10px 12px;gap:8px}.sth-sum{display:flex;align-items:center;gap:12px}.sth-sum .t{flex:1;display:grid;gap:2px}.sth-sum .t b{font-size:14px}.sth-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18);flex:none}.sth-dot.warn{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.2)}'
+ +'.sth-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}.sth-sc{display:grid;gap:4px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);font-size:12.5px}.sth-sc span{color:var(--mu)}.sth-sc summary{cursor:pointer;color:#7fa6ff}.sth-miss{max-height:140px;overflow:auto;padding:4px 0 2px 10px;color:var(--mu)}.sth-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
+ +'.sth-busy{display:flex;align-items:center;gap:10px;font-size:13.5px}.sth-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd2);border-top-color:#5b93ff;animation:sthspin .8s linear infinite;flex:none}@keyframes sthspin{to{transform:rotate(360deg)}}'
+ +'.sth-cols{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.sth-cols button{height:auto;min-height:44px;padding:6px 8px!important;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px!important}.sth-cols button span{white-space:normal;text-align:center}.sth-cols .cnt{flex:none}'
+ +'#sth .amb-search{display:flex}#sth-mode .seg{margin:0}.sth-hint{margin:8px 2px 0;font-size:12.5px;color:var(--mu)}#sth-mode .seg.s3 button{height:42px}'
+ +'.sth-r.no{opacity:.55}.sth-r .amb-play[disabled]{opacity:.4;cursor:not-allowed}.sth-no{min-width:34px;text-align:center;font-weight:700;font-size:15px;color:#f5b73a;flex:none}.sth-pz{font-size:15px;letter-spacing:-1px}.sth-r .amb-info small{font-size:12px}'
+ +'.sth-albs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}.sth-ab{display:flex!important;flex-direction:column;gap:6px;align-items:stretch;text-align:left;padding:8px!important;border-radius:12px!important;background:var(--sf2)!important;border:1px solid var(--bd)!important;height:auto!important;cursor:pointer}.sth-ab:hover{border-color:#5b93ff!important}.sth-ab b{font-size:13px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:600}.sth-ab small{color:var(--mu);font-size:11.5px}'
+ +'.sth-cv{display:block;aspect-ratio:1/1;border-radius:9px;background:linear-gradient(135deg,#1d3a6e,#0e1f3d) center/cover no-repeat;position:relative;overflow:hidden}.sth-cv i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:34px;font-weight:800;color:#fff;opacity:.4}.sth-cv.has i{display:none}'
+ +'.sth-albhd{display:flex;gap:12px;align-items:center;margin-bottom:6px}.sth-albhd b{font-size:15px}'
+ +'.sth-player{display:grid!important;gap:10px}.sth-player[hidden]{display:none!important}.sth-now{display:flex;align-items:center;gap:12px}.sth-now .amb-info b{font-size:15px}.sth-ctl{display:flex;gap:6px;flex:none}.sthb{width:40px;height:40px;padding:0!important;border-radius:50%!important;background:#13244a!important;border:1px solid var(--bd)!important;color:#fff!important;font-size:15px;display:grid;place-items:center;cursor:pointer}.sthb.big{width:46px;height:46px;background:linear-gradient(180deg,#3574f3,#1e4fd0)!important;border-color:#5b93ff!important;font-size:17px}'
+ +'.sth-seek{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mu)}.sth-seek>input{flex:1}.sth-vol{display:flex;gap:6px;align-items:center;flex:none;font-size:13px}.sth-vol input{width:90px}'
+ +'.sth-stz{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px}.sth-stz:empty{display:none}.sth-stz span{min-width:110px;text-align:center;color:var(--mu);font-weight:600}.sth-stz.big button{flex:1;height:48px;font-size:14px}.sth-stz.big span{color:var(--tx)}'
+ +'.sth-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sth-q small{color:var(--mu)}.sth-q span{display:flex;gap:4px;align-items:center;padding:3px 4px 3px 10px;border-radius:99px;background:var(--sf3)}.sth-q span button{width:22px;height:22px;padding:0;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}.sth-q span .ti{width:13px;height:13px}.sth-cl{padding:4px 10px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:inherit;font-size:11.5px;cursor:pointer}'
+ +'@media(max-width:620px){.sth-steps li{flex-wrap:wrap}.sth-steps button{width:100%}.sth-sum{flex-wrap:wrap}.sth-now{flex-wrap:wrap}.sth-seek{flex-wrap:wrap}.sth-vol{width:100%}.sth-vol input{flex:1;width:auto}}';
  document.head.appendChild(style);
- loadLyrics(S.ed).then(paint);loadAudio();restoreLocal();paint();
+ loadLyrics(S.ed).then(paint);restoreLocal();paint();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();
