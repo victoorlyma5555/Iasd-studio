@@ -17,7 +17,10 @@ async function refreshAccess(){if(accBusy||!cloud||!cloudUser)return;accBusy=tru
  const lost=((current==='Projeção'||current==='Sorteadores')&&!canUseSound())||(current==='Acervo'&&!canManageSite())||(current==='Alertas'&&!canSendSoundAlert())||(current==='Cargos'&&!(window.IASDAccess?.canGivePerms(cloudRole)))||(current==='Fundador'&&cloudRole!=='founder');
  if(lost)go('Painel');
  try{setupSoundAlertsRealtime()}catch(e){}
- render();try{window.dispatchEvent(new CustomEvent('iasd-access-changed'))}catch(e){}}catch(e){}finally{accBusy=false}}
+ /* nunca redesenha a ferramenta que a pessoa está usando: só páginas estáticas são refeitas; nas demais atualiza só menu/cabeçalho */
+ if(!lost&&['Painel','Cronograma','Datas especiais','Mais','Perfil'].includes(current))render();
+ else if(!lost){try{syncAccountUI()}catch(e){}try{window.IASDUI?.afterRender?.()}catch(e){}}
+ try{window.dispatchEvent(new CustomEvent('iasd-access-changed'))}catch(e){}}catch(e){}finally{accBusy=false}}
 function setupAccessRealtime(){const u=cloudUser?.id||null;if(accChan&&accChanUser===u)return;if(accChan){try{cloud.removeChannel(accChan)}catch(e){}accChan=null}accChanUser=u;if(!cloud||!u)return;
  const kick=()=>{clearTimeout(accTimer);accTimer=setTimeout(refreshAccess,150)};
  accChan=cloud.channel('iasd-access-'+u);['iasd_members','iasd_member_cargos','iasd_member_perms','iasd_cargos'].forEach(t=>accChan.on('postgres_changes',{event:'*',schema:'public',table:t},kick));

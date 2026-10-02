@@ -251,7 +251,7 @@ html[data-theme="light"] .gm-tile,html[data-theme="light"] .fd-tile{background:v
 @media (max-width:560px){.es-areas{display:flex;overflow-x:auto}.es-area{flex:0 0 auto}.es-day{min-height:56px;padding:3px}.es-chip b,.es-chip small{display:none}.es-chip{justify-content:center;padding:3px}.es-mt h2{font-size:19px}.es-filter{grid-template-columns:1fr}}
 .es-x{display:none}.es-chip:hover .es-x{display:inline}
 
-#es-root{display:grid;gap:16px;min-width:0}
+#esc-root{display:grid;gap:16px;min-width:0}
 .es-day{position:relative}.es-day.today{background:color-mix(in srgb,#2563eb 9%,transparent)}.es-hoje{position:absolute;top:8px;right:8px;font-style:normal;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#4d8dff}
 @media (max-width:560px){.es-hoje{display:none}}
 @media (hover:none){.es-x{display:inline;padding:0 4px}}
