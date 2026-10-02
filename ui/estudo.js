@@ -5,7 +5,7 @@
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cloud=()=>window.iasdCloud||null;
 const user=()=>{try{return typeof window.iasdCurrentUser==='function'?window.iasdCurrentUser():null}catch(e){return null}};
-const isF=()=>{try{return !!user()&&cloudRole==='founder'}catch(e){return false}};
+const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canStudy(cloudRole)}catch(e){return false}};
 const rid=()=>Math.random().toString(36).slice(2,9);
 const $=id=>document.getElementById(id);
 const toast=m=>{try{IASDPages.toast(m)}catch(e){}let t=$('bb-toast');if(!t){t=document.createElement('div');t.id='bb-toast';t.className='bb-toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2400)};

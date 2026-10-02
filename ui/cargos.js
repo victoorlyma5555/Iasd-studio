@@ -37,9 +37,9 @@ function page(){
 function permItem(i,on,lockNote){const founder=!!data.me_founder,lock=!!lockNote||(i.sensitive&&!founder);
  return '<label class="cg-perm'+(lock?' lock':'')+'"><input type="checkbox" data-k="'+E(i.key)+'" '+(on?'checked ':'')+(lock?'disabled ':'')+'><span><b>'+E(i.label)+'</b>'+(i.hint?'<small>'+E(i.hint)+'</small>':'')+'<small class="cg-inh" data-inh>'+E(lockNote||((i.sensitive&&!founder)?'só o fundador concede':''))+'</small></span></label>'}
 function permBoxes(sel){
- const ready=cat().map(g=>({g:g.group,items:g.items.filter(i=>i.ready)})).filter(x=>x.items.length),soon=cat().flatMap(g=>g.items.filter(i=>!i.ready));
- return ready.map(x=>'<fieldset class="cg-grp"><legend>'+E(x.g.replace(/ \(.*\)/,''))+'</legend>'+x.items.map(i=>permItem(i,sel.has(i.key))).join('')+'</fieldset>').join('')+
-  (soon.length?'<details class="cg-soon-box"><summary>Em breve · ainda sem efeito no site ('+soon.length+')</summary><p class="muted">Você já pode marcar, e passa a valer quando o site ganhar essas funções.</p>'+soon.map(i=>permItem(i,sel.has(i.key))).join('')+'</details>':'')}
+ const g=cat().map(g=>({g:g.group,items:g.items.filter(i=>i.ready)})).filter(x=>x.items.length);
+ return g.map(x=>{const n=x.items.filter(i=>sel.has(i.key)).length;return '<details class="cg-acc"'+(n?' open':'')+'><summary><span>'+E(x.g.replace(/ \(.*\)/,''))+'</span><em class="cg-n'+(n?' on':'')+'">'+n+'/'+x.items.length+'</em></summary>'+x.items.map(i=>permItem(i,sel.has(i.key))).join('')+'</details>'}).join('')}
+function accCount(o){o.querySelectorAll('details.cg-acc').forEach(d=>{const all=d.querySelectorAll('input[data-k]'),n=[...all].filter(x=>x.checked).length,e=d.querySelector('.cg-n');e.textContent=n+'/'+all.length;e.classList.toggle('on',n>0)})}
 const same=(a,b)=>a.size===b.size&&[...a].every(x=>b.has(x));
 const diff=(a,b)=>[...a].filter(x=>!b.has(x)).length+[...b].filter(x=>!a.has(x)).length;
 function close(force){const m=document.getElementById('cg-modal');if(!m)return true;if(!force&&m.__dirty&&m.__dirty()&&!confirm('Descartar as alterações?'))return false;m.remove();document.body.classList.remove('cg-lock');return true}
@@ -52,14 +52,14 @@ function toast(msg,undo){const t=document.createElement('div');t.className='cg-t
 function editMember(uid){const m=(data.members||[]).find(x=>x.user_id===uid);if(!m)return;
  const c0=new Set(m.cargo_ids||[]),p0=new Set(m.perms||[]);let own=new Set(p0);
  const cargoList=(data.cargos||[]).length?(data.cargos||[]).map(c=>{const lock=!data.me_founder&&(c.perms||[]).some(isSens);return '<label class="cg-perm'+(lock?' lock':'')+'"><input type="checkbox" data-c="'+E(c.id)+'" '+(c0.has(c.id)?'checked ':'')+(lock?'disabled ':'')+'><span><b>'+E(c.name)+'</b><small>'+((c.perms||[]).map(label).join(' · ')||'sem permissões')+'</small>'+(lock?'<small class="cg-inh">só o fundador concede</small>':'')+'</span></label>'}).join(''):'<p class="cg-none">Nenhum cargo criado. Use a aba Cargos para criar.</p>';
- const o=open(m.full_name,m.email||'','<section><h4>Cargos</h4>'+cargoList+'</section><section><h4>Permissões soltas</h4><p class="muted">Para liberar só uma função, sem criar um cargo.</p>'+permBoxes(p0)+'</section>');
+ const o=open(m.full_name,m.email||'','<section><h4>Funções desta pessoa</h4><p class="muted">Abra o tipo e marque só o que ela pode fazer.</p>'+permBoxes(p0)+'</section>'+((data.cargos||[]).length?'<section><h4>Cargos criados por você (opcional)</h4>'+cargoList+'</section>':''));
  const cargosNow=()=>new Set([...o.querySelectorAll('input[data-c]:checked')].map(x=>x.dataset.c));
  function refresh(){const cs=cargosNow(),inh=new Map();cs.forEach(id=>{const c=cargoById(id);(c?.perms||[]).forEach(k=>{if(!inh.has(k))inh.set(k,[]);inh.get(k).push(c.name)})});
   const founder=!!data.me_founder;
   permInputs(o).forEach(x=>{const k=x.dataset.k,from=inh.get(k),sens=isSens(k)&&!founder,lab=x.closest('label'),note=lab.querySelector('[data-inh]');
    if(from){x.checked=true;x.disabled=true;lab.classList.add('lock');note.textContent='já vem do cargo '+from.join(', ')}
    else{x.disabled=sens;x.checked=own.has(k);lab.classList.toggle('lock',sens);note.textContent=sens?'só o fundador concede':''}});
-  const n=diff(cs,c0)+diff(own,p0);o.querySelector('#cg-count').textContent=n?n+' alteraç'+(n===1?'ão':'ões')+' não salva'+(n===1?'':'s'):'Sem alterações';
+  accCount(o);const n=diff(cs,c0)+diff(own,p0);o.querySelector('#cg-count').textContent=n?n+' alteraç'+(n===1?'ão':'ões')+' não salva'+(n===1?'':'s'):'Sem alterações';
   o.querySelector('#cg-save').disabled=!n;o.querySelector('#cg-undo').disabled=!n;o.__n=n}
  o.__dirty=()=>o.__n>0;
  o.addEventListener('change',e=>{const x=e.target;if(x.dataset.k){x.checked?own.add(x.dataset.k):own.delete(x.dataset.k)}refresh()});
@@ -73,7 +73,7 @@ function editMember(uid){const m=(data.members||[]).find(x=>x.user_id===uid);if(
  refresh()}
 function editCargo(id){const c=id?cargoById(id):null,p0=new Set(c?c.perms:[]),n0=c?c.name:'';let own=new Set(p0);
  const o=open(c?'Editar cargo':'Novo cargo',c?'':'Dê um nome e marque o que este cargo pode fazer.','<label class="cg-name">Nome do cargo<input id="cg-name" maxlength="40" placeholder="Ex.: Diretor do Culto" value="'+E(n0)+'"></label>'+permBoxes(p0));
- const refresh=()=>{const nm=o.querySelector('#cg-name').value.trim(),n=diff(own,p0)+(nm!==n0?1:0);o.querySelector('#cg-count').textContent=n?n+' alteraç'+(n===1?'ão':'ões'):'Sem alterações';o.querySelector('#cg-save').disabled=!n||nm.length<2;o.querySelector('#cg-undo').disabled=!n;o.__n=n};
+ const refresh=()=>{accCount(o);const nm=o.querySelector('#cg-name').value.trim(),n=diff(own,p0)+(nm!==n0?1:0);o.querySelector('#cg-count').textContent=n?n+' alteraç'+(n===1?'ão':'ões'):'Sem alterações';o.querySelector('#cg-save').disabled=!n||nm.length<2;o.querySelector('#cg-undo').disabled=!n;o.__n=n};
  o.__dirty=()=>o.__n>0;
  o.addEventListener('input',e=>{if(e.target.id==='cg-name')refresh()});
  o.addEventListener('change',e=>{const x=e.target;if(x.dataset.k){x.checked?own.add(x.dataset.k):own.delete(x.dataset.k)}refresh()});

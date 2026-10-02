@@ -35,6 +35,7 @@ const S={
   assigned:()=>!!g(()=>hasAssignedRole()),
   alerts:()=>!!g(()=>canSendSoundAlert()),
   give:()=>!!g(()=>cloudUser)&&!!g(()=>window.IASDAccess.canGivePerms(cloudRole)),
+  study:()=>!!g(()=>cloudUser)&&!!g(()=>IASDAccess.canStudy(cloudRole)),
   founder:()=>!!g(()=>cloudUser)&&g(()=>cloudRole)==='founder'
 };
 const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
@@ -59,7 +60,7 @@ function searchable(){
   if(S.sound()){out.push({id:'Sorteadores',icon:'dice',label:'Sorteadores'})}
   if(S.sound())out.push({id:'Mídia',icon:'music',label:'Mídia e músicas'});
   out.push({id:'Perfil',icon:'user',label:'Meu perfil'});
-  if(S.founder())out.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
+  if(S.study())out.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
   if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
   if(S.give())out.push({id:'Cargos',icon:'users',label:'Cargos e acessos'});
@@ -76,9 +77,10 @@ function sideHTML(){
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
   if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
   if(S.give())h+='<div class="iu-sec">ACESSOS</div>'+navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
+  if(S.study())h+='<div class="iu-sec">ESTUDO</div>'+navBtn('Estudo',ic('book',19),'Sala de Estudo',cur);
   if(S.manage()){
     h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
-    if(S.founder())h+=navBtn('Estudo',ic('book',19),'Sala de Estudo',cur)+navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
+    if(S.founder())h+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
     h+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
     h+=`<button class="iu-nav" data-act="newtab">${ic('plus',19)}<span>Criar aba</span></button>`;
   }

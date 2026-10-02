@@ -230,7 +230,7 @@ async function prLoad(){
 }
 function prPaint(){
  const w=sheetEl?.querySelector('.pr-list');if(!w)return;
- const mod=isFounder();
+ const mod=isFounder()||!!(window.IASDAccess&&logged()&&IASDAccess.canModeratePrayer(cloudRole));
  if(PR.err==='login'){w.innerHTML='<p class="pg-empty">Entre na sua conta para ver e participar do mural.</p><button class="pg-gold ex-wide" data-ex="pr-login">Entrar</button>';return}
  if(PR.off){w.innerHTML='<p class="pg-empty">O mural ainda não foi ativado no servidor. O administrador precisa rodar o arquivo <b>docs/supabase-oracao.sql</b> no Supabase.</p>';return}
  if(PR.err){w.innerHTML='<p class="pg-empty">'+esc(PR.err)+'</p>';return}

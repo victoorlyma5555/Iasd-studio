@@ -15,24 +15,27 @@ const catalog=Object.freeze([
  {group:'Cronogramas',items:[
   {key:'cron.edit',label:'Criar e editar cronogramas',hint:'Inclui importar cronogramas antigos',ready:true},
   {key:'cron.delete',label:'Apagar cronogramas',ready:true}]},
+ {group:'Escalas',items:[
+  {key:'escala.add',label:'Adicionar pessoas nas escalas',ready:true},
+  {key:'escala.edit',label:'Editar escalas',ready:true},
+  {key:'escala.delete',label:'Excluir escalas',ready:true}]},
  {group:'Sonoplastia',items:[
   {key:'sound.use',label:'Usar a sonoplastia e o IASD Projetor',hint:'Studio, telão, sorteadores, receber e responder alertas',ready:true},
-  {key:'sound.library',label:'Gerenciar a biblioteca de mídias da sonoplastia',ready:false}]},
+  {key:'sound.library',label:'Gerenciar a biblioteca de mídias',hint:'Enviar e apagar vídeos e mídias, sem abrir o Projetor',ready:true}]},
  {group:'Avisos',items:[
   {key:'alert.send_sound',label:'Enviar alertas à sonoplastia',ready:true},
+  {key:'alert.delete',label:'Apagar alertas da sonoplastia',ready:true},
   {key:'alert.send_members',label:'Enviar avisos aos membros',hint:'Todos ou uma pessoa, com popup e notificação',ready:true}]},
  {group:'Oração',items:[
-  {key:'prayer.moderate',label:'Moderar pedidos de oração',ready:false}]},
+  {key:'prayer.moderate',label:'Moderar pedidos de oração',hint:'Marcar como respondido e apagar pedidos de outros',ready:true}]},
+ {group:'Sala de Estudo',items:[
+  {key:'study.use',label:'Abrir a Sala de Estudo e criar salas',hint:'Criar cursos e conduzir a sala ao vivo',ready:true}]},
  {group:'Site',items:[
   {key:'site.edit',label:'Editar capas, carrossel e acervo de imagens',ready:true},
   {key:'site.texts',label:'Editar textos do site',ready:true},
-  {key:'site.tabs',label:'Gerenciar abas personalizadas',ready:true},
-  {key:'site.theme',label:'Mudar o tema do site',ready:false}]},
+  {key:'site.tabs',label:'Gerenciar abas personalizadas',ready:true}]},
  {group:'Administração (só o fundador concede)',items:[
-  {key:'admin.accounts',label:'Ver contas e editar perfis de membros',sensitive:true,ready:false},
-  {key:'admin.layout',label:'Ajustar layout e prévia dos aparelhos',sensitive:true,ready:false},
-  {key:'admin.ranking_reset',label:'Reiniciar o ranking do jogo',sensitive:true,ready:false},
-  {key:'admin.study',label:'Gerenciar a Sala de Estudo',sensitive:true,ready:false}]}
+  {key:'admin.ranking_reset',label:'Zerar o ranking do jogo',sensitive:true,ready:true}]}
 ]);
 let perms=new Set();
 const has=(group,role)=>roles[group]?.includes(role)||false;
@@ -47,11 +50,16 @@ window.IASDAccess=Object.freeze({
  canEditSite:role=>has('siteEditors',role)||can('site.edit'),
  canEditTexts:role=>has('management',role)||can('site.texts'),
  canManageTabs:role=>has('management',role)||can('site.tabs'),
+ canEscala:(k,role)=>can('escala.'+k)||has('management',role)||has('scheduleEditors',role)||has('assigned',role),
+ canStudy:role=>role==='founder'||can('study.use'),
+ canModeratePrayer:role=>role==='founder'||can('prayer.moderate'),
+ canResetRanking:role=>role==='founder'||can('admin.ranking_reset'),
  canEditSchedule:role=>has('scheduleEditors',role)||can('cron.edit'),
  canDeleteSchedule:role=>has('management',role)||can('cron.delete'),
  hasAssignedRole:role=>has('assigned',role)||perms.size>0,
  canUseSound:role=>has('sound',role)||can('sound.use'),
  canSendSoundAlert:role=>has('assigned',role)||can('alert.send_sound')||can('sound.use'),
+ canDeleteAlert:role=>has('assigned',role)||can('alert.delete'),
  canSendMemberAlert:role=>has('sound',role)||can('alert.send_members')
 });
 })();
