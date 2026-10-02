@@ -264,7 +264,7 @@ function projectionPreviewLabel(t){
   try{const d=JSON.parse(t.slice('IASD_DRAW_ANIM:'.length));return 'Sorteio em andamento · '+d.min+' a '+d.max}catch{return 'Sorteio em andamento…'}
  }
  if(t.startsWith('IASD_DRAW:'))return 'Número sorteado: '+t.slice('IASD_DRAW:'.length).split('|')[0];
- if(t.startsWith('IASD_LYRIC:')){try{const d=JSON.parse(t.slice(11));return d.title?('♬ '+d.text):d.text}catch{return 'Letra do hino'}}
+ if(t.startsWith('IASD_LYRIC:')){try{const d=JSON.parse(t.slice(11));return d.end?'Fim do hino':d.title?('♬ '+d.text):d.text}catch{return 'Letra do hino'}}
  if(t.startsWith('IASD_BIBLE:')){try{const d=JSON.parse(t.slice('IASD_BIBLE:'.length));return d.reference||d.ref||'Passagem bíblica'}catch{return 'Passagem bíblica'}}
  if(t.startsWith('IASD_LOCAL_MEDIA:'))return 'Mídia em projeção';
  return t;

@@ -197,6 +197,28 @@ const LYR={
  glow:{d:.18,out:[{opacity:1,filter:'brightness(1) blur(0px)'},{opacity:0,filter:'brightness(1.9) blur(8px)'}],in:[{opacity:0,filter:'brightness(1.9) blur(8px)',transform:'scale(.97)'},{opacity:1,filter:'brightness(1) blur(0px)',transform:'scale(1)'}]},
  curtain:{d:.42,out:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 50% 0 50%)'}],in:[{clipPath:'inset(0 50% 0 50%)'},{clipPath:'inset(0 0 0 0)'}]}
 };
+/* início do hino: entra com a animação escolhida (a partir do preto); fim do hino: sai e deixa a tela preta */
+let endAnim=null;
+function cancelEnd(){if(endAnim){try{endAnim.cancel()}catch(e){}endAnim=null}}
+function lyricIntro(t,d){
+ const A=LYR[d.ia],ms=Math.min(2500,Math.max(0,+d.ms||0));
+ showRaw(t);
+ if(!A||!ms||!out.animate)return;
+ const slide=out.querySelector('.lyric-slide');
+ try{
+  out.animate([{opacity:0},{opacity:1}],{duration:ms,easing:'ease-out'});
+  if(slide)slide.animate(A.in,{duration:Math.round(ms*(1-A.d)),delay:Math.round(ms*A.d),easing:'cubic-bezier(.22,.61,.36,1)',fill:'backwards'});
+ }catch(e){}
+}
+function lyricEnd(d,seq){
+ const A=LYR[d.anim],ms=Math.min(2500,Math.max(0,+d.ms||0)),slide=out.querySelector('.lyric-slide');
+ if(!A||!ms||!out.animate||!slide){showRaw('');return}
+ try{
+  slide.animate(A.out,{duration:ms,easing:'ease-in-out',fill:'forwards'});
+  const a=out.animate([{opacity:1},{opacity:0}],{duration:ms,easing:'ease-in-out',fill:'forwards'});endAnim=a;
+  a.onfinish=()=>{if(seq!==trSeq||endAnim!==a)return;cancelEnd();showRaw('')};
+ }catch(e){cancelEnd();showRaw('')}
+}
 function lyricShow(t){
  let d={};try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){return showRaw(t)}
  const A=LYR[d.anim],ms=Math.min(2500,Math.max(0,+d.ms||0));
@@ -220,10 +242,16 @@ function lyricShow(t){
 }
 function show(value){
  let t=typeof value==='string'?value:'';
+ cancelEnd();
  const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(t);
  if(m){if(TR_IN[m[1]]||m[1]==='none')curTr={type:m[1],ms:Math.min(2000,+m[2])};t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
- if(fam==='IASD_LYRIC'&&prev==='IASD_LYRIC'){trFam=fam;++trSeq;return lyricShow(t)}
+ if(fam==='IASD_LYRIC'){
+  let d=null;try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){}
+  if(d&&d.end){trFam='';const seq=++trSeq;if(prev==='IASD_LYRIC')lyricEnd(d,seq);else showRaw('');return}
+  if(prev==='IASD_LYRIC'){trFam=fam;++trSeq;return lyricShow(t)}
+  if(d&&d.ia&&LYR[d.ia]){trFam=fam;++trSeq;return lyricIntro(t,d)}
+ }
  const instant=!out.animate||curTr.type==='none'||!TR_IN[curTr.type]||!curTr.ms||t.startsWith('IASD_GAME:')||t.startsWith('IASD_DRAW_STYLE:')||(fam===prev&&(fam==='timer'||fam==='draw'))||(prev===''&&fam==='');
  if(t.startsWith('IASD_DRAW_STYLE:')){return showRaw(t)}
  trFam=t.startsWith('IASD_GAME:')?'game':fam;

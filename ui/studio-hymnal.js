@@ -13,8 +13,8 @@ const S={ed:'novo',mode:'cantado',album:null,data:{},status:{},q:'',limit:80,que
 try{S.ed=localStorage.getItem('iasd-sth-ed')||'novo';if(!ED[S.ed])S.ed='novo';S.mode=localStorage.getItem('iasd-sth-mode')||'cantado';if(!['cantado','pb','sem'].includes(S.mode))S.mode='cantado'}catch(e){}
 const ANIMS=[['fade','Suave','Dissolve delicado entre as estrofes'],['rise','Subir','A letra sobe suavemente'],['mist','Névoa','Dissolve com desfoque, bem sereno'],['glow','Luz','Um brilho que se acende'],['curtain','Cortina','Abre do centro para os lados'],['none','Corte','Troca direta, sem animação']];
 const SPEEDS=[[550,'Rápida'],[900,'Normal'],[1500,'Lenta']];
-S.anim={a:'fade',ms:900};
-try{const v=JSON.parse(localStorage.getItem('iasd-sth-anim')||'null');if(v&&ANIMS.some(x=>x[0]===v.a))S.anim.a=v.a;if(v&&SPEEDS.some(x=>x[0]===+v.ms))S.anim.ms=+v.ms}catch(e){}
+S.anim={a:'fade',ms:900,i:'fade',o:'fade'};S.endClose=true;S.endTok=0;
+try{const v=JSON.parse(localStorage.getItem('iasd-sth-anim')||'null');if(v&&ANIMS.some(x=>x[0]===v.a))S.anim.a=v.a;if(v&&SPEEDS.some(x=>x[0]===+v.ms))S.anim.ms=+v.ms;if(v&&ANIMS.some(x=>x[0]===v.i))S.anim.i=v.i;if(v&&ANIMS.some(x=>x[0]===v.o))S.anim.o=v.o;S.endClose=!v||v.c!==0}catch(e){}
 S.op=1;try{const v=parseFloat(localStorage.getItem('iasd-sth-op'));if(v>=0&&v<=1)S.op=v}catch(e){}
 const pad=n=>String(n).padStart(3,'0');
 function clean(s){return String(s||'').replace(/\s+([,.;:!?])/g,'$1').replace(/^\s*\d+\.\s*/,'').trim()}
@@ -280,13 +280,28 @@ async function fillCovers(){
   const u=await thumbFor(n);if(u&&el.isConnected){el.style.backgroundImage='url("'+u+'")';el.classList.add('has')}
  }
 }
-function sendLyric(o){if(typeof window.project!=='function')return;o.anim=S.anim.a;o.ms=S.anim.ms;o.op=S.op;window.project('IASD_LYRIC:'+JSON.stringify(o))}
+function sendLyric(o){if(typeof window.project!=='function')return;if(o.anim===undefined)o.anim=S.anim.a;if(o.ms===undefined)o.ms=S.anim.ms;o.op=S.op;window.project('IASD_LYRIC:'+JSON.stringify(o))}
 function mkEntry(ed,n){const h=find(ed,n);return h&&h.est&&h.est.length?{name:h.t,img:'',L:h.est.map(x=>[0,0,x,'',''])}:null}
 function startSync(ed,n,fileName,opt){
  const manual=!!(opt&&opt.manual);let e=entryOf(ed,find(ed,n));
  if(!e||!e.L.length){e=manual?mkEntry(ed,n):null;if(!e){S.sync=null;return false}}
  const pb=!!(opt&&opt.pb)||/\s[-–]\s*pb\s*\.[a-z0-9]+$/i.test(fileName||'');
  const sy=S.sync={ed,n,e,pb,manual,last:-9,bgk:'',busy:false};sendStanza(sy,manual?-1:curStanza(sy,0));return true
+}
+/* fim do hino: a letra sai com a animação escolhida e (se ligado) a janela de projeção fecha.
+   Qualquer música iniciada antes ou durante a saída cancela o fechamento (S.endTok) e segue o ciclo normal. */
+function endHymn(){
+ const sy=S.sync;if(!sy)return;S.sync=null;const tok=++S.endTok;
+ const none=S.anim.o==='none',ms=none?0:S.anim.ms;
+ if(sy.manual)S.cur=null;
+ sendLyric({end:1,anim:S.anim.o,ms});
+ if(S.endClose)setTimeout(()=>{
+  if(S.endTok!==tok||S.sync)return;
+  let cur='';try{cur=localStorage.getItem('iasd-stage')||''}catch(e){}
+  if(!(cur.startsWith('IASD_LYRIC:')&&cur.includes('"end":1')))return;   /* o sonoplasta projetou outra coisa: não fecha */
+  if(typeof window.closeScreenNow==='function')window.closeScreenNow()
+ },ms+250);
+ paintPlayer();paintBody()
 }
 function curStanza(sy,t){const ti=sy.pb?1:0;let k=-1;for(let i=0;i<sy.e.L.length;i++){if(sy.e.L[i][ti]<=t+0.15)k=i;else break}return k}
 async function sendStanza(sy,k){
@@ -297,6 +312,7 @@ async function sendStanza(sy,k){
   if(bgk!==sy.bgk){bg=await bgFor(img);sy.bgk=bgk}
   if(S.sync!==sy)return;
   const o=L?{text:L[2],aux:L[4]||'',title:0}:{text:sy.e.name,title:1};if(bg!==undefined)o.bg=bg;
+  if(!sy.sent){o.ia=S.anim.i;sy.sent=true}
   sendLyric(o);
   const nx=sy.e.L[k+1];if(nx&&nx[3]&&String(nx[3]).toLowerCase()!==bgk)bgFor(nx[3]);
  }finally{sy.busy=false;const w=sy.want;sy.want=undefined;if(w!==undefined&&w!==sy.last&&S.sync===sy)sendStanza(sy,w)}
@@ -310,7 +326,7 @@ function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy
  el.innerHTML='<small>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</small> <button onclick="STHymn.stz(-1)">◀ Estrofe</button><button onclick="STHymn.stz(1)">Estrofe ▶</button>'}
 function stanzaJump(d){
  const sy=S.sync,a=audioEl();if(!sy)return;
- if(sy.manual){const k=Math.max(-1,Math.min(sy.e.L.length-1,sy.last+d));if(k!==sy.last)sendStanza(sy,k);return}
+ if(sy.manual){if(d>0&&sy.last>=sy.e.L.length-1){endHymn();return}const k=Math.max(-1,Math.min(sy.e.L.length-1,sy.last+d));if(k!==sy.last)sendStanza(sy,k);return}
  if(!a)return;const ti=sy.pb?1:0,k=Math.max(0,Math.min(sy.e.L.length-1,(sy.last<0?0:sy.last)+d));a.currentTime=sy.e.L[k][ti];sy.last=-9;tick()
 }
 document.addEventListener('timeupdate',ev=>{if(ev.target&&ev.target.id==='sthAudio')tick()},true);
@@ -331,6 +347,7 @@ async function urlFor(ed,n,mode){
 function audioEl(){return $('sthAudio')}
 async function play(ed,n,opts){
  const a=audioEl();if(!a)return;const h=find(ed,n);
+ S.endTok++;
  try{
   S.sync=null;
   if(S.mode==='sem'){
@@ -352,16 +369,19 @@ function next(dir){
 }
 
 /* ---------- ações ---------- */
-function saveAnim(){try{localStorage.setItem('iasd-sth-anim',JSON.stringify(S.anim))}catch(e){}}
+function saveAnim(){try{localStorage.setItem('iasd-sth-anim',JSON.stringify(Object.assign({c:S.endClose?1:0},S.anim)))}catch(e){}}
 const api={
  opInput(v){S.op=Math.min(1,Math.max(0,+v/100));const l=$('sthOpV');if(l)l.textContent=Math.round(S.op*100)+'%'},
  opSave(){try{localStorage.setItem('iasd-sth-op',String(S.op))}catch(e){}const sy=S.sync;if(sy)sendStanza(sy,sy.last)},
+ animIO(w,v){S.anim[w]=v;saveAnim();paintMode()},
+ endClose(on){S.endClose=!!on;saveAnim()},
  anim(a){S.anim.a=a;saveAnim();paintMode()},animMs(ms){S.anim.ms=+ms;saveAnim();paintMode()},
  testAnim(){const sy=S.sync;if(sy)sendStanza(sy,sy.last)},
  mode(m){S.mode=m;try{localStorage.setItem('iasd-sth-mode',m)}catch(e){}paintMode();paintBody()},
- album(i){S.album=i;S.limit=80;S.q='';setQ('');paintBody();scrollTop()},albumBack(){S.album=null;S.limit=80;paintBody()},
- ed(id){S.ed=id;S.album=null;S.q='';setQ('');S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
- input(v){S.q=v;S.limit=80;paintBody()},
+ album(i){S.album=i;S.limit=80;S.scopeCol=false;S.q='';setQ('');paintBody();scrollTop()},albumBack(){S.album=null;S.limit=80;paintBody()},
+ ed(id){S.ed=id;S.album=null;S.scopeCol=false;S.q='';setQ('');S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
+ input(v){S.q=v;S.limit=80;if(!v.trim())S.scopeCol=false;if(glob())Promise.all(KEYS.map(loadLyrics)).then(()=>{if(glob())paintBody()});paintCols();paintBody()},
+ edQ(id){S.ed=id;S.album=null;S.scopeCol=true;S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
  more(){S.limit+=120;paintBody()},
  play(ed,n){play(ed,n)},
  rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
@@ -383,6 +403,15 @@ const ico=n=>'<svg class="ti"><use href="#i-'+n+'"/></svg>';
 const hasFolder=()=>!!((S.cp&&S.cp.root)||S.rootH||S.files.length),hasDb=()=>!!((S.cp&&S.cp.db)||S.dbH||S.ljaMeta),connected=()=>hasFolder()||hasDb();
 function setQ(v){const i=$('sthq');if(i)i.value=v}
 function scrollTop(){const b=$('sth-body');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest'})}
+const glob=()=>!!S.q.trim()&&!S.scopeCol;
+/* busca global: nome ou número em todas as coleções, agrupada por coleção */
+function globalResults(){
+ const q=S.q.trim(),out=[],num=/^\d+$/.test(q),n=num?+q:0,f=num?'':fold(q);
+ KEYS.forEach(id=>{const L=list(id);if(!L.length)return;const c=!!ED[id].coll;
+  const r=num?(c?L.filter(h=>h.tr===n):L.filter(h=>h.n===n)):L.filter(h=>h.key.includes(f));
+  if(r.length)out.push({id,r})});
+ return out
+}
 function filtered(){
  const c=!!ED[S.ed].coll,q=S.q.trim();let r=list();
  if(c&&S.album!==null&&!q)r=r.filter(h=>h.ai===S.album);
@@ -431,7 +460,7 @@ function paintBar(){paintConn()}
 function colCount(k){const x=S.cnt&&S.cnt[k];if(x)return x.found;const m=S.ljaMeta&&S.ljaMeta.counts;return m?m[k]:0}
 function paintCols(){
  const el=$('sth-cols');if(!el)return;
- el.innerHTML=KEYS.map(k=>'<button type="button" role="tab" class="'+(S.ed===k?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><span>'+esc(ED[k].nome)+'</span><i class="cnt">'+colCount(k)+'</i></button>').join('')
+ const g=glob();el.innerHTML=KEYS.map(k=>'<button type="button" role="tab" class="'+(S.ed===k&&!g?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><span>'+esc(ED[k].nome)+'</span><i class="cnt">'+colCount(k)+'</i></button>').join('')
 }
 const MODES=[['cantado','Slide Cantado','Toca a música cantada e mostra cada estrofe na hora certa.'],['pb','Slide Playback','Toca só o instrumental e mostra a letra na hora certa.'],['sem','Slide sem Áudio','Não toca nada: você passa as estrofes com os botões ◀ ▶.']];
 function paintMode(){
@@ -441,20 +470,23 @@ function paintMode(){
   +'<div class="sth-trb"><div class="amb-chips">'+ANIMS.map(([k,l,d])=>'<button type="button" class="'+(S.anim.a===k?'on':'')+'" title="'+esc(d)+'" onclick="STHymn.anim(\''+k+'\')">'+l+'</button>').join('')+'</div>'
   +'<p class="sth-hint">'+ANIMS.find(x=>x[0]===S.anim.a)[2]+'. Vale só para as estrofes do hinário; as outras telas seguem a transição geral.</p>'
   +(S.anim.a==='none'?'':'<div class="seg s3 sth-sp" role="radiogroup" aria-label="Velocidade">'+SPEEDS.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.anim.ms===k)+'" class="'+(S.anim.ms===k?'on':'')+'" onclick="STHymn.animMs('+k+')">'+l+'</button>').join('')+'</div>')
+  +'<div class="sth-io">'+[['i','Ao iniciar o hino'],['o','Ao encerrar o hino']].map(([w,l])=>'<label><span>'+l+'</span><select onchange="STHymn.animIO(\''+w+'\',this.value)">'+ANIMS.map(([k,n])=>'<option value="'+k+'"'+(S.anim[w]===k?' selected':'')+'>'+n+'</option>').join('')+'</select></label>').join('')+'</div>'
+  +'<label class="sth-ck"><input type="checkbox" '+(S.endClose?'checked ':'')+'onchange="STHymn.endClose(this.checked)"><span>Fechar a projeção quando o hino terminar</span></label>'
   +'<label class="sth-op"><span>Opacidade do fundo da letra</span><input type="range" min="0" max="100" step="5" value="'+Math.round(S.op*100)+'" oninput="STHymn.opInput(this.value)" onchange="STHymn.opSave()" aria-label="Opacidade do fundo da letra"><b id="sthOpV">'+Math.round(S.op*100)+'%</b></label>'
   +'<button type="button" class="mp-btn" '+(S.sync?'':'disabled ')+'onclick="STHymn.testAnim()">Ver no telão</button></div></details>'
 }
 /* 3) lista */
-function row(h){
- const coll=!!ED[S.ed].coll,has=playable(S.ed,h),c=S.cur,cur=c&&c.ed===S.ed&&c.n===h.n,a=audioEl(),pl=cur&&a&&!a.paused&&S.mode!=='sem';
- const loc=S.local[S.ed]&&S.local[S.ed][h.n];let sub='';
+function row(h,ed){
+ ed=ed||S.ed;
+ const coll=!!ED[ed].coll,has=playable(ed,h),c=S.cur,cur=c&&c.ed===ed&&c.n===h.n,a=audioEl(),pl=cur&&a&&!a.paused&&S.mode!=='sem';
+ const loc=S.local[ed]&&S.local[ed][h.n];let sub='';
  if(!has)sub='Sem arquivo neste computador';
  else if(S.mode==='pb'&&loc&&!loc.pb&&!loc.onlyPb)sub='Sem playback · toca o cantado';
  else if(S.mode==='cantado'&&loc&&loc.onlyPb)sub='Só playback';
  else if(coll&&h.album&&(S.q||S.album===null))sub=h.album;
- return '<div class="amb-row sth-r'+(cur?' is-sel':'')+(has?'':' no')+'"><button type="button" class="amb-play" '+(has?'onclick="STHymn.rowPlay(\''+S.ed+'\','+h.n+')"':'disabled')+' title="'+(S.mode==='sem'?'Projetar':'Tocar')+'">'+(pl?'<b class="sth-pz">Ⅱ</b>':ico('play'))+'</button>'
+ return '<div class="amb-row sth-r'+(cur?' is-sel':'')+(has?'':' no')+'"><button type="button" class="amb-play" '+(has?'onclick="STHymn.rowPlay(\''+ed+'\','+h.n+')"':'disabled')+' title="'+(S.mode==='sem'?'Projetar':'Tocar')+'">'+(pl?'<b class="sth-pz">Ⅱ</b>':ico('play'))+'</button>'
   +'<span class="sth-no">'+(coll?(h.tr||'·'):h.n)+'</span><div class="amb-info"><b>'+esc(h.t)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div>'
-  +(has?'<button type="button" class="amb-x" onclick="STHymn.queue(\''+S.ed+'\','+h.n+')" title="Adicionar à fila">'+ico('plus')+'</button>':'')+'</div>';
+  +(has?'<button type="button" class="amb-x" onclick="STHymn.queue(\''+ed+'\','+h.n+')" title="Adicionar à fila">'+ico('plus')+'</button>':'')+'</div>';
 }
 function albumGrid(al){
  const cnt={};(S.data[S.ed]||[]).forEach(h=>{if(playable(S.ed,h))cnt[h.ai]=(cnt[h.ai]||0)+1});
@@ -464,6 +496,12 @@ const empty=(t,b)=>'<div class="amb-empty"><span>'+t+'</span>'+(b||'')+'</div>';
 function paintBody(){
  const b=$('sth-body');if(!b)return;
  if(!connected()){b.innerHTML=empty('Conecte o Louvor JA acima para ver e tocar as músicas.');return}
+ if(glob()){
+  const G=globalResults(),loading=KEYS.some(k=>S.status[k]==='loading');let h='';
+  if(!G.length){b.innerHTML=empty(loading?'Carregando as coleções…':'Nenhuma música encontrada em nenhuma coleção.');return}
+  G.forEach(g=>{h+='<div class="sth-gh"><b>'+esc(ED[g.id].nome)+'</b><small>'+g.r.length+(g.r.length===1?' resultado':' resultados')+'</small>'+(g.r.length>25?'<button type="button" class="mp-btn" onclick="STHymn.edQ(\''+g.id+'\')">Ver todos</button>':'')+'</div><div class="amb-list">'+g.r.slice(0,25).map(x=>row(x,g.id)).join('')+'</div>'});
+  b.innerHTML=h+(loading?'<p class="sth-hint">Carregando as coleções…</p>':'');return
+ }
  const st=S.status[S.ed],coll=!!ED[S.ed].coll,albs=S.alb[S.ed]||[],q0=S.q.trim();let html='';
  if(st==='loading'||(!st&&!S.data[S.ed])){b.innerHTML=empty('Carregando…');return}
  if(st==='err'){b.innerHTML=empty('Não foi possível carregar esta coleção.','<button type="button" class="mp-btn" onclick="STHymn.ed(\''+S.ed+'\')">Tentar de novo</button>');return}
@@ -471,7 +509,7 @@ function paintBody(){
  if(coll&&albs.length>1&&S.album===null&&!q0){b.innerHTML=albumGrid(albs);fillCovers();return}
  if(coll&&S.album!==null&&!q0&&albs[S.album])html+='<div class="sth-albhd"><button type="button" class="mp-btn" onclick="STHymn.albumBack()">← Álbuns</button><b>'+esc(albs[S.album].name)+'</b></div>';
  const L=filtered(),shown=L.slice(0,S.limit);
- html+='<div class="amb-list">'+shown.map(row).join('')+'</div>'+(L.length>shown.length?'<button type="button" class="amb-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length?empty('Nenhuma música encontrada.'):'');
+ html+='<div class="amb-list">'+shown.map(h=>row(h)).join('')+'</div>'+(L.length>shown.length?'<button type="button" class="amb-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length?empty('Nenhuma música encontrada.'):'');
  b.innerHTML=html;
 }
 /* 4) tocando agora */
@@ -489,20 +527,20 @@ function paintPlayer(){
 }
 function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n){el.innerHTML='';return}
  el.className='sth-stz'+(sy.manual?' big':'');
- el.innerHTML='<button type="button" class="mp-btn" onclick="STHymn.stz(-1)">◀ Estrofe</button><span>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</span><button type="button" class="mp-btn" onclick="STHymn.stz(1)">Estrofe ▶</button>'}
+ el.innerHTML='<button type="button" class="mp-btn" onclick="STHymn.stz(-1)">◀ Estrofe</button><span>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</span><button type="button" class="mp-btn" onclick="STHymn.stz(1)">'+(sy.manual&&sy.last>=sy.e.L.length-1?'Encerrar ■':'Estrofe ▶')+'</button>'}
 function paint(){paintCols();paintMode();paintConn();paintBody();paintPlayer()}
 
 function mount(){
  const sec=$('hymnal');if(!sec||$('sth'))return;
  const box=document.createElement('div');box.id='sth';
  box.innerHTML='<div id="sth-conn"></div><div class="seg sth-cols" id="sth-cols" role="tablist"></div>'
-  +'<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar por nome ou número…" oninput="STHymn.input(this.value)"></label></div>'
+  +'<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar em todas as músicas (nome ou número)…" oninput="STHymn.input(this.value)"></label></div>'
   +'<div id="sth-mode"></div><div id="sthp" class="amb-sel has sth-player" hidden></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
  sec.appendChild(box);
  const a=$('sthAudio');
  a.addEventListener('timeupdate',()=>{const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
  a.addEventListener('play',()=>{paintPlayer();paintBody()});a.addEventListener('pause',()=>{paintPlayer();paintBody()});
- a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paintBody()}});
+ a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paintBody();endHymn()}});
  a.addEventListener('error',()=>{if(S.cur&&a.src)say('Falha ao carregar o áudio. Tente de novo.')});
  const style=document.createElement('style');style.textContent=
  '#sth{display:grid;gap:14px;min-width:0;max-width:100%}#sth *{box-sizing:border-box;min-width:0}#sth code{background:rgba(127,150,200,.18);padding:1px 6px;border-radius:5px;font-size:12px}#sth input[type=range]{width:auto;accent-color:#3574f3}'
@@ -513,7 +551,7 @@ function mount(){
  +'.sth-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}.sth-sc{display:grid;gap:4px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);font-size:12.5px}.sth-sc span{color:var(--mu)}.sth-sc summary{cursor:pointer;color:#7fa6ff}.sth-miss{max-height:140px;overflow:auto;padding:4px 0 2px 10px;color:var(--mu)}.sth-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
  +'.sth-busy{display:flex;align-items:center;gap:10px;font-size:13.5px}.sth-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd2);border-top-color:#5b93ff;animation:sthspin .8s linear infinite;flex:none}@keyframes sthspin{to{transform:rotate(360deg)}}'
  +'.sth-cols{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.sth-cols button{height:auto;min-height:44px;padding:6px 8px!important;line-height:1.2;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 8px!important}.sth-cols button span{white-space:normal;text-align:center}.sth-cols .cnt{flex:none}'
- +'#sth .amb-search{display:flex}#sth-mode .seg{margin:0}.sth-tr{border:1px solid var(--bd);border-radius:10px;background:var(--sf2);padding:0 12px;margin-top:8px}.sth-tr summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:13px;font-weight:600;color:var(--tx)}.sth-tr summary b{color:#7fa6ff;font-weight:600}.sth-trb{display:grid;gap:10px;padding:2px 0 12px}.sth-trb .sth-hint{margin:0}.sth-op{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mu)}.sth-op span{flex:none}.sth-op input{flex:1}.sth-op b{min-width:38px;text-align:right;color:var(--tx)}.sth-trb .mp-btn{justify-self:start}.sth-trb .mp-btn[disabled]{opacity:.45;cursor:not-allowed}.sth-sp button{height:36px!important}.sth-hint{margin:8px 2px 0;font-size:12.5px;color:var(--mu)}#sth-mode .seg.s3 button{height:42px}'
+ +'#sth .amb-search{display:flex}#sth-mode .seg{margin:0}.sth-tr{border:1px solid var(--bd);border-radius:10px;background:var(--sf2);padding:0 12px;margin-top:8px}.sth-tr summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;font-size:13px;font-weight:600;color:var(--tx)}.sth-tr summary b{color:#7fa6ff;font-weight:600}.sth-trb{display:grid;gap:10px;padding:2px 0 12px}.sth-trb .sth-hint{margin:0}.sth-gh{display:flex;align-items:center;gap:10px;margin:14px 2px 4px;padding-bottom:6px;border-bottom:1px solid var(--bd)}.sth-gh:first-child{margin-top:0}.sth-gh b{font-size:13.5px}.sth-gh small{color:var(--mu);font-size:12px;flex:1}.sth-gh .mp-btn{height:30px;font-size:12px}.sth-io{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sth-io label{display:grid;gap:4px;font-size:12.5px;color:var(--mu)}.sth-io select{height:38px;border-radius:9px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);padding:0 10px;font-size:13px}.sth-ck{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer}.sth-ck input{width:auto;min-height:0;margin:0}.sth-op{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mu)}.sth-op span{flex:none}.sth-op input{flex:1}.sth-op b{min-width:38px;text-align:right;color:var(--tx)}.sth-trb .mp-btn{justify-self:start}.sth-trb .mp-btn[disabled]{opacity:.45;cursor:not-allowed}.sth-sp button{height:36px!important}.sth-hint{margin:8px 2px 0;font-size:12.5px;color:var(--mu)}#sth-mode .seg.s3 button{height:42px}'
  +'.sth-r.no{opacity:.55}.sth-r .amb-play[disabled]{opacity:.4;cursor:not-allowed}.sth-no{min-width:34px;text-align:center;font-weight:700;font-size:15px;color:#f5b73a;flex:none}.sth-pz{font-size:15px;letter-spacing:-1px}.sth-r .amb-info small{font-size:12px}'
  +'.sth-albs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}.sth-ab{display:flex!important;flex-direction:column;gap:6px;align-items:stretch;text-align:left;padding:8px!important;border-radius:12px!important;background:var(--sf2)!important;border:1px solid var(--bd)!important;height:auto!important;cursor:pointer}.sth-ab:hover{border-color:#5b93ff!important}.sth-ab b{font-size:13px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:600}.sth-ab small{color:var(--mu);font-size:11.5px}'
  +'.sth-cv{display:block;aspect-ratio:1/1;border-radius:9px;background:linear-gradient(135deg,#1d3a6e,#0e1f3d) center/cover no-repeat;position:relative;overflow:hidden}.sth-cv i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:34px;font-weight:800;color:#fff;opacity:.4}.sth-cv.has i{display:none}'
@@ -522,7 +560,7 @@ function mount(){
  +'.sth-seek{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mu)}.sth-seek>input{flex:1}.sth-vol{display:flex;gap:6px;align-items:center;flex:none;font-size:13px}.sth-vol input{width:90px}'
  +'.sth-stz{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px}.sth-stz:empty{display:none}.sth-stz span{min-width:110px;text-align:center;color:var(--mu);font-weight:600}.sth-stz.big button{flex:1;height:48px;font-size:14px}.sth-stz.big span{color:var(--tx)}'
  +'.sth-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sth-q small{color:var(--mu)}.sth-q span{display:flex;gap:4px;align-items:center;padding:3px 4px 3px 10px;border-radius:99px;background:var(--sf3)}.sth-q span button{width:22px;height:22px;padding:0;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}.sth-q span .ti{width:13px;height:13px}.sth-cl{padding:4px 10px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:inherit;font-size:11.5px;cursor:pointer}'
- +'@media(max-width:620px){.sth-steps li{flex-wrap:wrap}.sth-steps button{width:100%}.sth-sum{flex-wrap:wrap}.sth-now{flex-wrap:wrap}.sth-seek{flex-wrap:wrap}.sth-vol{width:100%}.sth-vol input{flex:1;width:auto}}';
+ +'@media(max-width:620px){.sth-io{grid-template-columns:1fr}.sth-steps li{flex-wrap:wrap}.sth-steps button{width:100%}.sth-sum{flex-wrap:wrap}.sth-now{flex-wrap:wrap}.sth-seek{flex-wrap:wrap}.sth-vol{width:100%}.sth-vol input{flex:1;width:auto}}';
  document.head.appendChild(style);
  loadLyrics(S.ed).then(paint);restoreLocal();paint();
 }
