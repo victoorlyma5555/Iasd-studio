@@ -269,7 +269,14 @@ const PROVAI_E_VEDE_LIBRARY=[
  {id:'u07AV1j8Fi0',title:'A esperança maior que a cura',year:2024},
  {id:'lhZCqHDBkEc',title:'Do abandono à esperança',year:2026},
  {id:'X3meq_tl8mg',title:'Do abandono à esperança (Libras)',year:2026},
- {id:'bLG9zmRaGOs',title:'Visão espiritual',year:2024}
+ {id:'bLG9zmRaGOs',title:'Visão espiritual',year:2024},
+ {id:'3N_GZkH23G4',title:'O poder de sonhar com Cristo',year:2024},
+ {id:'2m6C4OCp-B4',title:'A missão nos transformou',year:2024},
+ {id:'A2lE39QU6uE',title:'O Deus que jamais te abandona',year:2024},
+ {id:'_8tUX5OrIFc',title:'Uma geração educada para servir',year:2024},
+ {id:'xybPr_6U4eA',title:'O grande conflito',year:2024},
+ {id:'Ny0F9UuI_78',title:'Chamados para servir em uma ilha',year:2024},
+ {id:'5Ni0A2sOJJM',title:'O propósito do voluntariado',year:2024},
 ];
 function youtubeId(url){try{const u=new URL(url.trim());const h=u.hostname.toLowerCase();let id='';if(h==='youtu.be'||h==='www.youtu.be')id=u.pathname.slice(1).split('/')[0];else if(['youtube.com','www.youtube.com','m.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(h)){id=u.searchParams.get('v')||u.pathname.split('/')[2]||''}return /^[a-zA-Z0-9_-]{11}$/.test(id)?id:null}catch{return null}}
 function youtubeList(kind){const extra=($((kind==='ambient'?'ambientLinks':'testimonyLinks')).value||'').split(/\n/).map(youtubeId).filter(Boolean);return [...new Set(kind==='testimony'?[...PROVAI_E_VEDE_LIBRARY.map(v=>v.id),...extra]:extra)]}
