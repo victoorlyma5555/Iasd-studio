@@ -170,7 +170,7 @@ function stEsc(v){const d=document.createElement('div');d.textContent=String(v??
 let stMemRoster=null;
 async function stMemInit(){const f=$('stMemForm');if(!f)return;const P=window.parent;
  if(P===window||typeof P.sendMemberAlert!=='function'){f.hidden=true;return}
- if(!P.canUseSound||!P.canUseSound()){f.hidden=true;return}
+ if(!(P.canSendMemberAlert?P.canSendMemberAlert():(P.canUseSound&&P.canUseSound()))){f.hidden=true;return}
  f.hidden=false;const sel=$('stMemTo'),msg=$('stMemMsg'),btn=$('stMemSend'),st=$('stMemStatus');
  const fill=()=>{sel.innerHTML='<option value="">Todos os membros com cargo</option>'+(stMemRoster||[]).map(u=>'<option value="'+stEsc(u.user_id)+'" data-name="'+stEsc(u.full_name)+'">'+stEsc(u.full_name)+' · '+stEsc(u.role)+'</option>').join('')};
  fill();

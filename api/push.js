@@ -35,7 +35,7 @@ module.exports=async function handler(req,res){
    if((!trusted&&m.created_by!==uid)||Date.now()-Date.parse(m.created_at)>10*60*1000)return res.status(403).json({error:'Não permitido'});
    let rc=[];
    if(m.target_uid)rc=[m.target_uid];
-   else{const r=await sb('/rest/v1/iasd_members?role=in.(founder,cofounder,admin,editor,operator,midia,lider,sonoplasta)&select=user_id',svc);rc=(r.json||[]).map(x=>x.user_id)}
+   else{const [r,c,d]=await Promise.all([sb('/rest/v1/iasd_members?role=in.(founder,cofounder,admin,editor,operator,midia,lider,sonoplasta)&select=user_id',svc),sb('/rest/v1/iasd_member_cargos?select=user_id',svc),sb('/rest/v1/iasd_member_perms?select=user_id',svc)]);rc=[r,c,d].flatMap(q=>Array.isArray(q.json)?q.json.map(x=>x.user_id):[])}
    rc=[...new Set(rc.filter(u=>UUID.test(String(u))&&u!==m.created_by))];
    if(!rc.length)return res.status(200).json({sent:0,devices:0});
    const ss=await sb('/rest/v1/iasd_push_subscriptions?user_id=in.('+rc.join(',')+')&select=id,endpoint,p256dh,auth',svc);
