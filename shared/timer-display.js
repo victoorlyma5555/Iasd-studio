@@ -6,22 +6,22 @@
 'use strict';
 const NS='http://www.w3.org/2000/svg';
 const THEMES={
- noturno:{name:'Noturno Dourado',bg:'radial-gradient(ellipse at 50% 28%,#1d2760 0%,#0b1029 58%,#04060f 100%)',c1:'#c9a24a',c2:'#f5e3a6',glow:'rgba(214,170,80,.4)'},
- esmeralda:{name:'Esmeralda',bg:'radial-gradient(ellipse at 50% 28%,#124b40 0%,#072a24 58%,#02100d 100%)',c1:'#34d399',c2:'#b7f5db',glow:'rgba(52,211,153,.4)'},
- ouro:{name:'Ouro Real',bg:'radial-gradient(ellipse at 50% 30%,#35290f 0%,#14100a 60%,#060503 100%)',c1:'#d4a73d',c2:'#fde9a2',glow:'rgba(212,167,61,.42)'},
- vinho:{name:'Vinho',bg:'radial-gradient(ellipse at 50% 28%,#5a1630 0%,#2a0a18 58%,#0c0308 100%)',c1:'#e9a08f',c2:'#fde2d9',glow:'rgba(233,160,143,.38)'},
- aurora:{name:'Aurora',bg:'linear-gradient(135deg,#0c2f52 0%,#3a1f63 52%,#0a1a33 100%)',c1:'#5cc8f5',c2:'#d6c8ff',glow:'rgba(120,170,255,.42)'},
- grafite:{name:'Grafite',bg:'radial-gradient(ellipse at 50% 28%,#2c313c 0%,#14171d 60%,#07080b 100%)',c1:'#94a3b8',c2:'#e8edf4',glow:'rgba(148,163,184,.3)'},
- pergaminho:{name:'Pergaminho (claro)',bg:'radial-gradient(ellipse at 50% 35%,#fff8e8 0%,#f0e0bd 65%,#dcc797 100%)',c1:'#9a6418',c2:'#c58a2b',glow:'rgba(154,100,24,.22)',tx:'#2a1f0c',trk:'rgba(60,40,10,.12)',tk:'rgba(60,40,10,.3)',sh1:'rgba(255,255,255,.5)',sh2:'rgba(120,80,20,.08)'},
- safira:{name:'Safira Real',bg:'radial-gradient(ellipse at 50% 26%,#1d3f94 0%,#0d1f55 56%,#050b24 100%)',c1:'#7aa2ff',c2:'#dbe6ff',glow:'rgba(122,162,255,.42)'},
- oceano:{name:'Oceano Profundo',bg:'linear-gradient(160deg,#0b5a6b 0%,#083a52 50%,#03182b 100%)',c1:'#2dd4d4',c2:'#c8fbff',glow:'rgba(45,212,212,.4)'},
- floresta:{name:'Floresta',bg:'radial-gradient(ellipse at 50% 28%,#1f5a2b 0%,#0d2f17 58%,#041008 100%)',c1:'#86d38a',c2:'#e3f9d8',glow:'rgba(134,211,138,.36)'},
- imperial:{name:'Roxo Imperial',bg:'radial-gradient(ellipse at 50% 26%,#4a1f8a 0%,#22104d 56%,#090320 100%)',c1:'#c4a3ff',c2:'#f1e6ff',glow:'rgba(196,163,255,.42)'},
- rose:{name:'Rosé ao Anoitecer',bg:'linear-gradient(145deg,#6b2a66 0%,#3b1454 52%,#13071f 100%)',c1:'#f59fb8',c2:'#ffe0ea',glow:'rgba(245,159,184,.4)'},
- cobre:{name:'Cobre e Noite',bg:'radial-gradient(ellipse at 50% 30%,#4a2415 0%,#20100a 60%,#090403 100%)',c1:'#e08a4f',c2:'#ffd9b8',glow:'rgba(224,138,79,.4)'},
- amanhecer:{name:'Amanhecer',bg:'linear-gradient(165deg,#2b1650 0%,#7b2f6e 46%,#dd6a52 100%)',c1:'#ffc27a',c2:'#fff0d6',glow:'rgba(255,194,122,.44)'},
- lavanda:{name:'Lavanda (claro)',bg:'radial-gradient(ellipse at 50% 35%,#f6f1ff 0%,#dfd4fb 62%,#c3b3f0 100%)',c1:'#6d4fd1',c2:'#8b6cf0',glow:'rgba(109,79,209,.22)',tx:'#241a4c',trk:'rgba(40,25,90,.12)',tk:'rgba(40,25,90,.3)',sh1:'rgba(255,255,255,.55)',sh2:'rgba(70,40,150,.08)'},
- ceu:{name:'Céu de Manhã (claro)',bg:'radial-gradient(ellipse at 50% 32%,#f2faff 0%,#cfe8fb 62%,#a8d1f2 100%)',c1:'#1d6fb8',c2:'#2f8fd8',glow:'rgba(29,111,184,.22)',tx:'#0e2a47',trk:'rgba(14,42,71,.12)',tk:'rgba(14,42,71,.3)',sh1:'rgba(255,255,255,.55)',sh2:'rgba(20,80,140,.08)'},
+ noturno:{name:'Noturno Dourado',bg:'radial-gradient(ellipse at 50% 28%,#1d2760 0%,#0b1029 58%,#04060f 100%)',c1:'#c9a24a',c2:'#f5e3a6',glow:'rgba(214,170,80,.4)',pat:'dust'},
+ esmeralda:{name:'Esmeralda',bg:'radial-gradient(ellipse at 50% 28%,#124b40 0%,#072a24 58%,#02100d 100%)',c1:'#34d399',c2:'#b7f5db',glow:'rgba(52,211,153,.4)',pat:'ribbon'},
+ ouro:{name:'Ouro Real',bg:'radial-gradient(ellipse at 50% 30%,#35290f 0%,#14100a 60%,#060503 100%)',c1:'#d4a73d',c2:'#fde9a2',glow:'rgba(212,167,61,.42)',pat:'shine'},
+ vinho:{name:'Vinho',bg:'radial-gradient(ellipse at 50% 28%,#5a1630 0%,#2a0a18 58%,#0c0308 100%)',c1:'#e9a08f',c2:'#fde2d9',glow:'rgba(233,160,143,.38)',pat:'pulse'},
+ aurora:{name:'Aurora',bg:'linear-gradient(135deg,#0c2f52 0%,#3a1f63 52%,#0a1a33 100%)',c1:'#5cc8f5',c2:'#d6c8ff',glow:'rgba(120,170,255,.42)',pat:'borealis'},
+ grafite:{name:'Grafite',bg:'radial-gradient(ellipse at 50% 28%,#2c313c 0%,#14171d 60%,#07080b 100%)',c1:'#94a3b8',c2:'#e8edf4',glow:'rgba(148,163,184,.3)',pat:'stripes'},
+ pergaminho:{name:'Pergaminho (claro)',bg:'radial-gradient(ellipse at 50% 35%,#fff8e8 0%,#f0e0bd 65%,#dcc797 100%)',c1:'#9a6418',c2:'#c58a2b',glow:'rgba(154,100,24,.22)',tx:'#2a1f0c',trk:'rgba(60,40,10,.12)',tk:'rgba(60,40,10,.3)',sh1:'rgba(255,255,255,.5)',sh2:'rgba(120,80,20,.08)',pat:'candle'},
+ safira:{name:'Safira Real',bg:'radial-gradient(ellipse at 50% 26%,#1d3f94 0%,#0d1f55 56%,#050b24 100%)',c1:'#7aa2ff',c2:'#dbe6ff',glow:'rgba(122,162,255,.42)',pat:'facets'},
+ oceano:{name:'Oceano Profundo',bg:'linear-gradient(160deg,#0b5a6b 0%,#083a52 50%,#03182b 100%)',c1:'#2dd4d4',c2:'#c8fbff',glow:'rgba(45,212,212,.4)',pat:'waves'},
+ floresta:{name:'Floresta',bg:'radial-gradient(ellipse at 50% 28%,#1f5a2b 0%,#0d2f17 58%,#041008 100%)',c1:'#86d38a',c2:'#e3f9d8',glow:'rgba(134,211,138,.36)',pat:'fireflies'},
+ imperial:{name:'Roxo Imperial',bg:'radial-gradient(ellipse at 50% 26%,#4a1f8a 0%,#22104d 56%,#090320 100%)',c1:'#c4a3ff',c2:'#f1e6ff',glow:'rgba(196,163,255,.42)',pat:'ripple'},
+ rose:{name:'Rosé ao Anoitecer',bg:'linear-gradient(145deg,#6b2a66 0%,#3b1454 52%,#13071f 100%)',c1:'#f59fb8',c2:'#ffe0ea',glow:'rgba(245,159,184,.4)',pat:'float'},
+ cobre:{name:'Cobre e Noite',bg:'radial-gradient(ellipse at 50% 30%,#4a2415 0%,#20100a 60%,#090403 100%)',c1:'#e08a4f',c2:'#ffd9b8',glow:'rgba(224,138,79,.4)',pat:'sparks'},
+ amanhecer:{name:'Amanhecer',bg:'linear-gradient(165deg,#2b1650 0%,#7b2f6e 46%,#dd6a52 100%)',c1:'#ffc27a',c2:'#fff0d6',glow:'rgba(255,194,122,.44)',pat:'dawn'},
+ lavanda:{name:'Lavanda (claro)',bg:'radial-gradient(ellipse at 50% 35%,#f6f1ff 0%,#dfd4fb 62%,#c3b3f0 100%)',c1:'#6d4fd1',c2:'#8b6cf0',glow:'rgba(109,79,209,.22)',tx:'#241a4c',trk:'rgba(40,25,90,.12)',tk:'rgba(40,25,90,.3)',sh1:'rgba(255,255,255,.55)',sh2:'rgba(70,40,150,.08)',pat:'blobs'},
+ ceu:{name:'Céu de Manhã (claro)',bg:'radial-gradient(ellipse at 50% 32%,#f2faff 0%,#cfe8fb 62%,#a8d1f2 100%)',c1:'#1d6fb8',c2:'#2f8fd8',glow:'rgba(29,111,184,.22)',tx:'#0e2a47',trk:'rgba(14,42,71,.12)',tk:'rgba(14,42,71,.3)',sh1:'rgba(255,255,255,.55)',sh2:'rgba(20,80,140,.08)',pat:'clouds'},
  neon:{name:'Neon Arcade',bg:'linear-gradient(160deg,#12002e 0%,#2a0a5e 52%,#06001a 100%)',c1:'#ff3df2',c2:'#3df5ff',glow:'rgba(255,61,242,.6)',pat:'grid',font:'rounded'},
  estrelas:{name:'Noite Estrelada',bg:'radial-gradient(ellipse at 50% 0%,#16265a 0%,#070d24 62%,#02040d 100%)',c1:'#ffe9a8',c2:'#fff7de',glow:'rgba(255,233,168,.38)',pat:'stars'},
  terminal:{name:'Terminal Verde',bg:'radial-gradient(ellipse at 50% 40%,#052414 0%,#02130a 70%,#000805 100%)',c1:'#3dff7a',c2:'#b8ffd0',glow:'rgba(61,255,122,.5)',pat:'scan',font:'mono'},
@@ -56,6 +56,82 @@ const DECO_CSS=`
 .iasd-deco[data-pat="embers"]{background:radial-gradient(2px 2px at 20% 80%,#ffb347,transparent),radial-gradient(2px 2px at 45% 90%,#ff7a1a,transparent),radial-gradient(3px 3px at 70% 85%,#ffd27a,transparent),radial-gradient(2px 2px at 88% 95%,#ff9a3c,transparent),radial-gradient(2px 2px at 8% 95%,#ffb347,transparent),radial-gradient(2px 2px at 56% 100%,#ffd27a,transparent);animation:decoRise 5s linear infinite}
 @keyframes decoRise{from{transform:translateY(10%);opacity:1}to{transform:translateY(-70%);opacity:0}}
 .iasd-deco[data-pat="rays"]{background:repeating-conic-gradient(from 0deg at 50% 112%,color-mix(in srgb,var(--c1,#ffd978) 24%,transparent) 0 5deg,transparent 5deg 13deg);-webkit-mask-image:radial-gradient(ellipse at 50% 100%,#000,transparent 75%);mask-image:radial-gradient(ellipse at 50% 100%,#000,transparent 75%);animation:decoBreath 6s ease-in-out infinite alternate}
+/* ===== Fundos animados por tema (CSS puro; só transform/opacity para não pesar) ===== */
+.iasd-deco[data-pat]:before,.iasd-deco[data-pat]:after{pointer-events:none}
+.iasd-deco[data-off],.iasd-deco[data-off]:before,.iasd-deco[data-off]:after{animation:none!important}
+/* poeira dourada subindo (Noturno Dourado) */
+.iasd-deco[data-pat="dust"]:before,.iasd-deco[data-pat="dust"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;animation:decoUp 60s linear infinite;opacity:.8;background:radial-gradient(circle at 20% 30%,var(--c2) 0 .28vmin,transparent .5vmin) 0 0/25vh 25vh,radial-gradient(circle at 70% 60%,var(--c1) 0 .35vmin,transparent .6vmin) 0 0/25vh 25vh,radial-gradient(circle at 45% 85%,var(--c2) 0 .22vmin,transparent .45vmin) 0 0/25vh 25vh,radial-gradient(circle at 88% 12%,var(--c1) 0 .3vmin,transparent .55vmin) 0 0/25vh 25vh}
+.iasd-deco[data-pat="dust"]:after{animation-duration:90s;opacity:.45;background-size:50vh 50vh,50vh 50vh,50vh 50vh,50vh 50vh;transform:translateX(7vw)}
+@keyframes decoUp{to{transform:translateY(-100vh)}}
+/* fitas de luz deslizando (Esmeralda) */
+.iasd-deco[data-pat="ribbon"]:before,.iasd-deco[data-pat="ribbon"]:after{content:'';position:absolute;top:-10%;bottom:-10%;left:-30%;width:160%;background:linear-gradient(100deg,transparent 18%,color-mix(in srgb,var(--c1) 26%,transparent) 36%,transparent 52%),linear-gradient(100deg,transparent 52%,color-mix(in srgb,var(--c2) 16%,transparent) 66%,transparent 80%);animation:decoSway 16s ease-in-out infinite alternate}
+.iasd-deco[data-pat="ribbon"]:after{transform:scaleX(-1);animation-duration:23s;animation-delay:-9s;opacity:.7}
+@keyframes decoSway{from{transform:translateX(-14%) skewX(-6deg)}to{transform:translateX(14%) skewX(6deg)}}
+.iasd-deco[data-pat="ribbon"]:after{animation-name:decoSway2}
+@keyframes decoSway2{from{transform:scaleX(-1) translateX(-12%) skewX(5deg)}to{transform:scaleX(-1) translateX(12%) skewX(-5deg)}}
+/* brilho que atravessa a tela (Ouro Real, Vitral) */
+.iasd-deco[data-pat="shine"]:before{content:'';position:absolute;top:-10%;bottom:-10%;left:0;width:45%;background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--c2) 34%,transparent) 50%,transparent 70%);transform:translateX(-130%) skewX(-12deg);animation:decoShine 9s ease-in-out infinite}
+@keyframes decoShine{0%,25%{transform:translateX(-130%) skewX(-12deg)}75%,100%{transform:translateX(330%) skewX(-12deg)}}
+/* respiração de luz + pétalas (Vinho) */
+.iasd-deco[data-pat="pulse"]:before{content:'';position:absolute;inset:-10%;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--c1) 26%,transparent),transparent 58%);animation:decoPulse 7s ease-in-out infinite alternate}
+.iasd-deco[data-pat="pulse"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;opacity:.5;background:radial-gradient(ellipse 1vmin .6vmin at 25% 40%,var(--c1),transparent) 0 0/33vh 33vh,radial-gradient(ellipse 1.2vmin .7vmin at 75% 75%,var(--c2),transparent) 0 0/50vh 50vh;animation:decoUp 70s linear infinite}
+@keyframes decoPulse{from{transform:scale(.85);opacity:.55}to{transform:scale(1.15);opacity:1}}
+/* cortinas de aurora boreal (Aurora) */
+.iasd-deco[data-pat="borealis"]:before,.iasd-deco[data-pat="borealis"]:after{content:'';position:absolute;top:-5%;bottom:20%;left:-10%;width:120%;-webkit-mask-image:linear-gradient(180deg,#000 10%,transparent 95%);mask-image:linear-gradient(180deg,#000 10%,transparent 95%);background:linear-gradient(90deg,transparent 8%,color-mix(in srgb,var(--c1) 34%,transparent) 16%,transparent 26%),linear-gradient(90deg,transparent 40%,color-mix(in srgb,var(--c2) 28%,transparent) 50%,transparent 62%),linear-gradient(90deg,transparent 70%,color-mix(in srgb,var(--c1) 30%,transparent) 80%,transparent 92%);transform-origin:50% 100%;animation:decoCurtain 12s ease-in-out infinite alternate}
+.iasd-deco[data-pat="borealis"]:after{animation-duration:17s;animation-delay:-6s;opacity:.65;transform:scaleX(-1)}
+@keyframes decoCurtain{from{transform:translateX(-6%) skewX(-9deg) scaleY(.9)}to{transform:translateX(6%) skewX(9deg) scaleY(1.08)}}
+.iasd-deco[data-pat="borealis"]:after{animation-name:decoCurtain2}
+@keyframes decoCurtain2{from{transform:scaleX(-1) translateX(5%) skewX(8deg) scaleY(1.05)}to{transform:scaleX(-1) translateX(-5%) skewX(-8deg) scaleY(.88)}}
+/* listras diagonais correndo (Grafite) */
+.iasd-deco[data-pat="stripes"]:before{content:'';position:absolute;top:0;bottom:0;left:-20vmin;right:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c2) 7%,transparent) 0 3vmin,transparent 3vmin 6vmin);animation:decoStripe 7s linear infinite}
+@keyframes decoStripe{to{transform:translateX(8.485vmin)}}
+/* luz de vela oscilando + poeira (Pergaminho) */
+.iasd-deco[data-pat="candle"]:before{content:'';position:absolute;inset:-10%;background:radial-gradient(ellipse at 50% 62%,rgba(255,196,96,.34),transparent 66%);animation:decoFlick 5s steps(1,end) infinite}
+.iasd-deco[data-pat="candle"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;opacity:.55;background:radial-gradient(circle at 30% 30%,rgba(120,80,20,.5) 0 .25vmin,transparent .45vmin) 0 0/25vh 25vh,radial-gradient(circle at 75% 70%,rgba(120,80,20,.4) 0 .3vmin,transparent .5vmin) 0 0/50vh 50vh;animation:decoUp 80s linear infinite}
+@keyframes decoFlick{0%{opacity:.85}12%{opacity:.6}25%{opacity:.95}38%{opacity:.7}52%{opacity:1}66%{opacity:.65}80%{opacity:.9}92%{opacity:.75}100%{opacity:.85}}
+/* facetas de joia girando (Safira) */
+.iasd-deco[data-pat="facets"]:before{content:'';position:absolute;left:50%;top:50%;width:230vmax;height:230vmax;margin:-115vmax 0 0 -115vmax;background:conic-gradient(from 0deg,transparent 0 12deg,color-mix(in srgb,var(--c2) 22%,transparent) 22deg,transparent 34deg 70deg,color-mix(in srgb,var(--c1) 20%,transparent) 84deg,transparent 98deg 150deg,color-mix(in srgb,var(--c2) 18%,transparent) 160deg,transparent 175deg 230deg,color-mix(in srgb,var(--c1) 22%,transparent) 245deg,transparent 262deg 320deg,color-mix(in srgb,var(--c2) 16%,transparent) 332deg,transparent 346deg);animation:decoSpin 90s linear infinite;-webkit-mask-image:radial-gradient(circle,transparent 4%,#000 24%,#000 100%);mask-image:radial-gradient(circle,transparent 4%,#000 24%,#000 100%)}
+@keyframes decoSpin{to{transform:rotate(360deg)}}
+/* ondas e bolhas (Oceano) */
+.iasd-deco[data-pat="waves"]:before{content:'';position:absolute;left:-12vmin;right:0;top:55%;bottom:0;background:radial-gradient(circle at 50% 100%,transparent 0 3.4vmin,rgba(255,255,255,.09) 3.5vmin 4vmin,transparent 4.2vmin) 0 0/12vmin 7vmin,radial-gradient(circle at 50% 100%,transparent 0 2.4vmin,color-mix(in srgb,var(--c1) 16%,transparent) 2.5vmin 3vmin,transparent 3.2vmin) 6vmin 3.5vmin/12vmin 7vmin;animation:decoWave 9s linear infinite}
+@keyframes decoWave{to{transform:translateX(12vmin)}}
+.iasd-deco[data-pat="waves"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;opacity:.55;background:radial-gradient(circle at 30% 70%,transparent 0 .7vmin,rgba(255,255,255,.35) .8vmin .95vmin,transparent 1.1vmin) 0 0/25vh 25vh,radial-gradient(circle at 72% 30%,transparent 0 .45vmin,rgba(255,255,255,.3) .55vmin .7vmin,transparent .85vmin) 0 0/50vh 50vh;animation:decoUp 45s linear infinite}
+/* vaga-lumes (Floresta) */
+.iasd-deco[data-pat="fireflies"]:before,.iasd-deco[data-pat="fireflies"]:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 70%,#f6ff9a 0 .3vmin,rgba(246,255,154,.3) .55vmin,transparent 1.3vmin),radial-gradient(circle at 42% 40%,#f6ff9a 0 .25vmin,rgba(246,255,154,.3) .5vmin,transparent 1.2vmin),radial-gradient(circle at 66% 78%,#f6ff9a 0 .3vmin,rgba(246,255,154,.3) .55vmin,transparent 1.3vmin),radial-gradient(circle at 84% 34%,#f6ff9a 0 .25vmin,rgba(246,255,154,.3) .5vmin,transparent 1.2vmin),radial-gradient(circle at 54% 14%,#f6ff9a 0 .2vmin,rgba(246,255,154,.3) .45vmin,transparent 1.1vmin);animation:decoFly 9s ease-in-out infinite alternate}
+.iasd-deco[data-pat="fireflies"]:after{transform:translate(-9vmin,5vmin) scale(.9);animation-duration:13s;animation-delay:-5s}
+@keyframes decoFly{0%{transform:translate(0,0);opacity:.25}35%{opacity:1}70%{opacity:.4}100%{transform:translate(5vmin,-7vmin);opacity:.95}}
+/* ondas de luz saindo do centro (Roxo Imperial) */
+.iasd-deco[data-pat="ripple"]:before,.iasd-deco[data-pat="ripple"]:after{content:'';position:absolute;left:50%;top:50%;width:70vmin;height:70vmin;margin:-35vmin 0 0 -35vmin;border-radius:50%;border:.5vmin solid color-mix(in srgb,var(--c1) 55%,transparent);box-shadow:0 0 4vmin color-mix(in srgb,var(--c1) 30%,transparent) inset;opacity:0;animation:decoRing 10s ease-out infinite}
+.iasd-deco[data-pat="ripple"]:after{animation-delay:-5s}
+@keyframes decoRing{0%{transform:scale(.15);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+/* bolhas suaves flutuando (Rosé) */
+.iasd-deco[data-pat="float"]:before,.iasd-deco[data-pat="float"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;animation:decoUp 50s linear infinite;opacity:.8;background:radial-gradient(circle at 22% 40%,color-mix(in srgb,var(--c1) 22%,transparent) 0 3.2vmin,transparent 3.5vmin) 0 0/50vh 50vh,radial-gradient(circle at 72% 72%,color-mix(in srgb,var(--c2) 16%,transparent) 0 5vmin,transparent 5.3vmin) 0 0/50vh 50vh,radial-gradient(circle at 48% 12%,color-mix(in srgb,var(--c1) 18%,transparent) 0 2vmin,transparent 2.3vmin) 0 0/25vh 25vh}
+.iasd-deco[data-pat="float"]:after{animation-duration:75s;opacity:.5;transform:translateX(-12vw);background-size:100vh 100vh,100vh 100vh,50vh 50vh}
+/* faíscas subindo (Cobre) */
+.iasd-deco[data-pat="sparks"]:before,.iasd-deco[data-pat="sparks"]:after{content:'';position:absolute;left:0;right:0;top:0;height:200vh;animation:decoUp 22s linear infinite;background:radial-gradient(circle at 15% 25%,#ffb36b 0 .28vmin,transparent .5vmin) 0 0/25vh 25vh,radial-gradient(circle at 60% 70%,#ff8a3c 0 .35vmin,transparent .6vmin) 0 0/25vh 25vh,radial-gradient(circle at 85% 40%,#ffd9b8 0 .22vmin,transparent .45vmin) 0 0/25vh 25vh,radial-gradient(circle at 38% 90%,#ff8a3c 0 .3vmin,transparent .55vmin) 0 0/25vh 25vh}
+.iasd-deco[data-pat="sparks"]:after{animation-duration:34s;transform:translateX(9vw);background-size:50vh 50vh,50vh 50vh,50vh 50vh,50vh 50vh;opacity:.7}
+/* sol nascendo com raios girando (Amanhecer) */
+.iasd-deco[data-pat="dawn"]:before{content:'';position:absolute;left:50%;top:112%;width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--c1) 22%,transparent) 0 5deg,transparent 5deg 14deg);-webkit-mask-image:radial-gradient(circle,#000 0,transparent 36%);mask-image:radial-gradient(circle,#000 0,transparent 36%);animation:decoSpin 160s linear infinite}
+.iasd-deco[data-pat="dawn"]:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,color-mix(in srgb,var(--c2) 55%,transparent) 0 12vmin,transparent 55vmin);animation:decoPulse 8s ease-in-out infinite alternate;transform-origin:50% 100%}
+/* manchas de cor à deriva (Lavanda) */
+.iasd-deco[data-pat="blobs"]:before,.iasd-deco[data-pat="blobs"]:after{content:'';position:absolute;inset:-15%;background:radial-gradient(circle at 25% 30%,color-mix(in srgb,var(--c1) 22%,transparent) 0 18vmin,transparent 36vmin),radial-gradient(circle at 78% 70%,color-mix(in srgb,var(--c2) 22%,transparent) 0 22vmin,transparent 40vmin);animation:decoDrift 19s ease-in-out infinite alternate}
+.iasd-deco[data-pat="blobs"]:after{animation-duration:27s;animation-delay:-11s;opacity:.7;transform:rotate(180deg)}
+@keyframes decoDrift{from{transform:translate(-5%,3%) rotate(0deg) scale(1)}to{transform:translate(5%,-4%) rotate(25deg) scale(1.12)}}
+.iasd-deco[data-pat="blobs"]:after{animation-name:decoDrift2}
+@keyframes decoDrift2{from{transform:rotate(180deg) translate(4%,-3%) scale(1.1)}to{transform:rotate(150deg) translate(-5%,4%) scale(.96)}}
+/* nuvens passando (Céu de Manhã) */
+.iasd-deco[data-pat="clouds"]:before,.iasd-deco[data-pat="clouds"]:after{content:'';position:absolute;top:0;bottom:0;left:0;width:200vw;background:radial-gradient(ellipse 14vw 5vh at 20% 22%,rgba(255,255,255,.75),transparent),radial-gradient(ellipse 10vw 4vh at 24% 25%,rgba(255,255,255,.6),transparent),radial-gradient(ellipse 16vw 6vh at 62% 58%,rgba(255,255,255,.65),transparent),radial-gradient(ellipse 11vw 4vh at 80% 18%,rgba(255,255,255,.6),transparent),radial-gradient(ellipse 13vw 5vh at 45% 82%,rgba(255,255,255,.55),transparent);background-size:100vw 100%;animation:decoCloud 80s linear infinite}
+.iasd-deco[data-pat="clouds"]:after{opacity:.6;animation-duration:130s;transform:scale(1,-1);background-position:30vw 0}
+@keyframes decoCloud{to{transform:translateX(-100vw)}}
+.iasd-deco[data-pat="clouds"]:after{animation-name:decoCloud2}
+@keyframes decoCloud2{from{transform:scale(1,-1) translateX(0)}to{transform:scale(1,-1) translateX(-100vw)}}
+/* temas que já tinham fundo parado ganham movimento leve */
+.iasd-deco[data-pat="scan"]:before{content:'';position:absolute;left:0;right:0;top:-20vh;height:20vh;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--c1) 14%,transparent),transparent);animation:decoScan 7s linear infinite}
+@keyframes decoScan{to{transform:translateY(130vh)}}
+.iasd-deco[data-pat="diamonds"]:before{content:'';position:absolute;top:-10%;bottom:-10%;left:0;width:40%;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.14) 50%,transparent 70%);transform:translateX(-130%) skewX(-12deg);animation:decoShine 11s ease-in-out infinite}
+.iasd-deco[data-pat="sun"]{animation:decoBreath 6s ease-in-out infinite alternate;transform-origin:50% 82%}
+.iasd-deco[data-pat="frame"]{animation:decoFrame 5s ease-in-out infinite alternate}
+@keyframes decoFrame{from{opacity:.5}to{opacity:.95}}
 `;
 const CSS_FX=`
 .iasd-tm{font-family:var(--tf,Inter,system-ui,Arial,sans-serif)}
@@ -99,7 +175,7 @@ const CSS_FX=`
 @keyframes tmShake{0%{transform:translate(0,0)}25%{transform:translate(1cqh,-.7cqh)}50%{transform:translate(-.9cqh,.8cqh)}75%{transform:translate(.7cqh,.5cqh)}100%{transform:translate(0,0)}}
 .iasd-tm.an-nenhuma *,.iasd-tm.an-nenhuma:after{animation:none!important;transition:none!important}
 `;
-function deco(themeId){const t=THEMES[themeId];if(!t||!t.pat)return null;if(!document.getElementById('iasd-deco-css')){const st=document.createElement('style');st.id='iasd-deco-css';st.textContent=DECO_CSS;document.head.appendChild(st)}const d=document.createElement('div');d.className='iasd-deco';d.dataset.pat=t.pat;d.setAttribute('aria-hidden','true');return d}
+function deco(themeId){const off=/~0$/.test(String(themeId||''));themeId=String(themeId||'').split('~')[0];const t=THEMES[themeId];if(!t||!t.pat)return null;if(!document.getElementById('iasd-deco-css')){const st=document.createElement('style');st.id='iasd-deco-css';st.textContent=DECO_CSS;document.head.appendChild(st)}const d=document.createElement('div');d.className='iasd-deco';d.dataset.pat=t.pat;if(off)d.dataset.off='1';d.setAttribute('aria-hidden','true');return d}
 const LAYOUTS={ring:'Anel',digital:'Digital',cards:'Cartões',bar:'Barra',minimal:'Minimalista'};
 const ANIMS={suave:'Suave',pulso:'Pulso',neon:'Neon',tremor:'Tremor',nenhuma:'Sem animação'};
 const CSS=`
@@ -167,7 +243,8 @@ function clean(d){
   endsAt:num(d.endsAt,0,4e12,0),
   warn:Math.round(num(d.warn,0,86400,300)),
   alert:Math.round(num(d.alert,0,86400,60)),
-  theme:THEMES[d.theme]?d.theme:DEFAULT_THEME,
+  theme:THEMES[String(d.theme).split('~')[0]]?String(d.theme).split('~')[0]:DEFAULT_THEME,
+  fxoff:/~0$/.test(String(d.theme||'')),
   qr:d.qr===true,
   beep:d.beep!==false,
   layout:LAYOUTS[d.layout]?d.layout:'ring',
@@ -184,7 +261,7 @@ function mount(root,raw){
  if(!document.getElementById('iasd-tm-css')){const st=document.createElement('style');st.id='iasd-tm-css';st.textContent=CSS+CSS_FX;document.head.appendChild(st)}
  const th=THEMES[d.theme]||THEMES[DEFAULT_THEME];
  const box=document.createElement('div');box.className='iasd-tm idle an-'+d.anim+(th.font==='thin'?' is-thin':'');box.dataset.theme=d.theme;
- const dc=deco(d.theme);if(dc)box.appendChild(dc);
+ const dc=deco(d.theme+(d.fxoff?'~0':''));if(dc)box.appendChild(dc);
  const ui=d.layout==='ring'?buildRing(box,d):buildFlat(box,d);
  if(d.qr){const q=document.createElement('div');q.className='qr';
   q.innerHTML='<svg viewBox="-2 -2 '+(QR_N+4)+' '+(QR_N+4)+'" shape-rendering="crispEdges" role="img" aria-label="QR Code da Lição da Escola Sabatina"><rect x="-2" y="-2" width="'+(QR_N+4)+'" height="'+(QR_N+4)+'" fill="#fff"/><path d="'+QR_PATH+'" fill="#0b1029"/></svg><b>Lição da<br>Escola Sabatina</b><small>Aponte a câmera do celular</small>';

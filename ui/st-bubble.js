@@ -62,7 +62,8 @@ function mainView(){const c=fadeCfg(),hasW=!!fw();
  <button class="t" data-a="alerts"><span class="ic">🔔</span><b>Alertas</b><small>Ler e responder</small><span class="tn${unseen?' on':''}">${unseen}</span></button>
  </div>${hasW?'':'<p class="nt">Abra o IASD Projetor uma vez para liberar Tela preta, Fechar telão e Temas.</p>'}`}
 function themesView(){const w=fw();let items=[];try{items=[...w.document.querySelectorAll('#stThemes button')].map(b=>({t:b.dataset.t,n:(b.querySelector('b,strong')?.textContent||b.textContent||'').trim().split('\n')[0].slice(0,26),on:b.classList.contains('on')}))}catch(e){}
- return `<div class="hd"><button data-a="back">← Voltar</button><b>Temas do telão</b></div>`+(items.length?`<div class="th">${items.map(i=>`<button data-a="theme" data-t="${E(i.t)}" class="${i.on?'on':''}">${E(i.n||i.t)}</button>`).join('')}</div>`:'<p class="nt">Abra o IASD Projetor uma vez para listar os temas.</p>')}
+ let fx=true;try{fx=w.stThemeFxOn?w.stThemeFxOn():true}catch(e){}
+ return `<div class="hd"><button data-a="back">← Voltar</button><b>Temas do telão</b></div><div class="t wide${fx?' on':''}" style="cursor:default;margin-bottom:8px"><div style="display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px"><div><span class="ic">✨</span> <b>Animações</b><br><small>Fundos animados dos temas</small></div><button class="tg" data-a="themefx" style="border:0;border-radius:99px;padding:8px 13px;cursor:pointer;font:inherit;font-weight:800;background:${fx?'#22c55e':'#475569'};color:#fff">${fx?'LIGADAS':'DESLIGADAS'}</button></div></div>`+(items.length?`<div class="th">${items.map(i=>`<button data-a="theme" data-t="${E(i.t)}" class="${i.on?'on':''}">${E(i.n||i.t)}</button>`).join('')}</div>`:'<p class="nt">Abra o IASD Projetor uma vez para listar os temas.</p>')}
 function alertItem(x,sound){
  const ago=(typeof soundAgo==='function')?soundAgo(x.created_at):'';
  const sched=(typeof alertScheduleOf==='function')?alertScheduleOf(x):'';
@@ -83,6 +84,7 @@ function act(e){const b=e.target.closest('[data-a]');if(!b)return;const a=b.data
  if(a==='black'){try{w.project('')}catch(x){}toggle(false)}
  else if(a==='close'){try{w.closeScreenNow()}catch(x){}toggle(false)}
  else if(a==='fade'){const c=fadeCfg();c.on=!(c.on!==false);LS.set(FADE_KEY,c);render()}
+ else if(a==='themefx'){try{const w=fw();w.stSetThemeFx(!w.stThemeFxOn())}catch(x){}setTimeout(render,80)}
  else if(a==='fadein'){const c=fadeCfg();c.i=(c.i===false);if(c.i)c.on=true;LS.set(FADE_KEY,c);render()}
  else if(a==='speed'){const c=fadeCfg();c.f=+b.dataset.f;c.on=true;LS.set(FADE_KEY,c);render()}
  else if(a==='themes'){view='themes';render()}

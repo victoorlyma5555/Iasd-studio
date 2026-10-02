@@ -127,16 +127,22 @@ async function migrateLocalOfferings(){try{const db=await offeringDB();const fil
 function requestStudioHeight(){try{window.parent.postMessage({type:'iasd-studio-height',height:Math.ceil(document.querySelector('main').getBoundingClientRect().bottom + window.scrollY + 8)},location.origin)}catch(e){}}
 
 
+/* animações dos fundos dos temas: ligadas por padrão; o aviso 'desligado' viaja no id do tema ("id~0") até o telão */
+function stThemeFxOn(){try{return localStorage.getItem('iasd-themefx')!=='0'}catch(e){return true}}
+function tmThemeFx(){return tmTheme+(stThemeFxOn()?'':'~0')}
+window.stSetThemeFx=function(on){try{localStorage.setItem('iasd-themefx',on?'1':'0')}catch(e){}try{thMount()}catch(e){}try{tmSync();tmRender()}catch(e){}try{stRethemeLive()}catch(e){}try{stThemeFxPaint()}catch(e){}};
+window.stThemeFxOn=stThemeFxOn;
+function stThemeFxPaint(){document.querySelectorAll('.st-themefx').forEach(b=>{const on=stThemeFxOn();b.textContent=on?'Animações ligadas':'Animações desligadas';b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})}
 let tmTheme='noturno';try{tmTheme=localStorage.getItem('iasd-timer-theme')||'noturno'}catch(e){}
 let tmQr=false;try{tmQr=localStorage.getItem('iasd-timer-qr')==='1'}catch(e){}
 const TM={total:3600,remaining:3600,state:'idle',endsAt:0,warn:300,alert:60};
 function tmLeft(){return TM.state==='running'?Math.max(0,(TM.endsAt-Date.now())/1000):TM.remaining}
-function tmPayload(){return{title:($('tmTitle').value.trim()||'Escola Sabatina'),subtitle:'Caldas do Jorro',total:TM.total,state:TM.state,remaining:TM.remaining,endsAt:TM.endsAt,warn:TM.warn,alert:TM.alert,theme:tmTheme,qr:tmQr}}
+function tmPayload(){return{title:($('tmTitle').value.trim()||'Escola Sabatina'),subtitle:'Caldas do Jorro',total:TM.total,state:TM.state,remaining:TM.remaining,endsAt:TM.endsAt,warn:TM.warn,alert:TM.alert,theme:tmThemeFx(),qr:tmQr}}
 function tmQrToggle(){tmQr=!tmQr;try{localStorage.setItem('iasd-timer-qr',tmQr?'1':'0')}catch(e){}tmSync();tmRender()}
 function tmOnScreen(){return(localStorage.getItem('iasd-stage')||'').startsWith('IASD_TIMER:')}
 function tmSend(){project('IASD_TIMER:'+JSON.stringify(tmPayload()))}
 function tmSync(){if(tmOnScreen())tmSend()}
-let thView=null;function thMount(){const box=$('thPrev');if(!box||!window.IASDTimerDisplay)return;if(thView)thView.stop();thView=IASDTimerDisplay.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmTheme})}
+let thView=null;function thMount(){const box=$('thPrev');if(!box||!window.IASDTimerDisplay)return;if(thView)thView.stop();thView=IASDTimerDisplay.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmThemeFx()})}
 function tmPickTheme(id){tmTheme=id;thMount();try{localStorage.setItem('iasd-timer-theme',id)}catch(e){}tmSync();tmRender();stRethemeLive()}
 function stRethemeLive(){const st=localStorage.getItem('iasd-stage')||'';if(st.startsWith('IASD_BIBLE:')||st.startsWith('IASD_DRAW_READY:')||st.startsWith('IASD_DRAW:')){const base=st.startsWith('IASD_DRAW:')?'IASD_DRAW:'+st.slice(10).split('|')[0]:st;project(base)}}
 function tmShow(){tmSend()}
@@ -294,8 +300,8 @@ cfLoadRelease();
 function mirrorProjection(content){const label=$('liveLabel');if(label){const live=!!content&&!!localStorage.getItem('iasd-projetor-token');label.classList.toggle('is-live',live);$('liveLabelText').textContent=live?'AO VIVO · NO TELÃO':'NO TELÃO AGORA'}const frame=$('live');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-project',content:window.IASDTr?IASDTr.wire(content):content},location.origin)}
 function stThemed(c){
  if(typeof c!=='string')return c;
- for(const pre of ['IASD_BIBLE:','IASD_DRAW_READY:','IASD_DRAW_ANIM:']){if(c.startsWith(pre)){try{const d=JSON.parse(c.slice(pre.length));d.theme=tmTheme;if(pre==='IASD_BIBLE:'){d.bt=window.btCur?btCur():'';d.pt=window.btPage&&btPage()?1:0}return pre+JSON.stringify(d)}catch(e){}return c}}
- if(c.startsWith('IASD_DRAW:'))return 'IASD_DRAW:'+c.slice(10).split('|')[0]+'|'+tmTheme;
+ for(const pre of ['IASD_BIBLE:','IASD_DRAW_READY:','IASD_DRAW_ANIM:']){if(c.startsWith(pre)){try{const d=JSON.parse(c.slice(pre.length));d.theme=tmThemeFx();if(pre==='IASD_BIBLE:'){d.bt=window.btCur?btCur():'';d.pt=window.btPage&&btPage()?1:0}return pre+JSON.stringify(d)}catch(e){}return c}}
+ if(c.startsWith('IASD_DRAW:'))return 'IASD_DRAW:'+c.slice(10).split('|')[0]+'|'+tmThemeFx();
  return c}
 function project(content){const orig=content;content=stThemed(content);call('project',content);try{localStorage.setItem('iasd-black',content===''?'1':'0')}catch(e){}mirrorProjection(content);stRenderNow();feedback(content===''?'Tela preta enviada ao telão.':'Conteúdo enviado.');if(nextContent===orig)clearPrepared()}
 function loadAudio(input,id){const f=input.files?.[0];if(!f)return;const el=$(id);if(urls.has(id))URL.revokeObjectURL(urls.get(id));const url=URL.createObjectURL(f);urls.set(id,url);el.src=url;el.volume=muted?0:volume;prepare('','Áudio: '+f.name);feedback('Áudio carregado: '+f.name)}

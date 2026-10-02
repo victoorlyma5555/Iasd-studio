@@ -21,7 +21,7 @@ const _thMount=window.thMount;
 window.thMount=function(){
  const box=$('thPrev');if(!box)return;
  if(typeof thView!=='undefined'&&thView)thView.stop();
- thView=TD.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmTheme,layout:tmLayout,anim:tmAnim});
+ thView=TD.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmThemeFx(),layout:tmLayout,anim:tmAnim});
 };
 function refreshTimer(){try{tmSync()}catch(e){}try{thMount()}catch(e){}}
 chips('tmLayouts',Object.entries(TD.layouts),()=>tmLayout,k=>{tmLayout=k;lsSet('iasd-timer-layout',k);refreshTimer()});
@@ -61,7 +61,8 @@ function drawPreviewStyle(){const o=$('drawNumber');if(!o)return;o.dataset.tpl=D
 drawPreviewStyle();
 
 /* ---------- Temas: legenda do estilo ---------- */
-const PAT={grid:'grade neon',stars:'estrelas',scan:'terminal',diamonds:'vitral',sun:'sol',frame:'moldura',paper:'papel',bokeh:'brilhos',embers:'brasas',rays:'raios de luz'};
+const PAT={grid:'grade neon',stars:'estrelas',scan:'terminal',diamonds:'vitral',sun:'sol',frame:'moldura',paper:'papel',bokeh:'brilhos',embers:'brasas',rays:'raios de luz',dust:'poeira dourada',ribbon:'fitas de luz',shine:'brilho',pulse:'respiração de luz',borealis:'aurora boreal',stripes:'listras',candle:'luz de vela',facets:'facetas',waves:'ondas',fireflies:'vaga-lumes',ripple:'ondas de luz',float:'bolhas',sparks:'faíscas',dawn:'sol nascendo',blobs:'manchas de cor',clouds:'nuvens'};
 document.querySelectorAll('#stThemes button').forEach(b=>{const t=TD.themes[b.dataset.t];if(!t)return;const bits=[t.pat?PAT[t.pat]:'',t.font?({serif:'serifa',mono:'monoespaçada',rounded:'arredondada',thin:'fina'})[t.font]:'',t.tx?'claro':''].filter(Boolean);if(bits.length)b.title=t.name+' · '+bits.join(' · ')});
 try{thMount()}catch(e){}
+try{stThemeFxPaint()}catch(e){}
 })();

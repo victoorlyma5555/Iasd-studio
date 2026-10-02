@@ -319,3 +319,7 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 /* Bíblia de Projeção: título com espaço próprio e botões numa linha abaixo (antes o nome ficava espremido) */
 #bible .mp-head{flex-wrap:wrap;row-gap:10px}#bible .mp-tt{flex:1 1 210px;min-width:210px}#bible .mp-right{flex:1 1 100%;margin-left:0}#bible .bt-right{justify-content:flex-start}
 #bible .mp-right select{min-width:0;max-width:100%;flex:1 1 150px}
+
+/* botão Animações ligadas/desligadas (Temas) */
+.st-fxrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}.st-fxrow .muted{flex:1 1 220px;margin:0;font-size:12.5px}
+.st-themefx{font-weight:800;border-radius:99px;padding:9px 16px}.st-themefx.on{background:#16a34a;border-color:#16a34a;color:#fff}
