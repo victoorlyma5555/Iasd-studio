@@ -433,7 +433,7 @@ function projectionMonitorPopup(message,allowProceed=false){
   document.body.append(overlay)}
  overlay.querySelector('#iasd-monitor-alert-message').textContent=message;const actions=overlay.querySelector('#iasd-monitor-alert-actions');actions.replaceChildren();
  const close=document.createElement('button');close.className='ma-ok';close.textContent='Entendi';close.onclick=()=>overlay.remove();actions.append(close);
- if(allowProceed){const proceed=document.createElement('button');proceed.textContent='Projetar mesmo assim';proceed.onclick=()=>{overlay.remove();if(typeof pendingUnverifiedProjection==='function'){const fn=pendingUnverifiedProjection;pendingUnverifiedProjection=null;fn()}};actions.prepend(proceed)}
+ if(allowProceed){const proceed=document.createElement('button');proceed.textContent='Só mostrar na prévia';proceed.onclick=()=>{overlay.remove();if(typeof pendingUnverifiedProjection==='function'){const fn=pendingUnverifiedProjection;pendingUnverifiedProjection=null;fn()}};actions.prepend(proceed)}
  const off=document.createElement('button');off.className='ma-off';off.textContent='Já entendi, não mostrar este aviso de novo';off.onclick=()=>{try{localStorage.setItem(MON_OFF_KEY,'1')}catch(e){}overlay.remove();if(allowProceed&&typeof pendingUnverifiedProjection==='function'){const fn=pendingUnverifiedProjection;pendingUnverifiedProjection=null;fn()}};actions.append(off);
  close.focus();
 }
