@@ -37,8 +37,54 @@ async function loadAudio(force){
  }catch(e){S.aStatus.all='err';S.aErr=/relation|does not exist|schema cache/i.test(e.message||'')?'Falta rodar o SQL docs/supabase-hinario-audio.sql no Supabase.':(e.message||'Falha ao carregar os áudios.')}
  paint();
 }
-const hasAudio=(ed,n)=>!!(S.audio[ed]&&S.audio[ed][n]);
-const countAudio=ed=>Object.keys(S.audio[ed]||{}).length;
+/* ---------- pasta do computador (sem enviar nada: toca direto dos arquivos da igreja) ---------- */
+S.local={antigo:{},novo:{}};S.lstat={};
+const hasLocal=(ed,n)=>!!(S.local[ed]&&S.local[ed][n]);
+const hasAudio=(ed,n)=>hasLocal(ed,n)||!!(S.audio[ed]&&S.audio[ed][n]);
+const countAudio=ed=>{const k=new Set(Object.keys(S.audio[ed]||{}));Object.keys(S.local[ed]||{}).forEach(x=>k.add(x));return k.size};
+const AUD=/\.(mp3|m4a|aac|wav|ogg|opus|flac|mp4)$/i;
+function numOf(name){const b=String(name||'').replace(/\.[^.]+$/,'');
+ let m=/^\s*(?:hino\s*(?:n[º°o.]*)?\s*)?0*(\d{1,3})(?!\d)/i.exec(b);if(m&&+m[1]>0)return +m[1];
+ const g=(b.match(/\d+/g)||[]);const pad3=g.filter(x=>x.length>=3&&+x>0&&+x<1000);const pick=pad3.length?pad3[pad3.length-1]:g.filter(x=>+x>0&&+x<1000).pop();return pick?+pick:0}
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('iasd-sth-fs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function idbGet(k){try{const d=await idb();return await new Promise(res=>{const q=d.transaction('h').objectStore('h').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}catch(e){return null}}
+async function idbSet(k,v){try{const d=await idb();await new Promise(res=>{const t=d.transaction('h','readwrite');t.objectStore('h').put(v,k);t.oncomplete=res;t.onerror=res})}catch(e){}}
+async function walk(dir,out,depth){
+ for await(const [name,e] of dir.entries()){
+  if(e.kind==='directory'){if(depth<4)await walk(e,out,depth+1)}
+  else if(AUD.test(name)){const n=numOf(name);if(n&&!out[n])out[n]={handle:e,name}}}
+}
+async function indexHandle(ed,h){
+ S.busy='Lendo a pasta de hinos…';paintBar();const out={};
+ try{await walk(h,out,0)}catch(e){S.busy='';say('Não consegui ler a pasta: '+(e.message||e));return}
+ const max=list(ed).length;if(max)Object.keys(out).forEach(n=>{if(+n>max)delete out[n]});
+ S.local[ed]=out;S.lstat[ed]='ok';S.busy='';
+ say(Object.keys(out).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Eles tocam direto do computador, sem internet.');paint();
+}
+function indexFiles(ed,files){
+ const out={};[...files].forEach(f=>{if(!AUD.test(f.name||''))return;const n=numOf(f.name);if(n&&!out[n])out[n]={file:f,name:f.name}});
+ const max=list(ed).length;if(max)Object.keys(out).forEach(n=>{if(+n>max)delete out[n]});
+ S.local[ed]=out;S.lstat[ed]='ok';say(Object.keys(out).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Valem até fechar esta página (neste navegador, use Chrome ou Edge para lembrar a pasta).');paint();
+}
+async function connectFolder(){
+ const ed=S.ed;
+ if(window.showDirectoryPicker){
+  try{const h=await window.showDirectoryPicker({id:'hinos-'+ed,mode:'read'});await idbSet(ed,h);await indexHandle(ed,h)}
+  catch(e){if(e&&e.name!=='AbortError')say('Não foi possível abrir a pasta: '+(e.message||e))}
+ }else{
+  const i=document.createElement('input');i.type='file';i.webkitdirectory=true;i.multiple=true;i.onchange=()=>{if(i.files.length)indexFiles(ed,i.files)};i.click();
+ }
+}
+async function reconnectFolder(ed){
+ const h=await idbGet(ed);if(!h)return;
+ try{const p=await h.requestPermission({mode:'read'});if(p==='granted')await indexHandle(ed,h);else say('Permissão negada para a pasta.')}catch(e){say('Não foi possível reconectar: '+(e.message||e))}
+}
+async function restoreLocal(){
+ for(const ed of Object.keys(ED)){
+  const h=await idbGet(ed);if(!h)continue;
+  try{const p=await h.queryPermission({mode:'read'});if(p==='granted')await indexHandle(ed,h);else{S.lstat[ed]='perm';paint()}}catch(e){}
+ }
+}
 
 /* ---------- envio ---------- */
 const extOf=f=>{const m=/\.(mp3|m4a|aac|wav|ogg|webm|mp4)$/i.exec(f.name||'');return m?m[1].toLowerCase():(/mpeg/.test(f.type)?'mp3':'mp3')};
@@ -76,7 +122,10 @@ async function bulk(files){
 
 /* ---------- player ---------- */
 const urlCache={};
+let objUrl='';
 async function urlFor(ed,n){
+ const L=S.local[ed]&&S.local[ed][n];
+ if(L){const f=L.file||await L.handle.getFile();if(objUrl)try{URL.revokeObjectURL(objUrl)}catch(e){}objUrl=URL.createObjectURL(f);return objUrl}
  const k=ed+'|'+n,hit=urlCache[k];if(hit&&hit.exp>Date.now())return hit.url;
  const a=S.audio[ed]&&S.audio[ed][n];if(!a)throw Error('Este hino ainda não tem áudio.');
  const r=await cloud().storage.from(BUCKET).createSignedUrl(a.storage_path,3600);
@@ -136,6 +185,7 @@ const api={
  wl(on){S.withLyrics=!!on;try{localStorage.setItem('iasd-sth-wl',on?'1':'0')}catch(e){}},
  lyr(ed,n){const h=find(ed,n);if(h)projectLyrics(h,ed)},
  upload(ed,n){const i=document.createElement('input');i.type='file';i.accept='audio/*';i.onchange=async()=>{const f=i.files[0];if(!f)return;S.busy='Enviando '+pad(n)+'…';paintBar();try{await uploadOne(ed,n,f);say('Áudio do hino '+n+' salvo.')}catch(e){say('Falha no envio: '+(e.message||e))}S.busy='';paint()};i.click()},
+ folder(){connectFolder()},reconnect(ed){reconnectFolder(ed)},indexFiles(ed,files){indexFiles(ed,files)},numOf,
  bulk(){const i=document.createElement('input');i.type='file';i.accept='audio/*';i.multiple=true;i.onchange=()=>{if(i.files.length)bulk(i.files)};i.click()},
  remove(ed,n){removeOne(ed,n)},
  reload(){S.aStatus.all='';loadAudio(true)}
@@ -154,7 +204,7 @@ function paintNav(){
  const nav=$('sth-nav');if(!nav)return;
  const n=countAudio(S.ed),tot=list().length;
  nav.innerHTML='<div class="sth-tabs"><button class="'+(S.view==='lib'?'on':'')+'" onclick="STHymn.view(\'lib\')">🎵 Biblioteca de áudio</button><button class="'+(S.view==='lyr'?'on':'')+'" onclick="STHymn.view(\'lyr\')">📖 Letras</button></div>'
-  +'<div class="sth-top"><div class="sth-ed">'+Object.keys(ED).map(k=>'<button class="'+(S.ed===k?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><b>'+ED[k].nome+'</b><small>'+ED[k].sub+(S.aStatus.all==='ok'?' · '+countAudio(k)+' com áudio':'')+'</small></button>').join('')+'</div>'
+  +'<div class="sth-top"><div class="sth-ed">'+Object.keys(ED).map(k=>'<button class="'+(S.ed===k?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><b>'+ED[k].nome+'</b><small>'+ED[k].sub+(S.aStatus.all==='ok'||countAudio(k)?' · '+countAudio(k)+' com áudio':'')+'</small></button>').join('')+'</div>'
   +'<div class="sth-search"><input id="sthq" inputmode="search" autocomplete="off" placeholder="Número ou nome do hino…" value="'+esc(S.q)+'" oninput="STHymn.input(this.value)"></div></div>';
 }
 function row(h){
@@ -171,7 +221,9 @@ function paintBar(){
  const el=$('sth-bar');if(!el)return;
  if(S.busy){el.innerHTML='<span class="sth-busy">⏳ '+esc(S.busy)+'</span>';return}
  el.innerHTML='<div class="sth-fl">'+[['all','Todos'],['with','Com áudio'],['without','Sem áudio']].map(([k,l])=>'<button class="'+(S.filter===k?'on':'')+'" onclick="STHymn.filter(\''+k+'\')">'+l+'</button>').join('')+'</div>'
-  +'<button class="sth-bulk" onclick="STHymn.bulk()" title="Escolha vários arquivos. O número do hino é lido do começo do nome (025.mp3, 25 - Nome.mp3).">⬆ Enviar vários áudios</button>';
+  +'<button class="sth-bulk sth-fold" onclick="STHymn.folder()" title="Escolha a pasta do computador onde estão os hinos. Nada é enviado: toca direto dos arquivos, sem internet.">📁 '+(Object.keys(S.local[S.ed]||{}).length?'Trocar pasta ('+Object.keys(S.local[S.ed]).length+' hinos)':'Conectar pasta de hinos')+'</button>'
+  +(S.lstat[S.ed]==='perm'?'<button class="sth-bulk sth-fold" onclick="STHymn.reconnect(\''+S.ed+'\')">🔓 Reconectar pasta</button>':'')
+  +'<button class="sth-bulk" onclick="STHymn.bulk()" title="Envia para a nuvem. O número do hino é lido do começo do nome (025.mp3, 25 - Nome.mp3).">⬆ Enviar para a nuvem</button>';
 }
 function paintBody(keepFocus){
  const b=$('sth-body');if(!b)return;
@@ -180,7 +232,7 @@ function paintBody(keepFocus){
   if(st==='loading')html+='<p class="muted">Carregando hinos…</p>';else if(st==='err')html+='<p class="muted">Não foi possível carregar o hinário. Verifique a conexão.</p>';
   if(a==='nocloud')html+='<p class="sth-warn">Abra o Studio pelo IASD APP (logado como sonoplasta) para usar os áudios.</p>';
   else if(a==='err')html+='<p class="sth-warn">'+esc(S.aErr)+' <button onclick="STHymn.reload()">Tentar de novo</button></p>';
-  else if(a==='ok'&&!countAudio('antigo')&&!countAudio('novo'))html+='<p class="sth-tip">A biblioteca está vazia. Use <b>⬆ Enviar vários áudios</b> (o número do hino vem do nome do arquivo: <code>025.mp3</code> ou <code>25 - Nome.mp3</code>) ou o <b>⬆</b> de cada hino. Envie só gravações que a igreja tem autorização para usar.</p>';
+  else if(!countAudio('antigo')&&!countAudio('novo')&&a!=='loading')html+='<p class="sth-tip">A biblioteca está vazia. O jeito mais rápido: toque em <b>📁 Conectar pasta de hinos</b> e escolha a pasta onde estão os áudios no computador (sem enviar nada, toca direto de lá). Ou use <b>⬆ Enviar para a nuvem</b> (o número do hino vem do nome do arquivo: <code>025.mp3</code> ou <code>25 - Nome.mp3</code>) ou o <b>⬆</b> de cada hino. Envie só gravações que a igreja tem autorização para usar.</p>';
   const L=filtered(),shown=L.slice(0,S.limit);
   html+='<div class="sth-list">'+shown.map(row).join('')+(L.length>shown.length?'<button class="sth-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length&&st==='ok'?'<p class="muted">Nenhum hino encontrado.</p>':'')+'</div>';
   b.innerHTML=html;
@@ -246,7 +298,7 @@ function mount(){
  +'.sthp-opt{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px;justify-content:space-between}.sthp-opt label{display:flex;flex-direction:row;gap:6px;align-items:center}.sthp-opt input[type=checkbox]{width:auto;min-height:0;margin:0}.sthp-opt button{padding:6px 10px;font-size:12px}.sthp-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sthp-q small{opacity:.7}.sthp-q span{display:flex;gap:6px;align-items:center;padding:3px 4px 3px 9px;border-radius:99px;background:rgba(255,255,255,.08)}.sthp-q span button{width:22px;height:22px;padding:0;border-radius:50%;font-size:10px}.sthp-cl{padding:4px 9px;font-size:11px}'
  +'.sth-manual{margin-top:14px}.sth-manual summary{cursor:pointer;opacity:.8;padding:6px 0}';
  document.head.appendChild(style);
- loadLyrics(S.ed).then(paint);loadAudio();paint();
+ loadLyrics(S.ed).then(paint);loadAudio();restoreLocal();paint();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();
