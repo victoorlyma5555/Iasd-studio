@@ -113,6 +113,14 @@ drop policy if exists "sound_alerts_assigned_roles_send" on public.iasd_sound_al
 create policy "perm alert insert" on public.iasd_sound_alerts for insert to authenticated with check (created_by = auth.uid() and public.iasd_has_perm('alert.send_sound'));
 create policy "perm alert delete" on public.iasd_sound_alerts for delete to authenticated using (public.iasd_has_perm('alert.send_sound') or public.iasd_has_perm('sound.use'));
 
+-- Vídeos de dízimos (arquivos): enviar e apagar por permissão da sonoplastia (antes: cargo antigo)
+drop policy if exists "offering video storage upload" on storage.objects;
+drop policy if exists "offering video storage delete" on storage.objects;
+create policy "offering video storage upload" on storage.objects for insert to authenticated
+  with check (bucket_id = 'iasd-offering-videos' and public.iasd_has_perm('sound.use'));
+create policy "offering video storage delete" on storage.objects for delete to authenticated
+  using (bucket_id = 'iasd-offering-videos' and public.iasd_has_perm('sound.use'));
+
 -- 12) SÓ DEPOIS de testar e de conferir as funções do banco: tira os cargos antigos das pessoas (o acesso fica só nos cargos agregados)
 insert into public.iasd_member_cargos (user_id, cargo_id)
   select m.user_id, c.id from public.iasd_members m
