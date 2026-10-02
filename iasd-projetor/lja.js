@@ -19,6 +19,8 @@ function create(userData){
  try{const c=JSON.parse(fs.readFileSync(cfgFile,'utf8'));if(c&&typeof c==='object')cfg={root:String(c.root||''),db:String(c.db||'')}}catch{}
  const save=()=>{try{fs.mkdirSync(userData,{recursive:true});fs.writeFileSync(cfgFile,JSON.stringify(cfg),'utf8')}catch{}};
  let scanning=null,lastScan=null;
+ /* capas e fundos podem ficar fora de config: varre a pasta do programa (um nível acima) */
+ const scanRootOf=()=>{const r=cfg.root;if(!r||!isDir(r))return '';if(path.basename(r).toLowerCase()==='config'){const up=path.dirname(r);if(up&&up!==r&&isDir(up))return up}return r};
 
  /* a "raiz" é a pasta que contém musicas/ e imagens/ (config), mesmo que escolham a pasta do programa */
  function configRoot(dir){
@@ -77,12 +79,12 @@ function create(userData){
  async function scan(){
   if(scanning)return scanning;
   scanning=(async()=>{
-   const root=cfg.root;if(!root||!isDir(root))throw Error('Escolha a pasta do Louvor JA no IASD Projetor.');
+   const root=scanRootOf();if(!root)throw Error('Escolha a pasta do Louvor JA no IASD Projetor.');
    const out=[];let steps=0;
    async function walk(dir,rel,depth){
     let ents;try{ents=await fs.promises.readdir(dir,{withFileTypes:true})}catch{return}
     for(const e of ents){
-     if(e.isDirectory()){if(depth<6)await walk(path.join(dir,e.name),rel?rel+'/'+e.name:e.name,depth+1)}
+     if(e.isDirectory()){if(depth<6&&!/^(node_modules|\$recycle\.bin)$/i.test(e.name))await walk(path.join(dir,e.name),rel?rel+'/'+e.name:e.name,depth+1)}
      else if(e.isFile()){
       const k=AUD.test(e.name)?'a':IMG.test(e.name)?'i':'';
       if(k){out.push([e.name,rel,k]);if(++steps%400===0)await yieldLoop()}
@@ -97,7 +99,7 @@ function create(userData){
  }
  /* caminho seguro dentro da raiz ('/' como separador) */
  function resolveRel(rel){
-  const root=cfg.root;if(!root||typeof rel!=='string'||!rel||rel.length>600)return '';
+  const root=scanRootOf();if(!root||typeof rel!=='string'||!rel||rel.length>600)return '';
   const base=path.resolve(root),full=path.resolve(base,...rel.split('/'));
   if(!full.startsWith(base+path.sep))return '';
   return isFile(full)?full:'';

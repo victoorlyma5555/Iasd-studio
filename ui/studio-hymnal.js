@@ -94,7 +94,7 @@ async function cpProbe(){
 }
 S.scanAt=0;S.syncAt=0;S.rootH=null;S.dbH=null;S.stOpen={};S.syncing=false;S.cnt=null;S.statV=0;
 const baseOf=d=>String(d||'').split(/[\\/]/).filter(Boolean).pop()?.toLowerCase()||'';
-function setFiles(raw){S.files=raw;S.aidx=new Map();raw.forEach(it=>{const k=it.name.toLowerCase();let a=S.aidx.get(k);if(!a)S.aidx.set(k,a=[]);a.push(it)})}
+function setFiles(raw){S.thumbs={};S.bgc={};S.files=raw;S.aidx=new Map();raw.forEach(it=>{const k=it.name.toLowerCase();let a=S.aidx.get(k);if(!a)S.aidx.set(k,a=[]);a.push(it)})}
 function pickF(name,dir){
  if(!name)return null;const c=S.aidx.get(String(name).toLowerCase());if(!c||!c.length)return null;
  if(c.length===1)return c[0];const b=baseOf(dir);return c.find(x=>baseOf(x.dir)===b)||c[0]
@@ -125,11 +125,12 @@ async function computeCounts(){
  await Promise.all(KEYS.map(loadLyrics));await rematch();
  const hasImgs=Object.keys(S.imgs).length>0,c={};
  for(const id of KEYS){
-  const L=list(id),loc=S.local[id]||{},x={total:L.length,found:0,synced:0,noBg:0,miss:[],noProg:[],prog:ED[id].hy&&S.hy[id]?S.hy[id].length:null};
+  const L=list(id),loc=S.local[id]||{},x={total:L.length,found:0,synced:0,noBg:0,noCov:0,albums:(S.colx[id]||[]).length,miss:[],noProg:[],prog:ED[id].hy&&S.hy[id]?S.hy[id].length:null};
   L.forEach(h=>{const e=entryOf(id,h);
    if(ED[id].hy&&S.hy[id]&&!e)x.noProg.push(h.n+' · '+h.t);
    if(loc[h.n]){x.found++;if(e&&e.L.length)x.synced++;if(e&&hasImgs&&e.img&&!S.imgs[String(e.img).toLowerCase()])x.noBg++}
    else x.miss.push((ED[id].coll?(h.album||'')+' · ':h.n+' · ')+h.t)});
+  if(hasImgs)(S.colx[id]||[]).forEach(a=>{if(a.cover&&!S.imgs[String(a.cover).toLowerCase()])x.noCov++});
   c[id]=x}
  S.cnt=c;S.statV++;return c
 }
@@ -246,24 +247,29 @@ async function connectDb(){
  else{const i=document.createElement('input');i.type='file';i.accept='.db';i.onchange=()=>{if(i.files[0])run(i.files[0])};i.click()}
 }
 /* imagem da pasta -> fundo reduzido (poucos KB) ou miniatura de capa */
+async function decodeImg(f){
+ try{return await createImageBitmap(f)}catch(e){}
+ /* alguns .bmp/.jpg diferentes só abrem por <img> */
+ return await new Promise((res,rej)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(Error('imagem ilegível'))};i.src=u})
+}
 async function imgBlob(name,w,q){
  const r=S.imgs[String(name).toLowerCase()];if(!r)return null;
- try{const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());const bm=await createImageBitmap(f);const W=Math.min(w,bm.width),H=Math.round(bm.height*W/bm.width);
+ try{const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());const bm=await decodeImg(f);const bw=bm.width||bm.naturalWidth,bh=bm.height||bm.naturalHeight;const W=Math.min(w,bw),H=Math.round(bh*W/bw);
   const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(bm,0,0,W,H);if(bm.close)bm.close();return c}catch(e){return null}
 }
 const verGE=(v,m)=>{const x=String(v||'0').split('.').map(Number),y=m.split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==y[i])return(x[i]||0)>y[i]}return true};
 /* IASD Projetor antes da 0.5.8 recusa mensagens com mais de 50 KB: o fundo é reduzido para caber */
-const bgLimit=()=>verGE(S.cpInfo&&S.cpInfo.version,'0.5.8')?0:43000;
+const bgLimit=()=>verGE(S.cpInfo&&S.cpInfo.version,'0.5.9')?0:43000;
 async function bgFor(name){
  if(!name)return '';const k=String(name).toLowerCase()+'|'+bgLimit();if(S.bgc[k]!==undefined)return S.bgc[k];
  await ensureRead();let u='';const lim=bgLimit();
  if(!lim){const c=await imgBlob(name,1600);u=c?c.toDataURL('image/jpeg',.8):''}
  else for(const [w,q] of [[960,.6],[800,.5],[640,.45],[480,.4],[360,.35]]){const c=await imgBlob(name,w);if(!c)break;u=c.toDataURL('image/jpeg',q);if(u.length<=lim)break}
- S.bgc[k]=u;const ks=Object.keys(S.bgc);if(ks.length>40)delete S.bgc[ks[0]];return u
+ if(u)S.bgc[k]=u;const ks=Object.keys(S.bgc);if(ks.length>40)delete S.bgc[ks[0]];return u
 }
 async function thumbFor(name){
  const k=String(name).toLowerCase();if(S.thumbs[k]!==undefined)return S.thumbs[k];
- const c=await imgBlob(name,240);if(!c){S.thumbs[k]='';return ''}
+ const c=await imgBlob(name,240);if(!c)return ''
  const u=await new Promise(r=>c.toBlob(b=>r(b?URL.createObjectURL(b):''),'image/jpeg',.75));S.thumbs[k]=u;return u
 }
 let _cvRun=0;
@@ -412,6 +418,7 @@ function paintConn(){
   const card=id=>{const x=c[id];if(!x||!x.total)return '';const ln=[x.found+' de '+x.total+' com áudio'];
    if(x.prog!==null)ln.push(x.synced+' com letra sincronizada');else if(x.synced!==x.found)ln.push(x.synced+' com letra');
    if(x.noBg)ln.push(x.noBg+' sem fundo');
+   if(x.noCov)ln.push(x.noCov+' de '+x.albums+' álbuns sem capa');
    return '<div class="sth-sc"><b>'+esc(ED[id].nome)+'</b><span>'+ln.join(' · ')+'</span>'+det(id,'faltando na pasta',x.miss)+det(id,'sem correspondência no programa',x.noProg)+'</div>'};
   html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'Sincronizado '+ago(S.syncAt)+(S.cp?' · via IASD Projetor':''))+'</small></div>'
    +(perm?'<button type="button" class="mp-blue" onclick="STHymn.reconnect()">Reconectar</button>':'<button type="button" class="mp-btn" onclick="STHymn.sync()">'+ico('shuffle')+'Sincronizar agora</button>')+'</div>'

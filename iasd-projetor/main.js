@@ -421,7 +421,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   try{const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
  if(req.url==='/project'&&req.method==='POST'){
-  if(typeof data.content!=='string'||data.content.length>(data.content.startsWith('IASD_LYRIC:')?4000000:50000)){reply(res,400,{error:'Conteúdo inválido'});return}
+  if(typeof data.content!=='string'||data.content.length>(data.content.replace(/^IASD_TR:[a-z]+:\d{1,4}\|/,'').startsWith('IASD_LYRIC:')?4000000:50000)){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
    const content=data.content;
    if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}
