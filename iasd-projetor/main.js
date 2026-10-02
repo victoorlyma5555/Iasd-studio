@@ -373,12 +373,17 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   const lja=ljaStore(),u=new URL(req.url,'http://127.0.0.1');
   if(u.pathname==='/lja/state'){reply(res,200,lja.state());return}
   const cors={'Access-Control-Allow-Origin':allowedOrigin(req)||SITE,'Cross-Origin-Resource-Policy':'cross-origin','Vary':'Origin'};
+  if(u.pathname==='/lja/cache'){const f=lja.cachePath();if(!f){reply(res,404,{error:'Sem cópia da lista'});return}lja.sendFile(req,res,f,Object.assign({'Content-Type':'application/json; charset=utf-8'},cors));return}
   if(u.pathname==='/lja/db'){const f=lja.dbPath();if(!f){reply(res,404,{error:'Banco do Louvor JA não encontrado'});return}lja.sendFile(req,res,f,cors);return}
   if(u.pathname==='/lja/file'){const f=lja.resolveRel(u.searchParams.get('p')||'');if(!f){reply(res,404,{error:'Arquivo não encontrado'});return}lja.sendFile(req,res,f,cors);return}
   reply(res,404,{error:'Rota desconhecida'});return
  }
- const bodyLimit=req.url==='/project'?6000000:100000;let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>bodyLimit){reply(res,413,{error:'Mensagem muito grande'});return}}
+ const bodyLimit=req.url==='/project'?6000000:req.url==='/lja/cache'?31000000:100000;let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>bodyLimit){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
+ if(req.url==='/lja/cache'&&req.method==='POST'){
+  if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
+  try{if(!data.ix||typeof data.ix.cols!=='object'||!data.meta)throw Error('Lista inválida.');reply(res,200,{ok:true,cache:ljaStore().cachePut(raw,data.at)})}catch(e){reply(res,400,{error:e.message})}return
+ }
  if(req.url==='/lja/scan'&&req.method==='POST'){
   if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
   try{reply(res,200,await ljaStore().scan())}catch(e){reply(res,409,{error:e.message})}return

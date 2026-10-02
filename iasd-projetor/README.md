@@ -18,6 +18,10 @@ Na primeira utilização, abra o IASD APP e vá a Sonoplastia → Conectar IASD 
 
 O Projetor lê, somente leitura, a pasta do Louvor JA e o `database.db` do programa e entrega ao site (Sonoplastia → Hinário). Isso evita o bloqueio do Chrome para pastas de sistema (`Program Files`) e dispensa pedidos de permissão. Ele procura sozinho em `Louvor JA` dentro de `Program Files (x86)`, `Program Files` e `ProgramData`; o site também pode abrir a escolha de pasta/arquivo pelo Projetor. Rotas (todas exigem o pareamento): `GET /lja/state`, `POST /lja/scan`, `POST /lja/pick`, `GET /lja/db`, `GET /lja/file?p=`. Só serve arquivos dentro da pasta escolhida; nada é enviado para a internet.
 
+### Cópia da lista do Hinário (versão 0.5.10)
+
+Depois de ler o banco, o site guarda a lista de hinos também aqui, em `lja-index.json` (pasta de dados do Projetor, uns 3,5 MB). Se o navegador apagar os dados do site, a lista volta sozinha ao abrir o Hinário, sem reler o banco. O site só confere tamanho e data do `database.db`; se mudou, avisa "Atualizar lista" (nunca atualiza sozinho durante a projeção). Vale para qualquer conta: a cópia é do computador, não da conta. O pareamento continua guardado no navegador.
+
 ## Instalação e desenvolvimento
 
 No computador de desenvolvimento com Node.js LTS:

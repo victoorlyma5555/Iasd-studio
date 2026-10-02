@@ -65,7 +65,7 @@ function create(userData){
   if(root&&(!cfg.db||!isFile(cfg.db))){const db=findDb(root);if(db){cfg.db=db;save()}}
   let db=null;
   if(cfg.db&&isFile(cfg.db)){const s=fs.statSync(cfg.db);db={path:cfg.db,size:s.size,mtime:Math.round(s.mtimeMs)}}
-  return{ok:true,root,db,scanAt:lastScan?lastScan.at:0,files:lastScan?lastScan.n:0};
+  return{ok:true,root,db,scanAt:lastScan?lastScan.at:0,files:lastScan?lastScan.n:0,cache:cacheInfo()};
  }
  function setRoot(dir){
   if(!dir||!isDir(dir))throw Error('Pasta não encontrada.');
@@ -75,6 +75,25 @@ function create(userData){
   if(!file||!isFile(file))throw Error('Arquivo não encontrado.');
   cfg.db=file;save();return state();
  }
+ /* cópia da lista do Hinário em disco (assim o navegador pode apagar a dele que o site recupera daqui) */
+ const cacheFile=path.join(userData,'lja-index.json');
+ let _ci=null;
+ function cacheInfo(){
+  if(_ci&&_ci.t===cacheStamp())return _ci.v;
+  let v=null;try{const s=fs.statSync(cacheFile);if(s.isFile()&&s.size>2){let at=0;try{const h=fs.readFileSync(cacheFile+'.at','utf8');at=Number(h)||0}catch{}v={size:s.size,at:at||Math.round(s.mtimeMs)}}}catch{}
+  _ci={t:cacheStamp(),v};return v
+ }
+ function cacheStamp(){try{return fs.statSync(cacheFile).mtimeMs}catch{return 0}}
+ const CACHE_MAX=30*1024*1024;
+ function cachePut(raw,at){
+  if(typeof raw!=='string'||raw.length<20||raw.length>CACHE_MAX)throw Error('Lista inválida.');
+  fs.mkdirSync(userData,{recursive:true});
+  const tmp=cacheFile+'.tmp';
+  fs.writeFileSync(tmp,raw,'utf8');fs.renameSync(tmp,cacheFile);
+  try{fs.writeFileSync(cacheFile+'.at',String(Math.round(Number(at)||Date.now())),'utf8')}catch{}
+  _ci=null;return cacheInfo()
+ }
+ const cachePath=()=>{try{return fs.statSync(cacheFile).size>2?cacheFile:''}catch{return ''}};
  /* lista (nome, pasta relativa, tipo, tamanho) de áudios e imagens */
  async function scan(){
   if(scanning)return scanning;
@@ -120,6 +139,6 @@ function create(userData){
   if(req.method==='HEAD'||size===0){res.end();return}
   const s=fs.createReadStream(file,{start,end});s.on('error',()=>{try{res.destroy()}catch{}});s.pipe(res);
  }
- return{state,setRoot,setDb,scan,resolveRel,sendFile,dbPath:()=>cfg.db&&isFile(cfg.db)?cfg.db:'',configRoot,findDb,detect};
+ return{state,setRoot,setDb,scan,resolveRel,sendFile,cachePut,cachePath,cacheInfo,dbPath:()=>cfg.db&&isFile(cfg.db)?cfg.db:'',configRoot,findDb,detect};
 }
 module.exports={create,AUD,IMG,mimeOf};

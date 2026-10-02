@@ -146,7 +146,34 @@ async function applyIndex(ix,f){
  const meta={at:ix.at,meta:f?{size:f.size,mod:f.lastModified,name:f.name}:null,counts};
  await idbSet('lja:meta',meta);S.ljaMeta=meta;resetCols();
  await Promise.all(HY.map(async id=>{await colAlbums(id);hymnMaps(id)}));
+ setTimeout(cpPushIndex,400)
 }
+/* ---------- cópia da lista em disco, dentro do IASD Projetor ----------
+   O Chrome pode apagar os dados do site (limpeza, pouco espaço). A lista fica guardada também no Projetor;
+   se o navegador perder a dele, o site busca de volta sozinho, sem precisar ler o banco de novo. */
+const IXV=2;
+const cpCan=()=>!!(S.cp&&verGE(S.cpInfo&&S.cpInfo.version,'0.5.10'));
+async function cpPushIndex(){
+ if(!cpCan()||S.pushing||!S.ljaMeta)return;S.pushing=true;
+ try{
+  const meta=S.ljaMeta,cols={};for(const k of KEYS)cols[k]=(await idbGet('lja:'+k))||[];
+  await yieldUI();
+  await cpJson('/lja/cache',{ix:{v:IXV,at:meta.at,cols},meta,at:meta.at},20000)
+ }catch(e){}finally{S.pushing=false}
+}
+async function cpPullIndex(){
+ if(!cpCan())return false;
+ try{
+  const r=await cpFetch('/lja/cache',{},15000);if(!r.ok)return false;
+  const j=await r.json();if(!j||!j.ix||j.ix.v!==IXV||!j.ix.cols||!j.meta||!j.meta.at)return false;
+  await Promise.all(KEYS.map(k=>idbSet('lja:'+k,j.ix.cols[k]||[])));
+  await idbSet('lja:meta',j.meta);S.ljaMeta=j.meta;resetCols();
+  await Promise.all(HY.map(async id=>{await colAlbums(id);hymnMaps(id)}));
+  return true
+ }catch(e){return false}
+}
+/* o banco do Louvor JA mudou desde a última leitura? (confere só tamanho e data, não lê o arquivo) */
+function dbStaleNow(){const m=S.ljaMeta&&S.ljaMeta.meta,d=S.cp&&S.cp.db;return !!(m&&d&&(m.size!==d.size||m.mod!==d.mtime))}
 async function syncAll(why){
  if(S.syncing)return;S.syncing=true;S.busy='Sincronizando com a pasta e o banco…';paintBar();const notes=[];
  try{
@@ -175,7 +202,7 @@ async function syncAll(why){
    if(p==='granted'){try{S.busy='Contando os arquivos da pasta…';paintBar();await scanRoot(S.rootH);S.syncAt=Date.now();await computeCounts();saveScan()}catch(e){notes.push('pasta: '+(e.message||e))}}else{S.lstat.novo='perm'}
   }
  }finally{S.syncing=false;S.busy=''}
- S.syncAt=S.syncAt||Date.now();
+ S.syncAt=S.syncAt||Date.now();S.dbStale=dbStaleNow();
  if(why==='manual'||notes.length){const c=S.cnt;say('Sincronizado. '+(c?KEYS.filter(k=>c[k].total).map(k=>ED[k].nome+': '+c[k].found+' de '+c[k].total).join(' · '):'')+(notes.length?' ('+notes.join('; ')+')':''))}
  paint()
 }
@@ -207,10 +234,22 @@ async function ensureRead(){
  try{const q=await S.rootH.queryPermission({mode:'read'});if(q!=='granted')await S.rootH.requestPermission({mode:'read'});S.permOk=true}catch(e){}
 }
 async function restoreLocal(){
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().then(g=>{S.persisted=!!g}).catch(()=>{})}catch(e){}
  await loadLja();await cpProbe();S.rootH=await idbGet('root');S.dbH=await idbGet('ljadb');
  const sv=await idbGet('scan');
  if(sv&&sv.files){setFiles(sv.files);S.imgs=sv.imgs||{};S.cnt=sv.cnt||null;S.syncAt=sv.at||0;S.lstat.novo='saved';await rematch()}
- paint()
+ paint();
+ if(!cpCan())return;
+ /* o navegador perdeu a lista? recupera a cópia guardada no Projetor e refaz só a contagem dos arquivos */
+ try{
+  if(!S.ljaMeta){S.busy='Recuperando a lista guardada no IASD Projetor…';paintBar();paintConn();const ok=await cpPullIndex();S.busy='';if(ok)say('Lista do Louvor JA recuperada do IASD Projetor.');paint()}
+  if(S.ljaMeta&&(!sv||!sv.files||!S.cnt)&&(S.cp.root||S.cp.db))await syncAll('auto');
+  else if(S.ljaMeta){
+   S.dbStale=dbStaleNow();
+   const c=S.cp.cache;if(!S.dbStale&&(!c||c.at!==S.ljaMeta.at))setTimeout(cpPushIndex,1500);
+   paintConn()
+  }
+ }catch(e){S.busy='';paint()}
 }
 function ago(t){if(!t)return 'nunca';const m=Math.round((Date.now()-t)/60000);return m<1?'agora há pouco':m<60?'há '+m+' min':'há '+Math.round(m/60)+' h'}
 /* ---------- banco do Louvor JA (coletâneas, letra com tempo, capas e fundos), lido no próprio computador ---------- */
@@ -449,8 +488,8 @@ function paintConn(){
    if(x.noBg)ln.push(x.noBg+' sem fundo');
    if(x.noCov)ln.push(x.noCov+' de '+x.albums+' álbuns sem capa');
    return '<div class="sth-sc"><b>'+esc(ED[id].nome)+'</b><span>'+ln.join(' · ')+'</span>'+det(id,'faltando na pasta',x.miss)+det(id,'sem correspondência no programa',x.noProg)+'</div>'};
-  html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'Sincronizado '+ago(S.syncAt)+(S.cp?' · via IASD Projetor':''))+'</small></div>'
-   +(perm?'<button type="button" class="mp-blue" onclick="STHymn.reconnect()">Reconectar</button>':'<button type="button" class="mp-btn" onclick="STHymn.sync()">'+ico('shuffle')+'Sincronizar agora</button>')+'</div>'
+  html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm||S.dbStale?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':S.dbStale?'O banco do Louvor JA mudou desde a última leitura. Atualize para ver as novidades.':'Sincronizado '+ago(S.syncAt)+(S.cp?' · via IASD Projetor':''))+'</small></div>'
+   +(perm?'<button type="button" class="mp-blue" onclick="STHymn.reconnect()">Reconectar</button>':'<button type="button" class="'+(S.dbStale?'mp-blue':'mp-btn')+'" onclick="STHymn.sync()">'+ico('shuffle')+(S.dbStale?'Atualizar lista':'Sincronizar agora')+'</button>')+'</div>'
    +'<details class="sth-more-d"'+(S.stOpen.all?' open':'')+' ontoggle="STHymn.tg(\'all\',this.open)"><summary>Detalhes por coleção</summary><div class="sth-cards">'+KEYS.map(card).join('')+'</div><div class="sth-acts"><button type="button" class="mp-btn" onclick="STHymn.folder()">Trocar pasta</button><button type="button" class="mp-btn" onclick="STHymn.db()">Trocar banco</button>'+(perm?'':'<button type="button" class="mp-btn" onclick="STHymn.reconnect()">Reconectar</button>')+'</div></details></div>'
  }
  if(html!==_cnHtml){_cnHtml=html;el.innerHTML=html}
