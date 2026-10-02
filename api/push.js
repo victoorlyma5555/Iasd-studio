@@ -6,7 +6,7 @@
 //  PUSH_WEBHOOK_SECRET (segredo do gatilho do banco: docs/supabase-push-gatilho.sql)
 //  SUPABASE_URL (opcional; padrão do projeto)
 // GET  /api/push            → {publicKey}
-// POST /api/push {alert_id,kind:'alert'|'reply'} com "Authorization: Bearer <token do usuário>"
+// POST /api/push {alert_id,kind:'alert'|'reply'|'member'} com "Authorization: Bearer <token do usuário>"
 const SB=(process.env.SUPABASE_URL||'https://gtsaaixuampeaivugxdm.supabase.co').replace(/\/$/,'');
 const TARGET_RE=/⁣@@([0-9a-f-]{36})\|([^⁣]*)⁣/;
 const UUID=/^[0-9a-f-]{36}$/i;
@@ -21,7 +21,7 @@ module.exports=async function handler(req,res){
  if(!pub||!priv||!svc)return res.status(503).json({error:'Notificações ainda não configuradas no servidor.'});
  try{
   const body=typeof req.body==='string'?JSON.parse(req.body||'{}'):(req.body||{});
-  const kind=body.kind==='reply'?'reply':'alert',id=String(body.alert_id||'');
+  const kind=body.kind==='reply'?'reply':body.kind==='member'?'member':'alert',id=String(body.alert_id||'');
   const token=String(req.headers.authorization||'').replace(/^Bearer /,'');
   const secret=process.env.PUSH_WEBHOOK_SECRET,given=String(req.headers['x-push-secret']||'');
   // modo confiável: o gatilho do banco chama com o segredo compartilhado (não depende de nenhum aparelho ou do Projetor)
@@ -29,6 +29,23 @@ module.exports=async function handler(req,res){
   if(!UUID.test(id)||(!token&&!trusted))return res.status(400).json({error:'Pedido inválido'});
   let uid=null;
   if(!trusted){const who=await sb('/auth/v1/user',svc,{token});if(!who.ok||!who.json?.id)return res.status(401).json({error:'Sessão inválida'});uid=who.json.id}
+  if(kind==='member'){
+   const ma=await sb('/rest/v1/iasd_member_alerts?id=eq.'+id+'&select=id,created_by,sender_name,message,target_uid,created_at',svc);
+   const m=ma.json&&ma.json[0];if(!m)return res.status(404).json({error:'Alerta não encontrado'});
+   if((!trusted&&m.created_by!==uid)||Date.now()-Date.parse(m.created_at)>10*60*1000)return res.status(403).json({error:'Não permitido'});
+   let rc=[];
+   if(m.target_uid)rc=[m.target_uid];
+   else{const r=await sb('/rest/v1/iasd_members?role=in.(founder,cofounder,admin,editor,operator,midia,lider,sonoplasta)&select=user_id',svc);rc=(r.json||[]).map(x=>x.user_id)}
+   rc=[...new Set(rc.filter(u=>UUID.test(String(u))&&u!==m.created_by))];
+   if(!rc.length)return res.status(200).json({sent:0,devices:0});
+   const ss=await sb('/rest/v1/iasd_push_subscriptions?user_id=in.('+rc.join(',')+')&select=id,endpoint,p256dh,auth',svc);
+   const ls=ss.json||[],wp=require('web-push');wp.setVapidDetails('mailto:contato@iasdapp.com.br',pub,priv);
+   const pl={title:'🔔 Aviso da Sonoplastia',body:(m.sender_name||'Sonoplastia')+': '+String(m.message||'').slice(0,200),tag:'iasd-member-'+m.id,url:'/',sticky:true};
+   let n=0;const dd=[];
+   await Promise.all(ls.map(async s=>{try{await wp.sendNotification({endpoint:s.endpoint,keys:{p256dh:s.p256dh,auth:s.auth}},JSON.stringify(pl),{TTL:600,urgency:'high'});n++}catch(e){if(e.statusCode===404||e.statusCode===410)dd.push(s.id)}}));
+   if(dd.length)await sb('/rest/v1/iasd_push_subscriptions?id=in.('+dd.join(',')+')',svc,{method:'DELETE'});
+   return res.status(200).json({sent:n,devices:ls.length});
+  }
   const al=await sb('/rest/v1/iasd_sound_alerts?id=eq.'+id+'&select=id,created_by,sender_name,message,schedule_name,created_at,reply_message,replied_by,replied_by_name,replied_at',svc);
   const a=al.json&&al.json[0];if(!a)return res.status(404).json({error:'Alerta não encontrado'});
   const fresh=iso=>Date.now()-Date.parse(iso)<10*60*1000;

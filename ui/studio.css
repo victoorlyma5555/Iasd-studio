@@ -329,3 +329,7 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 #ambChips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}#ambChips button{flex:none}
 
 .st-al-re{margin-top:8px}.st-al-re>summary{cursor:pointer;color:#7fa6ff;font-weight:700;font-size:12.5px}.st-al-re .st-al-a{margin-top:8px}
+.st-mem{display:grid;gap:8px;margin:0 0 14px;padding:12px;border-radius:14px;border:1px solid rgba(244,216,138,.35);background:rgba(244,216,138,.06)}
+.st-mem[hidden]{display:none}
+.st-mem select,.st-mem textarea{width:100%;font:inherit;padding:9px 10px;border-radius:10px;box-sizing:border-box}
+.st-mem-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}

@@ -167,6 +167,16 @@ function tmRender(){
 (function(){const box=$('tmPresets');if(!box)return;[[60,'Escola Sabatina 1 h'],[50,'50 min'],[40,'40 min'],[30,'30 min'],[15,'15 min'],[10,'10 min'],[5,'5 min'],[1,'1 min']].forEach(([m,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.dataset.s=m*60;b.onclick=()=>tmSetTotal(m*60);box.append(b)});['tmThemes','stThemes'].forEach(id=>{const th=$(id);if(!th||!window.IASDTimerDisplay)return;Object.entries(IASDTimerDisplay.themes).forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.dataset.t=k;b.title=t.name;b.innerHTML='<i style="background:'+t.bg+'"><u style="border-color:'+t.c1+'"></u></i><span></span>';b.lastChild.textContent=t.name;b.onclick=()=>tmPickTheme(k);th.append(b)})});$('tmMin').onchange=$('tmSec').onchange=tmFromInputs;$('tmWarn').onchange=()=>{TM.warn=Math.max(0,Math.round((+$('tmWarn').value||0)*60));tmSync();tmRender()};$('tmAlertS').onchange=()=>{TM.alert=Math.max(0,Math.round(+$('tmAlertS').value||0));tmSync();tmRender()};$('tmTitle').onchange=tmSync;setInterval(tmRender,250);tmRender();thMount()})();
 
 function stEsc(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}
+let stMemRoster=null;
+async function stMemInit(){const f=$('stMemForm');if(!f)return;const P=window.parent;
+ if(P===window||typeof P.sendMemberAlert!=='function'){f.hidden=true;return}
+ if(!P.canUseSound||!P.canUseSound()){f.hidden=true;return}
+ f.hidden=false;const sel=$('stMemTo'),msg=$('stMemMsg'),btn=$('stMemSend'),st=$('stMemStatus');
+ const fill=()=>{sel.innerHTML='<option value="">Todos os membros com cargo</option>'+(stMemRoster||[]).map(u=>'<option value="'+stEsc(u.user_id)+'" data-name="'+stEsc(u.full_name)+'">'+stEsc(u.full_name)+' · '+stEsc(u.role)+'</option>').join('')};
+ fill();
+ try{stMemRoster=await P.loadMemberRoster();fill()}catch(e){st.textContent=/iasd_alert_roster|function|schema/i.test(e.message||'')?'Falta rodar docs/supabase-alertas-membros.sql no Supabase.':'Não consegui carregar a lista de membros.'}
+ btn.onclick=async()=>{const o=sel.selectedOptions[0],tgt=sel.value?{uid:sel.value,name:o.dataset.name}:null;btn.disabled=true;try{await P.sendMemberAlert(msg.value,tgt);msg.value='';st.textContent=tgt?'Enviado só para '+tgt.name+'.':'Enviado a todos os membros com cargo.'}catch(e){st.textContent=e.message||'Não foi possível enviar.'}finally{btn.disabled=false;requestStudioHeight()}}}
+stMemInit();
 async function stRenderAlerts(){const box=$('stAlerts');if(!box)return;const P=window.parent;
  if(P===window||typeof P.loadSoundAlertRows!=='function'){box.innerHTML='<p class="muted">Os alertas aparecem quando o Studio é aberto dentro do IASD APP.</p>';return}
  try{const rows=(await P.loadSoundAlertRows()).slice(0,8);
