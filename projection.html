@@ -397,4 +397,11 @@ window.addEventListener('message',e=>{
 });
 show(localStorage.getItem('iasd-stage')||'');
 if(window.opener)try{window.opener.postMessage({type:'projection-ready'},location.origin)}catch(e){}
+/* Telão sempre atualizado: a janela do telão fica aberta por horas. Quando sai versão nova do site e o telão está ocioso (logo ou tela preta), ele recarrega sozinho. */
+(function(){
+ if(/[?&]preview=/.test(location.search))return;
+ let base=null;const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h};
+ window.__checkNewVersion=async function(){try{const r=await fetch(location.pathname,{cache:'no-store'});if(!r.ok)return false;const h=hash(await r.text());if(base===null){base=h;return false}if(h!==base&&trFam===''&&!document.querySelector('.pt-stage')){location.reload();return true}}catch(e){}return false};
+ setTimeout(()=>window.__checkNewVersion(),4000);setInterval(()=>window.__checkNewVersion(),90000)
+})();
 </script></body></html>
