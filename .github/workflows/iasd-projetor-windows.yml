@@ -45,8 +45,17 @@ jobs:
             Write-Host "Versão $tag já publicada. Aumente a versão para uma nova atualização."
             # garante que a versão do package.json seja a marcada como "Latest" (o botão /releases/latest do GitHub leva a ela)
             gh release edit $tag --repo "${{ github.repository }}" --latest
+            if ($LASTEXITCODE -ne 0) { throw 'Falha ao marcar como Latest.' }
+            # instalador com nome fixo (sem versão): o link releases/latest/download/IASD-Projetor-Setup.exe sempre baixa o mais recente
+            $tmp = $env:RUNNER_TEMP
+            gh release download $tag --repo "${{ github.repository }}" --pattern "IASD-Projetor-Setup-$version.exe" --dir $tmp --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Falha ao baixar o instalador publicado.' }
+            Copy-Item (Join-Path $tmp "IASD-Projetor-Setup-$version.exe") (Join-Path $tmp 'IASD-Projetor-Setup.exe') -Force
+            gh release upload $tag (Join-Path $tmp 'IASD-Projetor-Setup.exe') --repo "${{ github.repository }}" --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Falha ao enviar o instalador de nome fixo.' }
             exit 0
           }
+          Copy-Item "dist/IASD-Projetor-Setup-$version.exe" "dist/IASD-Projetor-Setup.exe" -Force
           $assets = @(Get-ChildItem dist -File | Where-Object { $_.Name -match '(?i)\.exe$|\.blockmap$|^latest\.yml$' } | ForEach-Object { $_.FullName })
           if (-not ($assets | Where-Object { $_ -match 'latest\.yml$' })) {
             throw 'latest.yml não foi gerado; publicação interrompida.'
