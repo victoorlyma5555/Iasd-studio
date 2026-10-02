@@ -344,7 +344,7 @@ function send(ev,payload){const R=S.room;if(!R||!R.ch)return;try{R.ch.send({type
 const FX=(ev,p)=>{try{if(ev==='reset'){window.IASDEstudoFX&&IASDEstudoFX.reset();return}if(ev==='breakgo'){window.IASDEstudoFX&&IASDEstudoFX.breakGo(p.secs);return}window.IASDEstudoFX&&IASDEstudoFX.on(ev,p)}catch(e){console.warn('fx',ev,e)}};
 const RK='iasd-study-room',SAVE_H=12*3600e3;
 /* tempo máximo de sala SUSPENSA: passou disso, a sala fecha (para quem suspendeu e, se foi o dirigente, para todos). Ajuste aqui. */
-const SUSP_MIN=30,SUSP_MS=SUSP_MIN*60e3;
+const SUSP_MIN=10,SUSP_MS=SUSP_MIN*60e3;
 function suspOver(r){return !!(r&&r.pk&&Date.now()-r.pk>SUSP_MS)}
 function saveRoom(){const R=S.room;if(!R)return;try{localStorage.setItem(RK,JSON.stringify({code:R.code,host:R.host,me:R.me,cid:S.cid,li:S.li,view:S.view,mode:R.mode,lock:R.lock,ts:Date.now()}))}catch(e){}}
 function clearRoom(){try{localStorage.removeItem(RK)}catch(e){}}
@@ -447,6 +447,7 @@ async function leaveParked(){const r=parkRec();if(!r){parkBar();return}
 function parkRoom(){const R=S.room;if(!R||R.reconnecting||R.parking)return;R.parking=true;saveRoom();try{const r=JSON.parse(localStorage.getItem(RK)||'null');if(r){r.pk=Date.now();localStorage.setItem(RK,JSON.stringify(r))}}catch(e){}
  if(R.host){send('hp',{ms:SUSP_MS});setTimeout(()=>{if(S.room===R)leave(true);S.resumed=false},250)}else{leave(true);S.resumed=false}
  toast('Sala suspensa: câmera, microfone e dados desligados. Volte em até '+SUSP_MIN+' min, ou a sala fecha.')}
+window.addEventListener('pagehide',()=>{const R=S.room;if(R&&R.host&&!R.parking)send('hp',{ms:SUSP_MS})});
 function suspSync(){if(S.room){if(!$('es-root'))parkRoom();return}parkBar()}
 setInterval(suspSync,300);setTimeout(suspSync,500);
 function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;if(R.hand)handFx('Você',true);track();paintBar();refreshLobby()}
@@ -499,7 +500,7 @@ function paintAway(){
 }
 async function endRoom(){const R=S.room;if(!R||!R.host)return;
  if(!R.endAsked&&!(await IASDDialog.confirm('Encerrar a sala para todos? Os participantes serão avisados.',{title:'Encerrar sala',ok:'Encerrar sala',danger:true})))return;
- send('end',{});FX('reset');leave()}
+ send('end',{});FX('reset');await new Promise(r=>setTimeout(r,350));leave()}
 function endedByHost(){clearRoom();leave(true);S.view='home';paint();toast('O dirigente encerrou a sala.');try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}}
 
 /* ---------- voz e vídeo (WebRTC em malha; sinalização pelo canal da sala) ---------- */
