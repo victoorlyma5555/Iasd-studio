@@ -564,6 +564,13 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .gr .pt{display:grid;justify-items:end}.gr .pt b{font-size:calc(var(--u)*3)}.gr .pt small{font-size:calc(var(--u)*1.2);opacity:.75}
 .gr .dl{position:absolute;right:calc(var(--u)*1);top:calc(var(--u)*-.9);padding:0 calc(var(--u)*.8);border-radius:99px;background:#34d399;color:#06281c;font-weight:900;font-size:calc(var(--u)*1.3)}
 .gr-empty{display:grid;justify-items:center;padding:calc(var(--u)*3);border-radius:calc(var(--u)*1.6);background:rgba(10,24,84,.6);border:1px solid rgba(140,172,255,.3)}.gr-empty b{font-size:calc(var(--u)*4);color:#34d399}.gr-empty small{font-size:calc(var(--u)*1.8);opacity:.8}
+.gx-board .gp.b{animation:lgin .6s .15s both}.gx-board .gp.s{animation:lgin .6s .55s both}.gx-board .gp.g{animation:lgin .6s 1s both}
+.gx-board .gp-bs{transform-origin:bottom;animation:lgrise .8s cubic-bezier(.2,1.2,.4,1) both}.gx-board .gp.b .gp-bs{animation-delay:.1s}.gx-board .gp.s .gp-bs{animation-delay:.5s}.gx-board .gp.g .gp-bs{animation-delay:.95s}
+.gx-board .gp.g .gp-av{animation:lgpop .7s 1.1s cubic-bezier(.2,1.6,.4,1) both}.gx-board .gp.s .gp-av{animation:lgpop .6s .65s cubic-bezier(.2,1.6,.4,1) both}.gx-board .gp.b .gp-av{animation:lgpop .6s .25s cubic-bezier(.2,1.6,.4,1) both}
+.gx-board .gp .crown{animation:lgfloat 2s 1.8s ease-in-out infinite}
+.gx-board .gr .tk i{transform-origin:left;animation:gxgrow 1s .5s cubic-bezier(.3,1.1,.4,1) both}@keyframes gxgrow{from{transform:scaleX(0)}}
+.gx-board .gr .dl,.gx-board .gp-pt em{animation:lgpop .5s 1.4s cubic-bezier(.2,1.6,.4,1) both}
+@media (prefers-reduced-motion:reduce){.gx-board *{animation-duration:.01s!important;animation-delay:0s!important}}
 .gb-bar{position:absolute;left:calc(var(--u)*4);right:calc(var(--u)*4);bottom:calc(var(--u)*2.4);height:calc(var(--u)*7.6);display:grid;grid-template-columns:1fr 1.1fr auto;align-items:center;gap:calc(var(--u)*2);padding:0 calc(var(--u)*2.4);border-radius:calc(var(--u)*1.6);background:rgba(10,24,84,.78);border:1.5px solid rgba(140,172,255,.4)}
 .gb-l,.gb-m{display:flex;align-items:center;gap:calc(var(--u)*1.2)}.gb-m{display:grid;border-left:1px solid rgba(255,255,255,.25);padding-left:calc(var(--u)*2)}
 .gb-l{min-width:0}.gb-l>div{min-width:0}.gb-l b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gb-l .cr{font-size:calc(var(--u)*4)}.gb-l small,.gb-m small{display:block;font-size:calc(var(--u)*1.6);opacity:.85}.gb-l b{font-size:calc(var(--u)*3.6)}.gb-m b{font-size:calc(var(--u)*2.2)}
@@ -1062,9 +1069,9 @@ const fmt_=n=>Number(n||0).toLocaleString('pt-BR');
 function gxBoard(ps,i,q,t,gotIt,isLast){
  const total=cfgOf(code()).total,max=Math.max(1,...ps.map(p=>p.score));
  const pod=(p,k)=>{if(!p)return '<div class="gp '+['s','g','b'][k]+'"></div>';const n=splitName(p.name),cl=['s','g','b'][k],pos=[2,1,3][k];
-  return '<div class="gp '+cl+'">'+(cl==='g'?'<span class="crown">👑</span>':'')+'<div class="gp-av"><span>'+esc(n.av)+'</span><i>'+pos+'</i></div><div class="gp-nm">'+esc(n.name)+'</div><div class="gp-pt"><b>'+fmt(p.score)+'</b><small>pontos</small>'+(p.delta>0?'<em>+'+fmt(p.delta)+'</em>':'')+'</div><div class="gp-bs"></div></div>'};
+  return '<div class="gp '+cl+'">'+(cl==='g'?'<span class="crown">👑</span>':'')+'<div class="gp-av"><span>'+esc(n.av)+'</span><i>'+pos+'</i></div><div class="gp-nm">'+esc(n.name)+'</div><div class="gp-pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small>'+(p.delta>0?'<em>+'+fmt(p.delta)+'</em>':'')+'</div><div class="gp-bs"></div></div>'};
  const top=[ps[1],ps[0],ps[2]];
- const rest=ps.slice(3,7).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av">'+esc(n.av)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b>'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
+ const rest=ps.slice(3,7).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av">'+esc(n.av)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b data-v="'+p.score+'" data-f="'+(p.score-(p.delta||0))+'">'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
  const side=rest||'<div class="gr-empty"><b>✓ '+gotIt+' de '+ps.length+'</b><small>acertaram esta rodada</small></div>';
  const lead=ps[0];
  return '<div class="gx gx-board">'+gxTop()+
@@ -1072,6 +1079,7 @@ function gxBoard(ps,i,q,t,gotIt,isLast){
   '<div class="gb-ans">Resposta: <b>'+esc(q.a)+'</b>'+(q.ref?'<small>'+esc(q.ref)+'</small>':'')+'</div>'+
   '<div class="gb-pod">'+top.map(pod).join('')+'</div><div class="gb-list">'+side+'</div>'+
   '<div class="gb-bar"><div class="gb-l"><span class="cr">👑</span><div><small>Líder da partida</small><b>'+(lead?esc(splitName(lead.name).name):'—')+'</b></div></div><div class="gb-m"><b>'+(isLast?'Chegamos ao fim!':'Continue assim!')+'</b><small>'+(isLast?'Veja o pódio final.':'Ainda temos muitas rodadas!')+'</small></div><div class="gb-n"><button class="gx-go" onclick="IASDLive.next()">▶ '+(isLast?'Ver o pódio':'Próxima rodada')+' →</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div></div></div>'}
+function countUp(){const f=n=>Number(n).toLocaleString('pt-BR'),els=[...document.querySelectorAll('.gx-board b[data-v]')],t0=performance.now()+700,D=1400;if(!els.length)return;els.forEach(e=>{if(e.dataset.f!==e.dataset.v)e.textContent=f(e.dataset.f)});const tick=now=>{const k=Math.min(1,Math.max(0,(now-t0)/D)),ez=1-Math.pow(1-k,3);els.forEach(e=>{if(!e.isConnected)return;const a=+e.dataset.f,b=+e.dataset.v;if(a!==b)e.textContent=f(Math.round(a+(b-a)*ez))});if(k<1&&els[0].isConnected)requestAnimationFrame(tick)};requestAnimationFrame(tick)}
 async function scoreboard(i,q){
  const ps=(await players()).map(p=>({...p,score:Number(p.score)||0}));
  const before=HS.order.slice();
@@ -1104,6 +1112,7 @@ async function scoreboard(i,q){
   TH+'<div class="lg2-board'+(cfgB.teams?' tmb':'')+'">'+(ps.slice(0,cfgB.teams?4:7).map(lane).join('')||'<p class="lg2-sub">Sem jogadores.</p>')+(ps.length>(cfgB.teams?4:7)?'<small class="lg2-sub" style="text-align:center">+'+(ps.length-(cfgB.teams?4:7))+' jogadores</small>':'')+'</div>'+
   '<div class="lg2-row" style="margin-top:auto;padding-top:14px;flex-direction:column;align-items:center"><button class="lg2-btn gold" onclick="IASDLive.next()">'+(isLast?'🏆 Ver o pódio':'Próxima rodada →')+'</button><div class="lg2-autobar" style="--ad:'+(10/speed())+'s"><i></i></div></div>'),GX?'lb bgx qz':'bgx qz',{style:'--tc:'+t.c});
  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('.lg2-lane .tk i').forEach(el=>el.style.width=el.dataset.w+'%')));
+ if(GX)countUp();
  ps.forEach(p=>{HS.prev[p.id]=p.score});
  if(gotIt)A().sfx(HS.streak[ps[0]?.id]>=3?'streak':'correct');
  S.auto=setTimeout(()=>{if(S.phase==='board')next()},10000/speed());
