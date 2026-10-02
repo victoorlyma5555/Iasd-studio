@@ -94,11 +94,11 @@ window.stTakeover=function(keep){
  if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
   if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,1100)));else P.project&&P.project('')}catch(e){}}}
  /* prévias do YouTube dentro do Studio (música ambiente, Provai e Vede…) também calam quando outra mídia começa */
- try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(!(keep==='ambient'&&f.closest('#ambientEmbed')))f.remove()})}catch(e){}
+ try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(keep==='ambient'&&f.closest('#ambientEmbed'))return;const ms=stFm(800);if(!ms){f.remove();return}const t0=performance.now(),send=v=>{try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:'setVolume',args:[Math.max(0,Math.round(v))]}),'*')}catch(e){}};f.style.pointerEvents='none';const step=()=>{const k=Math.min(1,(performance.now()-t0)/ms);send(100*(1-k));if(k<1)setTimeout(step,60);else try{f.remove()}catch(e){}};step()})}catch(e){}
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{stFadePause(a,700)}catch(e){}}})}catch(e){}
  return wait
 };
-function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id==='sthAudio'){try{a.pause()}catch(e){}}else{try{stFadePause(a,900)}catch(e){}}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{try{stFadePause(a,900)}catch(e){}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
 function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}

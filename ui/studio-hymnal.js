@@ -384,6 +384,8 @@ async function urlFor(ed,n,mode){
  throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
 }
 function audioEl(){return $('sthAudio')}
+function fadeMs(ms){try{return window.parent.stFadeMs?window.parent.stFadeMs(ms):ms}catch(e){return ms}}
+function fadeOut(a,ms){return new Promise(r=>{if(!a||a.paused||!window.stFadePause){r();return}const m=fadeMs(ms);window.stFadePause(a,ms);setTimeout(r,m?m+60:0)})}
 async function play(ed,n,opts){
  const a=audioEl();if(!a)return;const h=find(ed,n);
  window.stTakeover&&stTakeover('hymn');
@@ -397,7 +399,7 @@ async function play(ed,n,opts){
    paintPlayer();paint();return
   }
   const u=await urlFor(ed,n,S.mode);
-  S.cur={ed,n};a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
+  S.cur={ed,n};await fadeOut(a,600);a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
   if(!(opts&&opts.silent))startSync(ed,n,u.name,{pb:u.pb});
   say(u.note||('Tocando: '+(ED[ed].coll?'':n+' · ')+(h?h.t:'')))
  }catch(e){say('Não foi possível tocar: '+(e&&e.message||e))}
@@ -424,13 +426,13 @@ const api={
  edQ(id){S.ed=id;S.album=null;S.scopeCol=true;S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
  more(){S.limit+=120;paintBody()},
  play(ed,n){play(ed,n)},
- rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
+ rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():fadeOut(a,600)}else play(ed,n)},
  queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
  unqueue(i){S.queue.splice(i,1);paintPlayer()},
  clearQueue(){S.queue=[];paintPlayer()},
- toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
+ toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():fadeOut(a,600)},
  next(){next(1)},prev(){next(-1)},
- stop(){const a=audioEl();if(a){a.pause();a.removeAttribute('src');a.load()}S.cur=null;S.sync=null;paintPlayer();paintBody()},
+ stop(){const a=audioEl();if(a){const clr=()=>{a.pause();a.removeAttribute('src');a.load()};if(!a.paused&&a.src&&window.stFadePause){const src=a.src;fadeOut(a,700).then(()=>{if(a.src===src)clr()})}else clr()}S.cur=null;S.sync=null;paintPlayer();paintBody()},
  seek(v){const a=audioEl();if(a&&a.duration)a.currentTime=a.duration*(+v/1000)},
  vol(v){const a=audioEl();if(a)a.volume=+v/100},
  stz(d){stanzaJump(d)},sync(){syncAll('manual')},tg(k,o){S.stOpen[k]=o},db(){connectDb()},
