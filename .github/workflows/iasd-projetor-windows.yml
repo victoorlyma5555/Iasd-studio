@@ -43,11 +43,13 @@ jobs:
           $existing = gh release view $tag --repo "${{ github.repository }}" --json tagName 2>$null
           if ($LASTEXITCODE -eq 0) {
             Write-Host "Versão $tag já publicada. Aumente a versão para uma nova atualização."
+            # garante que a versão do package.json seja a marcada como "Latest" (o botão /releases/latest do GitHub leva a ela)
+            gh release edit $tag --repo "${{ github.repository }}" --latest
             exit 0
           }
           $assets = @(Get-ChildItem dist -File | Where-Object { $_.Name -match '(?i)\.exe$|\.blockmap$|^latest\.yml$' } | ForEach-Object { $_.FullName })
           if (-not ($assets | Where-Object { $_ -match 'latest\.yml$' })) {
             throw 'latest.yml não foi gerado; publicação interrompida.'
           }
-          gh release create $tag $assets --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest=false
+          gh release create $tag $assets --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "IASD Projetor v$version" --generate-notes --latest
           if ($LASTEXITCODE -ne 0) { throw 'Falha ao publicar release.' }
