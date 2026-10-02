@@ -459,13 +459,13 @@ function paintBar(){
  const names=[{id:R.me,name:myName()+' (você)',hand:R.hand,mic:v.mic,cam:v.cam,host:R.host,self:true,away:isAway()}].concat(peers);
  const rxOff=R.lock.r&&!R.host,chOff=R.mode==='lobby';
  bar.innerHTML='<div class="es-bar-in"><button class="es-pill" onclick="IASDEstudo.togglePanel()" aria-label="Participantes"><b>'+esc(R.code)+'</b><span>👥 '+n+'</span></button>'
-  +'<button class="es-bt es-mic'+(v.mic?' on':' off')+'" onclick="IASDEstudo.toggleMic()" aria-label="'+(v.mic?'Desligar microfone':'Ligar microfone')+'">🎙</button>'
-  +'<button class="es-bt es-cam'+(v.cam?' on':' off')+'" onclick="IASDEstudo.toggleCam()" aria-label="'+(v.cam?'Desligar câmera':'Ligar câmera')+'">📷</button>'
-  +(R.host?'':'<button class="es-bt es-hb'+(R.hand?' on hup':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="'+(R.hand?'Baixar a mão':'Levantar a mão')+'" title="'+(R.hand?'Baixar a mão':'Levantar a mão')+'">✋</button>')
-  +(chOff?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" data-tg="chat" aria-label="Chat">💬'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
-  +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" data-tg="rx" aria-label="Reações">😊</button>')
-  +(R.host?'<button class="es-bt es-gear'+(R.hostOpen?' on':'')+'" onclick="IASDEstudo.toggleHost()" aria-label="Painel do dirigente" title="Painel do dirigente">⚙</button>':'')
-  +'<button class="es-bt es-exit" onclick="IASDEstudo.leaveAsk()" aria-label="'+(R.host?'Encerrar a sala':'Sair da sala')+'" title="'+(R.host?'Encerrar a sala':'Sair da sala')+'">🚪</button></div>'
+  +'<button class="es-bt es-mic'+(v.mic?' on':' off')+'" onclick="IASDEstudo.toggleMic()" aria-label="'+(v.mic?'Desligar microfone':'Ligar microfone')+'"><i>🎙</i><small>Mic</small></button>'
+  +'<button class="es-bt es-cam'+(v.cam?' on':' off')+'" onclick="IASDEstudo.toggleCam()" aria-label="'+(v.cam?'Desligar câmera':'Ligar câmera')+'"><i>📷</i><small>Câmera</small></button>'
+  +(R.host?'':'<button class="es-bt es-hb'+(R.hand?' on hup':'')+'" onclick="IASDEstudo.toggleHand()" aria-label="'+(R.hand?'Baixar a mão':'Levantar a mão')+'" title="'+(R.hand?'Baixar a mão':'Levantar a mão')+'"><i>✋</i><small>Mão</small></button>')
+  +(chOff?'':'<button class="es-bt es-chb'+(R.chatOpen?' on':'')+'" onclick="IASDEstudo.toggleChat()" data-tg="chat" aria-label="Chat"><i>💬</i><small>Chat</small>'+(R.unread?'<i class="es-bdg">'+(R.unread>9?'9+':R.unread)+'</i>':'')+'</button>')
+  +(rxOff?'':'<button class="es-bt'+(R.rxOpen?' on':'')+'" onclick="IASDEstudo.toggleRx()" data-tg="rx" aria-label="Reações"><i>😊</i><small>Reações</small></button>')
+  +(R.host?'<button class="es-bt es-gear'+(R.hostOpen?' on':'')+'" onclick="IASDEstudo.toggleHost()" aria-label="Painel do dirigente" title="Painel do dirigente"><i>⚙</i><small>Painel</small></button>':'')
+  +'<button class="es-bt es-exit" onclick="IASDEstudo.leaveAsk()" aria-label="'+(R.host?'Encerrar a sala':'Sair da sala')+'" title="'+(R.host?'Encerrar a sala':'Sair da sala')+'">'+(R.host?'Encerrar':'Sair')+'</button></div>'
   +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react(\''+e+'\')">'+e+'</button>').join('')+'</div>':'')
   +'<div class="es-panel" id="es-panel" '+(R.listOpen?'':'hidden')+'>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.mic?' 🎙':'')+(p.cam?' 📷':'')+(p.away?' <small class="es-aw">fora da lição</small>':'')
    +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom(\''+p.id+'\')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
@@ -592,6 +592,24 @@ function watchLevel(id,ms){const V=S.room&&S.room.voice;if(!V)return;const n=ms.
  const c=actx();if(!c||!n)return;dropLevel(id);
  try{const src=c.createMediaStreamSource(ms),an=c.createAnalyser();an.fftSize=512;an.smoothingTimeConstant=.3;src.connect(an);V.an[id]={ms,src,an,n,buf:new Uint8Array(an.fftSize),fb:new Uint8Array(an.frequencyBinCount),hw:0,on:false}}catch(e){}}
 function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.remove('talk'))}
+/* Mesmo ambiente: quando a conexão entre dois aparelhos é direta pela mesma rede (candidatos 'host' dos dois lados), as duas pessoas estão quase certamente
+   juntas e já se ouvem ao vivo. Então cada aparelho deixa de tocar a voz do outro — é isso que impede o ciclo alto-falante → microfone → alto-falante. */
+async function colocScan(){
+ const R=S.room,V=R&&R.voice;if(!V)return;
+ for(const id of Object.keys(V.pcs)){
+  const pc=V.pcs[id];if(!pc||pc.connectionState!=='connected')continue;
+  try{const st=await pc.getStats();let pair=null,pid=null;
+   st.forEach(r=>{if(r.type==='transport'&&r.selectedCandidatePairId)pid=r.selectedCandidatePairId});
+   if(pid)pair=st.get(pid);if(!pair)st.forEach(r=>{if(r.type==='candidate-pair'&&(r.selected||(r.nominated&&r.state==='succeeded')))pair=r});
+   if(!pair)continue;const l=st.get(pair.localCandidateId),m=st.get(pair.remoteCandidateId);
+   const near=!!(l&&m&&l.candidateType==='host'&&m.candidateType==='host');
+   R.vauto=R.vauto||{};R.vman=R.vman||{};
+   if(near&&!R.vauto[id]&&!R.vman[id]){R.vauto[id]=true;R.vmute[id]=true;applyAudio(id);paintDock();paintBar();
+    toast('Você e '+((R.peers[id]||{}).name||'outra pessoa')+' parecem estar no mesmo ambiente. Silenciei o som dela aqui para não dar microfonia: vocês já se ouvem ao vivo. Se não estiverem juntos, toque em 🔈 ao lado do nome.')}
+   else if(!near&&R.vauto[id]&&!R.vman[id]){delete R.vauto[id];R.vmute[id]=false;applyAudio(id);paintDock();paintBar()}
+  }catch(e){}
+ }}
+setInterval(()=>{if(S.room&&S.room.voice)colocScan()},2500);
 /* Microfonia (apito) entre aparelhos no mesmo ambiente: o cancelamento de eco do navegador só vale para o próprio aparelho.
    Se um tom forte e contínuo aparece no som de alguém, silenciamos o som dessa pessoa neste aparelho para quebrar o ciclo. */
 function howl(id,o,m,R){
@@ -600,7 +618,7 @@ function howl(id,o,m,R){
  let pk=0,pi=0,sum=0;for(let i=3;i<o.fb.length;i++){const v=o.fb[i];sum+=v;if(v>pk){pk=v;pi=i}}
  const avg=sum/(o.fb.length-3),ratio=pk/Math.max(1,avg);
  o.hw=(pk>=210&&ratio>=4.2)?o.hw+1:Math.max(0,o.hw-2);
- if(o.hw>=7){o.hw=0;R.vmute[id]=true;applyAudio(id);paintDock();const nm=(R.peers[id]||{}).name||'essa pessoa';
+ if(o.hw>=5){o.hw=0;R.vmute[id]=true;applyAudio(id);paintDock();const nm=(R.peers[id]||{}).name||'essa pessoa';
   toast('Detectei microfonia (apito). Silenciei o som de '+nm+' neste aparelho. Para voltar, use o botão de som dela. Use fones de ouvido quando estiverem no mesmo ambiente.')}}
 setInterval(()=>{const R=S.room,V=R&&R.voice;if(!V)return;Object.keys(V.an).forEach(id=>{const o=V.an[id];try{o.an.getByteTimeDomainData(o.buf)}catch(e){return}
  let m=0;for(let i=0;i<o.buf.length;i++){const d=Math.abs(o.buf[i]-128);if(d>m)m=d}const on=m>9&&!R.susp;
@@ -647,7 +665,7 @@ function bindTiles(box){const R=S.room,V=R&&R.voice,lobby=!!R&&R.mode==='lobby',
   if(V&&V.an[id]&&V.an[id].on)el.classList.add('talk');const pl=v.play&&v.play();if(pl&&pl.catch)pl.catch(()=>{})});
 }
 function refreshLobby(){if(S.room&&S.room.mode==='lobby')paint()}
-function muteFrom(id){const R=S.room;if(!R)return;R.vmute[id]=!R.vmute[id];applyAudio(id);paintDock();paintBar()}
+function muteFrom(id){const R=S.room;if(!R)return;R.vmute[id]=!R.vmute[id];R.vman=R.vman||{};R.vman[id]=true;applyAudio(id);paintDock();paintBar()}
 function hideFrom(id){const R=S.room;if(!R)return;R.vhide[id]=!R.vhide[id];paintDock()}
 
 /* ---------- bate-papo antes do estudo + painel do dirigente ---------- */
@@ -682,7 +700,13 @@ function muteAll(){const R=S.room;if(!R||!R.host)return;send('mute',{});toast('P
 function callPeer(id){const R=S.room;if(!R||!R.host)return;send('call',{to:id});toast('Convite enviado. A pessoa decide se liga o microfone.')}
 function inviteLink(){return location.origin+'/estudo?sala='+S.room.code}
 function inviteText(){return '📖 Estudo bíblico ao vivo — IASD APP\nEntre na sala pelo link: '+inviteLink()+'\nCódigo da sala: '+S.room.code}
-function shareWA(){if(!S.room)return;window.open('https://wa.me/?text='+encodeURIComponent(inviteText()),'_blank','noopener')}
+/* No celular abre o WhatsApp direto na escolha de contatos (esquema whatsapp://); se não abrir, usa o menu de compartilhar do sistema. No computador usa o WhatsApp Web. */
+function shareWA(){if(!S.room)return;const t=encodeURIComponent(inviteText()),mob=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+ if(!mob){window.open('https://api.whatsapp.com/send?text='+t,'_blank','noopener');return}
+ let left=false;const onHide=()=>{if(document.hidden)left=true};document.addEventListener('visibilitychange',onHide);
+ location.href='whatsapp://send?text='+t;
+ setTimeout(()=>{document.removeEventListener('visibilitychange',onHide);if(left||document.hidden)return;
+  if(navigator.share)shareNative();else location.href='https://api.whatsapp.com/send?text='+t},1400)}
 function copyInvite(){const R=S.room;if(!R)return;const t=inviteText();
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast('Convite copiado.'),()=>toast('Código: '+R.code));else toast('Código: '+R.code)}
 async function shareNative(){if(!S.room)return;try{await navigator.share({title:'Estudo bíblico ao vivo',text:inviteText()})}catch(e){}}

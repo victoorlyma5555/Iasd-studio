@@ -426,3 +426,14 @@ html[data-theme="light"] .es-expc h4{color:#a8690a}
 .es-sendbar[data-v=no] .es-send,.es-sendbar[data-v=part] .es-send{background:linear-gradient(135deg,#ffd37a,#f0b44c);color:#2a1a00;border:0}
 
 .es-exit{color:#ef4444!important;background:rgba(239,68,68,.12)!important}
+
+/* botões da barra com nome, não só emoji */
+.es-bar .es-bt{height:52px;min-width:50px;padding:0 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:14px}
+.es-bar .es-bt i{font-style:normal;font-size:19px;line-height:1}
+.es-bar .es-bt small{font-size:10px;font-weight:700;line-height:1.1;opacity:.85}
+.es-bar .es-bt.es-exit{background:#e5484d!important;color:#fff!important;border-color:#e5484d!important;font-size:14px;font-weight:800;padding:0 16px;margin-left:4px}
+.es-bar .es-bdg{top:0;right:0}
+@media (max-width:480px){.es-bar .es-bt{min-width:0;flex:1 1 0;padding:0 2px}.es-bar .es-bt small{font-size:9.5px}.es-bar .es-bt.es-exit{flex:1.3 1 0;padding:0 6px;margin-left:2px;font-size:13px}.es-bar .es-pill{flex:1.3 1 0;min-width:0;padding:0 6px}.es-bar-in{gap:3px}}
+.es-bar .es-bt.es-mic.off:after{display:none}
+.es-bar .es-pill{flex-direction:column;gap:0;justify-content:center;height:52px;border-radius:14px}
+.es-bar .es-pill b{font-size:12px;letter-spacing:.08em;line-height:1.1}.es-bar .es-pill span{font-size:11px;line-height:1.1}
