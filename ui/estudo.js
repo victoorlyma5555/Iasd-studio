@@ -163,12 +163,16 @@ function optsHTML(b,P,editing){
  if(b.kind==='vf')return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
  return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<label class="es-opt"><input type="radio"'+dis+' name="o-'+esc(b.id)+'" '+(String(v)===String(i)?'checked':'')+' onchange="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
 }
+function gabText(b){
+ if(!b.opts||!b.keys)return '';
+ if(b.kind==='vf')return b.opts.map((o,i)=>(b.keys[i]||'?')+' — '+o).join('\n');
+ return b.opts.filter((o,i)=>b.keys[i]==='X').map(o=>'✔ '+o).join('\n');
+}
 function guideHTML(b){
- let h='';
- if(b.opts&&b.keys){h+='<div class="es-gab">'+b.opts.map((o,i)=>'<div>'+(b.kind==='vf'?'<b>'+esc(b.keys[i])+'</b>':(b.keys[i]==='X'?'<b>✔</b>':'<b>·</b>'))+' '+esc(o)+'</div>').join('')+'</div>'}
- h+='<textarea class="es-gt" data-gid="'+esc(b.id)+'" rows="3" placeholder="Escreva aqui a resposta desta pergunta (só você vê)…">'+esc(b.guide||'')+'</textarea>';
- if(b.note)h+='<p class="es-cm">'+esc(b.note)+'</p>';
- return '<details class="es-guide"'+(b.guide||b.opts?' open':'')+'><summary>🔒 Resposta da pergunta (só você vê)</summary>'+h+'</details>';
+ /* a resposta já vem pronta e salva: se a pergunta só tinha gabarito (V/F, alternativas), ele vira o texto da caixa */
+ if(!b.guide&&b.opts&&b.keys){const g=gabText(b);if(g){b.guide=g;if(!S.room||S.room.host){clearTimeout(S.gsT);S.gsT=setTimeout(()=>saveCourse(false),600)}}}
+ const h='<textarea class="es-gt" data-gid="'+esc(b.id)+'" rows="'+(b.opts?Math.min(8,b.opts.length+1):3)+'" placeholder="Escreva aqui a resposta desta pergunta (só você vê)…">'+esc(b.guide||'')+'</textarea>'+(b.note?'<p class="es-cm">'+esc(b.note)+'</p>':'');
+ return '<details class="es-guide" open><summary>🔒 Resposta da pergunta (só você vê)</summary>'+h+'</details>';
 }
 function blockHTML(b,i,li,P,editing){
  const R=S.room,cur=R&&R.bi===i,host=!R||R.host;
