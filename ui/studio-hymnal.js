@@ -384,6 +384,30 @@ async function urlFor(ed,n,mode){
  throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
 }
 function audioEl(){return $('sthAudio')}
+/* lembra fila + hino + posição para sobreviver a um "atualizar a página" (o áudio em si o navegador sempre para) */
+const ST_KEY='iasd-sth-state';let stSaveAt=0;
+function saveState(force){
+ const now=Date.now();if(!force&&now-stSaveAt<1500)return;stSaveAt=now;
+ try{const a=audioEl(),c=S.cur;
+  if(!c&&!S.queue.length){localStorage.removeItem(ST_KEY);return}
+  localStorage.setItem(ST_KEY,JSON.stringify({q:S.queue.map(x=>({ed:x.ed,n:x.n,t:x.t})),cur:c?{ed:c.ed,n:c.n}:null,pos:a&&a.currentTime||0,pl:!!(a&&!a.paused&&a.src),mode:S.mode,ts:now}))}catch(e){}
+}
+async function restoreState(){
+ let v=null;try{v=JSON.parse(localStorage.getItem(ST_KEY)||'null')}catch(e){}
+ if(!v||Date.now()-(v.ts||0)>6*3600e3||S.cur||S.queue.length)return;
+ S.queue=(v.q||[]).filter(x=>x&&ED[x.ed]&&Number.isFinite(+x.n)).slice(0,100).map(x=>({ed:x.ed,n:+x.n,t:String(x.t||'')}));
+ const c=v.cur;
+ if(c&&ED[c.ed]&&v.mode!=='sem'&&v.mode===S.mode){
+  try{const a=audioEl(),u=await urlFor(c.ed,+c.n,S.mode);if(!a||S.cur)throw 0;
+   S.cur={ed:c.ed,n:+c.n};S.rest={ed:c.ed,n:+c.n,name:u.name,pb:u.pb};a.src=u.url;
+   a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;
+   const pos=+v.pos||0;a.addEventListener('loadedmetadata',()=>{try{if(pos>0&&pos<(a.duration||1e9)-1)a.currentTime=pos}catch(e){}},{once:true});
+   if(v.pl&&Date.now()-(v.ts||0)<120000){try{await a.play()}catch(e){say('Atualizou a página: toque em ▶ para continuar de onde parou.')}}
+   else say('Hino e fila recuperados: toque em ▶ para continuar.');
+  }catch(e){S.cur=null;S.rest=null}
+ }else if(S.queue.length)say('Fila de hinos recuperada.');
+ paintPlayer();paint();
+}
 function fadeMs(ms){try{return window.parent.stFadeMs?window.parent.stFadeMs(ms):ms}catch(e){return ms}}
 async function play(ed,n,opts){
  const a=audioEl();if(!a)return;const h=find(ed,n);
@@ -398,14 +422,14 @@ async function play(ed,n,opts){
    paintPlayer();paint();return
   }
   const u=await urlFor(ed,n,S.mode);
-  S.cur={ed,n};a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
+  S.rest=null;S.cur={ed,n};a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
   if(!(opts&&opts.silent))startSync(ed,n,u.name,{pb:u.pb});
   say(u.note||('Tocando: '+(ED[ed].coll?'':n+' · ')+(h?h.t:'')))
  }catch(e){say('Não foi possível tocar: '+(e&&e.message||e))}
- paintPlayer();paint();
+ paintPlayer();paint();saveState(true);
 }
 function next(dir){
- if(S.queue.length&&dir>0){const q=S.queue.shift();play(q.ed,q.n);return}
+ if(S.queue.length&&dir>0){const q=S.queue.shift();saveState(true);play(q.ed,q.n);return}
  const c=S.cur;if(!c)return;const ls=list(c.ed).filter(h=>playable(c.ed,h));const i=ls.findIndex(h=>h.n===c.n);const t=ls[i+(dir>0?1:-1)];if(t)play(c.ed,t.n)
 }
 
@@ -426,9 +450,9 @@ const api={
  more(){S.limit+=120;paintBody()},
  play(ed,n){play(ed,n)},
  rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
- queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
- unqueue(i){S.queue.splice(i,1);paintPlayer()},
- clearQueue(){S.queue=[];paintPlayer()},
+ queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});saveState(true);say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
+ unqueue(i){S.queue.splice(i,1);paintPlayer();saveState(true)},
+ clearQueue(){S.queue=[];paintPlayer();saveState(true)},
  toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
  next(){next(1)},prev(){next(-1)},
  /* encerra o hino já (letra/sincronia param na hora) e deixa só o SOM baixar com fade antes de limpar */
@@ -581,8 +605,8 @@ function mount(){
   +'<div id="sth-mode"></div><div id="sthp" class="amb-sel has sth-player" hidden></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
  sec.appendChild(box);
  const a=$('sthAudio');
- a.addEventListener('timeupdate',()=>{const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
- a.addEventListener('play',()=>{paintPlayer();paintBody()});a.addEventListener('pause',()=>{paintPlayer();paintBody()});
+ a.addEventListener('timeupdate',()=>{saveState();const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
+ a.addEventListener('play',()=>{if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
  a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paintBody();endHymn()}});
  a.addEventListener('error',()=>{if(S.cur&&a.src)say('Falha ao carregar o áudio. Tente de novo.')});
  const style=document.createElement('style');style.textContent=
@@ -605,7 +629,7 @@ function mount(){
  +'.sth-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sth-q small{color:var(--mu)}.sth-q span{display:flex;gap:4px;align-items:center;padding:3px 4px 3px 10px;border-radius:99px;background:var(--sf3)}.sth-q span button{width:22px;height:22px;padding:0;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}.sth-q span .ti{width:13px;height:13px}.sth-cl{padding:4px 10px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:inherit;font-size:11.5px;cursor:pointer}'
  +'@media(max-width:620px){.sth-io{grid-template-columns:1fr}.sth-steps li{flex-wrap:wrap}.sth-steps button{width:100%}.sth-sum{flex-wrap:wrap}.sth-now{flex-wrap:wrap}.sth-seek{flex-wrap:wrap}.sth-vol{width:100%}.sth-vol input{flex:1;width:auto}}';
  document.head.appendChild(style);
- loadLyrics(S.ed).then(paint);restoreLocal();paint();
+ loadLyrics(S.ed).then(paint);restoreLocal().then(restoreState).catch(()=>{});paint();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
 })();
