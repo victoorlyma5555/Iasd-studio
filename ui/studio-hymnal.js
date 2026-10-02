@@ -385,6 +385,14 @@ async function urlFor(ed,n,mode){
 }
 function audioEl(){return $('sthAudio')}
 /* lembra fila + hino + posição para sobreviver a um "atualizar a página" (o áudio em si o navegador sempre para) */
+let GAP=0;try{GAP=Math.max(0,Math.min(120,+localStorage.getItem('iasd-sth-gap')||0))}catch(e){}
+let gapTimer=0,gapLeft=0;
+function gapCancel(){clearInterval(gapTimer);gapTimer=0;gapLeft=0}
+function gapStart(){
+ gapCancel();gapLeft=GAP;if(!S.endClose)try{endHymn()}catch(e){}
+ paintPlayer();
+ gapTimer=setInterval(()=>{if(!S.queue.length){gapCancel();paintPlayer();return}gapLeft--;if(gapLeft<=0){gapCancel();if(S.queue.length)next(1);else paintPlayer()}else paintGap()},1000)}
+function paintGap(){const el=$('sth-gap');if(el)el.textContent=gapLeft>0?'Próximo hino em '+gapLeft+'s':''}
 const ST_KEY='iasd-sth-state';let stSaveAt=0;
 function saveState(force){
  const now=Date.now();if(!force&&now-stSaveAt<1500)return;stSaveAt=now;
@@ -410,7 +418,7 @@ async function restoreState(){
 }
 function fadeMs(ms){try{return window.parent.stFadeMs?window.parent.stFadeMs(ms):ms}catch(e){return ms}}
 async function play(ed,n,opts){
- const a=audioEl();if(!a)return;const h=find(ed,n);
+ const a=audioEl();if(!a)return;gapCancel();const h=find(ed,n);
  window.stTakeover&&stTakeover('hymn');
  S.endTok++;
  try{
@@ -452,7 +460,9 @@ const api={
  rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
  queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});saveState(true);say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
  unqueue(i){S.queue.splice(i,1);paintPlayer();saveState(true)},
- clearQueue(){S.queue=[];paintPlayer();saveState(true)},
+ clearQueue(){S.queue=[];gapCancel();paintPlayer();saveState(true)},
+ gap(v){GAP=Math.max(0,Math.min(120,+v||0));try{localStorage.setItem('iasd-sth-gap',String(GAP))}catch(e){}if(!GAP)gapCancel();paintPlayer()},
+ gapSkip(){gapCancel();if(S.queue.length)next(1);else paintPlayer()},
  toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
  next(){next(1)},prev(){next(-1)},
  /* encerra o hino já (letra/sincronia param na hora) e deixa só o SOM baixar com fade antes de limpar */
@@ -586,10 +596,11 @@ function paintPlayer(){
  if(!c&&!S.queue.length){el.hidden=true;el.innerHTML='';return}
  el.hidden=false;
  const q=S.queue.length?'<div class="sth-q"><small>Fila · '+S.queue.length+'</small>'+S.queue.map((x,i)=>'<span>'+esc(x.t)+'<button type="button" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">'+ico('x')+'</button></span>').join('')+'<button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar</button></div>':'';
+ const gp='<div class="sth-gap"><label>⏱ Intervalo entre hinos <select onchange="STHymn.gap(this.value)">'+[[0,'Sem intervalo'],[3,'3 s'],[5,'5 s'],[10,'10 s'],[15,'15 s'],[30,'30 s'],[60,'1 min'],[120,'2 min']].map(o=>'<option value="'+o[0]+'"'+(GAP===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label><span id="sth-gap">'+(gapLeft>0?'Próximo hino em '+gapLeft+'s':'')+'</span>'+(gapLeft>0?'<button type="button" class="sth-cl" onclick="STHymn.gapSkip()">Pular espera</button>':'')+'</div>';
  el.innerHTML=(c?'<div class="sth-now"><div class="amb-info"><small>TOCANDO AGORA · '+esc(MODES.find(m=>m[0]===S.mode)[1].toUpperCase())+'</small><b>'+(ED[c.ed].coll?'':c.n+' · ')+esc(h?h.t:'')+'</b></div>'
    +'<div class="sth-ctl"><button type="button" class="sthb" onclick="STHymn.prev()" title="Anterior">⏮</button>'+(sem?'':'<button type="button" class="sthb big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'Ⅱ':'▶')+'</button>')+'<button type="button" class="sthb" onclick="STHymn.next()" title="Próximo">⏭</button><button type="button" class="sthb" onclick="STHymn.stop()" title="Parar">■</button></div></div>'
    +(sem?'':'<div class="sth-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)" aria-label="Posição"><span id="sthpD">0:00</span><label class="sth-vol" title="Volume">🔊<input type="range" min="0" max="100" value="'+Math.round((a?a.volume:1)*100)+'" oninput="STHymn.vol(this.value)" aria-label="Volume"></label></div>')
-   +'<div id="sth-sync" class="sth-stz"></div>':'')+q;
+   +'<div id="sth-sync" class="sth-stz"></div>':'')+gp+q;
  paintSync();
 }
 function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n){el.innerHTML='';return}
@@ -607,7 +618,7 @@ function mount(){
  const a=$('sthAudio');
  a.addEventListener('timeupdate',()=>{saveState();const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
  a.addEventListener('play',()=>{if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
- a.addEventListener('ended',()=>{if(S.queue.length)next(1);else{paintPlayer();paintBody();endHymn()}});
+ a.addEventListener('ended',()=>{if(S.queue.length){if(GAP>0)gapStart();else next(1)}else{paintPlayer();paintBody();endHymn()}});
  a.addEventListener('error',()=>{if(S.cur&&a.src)say('Falha ao carregar o áudio. Tente de novo.')});
  const style=document.createElement('style');style.textContent=
  '#sth{display:grid;gap:14px;min-width:0;max-width:100%}#sth *{box-sizing:border-box;min-width:0}#sth code{background:rgba(127,150,200,.18);padding:1px 6px;border-radius:5px;font-size:12px}#sth input[type=range]{width:auto;accent-color:#3574f3}'
@@ -626,6 +637,7 @@ function mount(){
  +'.sth-player{display:grid!important;gap:10px}.sth-player[hidden]{display:none!important}.sth-now{display:flex;align-items:center;gap:12px}.sth-now .amb-info b{font-size:15px}.sth-ctl{display:flex;gap:6px;flex:none}.sthb{width:40px;height:40px;padding:0!important;border-radius:50%!important;background:#13244a!important;border:1px solid var(--bd)!important;color:#fff!important;font-size:15px;display:grid;place-items:center;cursor:pointer}.sthb.big{width:46px;height:46px;background:linear-gradient(180deg,#3574f3,#1e4fd0)!important;border-color:#5b93ff!important;font-size:17px}'
  +'.sth-seek{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mu)}.sth-seek>input{flex:1}.sth-vol{display:flex;gap:6px;align-items:center;flex:none;font-size:13px}.sth-vol input{width:90px}'
  +'.sth-stz{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px}.sth-stz:empty{display:none}.sth-stz span{min-width:110px;text-align:center;color:var(--mu);font-weight:600}.sth-stz.big button{flex:1;height:48px;font-size:14px}.sth-stz.big span{color:var(--tx)}'
+ +'.sth-gap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--mu)}.sth-gap select{margin-left:6px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);padding:0 8px;font:inherit}.sth-gap #sth-gap{color:#7fa6ff;font-weight:600}'
  +'.sth-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}.sth-q small{color:var(--mu)}.sth-q span{display:flex;gap:4px;align-items:center;padding:3px 4px 3px 10px;border-radius:99px;background:var(--sf3)}.sth-q span button{width:22px;height:22px;padding:0;border:0;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}.sth-q span .ti{width:13px;height:13px}.sth-cl{padding:4px 10px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:inherit;font-size:11.5px;cursor:pointer}'
  +'@media(max-width:620px){.sth-io{grid-template-columns:1fr}.sth-steps li{flex-wrap:wrap}.sth-steps button{width:100%}.sth-sum{flex-wrap:wrap}.sth-now{flex-wrap:wrap}.sth-seek{flex-wrap:wrap}.sth-vol{width:100%}.sth-vol input{flex:1;width:auto}}';
  document.head.appendChild(style);
