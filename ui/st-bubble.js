@@ -7,6 +7,8 @@ const FADE_KEY='iasd-fade',POS_KEY='iasd-bubble-pos';
 const fadeCfg=()=>Object.assign({on:true,f:1},LS.get(FADE_KEY,{}));
 /* usado pelo site (e lido igual pelo Studio/telão): duração do fade já com a velocidade escolhida */
 window.stFadeMs=base=>{const c=fadeCfg();return c.on===false?0:Math.round(base*(c.f||1))};
+/* fade de ENTRADA (início de vídeos/músicas): liga/desliga próprio, mesma velocidade */
+window.stFadeInMs=base=>{const c=fadeCfg();return c.on===false||c.i===false?0:Math.round(base*(c.f||1))};
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fw=()=>{try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow}catch(e){return null}};
 let root=null,btn=null,panel=null,badge=null,open=false,view='main',unseen=0,drag=null;
@@ -55,6 +57,7 @@ function mainView(){const c=fadeCfg(),hasW=!!fw();
  <button class="t danger" data-a="close"><span class="ic">✖</span><b>Fechar telão</b><small>Com fade no som</small></button>
  <div class="t wide${c.on!==false?' on':''}" style="cursor:default"><div style="display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px"><div><span class="ic">🔉</span> <b>Fade dos sons</b><br><small>Sem corte seco ao fechar ou pausar (hinos não mudam)</small></div><button class="tg" data-a="fade" style="border:0;border-radius:99px;padding:8px 13px;cursor:pointer;font:inherit;font-weight:800;background:${c.on!==false?'#22c55e':'#475569'};color:#fff">${c.on!==false?'LIGADO':'DESLIGADO'}</button></div>
   <div class="seg">${[['Curto',.6],['Médio',1],['Longo',1.8]].map(([n,f])=>`<button data-a="speed" data-f="${f}" class="${(c.f||1)===f?'on':''}">${n}</button>`).join('')}</div></div>
+ <div class="t wide${c.on!==false&&c.i!==false?' on':''}" style="cursor:default"><div style="display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px"><div><span class="ic">🔊</span> <b>Fade de entrada</b><br><small>Som sobe devagar ao iniciar vídeos e músicas (hinos não)</small></div><button class="tg" data-a="fadein" style="border:0;border-radius:99px;padding:8px 13px;cursor:pointer;font:inherit;font-weight:800;background:${c.on!==false&&c.i!==false?'#22c55e':'#475569'};color:#fff">${c.on!==false&&c.i!==false?'LIGADO':'DESLIGADO'}</button></div></div>
  <button class="t" data-a="themes"><span class="ic">🎨</span><b>Temas</b><small>Fundo do telão</small></button>
  <button class="t" data-a="alerts"><span class="ic">🔔</span><b>Alertas</b><small>Ler e responder</small><span class="tn${unseen?' on':''}">${unseen}</span></button>
  </div>${hasW?'':'<p class="nt">Abra o IASD Projetor uma vez para liberar Tela preta, Fechar telão e Temas.</p>'}`}
@@ -80,6 +83,7 @@ function act(e){const b=e.target.closest('[data-a]');if(!b)return;const a=b.data
  if(a==='black'){try{w.project('')}catch(x){}toggle(false)}
  else if(a==='close'){try{w.closeScreenNow()}catch(x){}toggle(false)}
  else if(a==='fade'){const c=fadeCfg();c.on=!(c.on!==false);LS.set(FADE_KEY,c);render()}
+ else if(a==='fadein'){const c=fadeCfg();c.i=(c.i===false);if(c.i)c.on=true;LS.set(FADE_KEY,c);render()}
  else if(a==='speed'){const c=fadeCfg();c.f=+b.dataset.f;c.on=true;LS.set(FADE_KEY,c);render()}
  else if(a==='themes'){view='themes';render()}
  else if(a==='theme'){try{const t=b.dataset.t;[...w.document.querySelectorAll('#stThemes button')].find(x=>x.dataset.t===t)?.click()}catch(x){}setTimeout(render,120)}
