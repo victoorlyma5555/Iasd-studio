@@ -87,7 +87,7 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
- if(keep!=='hymn'){try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}}
+ if(keep!=='hymn'){try{const ha=document.getElementById('sthAudio');if(keep==='yt'&&ha&&ha.src&&!ha.paused){stFadePause(ha,700);setTimeout(()=>{try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}},stFm(700)+80)}else{window.STHymn&&STHymn.stop&&STHymn.stop()}}catch(e){}}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
  if(keep!=='yt'){window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
@@ -98,7 +98,7 @@ window.stTakeover=function(keep){
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{stFadePause(a,700)}catch(e){}}})}catch(e){}
  return wait
 };
-function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{try{stFadePause(a,900)}catch(e){}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id==='sthAudio'){try{a.pause()}catch(e){}}else{try{stFadePause(a,900)}catch(e){}}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
 function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
