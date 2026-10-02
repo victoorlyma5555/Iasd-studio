@@ -85,24 +85,36 @@ begin
       from auth.users u left join public.iasd_profiles p on p.user_id = u.id left join public.iasd_members m on m.user_id = u.id), '[]'::jsonb));
 end $$;
 
+create or replace function public.iasd_is_founder() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.iasd_members where user_id = auth.uid() and role = 'founder') $$;
+create or replace function public.iasd_clean_perms(p text[]) returns text[]
+language plpgsql immutable as $$
+declare r text[];
+begin
+  select coalesce(array_agg(distinct x), array[]::text[]) into r from unnest(coalesce(p, array[]::text[])) x;
+  if exists (select 1 from unnest(r) x where x <> all(public.iasd_perm_catalog())) then raise exception 'Permissão desconhecida.'; end if;
+  return r;
+end $$;
+create or replace function public.iasd_sens_of(p text[]) returns text[]
+language sql immutable as $$
+  select coalesce(array_agg(x order by x), array[]::text[]) from unnest(coalesce(p, array[]::text[])) x where x = any(public.iasd_perm_sensitive()) $$;
+create or replace function public.iasd_sens_cargos(p uuid[]) returns uuid[]
+language sql stable security definer set search_path = public as $$
+  select coalesce(array_agg(id order by id), array[]::uuid[]) from public.iasd_cargos
+   where id = any(coalesce(p, array[]::uuid[])) and perms && public.iasd_perm_sensitive() $$;
+
 create or replace function public.iasd_perm_save_cargo(p_id uuid, p_name text, p_perms text[]) returns uuid
 language plpgsql security definer set search_path = public as $$
-declare v_founder boolean; v_name text := btrim(coalesce(p_name,'')); v_perms text[]; v_id uuid := p_id; v_old text[];
+declare v_name text := btrim(coalesce(p_name,'')); v_perms text[] := public.iasd_clean_perms(p_perms); v_id uuid := p_id;
 begin
   if not public.iasd_perm_admin() then raise exception 'Sem permissão para gerenciar acessos.'; end if;
-  v_founder := exists (select 1 from public.iasd_members where user_id = auth.uid() and role = 'founder');
   if char_length(v_name) < 2 or char_length(v_name) > 40 then raise exception 'O nome do cargo deve ter de 2 a 40 letras.'; end if;
-  select coalesce(array_agg(distinct x), array[]::text[]) into v_perms from unnest(coalesce(p_perms, array[]::text[])) x;
-  if exists (select 1 from unnest(v_perms) x where x <> all(public.iasd_perm_catalog())) then raise exception 'Permissão desconhecida.'; end if;
-  if not v_founder then
-    if v_perms && public.iasd_perm_sensitive() then raise exception 'Só o fundador pode dar permissões administrativas sensíveis.'; end if;
-    if v_id is not null then
-      select perms into v_old from public.iasd_cargos where id = v_id;
-      if v_old && public.iasd_perm_sensitive() then raise exception 'Só o fundador pode alterar este cargo.'; end if;
-    end if;
+  if not public.iasd_is_founder() and (cardinality(public.iasd_sens_of(v_perms)) > 0
+     or (v_id is not null and cardinality(public.iasd_sens_of((select perms from public.iasd_cargos where id = v_id))) > 0)) then
+    raise exception 'Só o fundador pode dar ou alterar permissões sensíveis.';
   end if;
-  if v_id is null then
-    insert into public.iasd_cargos (name, perms) values (v_name, v_perms) returning id into v_id;
+  if v_id is null then insert into public.iasd_cargos (name, perms) values (v_name, v_perms) returning id into v_id;
   else
     update public.iasd_cargos set name = v_name, perms = v_perms where id = v_id;
     if not found then raise exception 'Cargo não encontrado.'; end if;
@@ -113,43 +125,38 @@ end $$;
 
 create or replace function public.iasd_perm_delete_cargo(p_id uuid) returns void
 language plpgsql security definer set search_path = public as $$
-declare v_founder boolean; v_old text[];
 begin
   if not public.iasd_perm_admin() then raise exception 'Sem permissão para gerenciar acessos.'; end if;
-  v_founder := exists (select 1 from public.iasd_members where user_id = auth.uid() and role = 'founder');
-  select perms into v_old from public.iasd_cargos where id = p_id;
-  if not v_founder and v_old && public.iasd_perm_sensitive() then raise exception 'Só o fundador pode apagar este cargo.'; end if;
+  if not public.iasd_is_founder() and cardinality(public.iasd_sens_of((select perms from public.iasd_cargos where id = p_id))) > 0 then
+    raise exception 'Só o fundador pode apagar este cargo.';
+  end if;
   delete from public.iasd_cargos where id = p_id;
 end $$;
 
 create or replace function public.iasd_perm_set_member(p_uid uuid, p_cargo_ids uuid[], p_perms text[]) returns void
 language plpgsql security definer set search_path = public as $$
-declare v_founder boolean; v_perms text[]; v_cargos uuid[]; v_trole text; v_sens text[] := public.iasd_perm_sensitive(); v_old_s uuid[]; v_new_s uuid[]; v_old_p text[];
+declare v_perms text[] := public.iasd_clean_perms(p_perms); v_cargos uuid[];
 begin
   if not public.iasd_perm_admin() then raise exception 'Sem permissão para gerenciar acessos.'; end if;
-  v_founder := exists (select 1 from public.iasd_members where user_id = auth.uid() and role = 'founder');
-  select role into v_trole from public.iasd_members where user_id = p_uid;
-  if v_trole in ('founder','cofounder','admin') then raise exception 'Cargos administrativos já têm o acesso do próprio cargo.'; end if;
-  select coalesce(array_agg(distinct x), array[]::text[]) into v_perms from unnest(coalesce(p_perms, array[]::text[])) x;
-  if exists (select 1 from unnest(v_perms) x where x <> all(public.iasd_perm_catalog())) then raise exception 'Permissão desconhecida.'; end if;
+  if exists (select 1 from public.iasd_members where user_id = p_uid and role in ('founder','cofounder','admin')) then
+    raise exception 'Cargos administrativos já têm o acesso do próprio cargo.';
+  end if;
   select coalesce(array_agg(id), array[]::uuid[]) into v_cargos from public.iasd_cargos where id = any(coalesce(p_cargo_ids, array[]::uuid[]));
-  if not v_founder then
-    select coalesce(perms, array[]::text[]) into v_old_p from public.iasd_member_perms where user_id = p_uid;
-    v_old_p := coalesce(v_old_p, array[]::text[]);
-    if (select coalesce(array_agg(x order by x), array[]::text[]) from unnest(v_perms) x where x = any(v_sens))
-       is distinct from (select coalesce(array_agg(x order by x), array[]::text[]) from unnest(v_old_p) x where x = any(v_sens)) then
-      raise exception 'Só o fundador pode dar ou tirar permissões administrativas sensíveis.';
+  if not public.iasd_is_founder() then
+    if public.iasd_sens_of(v_perms) is distinct from public.iasd_sens_of((select perms from public.iasd_member_perms where user_id = p_uid)) then
+      raise exception 'Só o fundador pode dar ou tirar permissões sensíveis.';
     end if;
-    select coalesce(array_agg(mc.cargo_id order by mc.cargo_id), array[]::uuid[]) into v_old_s
-      from public.iasd_member_cargos mc join public.iasd_cargos c on c.id = mc.cargo_id where mc.user_id = p_uid and c.perms && v_sens;
-    select coalesce(array_agg(c.id order by c.id), array[]::uuid[]) into v_new_s from public.iasd_cargos c where c.id = any(v_cargos) and c.perms && v_sens;
-    if v_old_s is distinct from v_new_s then raise exception 'Só o fundador pode dar ou tirar cargos com permissões sensíveis.'; end if;
+    if public.iasd_sens_cargos(v_cargos) is distinct from public.iasd_sens_cargos((select array_agg(cargo_id) from public.iasd_member_cargos where user_id = p_uid)) then
+      raise exception 'Só o fundador pode dar ou tirar cargos sensíveis.';
+    end if;
   end if;
   delete from public.iasd_member_cargos where user_id = p_uid;
   insert into public.iasd_member_cargos (user_id, cargo_id) select p_uid, unnest(v_cargos);
   if cardinality(v_perms) = 0 then delete from public.iasd_member_perms where user_id = p_uid;
-  else insert into public.iasd_member_perms (user_id, perms) values (p_uid, v_perms) on conflict (user_id) do update set perms = excluded.perms; end if;
+  else insert into public.iasd_member_perms (user_id, perms) values (p_uid, v_perms)
+       on conflict (user_id) do update set perms = excluded.perms; end if;
 end $$;
+
 revoke all on function public.iasd_perm_overview(), public.iasd_perm_save_cargo(uuid, text, text[]), public.iasd_perm_delete_cargo(uuid), public.iasd_perm_set_member(uuid, uuid[], text[]) from public, anon;
 grant execute on function public.iasd_perm_overview(), public.iasd_perm_save_cargo(uuid, text, text[]), public.iasd_perm_delete_cargo(uuid), public.iasd_perm_set_member(uuid, uuid[], text[]) to authenticated;
 
