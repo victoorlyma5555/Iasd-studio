@@ -76,7 +76,7 @@ async function alertFetchPending(initial=false){
  const {data,error}=await alertCloud.from('iasd_sound_alerts').select('id,message,sender_name,schedule_name,created_at,created_by').order('created_at',{ascending:false}).limit(20);
  if(error){alertLastError=error.message;alertBroadcastStatus();console.warn('Alertas independentes:',error.message);return}
  const items=(data||[]).reverse();
- if(initial){items.forEach(x=>{alertSeen.add(x.id);const t=alertTarget(x);if(!t||!alertAccount||t.uid===alertAccount.id)storeAlert(alertClean(x))});return}
+ if(initial){const known=new Set(loadAlertHistory().map(x=>x.id)),fresh=Date.now()-180000;/* alertas de até 3 min que chegaram com o Projetor fechado ainda aparecem */for(const x of items){if(!known.has(x.id)&&Date.parse(x.created_at)>fresh&&!alertSeen.has(x.id)){receiveDirectAlert(x);continue}alertSeen.add(x.id);const t=alertTarget(x);if(!t||!alertAccount||t.uid===alertAccount.id)storeAlert(alertClean(x))}return}
  for(const item of items)receiveDirectAlert(item);
 }
 // Alerta individual: o destinatário vai marcado em schedule_name (\u2063@@uid|Nome\u2063). Quem não é o destino ignora.
