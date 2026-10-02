@@ -21,7 +21,7 @@ window.stTakeover=function(keep){
  if(keep!=='yt'){window.__ytLive=false;try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
  if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
-  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{});else P.project&&P.project('')}catch(e){}}}
+  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,1100)));else P.project&&P.project('')}catch(e){}}}
  /* prévias do YouTube dentro do Studio (música ambiente, Provai e Vede…) também calam quando outra mídia começa */
  try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(!(keep==='ambient'&&f.closest('#ambientEmbed')))f.remove()})}catch(e){}
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{a.pause()}catch(e){}}})}catch(e){}

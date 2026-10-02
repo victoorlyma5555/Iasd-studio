@@ -215,8 +215,8 @@ function activateProjector(win,display){
  setTimeout(()=>{
   if(!win.isDestroyed()){
    win.setAlwaysOnTop(false);
-   win.moveTop();
-   win.focus();
+   // Se um vídeo do YouTube assumiu o telão nesse meio tempo, não traz o telão preto para frente dele.
+   if(!youtubeShown&&win.isVisible()){win.moveTop();win.focus()}
   }
  },900);
 }
@@ -267,7 +267,7 @@ async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())ret
 // Tela preta com vídeo no telão: esconde a janela do vídeo, pausa e silencia (a projeção continua aberta).
 async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
-async function projectPreparedYoutube(ms=0){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed())windowRef.hide();youtubeRef.setBounds(display.bounds);youtubeRef.webContents.setAudioMuted(false);try{youtubeRef.setOpacity(ms?0:1)}catch{}youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();youtubeShown=true;void youtubeVideoDo('v.play()');if(ms)void fadeWin(youtubeRef,1,ms);return display}
+async function projectPreparedYoutube(ms=0){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed()){windowRef.setAlwaysOnTop(false);windowRef.hide()}youtubeRef.setBounds(display.bounds);youtubeRef.webContents.setAudioMuted(false);try{youtubeRef.setOpacity(ms?0:1)}catch{}youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();youtubeShown=true;void youtubeVideoDo('v.play()');if(ms)void fadeWin(youtubeRef,1,ms);return display}
 function showSoundAlert(payload){
  // Janela própria do IASD Projetor: sem notificação duplicada do Windows.
  // Sempre no monitor principal, preservando o conteúdo do telão secundário.
