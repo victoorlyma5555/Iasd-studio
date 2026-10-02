@@ -748,7 +748,22 @@ function stMiniUpdate(){
  m.querySelector('.t').textContent='Projeção · '+mm+':'+ss;
  m.classList.add('on')
 }
-setInterval(()=>{if(document.getElementById('iasd-studio-frame'))stMiniUpdate()},1000);
+/* pílula da música ambiente (YouTube): aparece fora da aba "Músicas ambientes" */
+function stAmbWin(){try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow}catch(e){return null}}
+function stAmbCtl(a){const w=stAmbWin();if(w&&w.ambCtl)w.ambCtl(a);stAmbUpdate()}
+function stAmbOpen(){go('Projeção');setTimeout(()=>{try{const w=stAmbWin();w&&w.showTool&&w.showTool('ambient')}catch(e){}},300)}
+function stAmbUpdate(){
+ let m=document.getElementById('st-amb');
+ const w=canUseSound()?stAmbWin():null;let ys=null,here=false;
+ try{ys=w&&w.ambState?w.ambState():null;const pn=w&&w.document.getElementById('ambient');here=current==='Projeção'&&!!pn&&pn.offsetParent!==null&&getComputedStyle(pn).display!=='none'}catch(e){}
+ const active=(ys==='1'||ys==='2')&&!here;
+ if(!active){if(m)m.classList.remove('on');return}
+ if(!m){const st=document.createElement('style');st.textContent='#st-amb{position:fixed;right:14px;bottom:calc(142px + env(safe-area-inset-bottom,0px));z-index:9997;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(10,24,52,.96);color:#fff;border:1px solid rgba(245,183,58,.55);box-shadow:0 10px 28px rgba(0,0,0,.45);font:700 12px Inter,system-ui,sans-serif;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}#st-amb.on{opacity:1;transform:none;pointer-events:auto}#st-amb .b{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:#2f6bff;color:#fff;font-size:13px;cursor:pointer}#st-amb .b.s{background:rgba(255,255,255,.14)}#st-amb .b.g{background:transparent;width:auto;padding:0 4px;color:#9db4ff;font:700 11px inherit}';document.head.appendChild(st);
+  m=document.createElement('div');m.id='st-amb';m.innerHTML='<span>🎵 Música ambiente</span><button class="b" type="button" data-k="p" onclick="stAmbCtl(this.dataset.a)"></button><button class="b s" type="button" title="Fechar música" aria-label="Fechar música" onclick="stAmbCtl(\'close\')">✕</button><button class="b g" type="button" onclick="stAmbOpen()">Abrir</button>';document.body.appendChild(m)}
+ const pb=m.querySelector('[data-k=p]');pb.textContent=ys==='1'?'❚❚':'▶';pb.dataset.a=ys==='1'?'pause':'play';pb.setAttribute('aria-label',ys==='1'?'Pausar':'Tocar');
+ m.classList.add('on')
+}
+setInterval(()=>{if(document.getElementById('iasd-studio-frame')){stMiniUpdate();stAmbUpdate()}},1000);
 function render(){
 if(current==='Sonoplastia'&&canUseSound()){current='Projeção';try{sessionStorage.setItem('iasd-current-page','Projeção');window.IASDRouter?.sync?.('Projeção',{replace:true})}catch(e){}}
 const headerActions=document.querySelector('body > header .header-actions');if(!headerActions){const detached=document.querySelector('#dashboard-account-slot .header-actions');if(detached)document.querySelector('body > header').appendChild(detached)}
