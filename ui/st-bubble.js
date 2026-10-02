@@ -29,13 +29,21 @@ function css(){if(document.getElementById('stb-css'))return;const s=document.cre
 #stb .hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}#stb .hd button{border:0;background:rgba(255,255,255,.1);color:inherit;border-radius:9px;padding:6px 10px;font:inherit;cursor:pointer}#stb .hd b{font-size:14px}
 #stb .th{display:grid;grid-template-columns:1fr 1fr;gap:7px}#stb .th button{padding:10px;border-radius:12px;border:1px solid rgba(140,172,255,.28);background:rgba(255,255,255,.06);color:inherit;font:inherit;font-size:12.5px;cursor:pointer;text-align:left}#stb .th button.on{border-color:#f5b73a;background:rgba(245,183,58,.14)}
 #stb .al .sound-alert-item{background:rgba(255,255,255,.05);color:#f4f7ff}#stb .al button,#stb .al input{font:inherit}#stb .al input{background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:8px}#stb .al button{border-radius:9px;border:1px solid rgba(140,172,255,.35);background:rgba(255,255,255,.08);color:#fff;padding:7px 9px;cursor:pointer}
+/*alerts*/
+#stb .al .ai{padding:10px;border-radius:12px;border:1px solid rgba(140,172,255,.25);background:rgba(255,255,255,.05);margin-bottom:8px}
+#stb .ai .ah{display:flex;justify-content:space-between;gap:8px;align-items:baseline}#stb .ai .ah span,#stb .ai .as{font-size:11.5px;opacity:.7;font-weight:500}
+#stb .ai .am{margin-top:4px;font-size:13.5px;line-height:1.4;overflow-wrap:anywhere;white-space:pre-wrap}
+#stb .ai .ar{margin-top:7px;padding:7px 9px;border-radius:9px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.4);font-size:13px}#stb .ai .ar span{font-size:11px;opacity:.7;font-weight:500}#stb .ai .ar div{margin-top:2px;overflow-wrap:anywhere}
+#stb .ai .aq{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#stb .ai .aq button{flex:1 1 auto;font-size:12px;padding:7px 8px}
+#stb .ai .af{display:flex;gap:6px;margin-top:6px}#stb .ai .af input{flex:1;min-width:0;font-size:13px}#stb .ai .af button{flex:none}
+#stb.wide .pn{width:min(360px,calc(100vw - 20px))}
 #stb .nt{margin:8px 2px 0;font-size:11.5px;opacity:.7;font-weight:500}
 @media (prefers-reduced-motion:reduce){#stb .bb,#stb.ring .bb{animation:none;transition:none}}`;document.head.append(s)}
 
 function pos(){const p=LS.get(POS_KEY,null),w=innerWidth,h=innerHeight;let x,y;if(p&&typeof p.x==='number'){x=p.x*(w-SIZE);y=p.y*(h-SIZE)}else{x=w-SIZE-14;y=h-SIZE-230}return clamp(x,y)}
 function clamp(x,y){const w=innerWidth,h=innerHeight,keep=24;return {x:Math.min(w-keep,Math.max(keep-SIZE,x)),y:Math.min(h-keep,Math.max(0,y))}}
 function place(x,y){root.style.transform='translate('+Math.round(x)+'px,'+Math.round(y)+'px)';placePanel(x,y)}
-function placePanel(x,y){if(!panel)return;const w=innerWidth,h=innerHeight,pw=Math.min(300,w-20);
+function placePanel(x,y){if(!panel)return;const w=innerWidth,h=innerHeight,pw=Math.min(view==='alerts'?360:300,w-20);
  const below=y<h/2;panel.style.top=below?(SIZE+8)+'px':'auto';panel.style.bottom=below?'auto':(SIZE+8)+'px';
  let left=0;if(x+pw>w-10)left=(w-10)-(x+pw);if(x+left<10)left=10-x;panel.style.left=Math.round(left)+'px';
  panel.style.maxHeight=Math.max(220,(below?h-y-SIZE-20:y-20))+'px'}
@@ -52,10 +60,18 @@ function mainView(){const c=fadeCfg(),hasW=!!fw();
  </div>${hasW?'':'<p class="nt">Abra o IASD Projetor uma vez para liberar Tela preta, Fechar telão e Temas.</p>'}`}
 function themesView(){const w=fw();let items=[];try{items=[...w.document.querySelectorAll('#stThemes button')].map(b=>({t:b.dataset.t,n:(b.querySelector('b,strong')?.textContent||b.textContent||'').trim().split('\n')[0].slice(0,26),on:b.classList.contains('on')}))}catch(e){}
  return `<div class="hd"><button data-a="back">← Voltar</button><b>Temas do telão</b></div>`+(items.length?`<div class="th">${items.map(i=>`<button data-a="theme" data-t="${E(i.t)}" class="${i.on?'on':''}">${E(i.n||i.t)}</button>`).join('')}</div>`:'<p class="nt">Abra o IASD Projetor uma vez para listar os temas.</p>')}
+function alertItem(x,sound){
+ const ago=(typeof soundAgo==='function')?soundAgo(x.created_at):'';
+ const sched=(typeof alertScheduleOf==='function')?alertScheduleOf(x):'';
+ const tgt=(typeof alertTargetOf==='function')?alertTargetOf(x):null;
+ const quick=(window.SOUND_QUICK_REPLIES||[]);
+ const reply=x.reply_message?`<div class="ar"><b>↩ ${E(x.replied_by_name||'Sonoplastia')}</b> <span>${E(typeof soundAgo==='function'?soundAgo(x.replied_at):'')}</span><div>${E(x.reply_message)}</div></div>`:(sound?'':'<div class="nt">Aguardando resposta…</div>');
+ const form=sound&&!x.reply_message?`<div class="aq">${quick.map((t,i)=>`<button type="button" data-alert-reply="${E(x.id)}" data-quick="${i}">${E(t)}</button>`).join('')}</div><div class="af"><input type="text" maxlength="300" placeholder="Escrever resposta…" data-alert-input="${E(x.id)}"><button type="button" data-alert-reply="${E(x.id)}" data-send="1">Enviar</button></div>`:'';
+ return `<div class="ai"><div class="ah"><b>${E(x.sender_name||'Equipe')}</b><span>${E(ago)}</span></div>${(sched||tgt)?`<div class="as">${E(sched)}${sched&&tgt?' · ':''}${tgt?'para '+E(tgt.name):''}</div>`:''}<div class="am">${E(x.message)}</div>${reply}${form}</div>`}
 async function alertsView(){panel.innerHTML=`<div class="hd"><button data-a="back">← Voltar</button><b>Alertas</b></div><div class="al" id="stb-al"><p class="nt">Carregando…</p></div><div class="tl" style="margin-top:8px"><button class="t wide" data-a="sendalert"><span class="ic">✉</span><b>Enviar um alerta</b><small>Abre a página de Alertas</small></button></div>`;
  try{const rows=await window.loadSoundAlertRows();const sound=!!(window.canUseSound&&canUseSound());const box=document.getElementById('stb-al');if(!box||view!=='alerts')return;
-  box.innerHTML=rows.length&&window.IASDPages?.alertRows?IASDPages.alertRows(rows.slice(0,5),sound):'<p class="nt">Nenhum alerta ainda.</p>'}catch(e){const box=document.getElementById('stb-al');if(box)box.innerHTML='<p class="nt">Não foi possível carregar os alertas.</p>'}}
-function render(){if(!panel)return;if(view==='main')panel.innerHTML=mainView();else if(view==='themes')panel.innerHTML=themesView();else if(view==='alerts')void alertsView();
+  box.innerHTML=rows.length?rows.slice(0,5).map(x=>alertItem(x,sound)).join(''):'<p class="nt">Nenhum alerta ainda.</p>'}catch(e){const box=document.getElementById('stb-al');if(box)box.innerHTML='<p class="nt">Não foi possível carregar os alertas.</p>'}}
+function render(){if(!panel)return;root.classList.toggle('wide',view==='alerts');if(view==='main')panel.innerHTML=mainView();else if(view==='themes')panel.innerHTML=themesView();else if(view==='alerts')void alertsView();
  const x=root.getBoundingClientRect();placePanel(x.left,x.top)}
 function setBadge(){if(!badge)return;badge.textContent=unseen>9?'9+':String(unseen);badge.classList.toggle('on',unseen>0)}
 function toggle(v){open=typeof v==='boolean'?v:!open;root.classList.toggle('open',open);if(open){view='main';render()}}
