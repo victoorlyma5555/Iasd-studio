@@ -11,8 +11,8 @@ body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-seri
 body{background:#080e19}
 #out{padding:5vw 7vw;white-space:normal;overflow:hidden}
 #out.lyric-mode{position:relative;overflow:hidden;padding:0!important;background-size:cover;background-position:center;background-repeat:no-repeat}
-.lyric-bgold{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#0b1620;pointer-events:none}.lyric-old{pointer-events:none}.lyric-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6vh 6vw}
-.lyric-box{max-width:min(92%,1500px);padding:.45em .9em;border-radius:.18em;background:rgba(10,18,24,.72);color:#fff;text-align:center;font-weight:700;line-height:1.28;font-size:clamp(28px,5.2vw,104px);letter-spacing:-.01em;text-wrap:balance;overflow-wrap:break-word;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+.lyric-bgold{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#000;pointer-events:none}.lyric-old{pointer-events:none}.lyric-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6vh 6vw}
+.lyric-box{max-width:min(92%,1500px);padding:.45em .9em;border-radius:.18em;background:#000;color:#fff;text-align:center;font-weight:700;text-transform:uppercase;line-height:1.28;font-size:clamp(26px,4.8vw,96px);letter-spacing:0;text-wrap:balance;overflow-wrap:break-word;text-shadow:0 2px 8px rgba(0,0,0,.6)}
 .lyric-box.lyric-title{color:#f6c62e;text-transform:uppercase;font-size:clamp(34px,6.2vw,120px);letter-spacing:.01em}
 .lyric-box .lyric-aux{display:block;margin-top:.35em;font-size:.55em;font-weight:500;color:#dfe7ee}
 #out.bible-mode{padding:5vh 8vw}
@@ -267,7 +267,7 @@ function showRaw(value){
    out.classList.add('lyric-mode');
    if(typeof d.bg==='string'&&/^(data:image\/(jpeg|png|webp);base64,|blob:|https:\/\/)/.test(d.bg)){window.__lyricBg=d.bg}
    if(d.bg===''){window.__lyricBg=''}
-   out.style.backgroundImage=window.__lyricBg?'url("'+window.__lyricBg+'")':'none';out.style.backgroundColor='#0b1620';
+   out.style.backgroundImage=window.__lyricBg?'url("'+window.__lyricBg+'")':'none';out.style.backgroundColor='#000';
    const slide=document.createElement('div');slide.className='lyric-slide';
    const box=document.createElement('div');box.className='lyric-box'+(d.title?' lyric-title':'');
    box.append(document.createTextNode(d.text.replace(/\s*\n\s*/g,' ').trim()));
