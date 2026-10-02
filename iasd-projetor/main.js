@@ -261,11 +261,39 @@ async function googleLogout(){try{await require('electron').session.fromPartitio
 function fadeWin(win,to,ms){return new Promise(resolve=>{if(!win||win.isDestroyed()||!ms||ms<60){try{if(win&&!win.isDestroyed())win.setOpacity(to)}catch{}return resolve()}let from;try{from=win.getOpacity()}catch{from=1-to}const t0=Date.now();const iv=setInterval(()=>{if(win.isDestroyed()){clearInterval(iv);return resolve()}const k=Math.min(1,(Date.now()-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;try{win.setOpacity(from+(to-from)*e)}catch{}if(k>=1){clearInterval(iv);resolve()}},16)})}
 function trMs(content){const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(String(content||''));return m&&m[1]!=='none'?Math.min(2000,+m[2]):0}
 async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;closeYoutube();const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false,partition:YT_PARTITION}});youtubeRef=win;youtubeVideoId=id;win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});const host=(await googleLogged())?'https://www.youtube.com':'https://www.youtube-nocookie.com';await win.loadURL(host+'/embed/'+id+'?autoplay=1&rel=0&playsinline=1',{httpReferrer:{url:SITE+'/',policy:'strict-origin-when-cross-origin'}});win.webContents.setFrameRate(15)}
-function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed()){try{youtubeRef.webContents.setAudioMuted(true)}catch{}youtubeRef.destroy()}youtubeRef=null;youtubeVideoId=null;youtubeShown=false}
+let youtubeOnPrimary=false,youtubeCover=null;
+function dropYoutubeCover(){if(youtubeCover&&!youtubeCover.isDestroyed())youtubeCover.destroy();youtubeCover=null}
+// Anúncio no vídeo do telão: lê o player (classe ad-showing) e o botão de pular, se houver.
+async function youtubeAdState(){
+ if(!youtubeRef||youtubeRef.isDestroyed())return {active:false};
+ let r={ad:false,sk:false};
+ try{r=await youtubeRef.webContents.executeJavaScript("(()=>{const p=document.querySelector('.html5-video-player');return {ad:!!p&&p.classList.contains('ad-showing'),sk:!!document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern')}})()")}catch{}
+ return {active:true,shown:youtubeShown,onPrimary:youtubeOnPrimary,ad:!!r.ad,skippable:!!r.sk}
+}
+async function youtubeSkipAd(){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return !!(await youtubeRef.webContents.executeJavaScript("(()=>{const b=document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern');if(!b)return false;b.click();return true})()"))}catch{return false}}
+// Traz o vídeo para o monitor principal (mudo) para o operador pular o anúncio; o telão fica preto até devolver.
+function youtubeToPrimary(){
+ if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)throw Error('Não há vídeo no telão');
+ const display=chooseDisplay(),area=screen.getPrimaryDisplay().workArea;
+ if(display&&!youtubeCover){const c=new BrowserWindow({x:display.bounds.x,y:display.bounds.y,width:display.bounds.width,height:display.bounds.height,frame:false,show:false,focusable:false,skipTaskbar:true,backgroundColor:'#000',webPreferences:{sandbox:true}});c.setAlwaysOnTop(true,'screen-saver');c.on('closed',()=>{if(youtubeCover===c)youtubeCover=null});c.loadURL('data:text/html,<body style="margin:0;background:#000">').catch(()=>{});c.once('ready-to-show',()=>{if(!c.isDestroyed())c.showInactive()});youtubeCover=c}
+ const w=Math.min(960,area.width-40),h=Math.round(w*9/16);
+ youtubeRef.webContents.setAudioMuted(true);
+ youtubeRef.setFullScreen(false);
+ youtubeRef.setBounds({x:area.x+Math.round((area.width-w)/2),y:area.y+Math.round((area.height-h)/2),width:w,height:h});
+ youtubeRef.setAlwaysOnTop(true,'floating');youtubeRef.show();youtubeRef.focus();youtubeOnPrimary=true
+}
+async function youtubeToProjector(){
+ if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Não há vídeo');
+ youtubeOnPrimary=false;
+ try{youtubeRef.setAlwaysOnTop(false)}catch{}
+ await projectPreparedYoutube(0);
+ setTimeout(dropYoutubeCover,350)
+}
+function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed()){try{youtubeRef.webContents.setAudioMuted(true)}catch{}youtubeRef.destroy()}youtubeRef=null;youtubeVideoId=null;youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 const YT_VIDEO=(code)=>"(()=>{const v=document.querySelector('video');if(!v)return false;"+code+";return true})()";
 async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return await youtubeRef.webContents.executeJavaScript(YT_VIDEO(code))}catch{return false}}
 // Tela preta com vídeo no telão: esconde a janela do vídeo, pausa e silencia (a projeção continua aberta).
-async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false}
+async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 async function projectPreparedYoutube(ms=0){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(windowRef&&!windowRef.isDestroyed()){windowRef.setAlwaysOnTop(false);windowRef.hide()}youtubeRef.setBounds(display.bounds);youtubeRef.webContents.setAudioMuted(false);try{youtubeRef.setOpacity(ms?0:1)}catch{}youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();youtubeShown=true;void youtubeVideoDo('v.play()');if(ms)void fadeWin(youtubeRef,1,ms);return display}
 let alertCurrent=null,pendingAlertReplies=[];
@@ -495,6 +523,9 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(req.url==='/alert-replies'&&req.method==='POST'){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/state'&&req.method==='POST'){reply(res,200,await youtubeAdState());return}
+ if(req.url==='/youtube/skip'&&req.method==='POST'){reply(res,200,{ok:await youtubeSkipAd()});return}
+ if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector();reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}const code={play:'v.play()',pause:'v.pause()',mute:'v.muted=true',unmute:'v.muted=false'}[data.action];if(!await youtubeVideoDo(code)){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/close'&&req.method==='POST'){closeYoutube();reply(res,200,{ok:true});return}

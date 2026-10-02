@@ -28,22 +28,45 @@ let stYtInfo=null;
 function stYtTitle(kind,id){try{if(kind==='testimony'){const it=(window.PROVAI_E_VEDE_LIBRARY||[]).find(v=>v.id===id);if(it)return it.title}
  const b=kind==='ambient'?document.querySelector('#ambient .amb-info b'):null;if(b&&b.textContent.trim())return b.textContent.trim()}catch(e){}
  return {ambient:'Música ambiente',testimony:'Provai e Vede',offering:'Vídeo de dízimos e ofertas',special:'Música especial'}[kind]||'Vídeo do YouTube'}
-function stYtCard(kind,id){stYtInfo={kind,id,title:stYtTitle(kind,id),paused:false,muted:false};stYtCardRender()}
+function stYtCard(kind,id){stAdWarned=false;stYtSt={ad:false,skippable:false,onPrimary:false};stYtInfo={kind,id,title:stYtTitle(kind,id),paused:false,muted:false};stYtCardRender()}
 function stYtCardHide(){stYtInfo=null;const c=document.getElementById('ytLiveCard');if(c)c.remove()}
+let stYtSt={ad:false,skippable:false,onPrimary:false},stYtPoll=0,stAdWarned=false;
+async function stYtPollState(){if(!window.__ytLive||!stYtInfo||Date.now()-stYtPoll<1200)return;stYtPoll=Date.now();const r=await window.parent.youtubeStateRequest?.().catch(()=>null);if(!r||!r.active){return}
+ if(r.ad&&!stAdWarned){stAdWarned=true;feedback('⚠ Anúncio no vídeo do telão. Use o cartão para pular ou trazer para a tela 1.')}if(!r.ad)stAdWarned=false;
+ stYtSt={ad:!!r.ad,skippable:!!r.skippable,onPrimary:!!r.onPrimary};stYtCardRender()}
 function stYtCardRender(){const scr=document.querySelector('#preview-layout .screen');if(!scr)return;let c=document.getElementById('ytLiveCard');
- if(!stYtInfo||!window.__ytLive){if(c)c.remove();return}
+ const live=!!(stYtInfo&&window.__ytLive),as=typeof window.ambState==='function'?window.ambState():null,amb=!live&&as!==null;
+ if(!live&&!amb){if(c)c.remove();return}
  if(!c){c=document.createElement('div');c.id='ytLiveCard';c.className='yt-live-card';scr.append(c);
-  c.addEventListener('click',async e=>{const b=e.target.closest('[data-yl]');if(!b||!stYtInfo)return;const a=b.dataset.yl,P=window.parent;
-   try{if(a==='pp'){const next=stYtInfo.paused?'play':'pause';await P.controlPreparedYoutube(next);stYtInfo.paused=!stYtInfo.paused}
+  c.addEventListener('click',async e=>{const b=e.target.closest('[data-yl]');if(!b)return;const a=b.dataset.yl,P=window.parent;
+   try{
+    if(a==='apq'){window.ambCtl(window.ambState()==='2'?'play':'pause')}
+    else if(a==='acl'){window.ambCtl('close')}
+    else if(!stYtInfo)return;
+    else if(a==='pp'){const next=stYtInfo.paused?'play':'pause';await P.controlPreparedYoutube(next);stYtInfo.paused=!stYtInfo.paused}
     else if(a==='mu'){const next=stYtInfo.muted?'unmute':'mute';await P.controlPreparedYoutube(next);stYtInfo.muted=!stYtInfo.muted}
-    else if(a==='cl'){await P.closePreparedYoutube();window.__ytLive=false;stYtCardHide();feedback('Vídeo fechado no telão.');return}
+    else if(a==='skip'){await P.youtubeSkipAdRequest()}
+    else if(a==='p1'){await P.youtubeMoveRequest('primary');stYtSt.onPrimary=true}
+    else if(a==='back'){await P.youtubeMoveRequest('projector');stYtSt.onPrimary=false;stYtSt.ad=false}
+    else if(a==='cl'){await P.closePreparedYoutube();window.__ytLive=false;stYtSt={ad:false,skippable:false,onPrimary:false};stYtCardHide();feedback('Vídeo fechado no telão.');return}
    }catch(err){feedback('Não foi possível controlar o vídeo: '+(err.message||err))}
    stYtCardRender()})}
  const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
- const k=JSON.stringify([stYtInfo.id,stYtInfo.title,stYtInfo.paused,stYtInfo.muted]);if(c.dataset.k===k)return;c.dataset.k=k;
- c.style.setProperty('--yt-bg','url(https://i.ytimg.com/vi/'+encodeURIComponent(stYtInfo.id)+'/hqdefault.jpg)');
- c.innerHTML='<div class="yl-in"><span class="yl-badge">'+(stYtInfo.paused?'⏸ PAUSADO NO TELÃO':'● TOCANDO NO TELÃO')+'</span><b class="yl-t">'+esc(stYtInfo.title)+'</b><small>Vídeo do YouTube no IASD Projetor</small><div class="yl-b"><button type="button" data-yl="pp">'+(stYtInfo.paused?'▶ Continuar':'⏸ Pausar')+'</button><button type="button" data-yl="mu">'+(stYtInfo.muted?'🔊 Ativar som':'🔇 Mudo')+'</button><button type="button" data-yl="cl">✕ Fechar vídeo</button></div></div>'}
-setInterval(()=>{if(stYtInfo&&!window.__ytLive)stYtCardHide();else if(stYtInfo)stYtCardRender()},1000);
+ let id,title,badge,sub,btns,tone='';
+ if(live){id=stYtInfo.id;title=stYtInfo.title;const S=stYtSt;
+  if(S.onPrimary){tone=S.ad?'warn':'ok';badge=S.ad?'⚠ ANÚNCIO NA TELA 1 · TELÃO EM PRETO':'✓ ANÚNCIO ACABOU · TELÃO EM PRETO';sub=S.ad?'Pule o anúncio na janela do vídeo (tela 1) e devolva ao telão.':'Pronto: devolva o vídeo ao telão.';
+   btns=(S.ad&&S.skippable?'<button type="button" data-yl="skip">⏭ Pular anúncio</button>':'')+'<button type="button" data-yl="back" class="'+(S.ad?'':'main')+'">📺 Devolver ao telão</button><button type="button" data-yl="cl">✕ Fechar vídeo</button>'}
+  else if(S.ad){tone='warn';badge='⚠ ANÚNCIO NO TELÃO';sub='O público está vendo um anúncio.';
+   btns=(S.skippable?'<button type="button" data-yl="skip">⏭ Pular anúncio</button>':'')+'<button type="button" data-yl="p1" class="main">🖥 Trazer p/ tela 1</button><button type="button" data-yl="cl">✕ Fechar vídeo</button>'}
+  else{badge=stYtInfo.paused?'⏸ PAUSADO NO TELÃO':'● TOCANDO NO TELÃO';sub='Vídeo do YouTube no IASD Projetor';
+   btns='<button type="button" data-yl="pp">'+(stYtInfo.paused?'▶ Continuar':'⏸ Pausar')+'</button><button type="button" data-yl="mu">'+(stYtInfo.muted?'🔊 Ativar som':'🔇 Mudo')+'</button><button type="button" data-yl="cl">✕ Fechar vídeo</button>'}}
+ else{const f=document.querySelector('#ambientEmbed iframe');const m=/\/embed\/([\w-]{11})/.exec(f&&f.src||'');id=m?m[1]:'';title=stYtTitle('ambient',id);const paused=as==='2';
+  badge=paused?'⏸ MÚSICA PAUSADA':'♪ TOCANDO NO COMPUTADOR';sub='Música ambiente (som do computador, não está no telão)';
+  btns='<button type="button" data-yl="apq">'+(paused?'▶ Continuar':'⏸ Pausar')+'</button><button type="button" data-yl="acl">✕ Fechar música</button>'}
+ const k=JSON.stringify([live,id,title,badge,btns]);if(c.dataset.k===k)return;c.dataset.k=k;c.dataset.tone=tone;
+ c.style.setProperty('--yt-bg',id?'url(https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg)':'none');
+ c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
+setInterval(()=>{if(stYtInfo&&!window.__ytLive){stYtCardHide()}void stYtPollState();stYtCardRender()},1000);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
  if(keep!=='hymn'){try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}}

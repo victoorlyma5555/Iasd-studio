@@ -279,6 +279,9 @@ async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie 
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{targetAddressSpace:'loopback',headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
 async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');const tr=window.IASDTr&&IASDTr.get();return companionRequest('/youtube/project',{ms:tr&&tr.type!=='none'?tr.ms:0})}
 async function closePreparedYoutube(){if(!companionToken)return;return companionRequest('/youtube/close')}
+async function youtubeStateRequest(){if(!companionToken)return null;try{return await companionRequest('/youtube/state',{})}catch{return null}}
+async function youtubeSkipAdRequest(){if(!companionToken)return;return companionRequest('/youtube/skip',{})}
+async function youtubeMoveRequest(to){if(!companionToken)return;return companionRequest('/youtube/move',{to})}
 async function controlPreparedYoutube(action){if(!companionToken)return;return companionRequest('/youtube/control',{action})}
 async function pairCompanion(){
  if(!canUseSound())return;

@@ -312,3 +312,6 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 .yl-badge{font-size:11px;font-weight:800;letter-spacing:1.4px;color:#ffd978;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.45);border:1px solid rgba(255,217,120,.4)}
 .yl-t{font-size:clamp(14px,2.2vw,22px);line-height:1.25;overflow-wrap:anywhere}.yt-live-card small{opacity:.75;font-size:12px}
 .yl-b{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}.yl-b button{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-size:13px;cursor:pointer}.yl-b button:hover{background:rgba(255,255,255,.22)}
+
+.yt-live-card[data-tone="warn"]{background:linear-gradient(rgba(60,10,10,.82),rgba(30,5,5,.92)),var(--yt-bg) center/cover #1a0505}.yt-live-card[data-tone="warn"] .yl-badge{color:#ffb4a8;border-color:rgba(255,140,120,.6)}
+.yt-live-card[data-tone="ok"] .yl-badge{color:#9be7b0;border-color:rgba(120,230,160,.5)}.yl-b button.main{background:linear-gradient(135deg,#f9d777,#d7a83d);color:#17243c;border:0;font-weight:700}
