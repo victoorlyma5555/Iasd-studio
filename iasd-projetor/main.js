@@ -377,7 +377,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   if(u.pathname==='/lja/file'){const f=lja.resolveRel(u.searchParams.get('p')||'');if(!f){reply(res,404,{error:'Arquivo não encontrado'});return}lja.sendFile(req,res,f,cors);return}
   reply(res,404,{error:'Rota desconhecida'});return
  }
- let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
+ const bodyLimit=req.url==='/project'?6000000:100000;let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>bodyLimit){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
  if(req.url==='/lja/scan'&&req.method==='POST'){
   if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
@@ -421,7 +421,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   try{const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
  if(req.url==='/project'&&req.method==='POST'){
-  if(typeof data.content!=='string'||data.content.length>50000){reply(res,400,{error:'Conteúdo inválido'});return}
+  if(typeof data.content!=='string'||data.content.length>(data.content.startsWith('IASD_LYRIC:')?4000000:50000)){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
    const content=data.content;
    if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}

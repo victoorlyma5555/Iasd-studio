@@ -246,10 +246,15 @@ async function imgBlob(name,w,q){
  try{const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());const bm=await createImageBitmap(f);const W=Math.min(w,bm.width),H=Math.round(bm.height*W/bm.width);
   const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(bm,0,0,W,H);if(bm.close)bm.close();return c}catch(e){return null}
 }
+const verGE=(v,m)=>{const x=String(v||'0').split('.').map(Number),y=m.split('.').map(Number);for(let i=0;i<3;i++){if((x[i]||0)!==y[i])return(x[i]||0)>y[i]}return true};
+/* IASD Projetor antes da 0.5.8 recusa mensagens com mais de 50 KB: o fundo é reduzido para caber */
+const bgLimit=()=>verGE(S.cpInfo&&S.cpInfo.version,'0.5.8')?0:43000;
 async function bgFor(name){
- if(!name)return '';const k=String(name).toLowerCase();if(S.bgc[k]!==undefined)return S.bgc[k];
- await ensureRead();const c=await imgBlob(name,1280);const u=c?c.toDataURL('image/jpeg',.7):'';S.bgc[k]=u;
- const ks=Object.keys(S.bgc);if(ks.length>40)delete S.bgc[ks[0]];return u
+ if(!name)return '';const k=String(name).toLowerCase()+'|'+bgLimit();if(S.bgc[k]!==undefined)return S.bgc[k];
+ await ensureRead();let u='';const lim=bgLimit();
+ if(!lim){const c=await imgBlob(name,1600);u=c?c.toDataURL('image/jpeg',.8):''}
+ else for(const [w,q] of [[960,.6],[800,.5],[640,.45],[480,.4],[360,.35]]){const c=await imgBlob(name,w);if(!c)break;u=c.toDataURL('image/jpeg',q);if(u.length<=lim)break}
+ S.bgc[k]=u;const ks=Object.keys(S.bgc);if(ks.length>40)delete S.bgc[ks[0]];return u
 }
 async function thumbFor(name){
  const k=String(name).toLowerCase();if(S.thumbs[k]!==undefined)return S.thumbs[k];
