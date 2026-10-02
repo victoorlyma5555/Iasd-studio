@@ -377,7 +377,7 @@ async function startRoom(code,host,opts){
  ch.on('broadcast',{event:'vo'},async({payload})=>{if(R.host||!R.follow)return;if(!!S.openV[payload.key]!==!!payload.open)await toggleVerse(payload.key,payload.ref,true)});
  ['chs','cha','chr','chx','hl','brk','call','mute','end'].forEach(ev=>ch.on('broadcast',{event:ev},({payload})=>FX(ev,payload)));
  ch.on('broadcast',{event:'hp'},({payload})=>{if(R.host)return;clearTimeout(R.hpT);const ms=Math.min(Math.max(+(payload&&payload.ms)||SUSP_MS,6e4),SUSP_MS);toast('O dirigente suspendeu a sala. Se não voltar em '+Math.round(ms/6e4)+' min, ela fecha.');
-  R.hpT=setTimeout(()=>{if(S.room!==R||Object.values(R.peers).some(p=>p.host))return;try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}clearRoom();leave(true);S.view='home';paint();toast('Sala fechada: o dirigente ficou suspenso por mais de '+SUSP_MIN+' min.')},ms)});
+  R.hpT=setTimeout(()=>{if(S.room!==R||Object.values(R.peers).some(p=>p.host))return;try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}clearRoom();leave(true);resetAfterRoom();paint();toast('Sala fechada: o dirigente ficou suspenso por mais de '+SUSP_MIN+' min.')},ms)});
  ch.on('broadcast',{event:'rx'},({payload})=>floatReact(payload.e,payload.name));
  ch.on('broadcast',{event:'sig'},({payload})=>{if(payload.to===me)onSig(payload)});
  const onSync=()=>{R.syncT=0;const st=ch.presenceState(),prev=R.peers;R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&/^[\w-]{1,64}$/.test(k)&&st[k][0])R.peers[k]=st[k][0]});
@@ -424,11 +424,17 @@ function paintReveals(){
   el.innerHTML=h;
  });
 }
+/* fim da sala: zera as respostas da tela e volta para "Criar sala / Entrar com código".
+   O que cada pessoa enviou já foi guardado na própria conta (IASDStudyMe.rec) ou neste aparelho, se for convidada. */
+function resetAfterRoom(){
+ S.sent={};S.verdict={};S.openV={};S.edit=false;S.view='home';S.li=0;
+ try{Object.keys(S.prog||{}).forEach(k=>{if(S.prog[k]&&typeof S.prog[k]==='object')S.prog[k].a={}});saveProg();localStorage.removeItem(LS_PROG+'sala')}catch(e){}
+}
 function leave(silent){
  const R=S.room;if(!R)return;stopVoice(true);FX('reset');
  try{R.ch.untrack();cloud().removeChannel(R.ch)}catch(e){}
  document.body.classList.remove('es-fxon','es-host','es-susp');
- S.room=null;if(silent!==true){clearRoom();try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),600)}catch(e){}}applyLock();paintBar();paintDock();paintChat();if(!silent){toast('Você saiu da sala.');paint()}
+ S.room=null;if(silent!==true){resetAfterRoom();clearRoom();try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),600)}catch(e){}}applyLock();paintBar();paintDock();paintChat();if(!silent){toast('Você saiu da sala.');paint()}
 }
 function backToRoom(){const R=S.room;
  if(!R){S.resumed=false;if(typeof go==='function')go('Estudo');return}
@@ -502,7 +508,7 @@ function paintAway(){
 async function endRoom(){const R=S.room;if(!R||!R.host)return;
  if(!R.endAsked&&!(await IASDDialog.confirm('Encerrar a sala para todos? Os participantes serão avisados.',{title:'Encerrar sala',ok:'Encerrar sala',danger:true})))return;
  send('end',{});FX('reset');await new Promise(r=>setTimeout(r,350));leave()}
-function endedByHost(){clearRoom();leave(true);S.view='home';paint();toast('O dirigente encerrou a sala.');try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}}
+function endedByHost(){clearRoom();leave(true);resetAfterRoom();paint();toast('O dirigente encerrou a sala.');try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}}
 
 /* ---------- voz e vídeo (WebRTC em malha; sinalização pelo canal da sala) ---------- */
 /* Todos entram só ouvindo e assistindo, sem pedir permissão. Microfone e câmera só ligam quando a própria pessoa toca nos botões. */
