@@ -678,7 +678,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .lb-n{width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 25%,#4f9bff,#1459dd 70%);font-weight:800;font-size:calc(var(--u)*2.1);box-shadow:0 0 calc(var(--u)*1.4) rgba(60,130,255,.65),inset 0 calc(var(--u)*.15) 0 rgba(255,255,255,.4)}
 .lb-ic{width:calc(var(--u)*4.2);height:calc(var(--u)*4.2);border-radius:50%;display:grid;place-items:center;background:rgba(18,36,110,.7);border:1px solid rgba(150,180,255,.35);color:#dbe6ff}.lb-ic svg{width:52%;height:52%}
 .lb-st b{display:block;font-size:calc(var(--u)*1.65);font-weight:800;line-height:1.15;letter-spacing:.005em}.lb-st small{display:block;font-size:calc(var(--u)*1.25);color:#b3c1ee;line-height:1.25;margin-top:calc(var(--u)*.15)}
-.lg2-lb.d1 .lg2-pp{font-size:calc(var(--u)*1.2)}.lg2-lb.d2 .lg2-pp{font-size:calc(var(--u)*1)}.lg2-lb.d1 .lg2-ppl{gap:calc(var(--u)*.5)}.lg2-lb.d2 .lg2-pp{max-width:calc(var(--u)*15);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.lg2-lb.many .lb-hw{display:none}.lg2-lb.many .lg2-ppl{flex:1 1 0}
+.lg2-lb.d1 .lg2-pp{font-size:calc(var(--u)*1.2)}.lg2-lb.d2 .lg2-pp{font-size:calc(var(--u)*1)}.lg2-lb.d1 .lg2-ppl{gap:calc(var(--u)*.5)}.lg2-lb.d2 .lg2-pp{max-width:calc(var(--u)*15);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.lg2-pp.more{background:linear-gradient(180deg,rgba(255,200,61,.3),rgba(255,200,61,.12));border-color:rgba(255,200,61,.6);color:#ffe27a;padding-left:1.1em}.lg2-lb.many .lb-hw{display:none}.lg2-lb.many .lg2-ppl{flex:1 1 0}
 /* pergunta (referência 2) */
 .lg2-lb.lg2-qv{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);padding:0 calc(var(--u)*5.25) calc(var(--u)*2.8)}
 .qv-top{position:relative;flex:none;height:calc(var(--u)*14.8)}
@@ -962,9 +962,13 @@ async function lobby(){
  paintLobbyPlayers(ps,true);
 }
 function paintLobbyPlayers(ps,first){
- const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;{const lb=document.querySelector('.lg2-lb');if(lb){lb.classList.toggle('many',ps.length>6);lb.classList.toggle('d1',ps.length>12);lb.classList.toggle('d2',ps.length>20)}}const wt=$('lg-wait');if(wt)wt.textContent=ps.length?'TUDO PRONTO? É SÓ COMEÇAR!':'AGUARDANDO OS PARTICIPANTES...';
+ const box=$('lg-player-list');if(!box)return;const cnt=$('lg-player-count');if(cnt)cnt.textContent=ps.length;{const lb=document.querySelector('.lg2-lb');if(lb){lb.classList.toggle('many',ps.length>6);lb.classList.toggle('d1',ps.length>12);lb.classList.toggle('d2',false)}}const wt=$('lg-wait');if(wt)wt.textContent=ps.length?'TUDO PRONTO? É SÓ COMEÇAR!':'AGUARDANDO OS PARTICIPANTES...';
  if(cfgOf(code()).teams)['A','B'].forEach(k=>{const e=$('tc-'+k);if(e)e.textContent=ps.filter(p=>teamTag(p.name)===k).length});
- ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);(cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box).appendChild(d);if(!first)A().sfx('join')}});
+ const LIM=cfgOf(code()).teams?8:15;
+ ps.forEach(p=>{if(!HS.joined.has(p.id)){HS.joined.add(p.id);const n=splitName(p.name);const d=document.createElement('div');d.className='lg2-pp';d.innerHTML='<span class="lg2-av">'+esc(n.av)+'</span>'+esc(n.name);const tgt=cfgOf(code()).teams?($('lg-list-'+teamOf(p))||box):box;if(tgt.querySelectorAll('.lg2-pp:not(.more)').length<LIM)tgt.appendChild(d);if(!first)A().sfx('join')}});
+ /* acima do limite não mostra todos: um chip "+N" resume o resto (o total está no contador) */
+ const lists=cfgOf(code()).teams?['A','B'].map(k=>$('lg-list-'+k)).filter(Boolean):[box];
+ lists.forEach(l=>{const tot=cfgOf(code()).teams?ps.filter(p=>teamOf(p)===l.id.slice(-1)).length:ps.length,extra=tot-l.querySelectorAll('.lg2-pp:not(.more)').length;let m=l.querySelector('.more');if(extra>0){if(!m){m=document.createElement('div');m.className='lg2-pp more';l.appendChild(m)}m.textContent='+'+extra+' jogadores'}else if(m)m.remove()});
 }
 async function start(){
  const ps=await players();if(!ps.length&&!(await IASDDialog.confirm('Ninguém entrou ainda. Começar assim mesmo?')))return;
