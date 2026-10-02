@@ -925,6 +925,7 @@ button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255
 .lg2-chrome{top:calc(10px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));right:calc(10px + env(safe-area-inset-right,0px))}
 .lg2.host .lg2-chrome .lg2-ic:not(.sair){bottom:calc(12px + env(safe-area-inset-bottom,0px));right:calc(12px + env(safe-area-inset-right,0px))}
 .lg2.host .lg2-chrome .lg2-ic:not(.sair):nth-last-child(2){right:calc(62px + env(safe-area-inset-right,0px))}.lg2.host .lg2-chrome .lg2-ic:not(.sair):nth-last-child(3){right:calc(112px + env(safe-area-inset-right,0px))}
+.lg2-res:has(.lgp) .big{font-size:clamp(44px,8vh,88px)!important;line-height:1}.lg2-res:has(.lgp) h2{margin:0}.lg2-res:has(.lgp){gap:clamp(4px,1vh,10px)}
 `;document.head.appendChild(s);
  if(!document.getElementById('lg2-font')){const l=document.createElement('link');l.id='lg2-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap';document.head.appendChild(l)}
 }
