@@ -558,7 +558,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .gp-bs{width:100%;height:calc(var(--u)*5);border-radius:calc(var(--u)*1) calc(var(--u)*1) 0 0;background:linear-gradient(180deg,var(--rc),rgba(0,0,0,.35));opacity:.55;box-shadow:0 0 calc(var(--u)*2) var(--rc)}
 .gp.g .gp-bs{height:calc(var(--u)*8)}.gp.s .gp-bs{height:calc(var(--u)*6)}.gp.b .gp-bs{height:calc(var(--u)*4)}
 .gb-list{position:absolute;right:calc(var(--u)*4);top:calc(var(--u)*20);width:calc(var(--u)*37);display:grid;gap:calc(var(--u)*.8)}
-.gr{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:calc(var(--u)*1);padding:calc(var(--u)*.8) calc(var(--u)*1.4);border-radius:calc(var(--u)*1.2);background:rgba(10,24,84,.7);border:1px solid rgba(140,172,255,.3);animation:lgin .5s both}
+.gr{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:calc(var(--u)*1);padding:calc(var(--u)*.45) calc(var(--u)*1.4);border-radius:calc(var(--u)*1.2);background:rgba(10,24,84,.7);border:1px solid rgba(140,172,255,.3);animation:lgin .5s both}
 .gr .rk{font-size:calc(var(--u)*2.3);font-weight:800;width:calc(var(--u)*4);text-align:center}.gr .av{width:calc(var(--u)*4);height:calc(var(--u)*4);border-radius:50%;display:grid;place-items:center;font-size:calc(var(--u)*2.4);background:#4b3fcc}
 .gr .nm b{display:block;font-size:calc(var(--u)*1.9)}.gr .tk{height:calc(var(--u)*.8);border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;margin-top:calc(var(--u)*.4)}.gr .tk i{display:block;height:100%;background:linear-gradient(90deg,#8b5cf6,#f5b73a);border-radius:99px}
 .gr .pt{display:grid;justify-items:end}.gr .pt b{font-size:calc(var(--u)*3)}.gr .pt small{font-size:calc(var(--u)*1.2);opacity:.75}
@@ -566,7 +566,7 @@ button.lg2-a:hover:not(:disabled){transform:translateY(-3px)}button.lg2-a:active
 .gr-empty{display:grid;justify-items:center;padding:calc(var(--u)*3);border-radius:calc(var(--u)*1.6);background:rgba(10,24,84,.6);border:1px solid rgba(140,172,255,.3)}.gr-empty b{font-size:calc(var(--u)*4);color:#34d399}.gr-empty small{font-size:calc(var(--u)*1.8);opacity:.8}
 .gb-bar{position:absolute;left:calc(var(--u)*4);right:calc(var(--u)*4);bottom:calc(var(--u)*2.4);height:calc(var(--u)*7.6);display:grid;grid-template-columns:1fr 1.1fr auto;align-items:center;gap:calc(var(--u)*2);padding:0 calc(var(--u)*2.4);border-radius:calc(var(--u)*1.6);background:rgba(10,24,84,.78);border:1.5px solid rgba(140,172,255,.4)}
 .gb-l,.gb-m{display:flex;align-items:center;gap:calc(var(--u)*1.2)}.gb-m{display:grid;border-left:1px solid rgba(255,255,255,.25);padding-left:calc(var(--u)*2)}
-.gb-l .cr{font-size:calc(var(--u)*4)}.gb-l small,.gb-m small{display:block;font-size:calc(var(--u)*1.6);opacity:.85}.gb-l b{font-size:calc(var(--u)*3.6)}.gb-m b{font-size:calc(var(--u)*2.2)}
+.gb-l{min-width:0}.gb-l>div{min-width:0}.gb-l b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gb-l .cr{font-size:calc(var(--u)*4)}.gb-l small,.gb-m small{display:block;font-size:calc(var(--u)*1.6);opacity:.85}.gb-l b{font-size:calc(var(--u)*3.6)}.gb-m b{font-size:calc(var(--u)*2.2)}
 .gb-n{display:grid;gap:calc(var(--u)*.6);justify-items:center}.gb-n .gx-go{font-size:calc(var(--u)*2.4);padding:calc(var(--u)*1) calc(var(--u)*3)}.gb-n .lg2-autobar{width:100%;height:4px}
 /* entrar na partida (px: funciona no celular e no PC) */
 .gx-join{justify-content:flex-start;overflow:auto;padding:16px 16px 28px;--u:min(1vw,1.7777vh)}
@@ -1064,7 +1064,7 @@ function gxBoard(ps,i,q,t,gotIt,isLast){
  const pod=(p,k)=>{if(!p)return '<div class="gp '+['s','g','b'][k]+'"></div>';const n=splitName(p.name),cl=['s','g','b'][k],pos=[2,1,3][k];
   return '<div class="gp '+cl+'">'+(cl==='g'?'<span class="crown">👑</span>':'')+'<div class="gp-av"><span>'+esc(n.av)+'</span><i>'+pos+'</i></div><div class="gp-nm">'+esc(n.name)+'</div><div class="gp-pt"><b>'+fmt(p.score)+'</b><small>pontos</small>'+(p.delta>0?'<em>+'+fmt(p.delta)+'</em>':'')+'</div><div class="gp-bs"></div></div>'};
  const top=[ps[1],ps[0],ps[2]];
- const rest=ps.slice(3,8).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av">'+esc(n.av)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b>'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
+ const rest=ps.slice(3,7).map((p,k)=>{const n=splitName(p.name);return '<div class="gr" style="animation-delay:'+(k*.08)+'s"><span class="rk">'+(k+4)+'º</span><span class="av">'+esc(n.av)+'</span><div class="nm"><b>'+esc(n.name)+'</b><div class="tk"><i style="width:'+Math.max(4,Math.round(p.score/max*100))+'%"></i></div></div><span class="pt"><b>'+fmt(p.score)+'</b><small>pontos</small></span>'+(p.delta>0?'<span class="dl">+'+fmt(p.delta)+'</span>':'')+'</div>'}).join('');
  const side=rest||'<div class="gr-empty"><b>✓ '+gotIt+' de '+ps.length+'</b><small>acertaram esta rodada</small></div>';
  const lead=ps[0];
  return '<div class="gx gx-board">'+gxTop()+
