@@ -22,11 +22,33 @@ window.ambCtl=function(a){const f=document.querySelector('#ambientEmbed iframe')
  if(a==='close'){f.remove();return}
  try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:a==='pause'?'pauseVideo':'playVideo',args:[]}),'*');f.dataset.ys=a==='pause'?'2':'1'}catch(e){}};
 window.ambState=function(){const f=document.querySelector('#ambientEmbed iframe');return f?f.dataset.ys||'':null};
+
+/* cartão do vídeo do YouTube que está no telão (o vídeo real fica no IASD Projetor, o preview mostra o estado e os controles) */
+let stYtInfo=null;
+function stYtTitle(kind,id){try{if(kind==='testimony'){const it=(window.PROVAI_E_VEDE_LIBRARY||[]).find(v=>v.id===id);if(it)return it.title}
+ const b=kind==='ambient'?document.querySelector('#ambient .amb-info b'):null;if(b&&b.textContent.trim())return b.textContent.trim()}catch(e){}
+ return {ambient:'Música ambiente',testimony:'Provai e Vede',offering:'Vídeo de dízimos e ofertas',special:'Música especial'}[kind]||'Vídeo do YouTube'}
+function stYtCard(kind,id){stYtInfo={kind,id,title:stYtTitle(kind,id),paused:false,muted:false};stYtCardRender()}
+function stYtCardHide(){stYtInfo=null;const c=document.getElementById('ytLiveCard');if(c)c.remove()}
+function stYtCardRender(){const scr=document.querySelector('#preview-layout .screen');if(!scr)return;let c=document.getElementById('ytLiveCard');
+ if(!stYtInfo||!window.__ytLive){if(c)c.remove();return}
+ if(!c){c=document.createElement('div');c.id='ytLiveCard';c.className='yt-live-card';scr.append(c);
+  c.addEventListener('click',async e=>{const b=e.target.closest('[data-yl]');if(!b||!stYtInfo)return;const a=b.dataset.yl,P=window.parent;
+   try{if(a==='pp'){const next=stYtInfo.paused?'play':'pause';await P.controlPreparedYoutube(next);stYtInfo.paused=!stYtInfo.paused}
+    else if(a==='mu'){const next=stYtInfo.muted?'unmute':'mute';await P.controlPreparedYoutube(next);stYtInfo.muted=!stYtInfo.muted}
+    else if(a==='cl'){await P.closePreparedYoutube();window.__ytLive=false;stYtCardHide();feedback('Vídeo fechado no telão.');return}
+   }catch(err){feedback('Não foi possível controlar o vídeo: '+(err.message||err))}
+   stYtCardRender()})}
+ const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+ const k=JSON.stringify([stYtInfo.id,stYtInfo.title,stYtInfo.paused,stYtInfo.muted]);if(c.dataset.k===k)return;c.dataset.k=k;
+ c.style.setProperty('--yt-bg','url(https://i.ytimg.com/vi/'+encodeURIComponent(stYtInfo.id)+'/hqdefault.jpg)');
+ c.innerHTML='<div class="yl-in"><span class="yl-badge">'+(stYtInfo.paused?'⏸ PAUSADO NO TELÃO':'● TOCANDO NO TELÃO')+'</span><b class="yl-t">'+esc(stYtInfo.title)+'</b><small>Vídeo do YouTube no IASD Projetor</small><div class="yl-b"><button type="button" data-yl="pp">'+(stYtInfo.paused?'▶ Continuar':'⏸ Pausar')+'</button><button type="button" data-yl="mu">'+(stYtInfo.muted?'🔊 Ativar som':'🔇 Mudo')+'</button><button type="button" data-yl="cl">✕ Fechar vídeo</button></div></div>'}
+setInterval(()=>{if(stYtInfo&&!window.__ytLive)stYtCardHide();else if(stYtInfo)stYtCardRender()},1000);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
  if(keep!=='hymn'){try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
- if(keep!=='yt'){window.__ytLive=false;try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
+ if(keep!=='yt'){window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
  if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
   if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,1100)));else P.project&&P.project('')}catch(e){}}}
@@ -205,7 +227,7 @@ function saveYouTubeList(kind){const ids=youtubeList(kind);localStorage.setItem(
 async function closePrivateYoutube(){for(const kind of ['ambient','testimony','offering','special']){$(kind+'Embed')?.replaceChildren();$(kind+'Private')?.classList.add('hide')}try{await window.parent.closePreparedYoutube?.();window.__ytLive=false}catch(e){console.warn(e)}let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}if(st.startsWith('IASD_LOCAL_MEDIA:'))call('stopProjection');feedback('Vídeo fechado (prévia e telão). Para fechar a janela do telão use “Fechar telão”.')}
 function youtubeEmbed(id,target){if(target==='ambientEmbed')stTakeover('ambient');const host=$(target);host.replaceChildren();const frame=document.createElement('iframe');frame.className='youtube-player';frame.src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0'+(target==='ambientEmbed'?'&autoplay=1&enablejsapi=1&origin='+encodeURIComponent(location.origin):'');frame.title='Reprodutor do YouTube';frame.allow='accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;fullscreen';frame.allowFullscreen=true;host.append(frame);if(target==='ambientEmbed'){frame.dataset.ys='';const hs=()=>{try{frame.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),'*')}catch(e){}};frame.addEventListener('load',()=>{hs();setTimeout(hs,800);setTimeout(hs,2500)})}}
 const selectedYouTube={testimony:null,ambient:null,offering:null,special:null};
-async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt');if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');await window.parent.prepareYoutubePreview(id);await window.parent.projectPreparedYoutube();window.__ytLive=true;feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
+async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt');if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');await window.parent.prepareYoutubePreview(id);await window.parent.projectPreparedYoutube();window.__ytLive=true;stYtCard(kind,id);feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
 function randomYouTube(){const ids=youtubeList('testimony');if(!ids.length){feedback('A biblioteca está temporariamente vazia.');return}let seen=[];try{seen=JSON.parse(localStorage.getItem('iasd-testimony-seen')||'[]')}catch{}let available=ids.filter(id=>!seen.includes(id));if(!available.length){seen=[];available=ids}const id=available[Math.floor(Math.random()*available.length)];seen.push(id);localStorage.setItem('iasd-testimony-seen',JSON.stringify(seen));const item=PROVAI_E_VEDE_LIBRARY.find(v=>v.id===id);$('testimonyChosen').textContent=(item?item.title+' · '+item.year:'Vídeo adicional')+' · '+(ids.length-seen.length)+' ainda não vistos nesta rodada';selectedYouTube.testimony=id;youtubeEmbed(id,'testimonyEmbed');feedback('Vídeo sorteado e pronto para dar play.')}
 function resetYouTubeHistory(){localStorage.removeItem('iasd-testimony-seen');feedback('Histórico do Provai e Vede reiniciado.')}
 function addAmbientExample(){const id='cDffo1ae83o',el=$('ambientLinks');if(!youtubeList('ambient').includes(id)){el.value+=(el.value.trim()?'\n':'')+'https://www.youtube.com/watch?v='+id;saveYouTubeList('ambient')}feedback('Pad de referência adicionado à seleção.')}

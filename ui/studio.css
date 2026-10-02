@@ -305,3 +305,10 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 .bb-find{display:flex;gap:8px;align-items:center}
 .bb-find input{flex:1;min-width:0}
 .bb-find button{flex:none;min-height:42px}
+
+/* cartão do YouTube no preview do telão */
+.yt-live-card{position:absolute;inset:0;z-index:4;display:grid;place-items:center;text-align:center;border-radius:inherit;overflow:hidden;background:linear-gradient(rgba(5,10,20,.72),rgba(5,10,20,.86)),var(--yt-bg) center/cover #050a10;color:#fff}
+.yt-live-card .yl-in{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;max-width:92%}
+.yl-badge{font-size:11px;font-weight:800;letter-spacing:1.4px;color:#ffd978;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.45);border:1px solid rgba(255,217,120,.4)}
+.yl-t{font-size:clamp(14px,2.2vw,22px);line-height:1.25;overflow-wrap:anywhere}.yt-live-card small{opacity:.75;font-size:12px}
+.yl-b{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}.yl-b button{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-size:13px;cursor:pointer}.yl-b button:hover{background:rgba(255,255,255,.22)}
