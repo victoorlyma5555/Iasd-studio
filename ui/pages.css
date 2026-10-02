@@ -569,3 +569,24 @@ body.iu .reader-verse.sel{outline:2px solid #f5b73a;outline-offset:2px;box-shado
 .bb-sharebtn[hidden]{display:none!important}
 
 .pg-biblia .bb-find{flex-wrap:wrap}.pg-biblia .bb-find label{flex:1 1 0}.bb-find2{flex:1 0 100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}.bb-find2 .pg-ghost{width:100%}
+
+/* Escalas: barra única em cima do calendário */
+.pg-escalas{gap:12px}
+.pg-escalas .es-areas{margin:0}
+.es-bar2{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.es-bar2a,.es-bar2b{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.es-bar2 .sq{width:42px;height:42px;padding:0;display:grid;place-items:center}
+.es-sl{display:inline-flex;margin:0}.es-sl select{height:42px;min-width:0;padding:0 28px 0 12px;font-weight:700}
+.es-sl.m select{min-width:118px}.es-sl.y select{min-width:84px}.es-sl.st select{min-width:106px}
+.es-wt{font-size:15px;padding:0 6px}
+.es-hj{height:42px}.es-ex{height:42px;display:inline-flex;align-items:center;gap:6px}
+.es-hint{color:var(--iu-mu,#9fb4cc);font-size:13px;margin:0 2px 10px}.es-hint b{color:var(--iu-tx)}
+.es-bar2 .es-seg{display:inline-flex}
+@media (max-width:620px){.es-bar2a{width:100%}.es-bar2a .es-sl.m{flex:1 1 auto}.es-bar2a .es-hj{margin-left:auto}.es-bar2b{width:100%}.es-bar2b .es-seg{flex:1 1 auto}.es-bar2b .es-seg button{flex:1}.es-bar2b .es-sl.st{flex:1 1 40%}.es-ex span{display:none}.es-ex{width:42px;justify-content:center;padding:0}}
+
+@media (max-width:620px){.es-bar2a .es-sl.m{flex:1 1 0;min-width:0}.es-bar2a .es-sl.m select{width:100%;min-width:0}.es-bar2a .es-sl.y select{min-width:0;width:84px}.es-bar2b .es-hj{flex:0 0 auto}.es-bar2b .es-sl.st{flex:1 1 0;min-width:0}.es-bar2b .es-sl.st select{width:100%;min-width:0}}
+.es-ex span{display:none}.es-ex{width:42px;justify-content:center;padding:0}
+.es-bar2b{flex-wrap:nowrap}.es-bar2a{flex-wrap:nowrap}
+@media (max-width:620px){.es-bar2a .es-sl.m{flex:1 1 0}.es-bar2a .es-sl.y{flex:.8 1 0;min-width:0}.es-bar2a .es-sl.y select{width:100%}.es-bar2b .es-sl.st select{min-width:0}.es-bar2b{gap:6px}.es-bar2b .es-seg button{padding:0 8px;font-size:13px}.es-sl select{padding:0 22px 0 10px}}
+@media (max-width:620px){.es-sl.m select,.es-sl.y select,.es-sl.st select{min-width:0!important;width:100%}.es-bar2a{flex-wrap:nowrap;width:100%}.es-bar2b{flex-wrap:wrap}.es-bar2b .es-sl.st{flex:1 1 38%}.es-bar2b .es-seg{flex:1 1 55%}}
+@media (max-width:620px){.es-sl select{font-size:14px;padding:0 20px 0 8px!important;text-overflow:clip}}

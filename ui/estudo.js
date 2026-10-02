@@ -617,29 +617,25 @@ function howl(id,o,m,R){
  const avg=sum/(o.fb.length-3),ratio=pk/Math.max(1,avg);
  o.hw=(pk>=210&&ratio>=4.2)?o.hw+1:Math.max(0,o.hw-2);
  if(o.hw>=5){o.hw=0;onHowl(id)}}
-/* Microfonia: 1) o som da outra pessoa abaixa por alguns segundos; 2) um dos dois (nunca os dois) recebe o pedido para desligar o microfone;
-   3) se o apito continua, o app desliga o microfone só desse aparelho. Quem fica sem microfone: o ouvinte antes do dirigente; entre iguais, decide o código. */
+/* Microfonia: o som da outra pessoa abaixa por alguns segundos e um dos dois recebe o pedido para falar por um celular só (o app nunca desliga microfone sozinho).
+   Quem recebe: o ouvinte antes do dirigente; entre iguais, decide o código. */
 function onHowl(id){
  const R=S.room,V=R&&R.voice;if(!R||!V)return;
  R.duck=R.duck||{};R.duck[id]=Date.now()+6000;applyAudio(id);setTimeout(()=>{if(S.room===R)applyAudio(id)},6200);
  const meOn=!!V.mic,xOn=!!(R.peers[id]&&R.peers[id].mic);if(!meOn&&!xOn)return;
  let victim;if(meOn&&!xOn)victim=R.me;else if(!meOn&&xOn)victim=id;else{
   const xh=!!(R.peers[id]&&R.peers[id].host);victim=(R.host&&!xh)?id:(!R.host&&xh)?R.me:(R.me>id?R.me:id)}
- const key=[R.me,id].sort().join('|');R.mf=R.mf||{};const st=R.mf[key]=R.mf[key]||{stage:0,at:0,last:0},now=Date.now();
- if(now-st.last>30000)st.stage=0;st.last=now;
- if(st.forced&&now-st.forced<90000)return; /* já desligamos um dos dois: nunca desligamos o segundo */
- if(now-st.at<4000)return;
- let stage;if(st.stage===0){stage=1;st.stage=1;st.at=now}else if(st.stage===1){if(now-st.at<7000)return;stage=2;st.stage=2;st.at=now;st.forced=now}else{stage=2;st.at=now;st.forced=now}
- if(victim===R.me)handleMf(stage,id);else send('mf',{to:victim,stage,from:R.me})}
+ const key=[R.me,id].sort().join('|');R.mf=R.mf||{};const st=R.mf[key]=R.mf[key]||{at:0},now=Date.now();
+ if(now-st.at<12000)return;st.at=now;
+ if(victim===R.me)handleMf(1,id);else send('mf',{to:victim,stage:1,from:R.me})}
 function handleMf(stage,fromId){
  const R=S.room,V=R&&R.voice;if(!R||!V)return;const nm=(R.peers[fromId]||{}).name||'outra pessoa';
- const old=$('es-mf');
- if(stage>=2){if(old)old.remove();if(V.mic){stopMic();toast('Desliguei o seu microfone para parar a microfonia com '+nm+'. O microfone dela continua ligado. Quando quiser, ligue de novo (de preferência com fone de ouvido).')}return}
- if(!V.mic||old)return;
+ if(!V.mic||$('es-mf'))return;
  const el=document.createElement('div');el.id='es-mf';el.className='es-mf';
- el.innerHTML='<b>⚠ Microfonia detectada</b><p>Entre você e '+esc(nm)+'. Para acabar com o apito, <u>um dos dois</u> precisa desligar o microfone. Desligue o seu — a outra pessoa continua ligada.</p><div><button class="es-mfb" data-a="off">Desligar meu microfone</button><button class="es-mfn" data-a="no">Agora não</button></div><small>Se o apito continuar, o app desliga o seu microfone sozinho.</small>';
+ el.innerHTML='<b>⚠ Microfonia detectada</b><p>Entre você e '+esc(nm)+'. Para acabar com o apito, falem por <u>um celular só</u>: desligue o microfone deste aparelho (ou do outro). Vocês continuam participando normalmente pelo celular que ficar ligado.</p><div><button class="es-mfb" data-a="off">Desligar meu microfone</button><button class="es-mfn" data-a="no">Continuar com os dois</button></div><small>O app nunca desliga o seu microfone sozinho.</small>';
  el.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a)return;el.remove();if(a==='off')stopMic()});
- document.body.appendChild(el);setTimeout(()=>{if(el.isConnected)el.remove()},12000)}
+ document.body.appendChild(el);setTimeout(()=>{if(el.isConnected)el.remove()},15000)}
+
 setInterval(()=>{const R=S.room,V=R&&R.voice;if(!V)return;Object.keys(V.an).forEach(id=>{const o=V.an[id];try{o.an.getByteTimeDomainData(o.buf)}catch(e){return}
  let m=0;for(let i=0;i<o.buf.length;i++){const d=Math.abs(o.buf[i]-128);if(d>m)m=d}const on=m>9&&!R.susp;
   if(id!=='me')howl(id,o,m,R);
