@@ -28,7 +28,7 @@ function limited(id){const now=Date.now(),list=(recent.get(id)||[]).filter(t=>no
 const clean=(value,max=120)=>String(value||'').replace(/[\u0000-\u001f]+/g,' ').trim().slice(0,max);
 async function callGemini(model,key,prompt,signal){
  return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},
-  body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.9,topP:0.95,maxOutputTokens:4096}})});
+  body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.9,topP:0.95,maxOutputTokens:6144}})});
 }
 module.exports=async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
@@ -46,11 +46,36 @@ module.exports=async function handler(req,res){
   if(limited(user.id))return res.status(429).json({error:'Você já gerou vários roteiros agora há pouco. Aguarde alguns minutos.'});
   const body=typeof req.body==='string'?JSON.parse(req.body):req.body||{};
   const tema=clean(body.tema,120),ocasiao=clean(body.ocasiao,70),estilo=clean(body.estilo,60),duracao=clean(body.duracao,30),referencia=clean(body.referencia,100),detalhes=clean(body.detalhes,400);
-  const pessoas=Number(body.pessoas);
+  const pessoas=Number(body.pessoas),peca=body.tipo==='peca';
   if(!tema||!Number.isInteger(pessoas)||pessoas<2||pessoas>30)return res.status(400).json({error:'Informe um tema e entre 2 e 30 participantes.'});
   const nomes=(Array.isArray(body.nomes)?body.nomes:[]).map(n=>clean(n,30).replace(/[:\[\]]/g,'')).filter(Boolean).slice(0,pessoas);
-  const papeis=Array.from({length:pessoas},(_,i)=>(nomes[i]||('PARTICIPANTE '+(i+1))).toUpperCase());
-  const prompt=`Você escreve jograis para igrejas cristãs adventistas. Crie um jogral ORIGINAL em português brasileiro, pronto para ensaiar.
+  const papeis=Array.from({length:pessoas},(_,i)=>(nomes[i]||((peca?'PERSONAGEM ':'PARTICIPANTE ')+(i+1))).toUpperCase());
+  const promptPeca=`Você escreve peças teatrais curtas para igrejas cristãs adventistas. Crie uma PEÇA ORIGINAL em português brasileiro, pronta para ensaiar e fácil de montar numa igreja (poucos recursos).
+
+DADOS
+- Tema: ${tema}
+- Ocasião: ${ocasiao||'culto'}
+- Duração aproximada: ${duracao||'8 minutos'}
+- Estilo: ${estilo||'Drama'}
+- História ou passagem bíblica de base: ${referencia||'escolha uma história bíblica pertinente'}
+- Atores (${pessoas}); personagens, use estes rótulos para quem fala: ${papeis.join(', ')} (você pode criar um NARRADOR se ajudar, e TODOS para falas em coro)${detalhes?'\n- Observações do organizador: '+detalhes:''}
+
+FORMATO OBRIGATÓRIO (texto simples, sem markdown, sem asteriscos)
+1ª linha: PEÇA — TÍTULO EM MAIÚSCULAS
+2ª linha: ocasião, duração e número de atores
+Depois uma linha em branco, a linha PERSONAGENS e uma linha por personagem no formato: • NOME — descrição curta (idade aproximada, papel)
+Depois o roteiro dividido em cenas. Cada cena começa em uma linha sozinha: [CENA 1 — local e situação]
+Instruções de cena e de cenário ficam sozinhas em uma linha entre colchetes.
+Cada fala em uma linha: RÓTULO: (ação ou emoção opcional) fala
+Termine com uma linha [FIGURINO E OBJETOS: ...] listando o que precisa ser providenciado.
+
+REGRAS
+- Todos os atores falam; distribua bem as falas. Use de 2 a 4 cenas conforme a duração.
+- Diálogos naturais e curtos; conflito claro, virada e desfecho com esperança.
+- Não escreva versículos completos nem invente citações: cite só a referência e indique entre colchetes que o texto deve ser lido da Bíblia e conferido antes.
+- Fiel ao ensino bíblico, sem doutrinas não pedidas e sem citar autores.
+- Responda somente com a peça, sem introdução e sem comentários finais.`;
+  const prompt=peca?promptPeca:`Você escreve jograis para igrejas cristãs adventistas. Crie um jogral ORIGINAL em português brasileiro, pronto para ensaiar.
 
 DADOS
 - Tema: ${tema}
