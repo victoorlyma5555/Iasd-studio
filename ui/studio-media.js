@@ -170,7 +170,13 @@ window.searchSpecialYouTube=async function(){
  catch(e){st.textContent=e.message}
  renderSpResults();
 };
-function renderSpResults(){const box=$('specialSearchResults');if(!box)return;box.replaceChildren();spResults.forEach(it=>box.append(vrow('special',it,{save:true})));resize()}
+/* botão "Fechar resultados": libera a tela para colar um link ou escolher outra coisa */
+function closeBtn(box,statusId,onClose){let b=box.previousElementSibling&&box.previousElementSibling.classList&&box.previousElementSibling.classList.contains('res-close')?box.previousElementSibling:null;const has=box.children.length>0;
+ if(!has){if(b)b.remove();return}
+ if(!b){b=h('button','mp-btn res-close');b.type='button';b.textContent='✕ Fechar resultados';b.style.cssText='margin:6px 0;align-self:flex-start';b.onclick=()=>{onClose();const st=$(statusId);if(st)st.textContent=''};box.parentNode.insertBefore(b,box)}}
+function closeSpResults(){spResults=[];renderSpResults()}
+function renderSpResults(){const box=$('specialSearchResults');if(!box)return;box.replaceChildren();spResults.forEach(it=>box.append(vrow('special',it,{save:true})));closeBtn(box,'specialSearchStatus',closeSpResults);resize()}
+(function(){const i=$('specialSearch');if(i)i.addEventListener('search',()=>{if(!i.value.trim()){closeSpResults();const st=$('specialSearchStatus');if(st)st.textContent=''}})})();
 function renderSpGallery(){
  const box=$('specialGalList');if(!box)return;box.replaceChildren();const q=($('specialGalQ').value||'').trim().toLowerCase();
  const items=lib('special').filter(x=>!q||titleOf(x.id,x.title).toLowerCase().includes(q));
@@ -237,7 +243,9 @@ window.tsYtSearch=async function(){
  try{tsRes=await ytSearch(q);st.textContent=tsRes.length?tsRes.length+' resultado(s).':'Nenhum vídeo encontrado.'}catch(e){st.textContent=e.message}
  renderTsRes();
 };
-function renderTsRes(){const box=$('tsYtRes');if(!box)return;box.replaceChildren();tsRes.forEach(it=>box.append(vrow('testimony',it,{save:true})));resize()}
+function closeTsRes(){tsRes=[];renderTsRes()}
+function renderTsRes(){const box=$('tsYtRes');if(!box)return;box.replaceChildren();tsRes.forEach(it=>box.append(vrow('testimony',it,{save:true})));closeBtn(box,'tsYtStatus',closeTsRes);resize()}
+(function(){const i=$('tsYtQ');if(i)i.addEventListener('search',()=>{if(!i.value.trim()){closeTsRes();const st=$('tsYtStatus');if(st)st.textContent=''}})})();
 window.tsAddUrl=function(now){const id=youtubeId($('tsUrl').value||'');if(!id){toast('Cole um link válido do YouTube.');return}ensureTitle(id);if(now)select('testimony',id);else qadd('testimony',id);$('tsUrl').value=''};
 window.tsLocal=function(){const v=$('testimonyPlayer');if(v){v.hidden=false}$('tsLocalAct').hidden=false;syncGrow();resize()};
 /* “Gerenciar vídeos adicionais” e “Importar vídeo” antigos agora vivem na aba Biblioteca */
