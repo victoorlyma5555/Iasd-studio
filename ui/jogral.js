@@ -20,6 +20,7 @@ const IC={
  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
  x:'<path d="M6 6l12 12M18 6L6 18"/>',
  left:'<path d="M15 5l-7 7 7 7"/>',right:'<path d="M9 5l7 7-7 7"/>',
+ wa:'<path d="M4 20l1.2-4.1A8 8 0 1 1 8.2 19z"/><path d="M9 9c0 3 3 6 6 6l1-1.5-2-1-1 .8c-.8-.4-1.6-1.2-2-2l.8-1-1-2z"/>',
  info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>'
 };
 const I=(n,s)=>'<svg width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';
@@ -86,7 +87,7 @@ function outHTML(){
  return '<section class="pg-card jg-out"><div class="pg-head"><h2 class="pg-h">'+I('doc',22)+'Seu jogral</h2><div class="jg-tabs" role="tablist"><button type="button" role="tab" class="'+(J.view==='roteiro'?'on':'')+'" onclick="IASDJogral.view(\'roteiro\')">Roteiro</button><button type="button" role="tab" class="'+(J.view==='editar'?'on':'')+'" onclick="IASDJogral.view(\'editar\')">Editar texto</button></div></div>'+
  (has?'<p class="jg-stats">'+esc(stats(J.text))+'</p>':'')+
  (J.view==='editar'?'<textarea id="jg-text" class="jg-edit" aria-label="Texto do jogral" spellcheck="true" oninput="IASDJogral.text(this.value)" placeholder="Escreva ou cole seu roteiro. Use RÓTULO: fala para cada participante e [instruções] entre colchetes.">'+esc(J.text)+'</textarea>':scriptHTML(J.text))+
- '<div class="jg-acts"><button type="button" class="pg-blue" onclick="IASDJogral.ensaio()"'+(has?'':' disabled')+'>'+I('play',16)+'Ensaiar</button><button type="button" class="pg-ghost" onclick="IASDJogral.salvar()"'+(has?'':' disabled')+'>'+I('save',16)+'Salvar</button><button type="button" class="pg-ghost" onclick="IASDJogral.copiar()"'+(has?'':' disabled')+'>'+I('copy',16)+'Copiar</button><button type="button" class="pg-ghost" onclick="IASDJogral.imprimir()"'+(has?'':' disabled')+'>'+I('print',16)+'Imprimir / PDF</button></div>'+
+ '<div class="jg-acts"><button type="button" class="pg-blue" onclick="IASDJogral.ensaio()"'+(has?'':' disabled')+'>'+I('play',16)+'Ensaiar</button><button type="button" class="pg-ghost" onclick="IASDJogral.salvar()"'+(has?'':' disabled')+'>'+I('save',16)+'Salvar</button><button type="button" class="pg-ghost" onclick="IASDJogral.copiar()"'+(has?'':' disabled')+'>'+I('copy',16)+'Copiar</button><button type="button" class="pg-ghost" onclick="IASDJogral.imprimir()"'+(has?'':' disabled')+'>'+I('print',16)+'Imprimir / PDF</button><button type="button" class="pg-ghost jg-wa" onclick="IASDJogral.whatsapp()"'+(has?'':' disabled')+'>'+I('wa',16)+'WhatsApp</button></div>'+
  '<p id="jg-msg" class="jg-msg '+esc(J.msgKind)+'" role="status">'+esc(J.msg)+'</p></section>'}
 function savedHTML(){
  if(!saved.length)return '';
@@ -133,6 +134,17 @@ function salvar(){
 function abrir(i){const s=saved[i];if(!s)return;J.text=s.text;J.id=s.id;J.view='roteiro';redraw();say('“'+s.title+'” aberto.','ok');const o=document.querySelector('.jg-out');if(o&&o.scrollIntoView)o.scrollIntoView({behavior:'smooth',block:'start'})}
 async function apagar(i){const s=saved[i];if(!s)return;const ok=window.IASDDialog&&IASDDialog.confirm?await IASDDialog.confirm('Apagar “'+s.title+'”?'):confirm('Apagar “'+s.title+'”?');if(!ok)return;saved.splice(i,1);persist();if(J.id===s.id)J.id=null;redraw()}
 async function copiar(){try{await navigator.clipboard.writeText(J.text);say('Roteiro copiado.','ok')}catch(e){say('Não foi possível copiar. Selecione o texto na aba “Editar texto”.','err')}}
+function waText(){
+ return parse(J.text).map(r=>r.k==='gap'?'':r.k==='title'?'*JOGRAL — '+r.t+'*':r.k==='meta'?'_'+r.t+'_':r.k==='dir'?'_['+r.t+']_':r.k==='say'?'*'+r.who+(r.how?' ('+r.how+')':'')+':* '+r.t:r.t).join('\n').replace(/\n{3,}/g,'\n\n').trim()+'\n\n_Criado no IASD APP · Palavra em Cena_'}
+async function whatsapp(){
+ if(!J.text.trim())return;
+ const full=waText();
+ try{if(navigator.share&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){await navigator.share({text:full});say('Compartilhado.','ok');return}}catch(e){if(e&&e.name==='AbortError')return}
+ let t=full,cut=false;
+ while(encodeURIComponent(t).length>6500){t=t.slice(0,Math.floor(t.length*0.9));cut=true}
+ if(cut){t=t.replace(/\n[^\n]*$/,'')+'\n…(roteiro cortado; o completo está no IASD APP)';try{await navigator.clipboard.writeText(full)}catch(e){}}
+ const w=window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener');
+ say(w?(cut?'WhatsApp aberto. O roteiro era longo: o texto completo foi copiado, cole na conversa para enviar inteiro.':'WhatsApp aberto. Escolha a conversa para enviar.'):'Permita abrir janelas neste navegador para compartilhar no WhatsApp.',w?'ok':'warn')}
 function imprimir(){
  if(!J.text.trim())return;const w=window.open('','_blank');if(!w){say('Permita a janela de impressão neste navegador.','warn');return}
  const rows=parse(J.text).map(r=>r.k==='gap'?'<div class="g"></div>':r.k==='title'?'<h1>'+esc(r.t)+'</h1>':r.k==='meta'?'<p class="m">'+esc(r.t)+'</p>':r.k==='dir'?'<p class="d">['+esc(r.t)+']</p>':r.k==='say'?'<p class="s"><b>'+esc(r.who)+(r.how?' <i>('+esc(r.how)+')</i>':'')+'</b>'+esc(r.t)+'</p>':'<p>'+esc(r.t)+'</p>').join('');
@@ -141,7 +153,7 @@ function imprimir(){
 /* ---------- modo ensaio (tela cheia) ---------- */
 let P=null;
 function ensaio(){
- const steps=parse(J.text).filter(r=>r.k==='say'||r.k==='dir'||r.k==='title');if(!steps.length)return;
+ let steps=parse(J.text).filter(r=>r.k==='say');if(!steps.length)steps=parse(J.text).filter(r=>r.k==='txt').map(r=>({k:'say',who:'',how:'',t:r.t}));if(!steps.length){say('Não há falas no formato NOME: fala para ensaiar.','warn');return}
  P={steps,i:0};const o=document.createElement('div');o.id='jg-play';o.className='jg-play';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');document.body.append(o);document.body.classList.add('jg-lock');paintPlay();
  o.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b){const a=b.dataset.a;if(a==='x')closePlay();else step(a==='n'?1:-1);return}const r=o.getBoundingClientRect();if(e.target.closest('.jg-pbar'))return;step(e.clientX>r.left+r.width*.3?1:-1)});
  document.addEventListener('keydown',keys)}
@@ -152,11 +164,11 @@ function paintPlay(){
  const o=document.getElementById('jg-play');if(!o||!P)return;const s=P.steps[P.i],n=P.steps.length;
  const nxt=P.steps.slice(P.i+1).find(x=>x.k==='say');
  let main;
- if(s.k==='say'){const all=/^TODOS\b/.test(s.who);main='<div class="jg-pwho'+(all?' all':'')+'" style="--h:'+hue(s.who)+'">'+(all?'✦ ':'')+esc(s.who)+(s.how?' <small>'+esc(s.how)+'</small>':'')+'</div><p class="jg-ptxt">'+esc(s.t)+'</p>'}
+ if(s.k==='say'){const all=/^TODOS\b/.test(s.who);main=(s.who?'<div class="jg-pwho'+(all?' all':'')+'" style="--h:'+hue(s.who)+'">'+(all?'✦ ':'')+esc(s.who)+(s.how?' <small>'+esc(s.how)+'</small>':'')+'</div>':'')+'<p class="jg-ptxt">'+esc(s.t)+'</p>'}
  else if(s.k==='dir')main='<p class="jg-pdir">'+esc(s.t)+'</p>';
  else main='<p class="jg-ptitle">'+esc(s.t)+'</p>';
- o.innerHTML='<div class="jg-ptop"><span>'+(P.i+1)+' / '+n+'</span><button type="button" data-a="x" aria-label="Fechar">'+I('x',22)+'</button></div><div class="jg-pmain">'+main+'</div>'+(nxt&&s.k==='say'?'<div class="jg-pnext">Próxima: <b>'+esc(nxt.who)+'</b></div>':'')+'<div class="jg-pbar"><button type="button" data-a="p" aria-label="Anterior"'+(P.i?'':' disabled')+'>'+I('left',26)+'</button><div class="jg-prog"><i style="width:'+Math.round((P.i+1)/n*100)+'%"></i></div><button type="button" data-a="n" aria-label="Próxima"'+(P.i<n-1?'':' disabled')+'>'+I('right',26)+'</button></div>'}
-window.IASDJogral={page,gerar,modelo,salvar,abrir,apagar,copiar,imprimir,ensaio,
+ o.innerHTML='<div class="jg-ptop"><span>'+(P.i+1)+' / '+n+'</span><button type="button" data-a="x" aria-label="Fechar">'+I('x',22)+'</button></div><div class="jg-pmain">'+main+'</div>'+(nxt&&nxt.who?'<div class="jg-pnext">Próxima: <b>'+esc(nxt.who)+'</b></div>':'')+'<div class="jg-pbar"><button type="button" data-a="p" aria-label="Anterior"'+(P.i?'':' disabled')+'>'+I('left',26)+'</button><div class="jg-prog"><i style="width:'+Math.round((P.i+1)/n*100)+'%"></i></div><button type="button" data-a="n" aria-label="Próxima"'+(P.i<n-1?'':' disabled')+'>'+I('right',26)+'</button></div>'}
+window.IASDJogral={page,gerar,modelo,salvar,abrir,apagar,copiar,imprimir,ensaio,whatsapp,
  set(k,v){J[k]=v;if(k==='nomes'){const s=document.querySelector('.jg-more summary i');}},
  tema(i){J.tema=TEMAS[i];redraw()},ocasiao(i){J.ocasiao=i;redraw()},estilo(i){J.estilo=i;redraw()},dur(i){J.dur=i;redraw()},
  n(d){J.n=Math.max(2,Math.min(30,J.n+d));const o=document.getElementById('jg-n');if(o)o.textContent=J.n},

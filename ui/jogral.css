@@ -73,3 +73,5 @@ body.jg-lock{overflow:hidden}
 .jg-seg{min-width:0}.jg-seg button{min-width:0;padding:0 3px;font-size:12.5px}
 .jg-chips.sm{gap:6px}
 @media (max-width:640px){.pg-jogral .jg-out{scroll-margin-top:72px}.jg-out{scroll-margin-top:72px}.jg-chip{height:42px}.jg-seg,.jg-step{height:48px}.jg-step button{width:52px;height:48px}.jg-seg button{font-size:12px}.jg-acts .pg-blue,.jg-acts .pg-ghost{height:46px}}
+
+.jg-wa{color:#4ade80;border-color:rgba(74,222,128,.45)}.jg-wa:hover{border-color:#4ade80!important}
