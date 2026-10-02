@@ -196,7 +196,7 @@ async function alRenderPush(){const box=document.getElementById('al-push');if(!b
 window.alRenderPush=alRenderPush;
 
 /* convite para ativar notificações: o navegador só pede permissão depois de um toque, então mostramos uma barra com botão */
-function pushInvite(){try{if(!cloudUser||!hasAssignedRole()||document.getElementById('push-invite'))return;if(pushState()!=='off')return;
+function pushInvite(){try{if(!isMobileDevice()||!cloudUser||!hasAssignedRole()||document.getElementById('push-invite'))return;if(pushState()!=='off')return;
  if(Date.now()-(+localStorage.getItem('iasd-push-later')||0)<7*864e5)return;
  const b=document.createElement('div');b.id='push-invite';b.setAttribute('role','dialog');
  b.style.cssText='position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:99998;max-width:460px;margin:0 auto;padding:14px 16px;border-radius:16px;color:#f6f9ff;background:linear-gradient(160deg,#16305a,#0b1730);border:1px solid rgba(244,216,138,.45);box-shadow:0 12px 40px rgba(0,0,0,.45);font:inherit';
