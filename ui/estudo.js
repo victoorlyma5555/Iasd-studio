@@ -368,6 +368,7 @@ async function startRoom(code,host,opts){
  ch.on('broadcast',{event:'rev'},({payload})=>{R.rev[payload.bid]=payload.on;FX('stage',payload);paintReveals()});
  ch.on('broadcast',{event:'gr'},({payload})=>{if(payload.to!==me)return;S.verdict[payload.bid]={r:payload.r,msg:payload.msg};const L=lessonSrc();markMe(L&&L.li!=null?L.li:S.li,payload.bid,payload.r);paintSend(payload.bid)});
  ch.on('broadcast',{event:'ans'},({payload})=>{if(R.host)gradeIncoming(payload);(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};FX('ans',payload);paintReveals()});
+ ch.on('broadcast',{event:'mf'},({payload})=>{if(payload.to===me)handleMf(payload.stage,payload.from)});
  ch.on('broadcast',{event:'exp'},({payload})=>{if(!R.host)showExp(payload)});
  ch.on('broadcast',{event:'vo'},async({payload})=>{if(R.host||!R.follow)return;if(!!S.openV[payload.key]!==!!payload.open)await toggleVerse(payload.key,payload.ref,true)});
  ['chs','cha','chr','chx','hl','brk','call','mute','end'].forEach(ev=>ch.on('broadcast',{event:ev},({payload})=>FX(ev,payload)));
@@ -554,7 +555,7 @@ async function toggleMic(){
  const t=st.getAudioTracks()[0];V.aTrack=t;V.mic=true;t.onended=()=>{if(V.aTrack===t)stopMic()};
  Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(t).catch(()=>{}));syncVoicePeers();
  actx();watchLevel('me',new MediaStream([t]));
- toast('Microfone ligado. Se houver outra pessoa no mesmo ambiente, usem fones de ouvido.');track();paintBar();paintDock();refreshLobby();
+ toast('Microfone ligado. Se houver outra pessoa no mesmo ambiente, use fone de ouvido para evitar microfonia.');track();paintBar();paintDock();refreshLobby();
 }
 function stopMic(){
  const V=S.room&&S.room.voice;if(!V||!V.mic)return;V.mic=false;const t=V.aTrack;V.aTrack=null;
@@ -585,18 +586,17 @@ function attachAudio(id){const R=S.room,V=R&&R.voice;if(!V)return;const ms=V.til
  let a=V.aud[id];if(!a){a=V.aud[id]=document.createElement('audio');a.autoplay=true;a.setAttribute('playsinline','');a.dataset.p=id;audBox().appendChild(a)}
  if(a.srcObject!==ms)a.srcObject=ms;applyAudio(id);watchLevel(id,ms)}
 function applyAudio(id){const R=S.room,V=R&&R.voice;if(!V)return;
- (id?[id]:Object.keys(V.aud)).forEach(i=>{const a=V.aud[i];if(!a)return;a.muted=!!(R.vmute[i]||R.susp);a.volume=1;
+ (id?[id]:Object.keys(V.aud)).forEach(i=>{const a=V.aud[i];if(!a)return;a.muted=!!(R.vmute[i]||R.susp);a.volume=(R.duck&&R.duck[i]>Date.now())?.15:((R.near&&R.near[i])?.5:1);
   const p=a.play();if(p&&p.catch)p.catch(()=>{if(!R.needTap){R.needTap=true;toast('Toque na tela para ativar o som da sala.')}})})}
 function dropAudio(id){const V=S.room&&S.room.voice;if(!V)return;const a=V.aud[id];if(a){try{a.pause();a.srcObject=null;a.remove()}catch(e){}delete V.aud[id]}dropLevel(id)}
 function watchLevel(id,ms){const V=S.room&&S.room.voice;if(!V)return;const n=ms.getAudioTracks().length;const old=V.an[id];if(old&&old.ms===ms&&old.n===n)return;
  const c=actx();if(!c||!n)return;dropLevel(id);
  try{const src=c.createMediaStreamSource(ms),an=c.createAnalyser();an.fftSize=512;an.smoothingTimeConstant=.3;src.connect(an);V.an[id]={ms,src,an,n,buf:new Uint8Array(an.fftSize),fb:new Uint8Array(an.frequencyBinCount),hw:0,on:false}}catch(e){}}
 function dropLevel(id){const V=S.room&&S.room.voice;if(!V||!V.an[id])return;try{V.an[id].src.disconnect()}catch(e){}delete V.an[id];document.querySelectorAll('.es-tile[data-t="'+id+'"]').forEach(el=>el.classList.remove('talk'))}
-/* Mesmo ambiente: conexão direta pela mesma rede (candidatos 'host' dos dois lados) = as duas pessoas quase certamente estão juntas e já se ouvem ao vivo.
-   Cada aparelho deixa de tocar a voz do outro (só dessa pessoa — todo o resto da sala continua normal): é isso que quebra o ciclo alto-falante → microfone.
-   Quem tocar em 🔈 para ouvir fica com a escolha dele (não mexemos mais). */
+/* Mesmo ambiente: conexão direta pela mesma rede (candidatos 'host' dos dois lados). Os dois microfones continuam ligados;
+   só baixamos o volume com que cada aparelho toca a voz do outro, o que reduz o ganho do ciclo alto-falante → microfone. */
 async function colocScan(){
- const R=S.room,V=R&&R.voice;if(!V)return;
+ const R=S.room,V=R&&R.voice;if(!V)return;R.near=R.near||{};
  for(const id of Object.keys(V.pcs)){
   const pc=V.pcs[id];if(!pc||pc.connectionState!=='connected')continue;
   try{const st=await pc.getStats();let pair=null,pid=null;
@@ -604,23 +604,42 @@ async function colocScan(){
    if(pid)pair=st.get(pid);if(!pair)st.forEach(r=>{if(r.type==='candidate-pair'&&(r.selected||(r.nominated&&r.state==='succeeded')))pair=r});
    if(!pair)continue;const l=st.get(pair.localCandidateId),m=st.get(pair.remoteCandidateId);
    const near=!!(l&&m&&l.candidateType==='host'&&m.candidateType==='host');
-   R.vauto=R.vauto||{};R.vman=R.vman||{};
-   if(near&&!R.vauto[id]&&!R.vman[id]){R.vauto[id]=true;R.vmute[id]=true;applyAudio(id);paintDock();paintBar();
-    toast('Você e '+((R.peers[id]||{}).name||'outra pessoa')+' estão no mesmo ambiente. Silenciei só o som dela aqui, para não dar microfonia — vocês se ouvem ao vivo e os dois seguem falando e ouvindo o resto da sala. Se estiverem em cômodos diferentes, toque em 🔈 ao lado do nome.')}
-   else if(!near&&R.vauto[id]&&!R.vman[id]){delete R.vauto[id];R.vmute[id]=false;applyAudio(id);paintDock();paintBar()}
+   if(near!==!!R.near[id]){R.near[id]=near;applyAudio(id)}
   }catch(e){}
  }}
 setInterval(()=>{if(S.room&&S.room.voice)colocScan()},2500);
 /* Microfonia (apito) entre aparelhos no mesmo ambiente: o cancelamento de eco do navegador só vale para o próprio aparelho.
    Se um tom forte e contínuo aparece no som de alguém, silenciamos o som dessa pessoa neste aparelho para quebrar o ciclo. */
 function howl(id,o,m,R){
- if(R.vmute[id]||m<40){o.hw=0;return}
+ if(m<40){o.hw=0;return}
  try{o.an.getByteFrequencyData(o.fb)}catch(e){return}
- let pk=0,pi=0,sum=0;for(let i=3;i<o.fb.length;i++){const v=o.fb[i];sum+=v;if(v>pk){pk=v;pi=i}}
+ let pk=0,sum=0;for(let i=3;i<o.fb.length;i++){const v=o.fb[i];sum+=v;if(v>pk)pk=v}
  const avg=sum/(o.fb.length-3),ratio=pk/Math.max(1,avg);
  o.hw=(pk>=210&&ratio>=4.2)?o.hw+1:Math.max(0,o.hw-2);
- if(o.hw>=5){o.hw=0;R.vmute[id]=true;applyAudio(id);paintDock();const nm=(R.peers[id]||{}).name||'essa pessoa';
-  toast('Detectei microfonia (apito). Silenciei o som de '+nm+' neste aparelho. Para voltar, use o botão de som dela. Use fones de ouvido quando estiverem no mesmo ambiente.')}}
+ if(o.hw>=5){o.hw=0;onHowl(id)}}
+/* Microfonia: 1) o som da outra pessoa abaixa por alguns segundos; 2) um dos dois (nunca os dois) recebe o pedido para desligar o microfone;
+   3) se o apito continua, o app desliga o microfone só desse aparelho. Quem fica sem microfone: o ouvinte antes do dirigente; entre iguais, decide o código. */
+function onHowl(id){
+ const R=S.room,V=R&&R.voice;if(!R||!V)return;
+ R.duck=R.duck||{};R.duck[id]=Date.now()+6000;applyAudio(id);setTimeout(()=>{if(S.room===R)applyAudio(id)},6200);
+ const meOn=!!V.mic,xOn=!!(R.peers[id]&&R.peers[id].mic);if(!meOn&&!xOn)return;
+ let victim;if(meOn&&!xOn)victim=R.me;else if(!meOn&&xOn)victim=id;else{
+  const xh=!!(R.peers[id]&&R.peers[id].host);victim=(R.host&&!xh)?id:(!R.host&&xh)?R.me:(R.me>id?R.me:id)}
+ const key=[R.me,id].sort().join('|');R.mf=R.mf||{};const st=R.mf[key]=R.mf[key]||{stage:0,at:0,last:0},now=Date.now();
+ if(now-st.last>30000)st.stage=0;st.last=now;
+ if(st.forced&&now-st.forced<90000)return; /* já desligamos um dos dois: nunca desligamos o segundo */
+ if(now-st.at<4000)return;
+ let stage;if(st.stage===0){stage=1;st.stage=1;st.at=now}else if(st.stage===1){if(now-st.at<7000)return;stage=2;st.stage=2;st.at=now;st.forced=now}else{stage=2;st.at=now;st.forced=now}
+ if(victim===R.me)handleMf(stage,id);else send('mf',{to:victim,stage,from:R.me})}
+function handleMf(stage,fromId){
+ const R=S.room,V=R&&R.voice;if(!R||!V)return;const nm=(R.peers[fromId]||{}).name||'outra pessoa';
+ const old=$('es-mf');
+ if(stage>=2){if(old)old.remove();if(V.mic){stopMic();toast('Desliguei o seu microfone para parar a microfonia com '+nm+'. O microfone dela continua ligado. Quando quiser, ligue de novo (de preferência com fone de ouvido).')}return}
+ if(!V.mic||old)return;
+ const el=document.createElement('div');el.id='es-mf';el.className='es-mf';
+ el.innerHTML='<b>⚠ Microfonia detectada</b><p>Entre você e '+esc(nm)+'. Para acabar com o apito, <u>um dos dois</u> precisa desligar o microfone. Desligue o seu — a outra pessoa continua ligada.</p><div><button class="es-mfb" data-a="off">Desligar meu microfone</button><button class="es-mfn" data-a="no">Agora não</button></div><small>Se o apito continuar, o app desliga o seu microfone sozinho.</small>';
+ el.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a)return;el.remove();if(a==='off')stopMic()});
+ document.body.appendChild(el);setTimeout(()=>{if(el.isConnected)el.remove()},12000)}
 setInterval(()=>{const R=S.room,V=R&&R.voice;if(!V)return;Object.keys(V.an).forEach(id=>{const o=V.an[id];try{o.an.getByteTimeDomainData(o.buf)}catch(e){return}
  let m=0;for(let i=0;i<o.buf.length;i++){const d=Math.abs(o.buf[i]-128);if(d>m)m=d}const on=m>9&&!R.susp;
   if(id!=='me')howl(id,o,m,R);
@@ -831,6 +850,6 @@ async function importFile(inp){
  c.lessons=out;if(j.description)c.description=String(j.description).slice(0,400);
  saveCourse(true);S.edit=false;paint();toast('Importado: '+out.length+' lições.')}
 
-window.IASDEstudo={sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
+window.IASDEstudo={onHowl,sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
 window.IASDEstudoCore={stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
 })();

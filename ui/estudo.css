@@ -437,3 +437,7 @@ html[data-theme="light"] .es-expc h4{color:#a8690a}
 .es-bar .es-bt.es-mic.off:after{display:none}
 .es-bar .es-pill{flex-direction:column;gap:0;justify-content:center;height:52px;border-radius:14px}
 .es-bar .es-pill b{font-size:12px;letter-spacing:.08em;line-height:1.1}.es-bar .es-pill span{font-size:11px;line-height:1.1}
+
+.es-mf{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:100001;max-width:460px;margin:0 auto;padding:14px 16px;border-radius:18px;background:#7a1d22;color:#fff;box-shadow:0 18px 50px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25)}
+.es-mf b{font-size:16px}.es-mf p{margin:6px 0 10px;line-height:1.45;font-size:14.5px}.es-mf small{display:block;margin-top:8px;opacity:.8}
+.es-mf div{display:flex;gap:8px;flex-wrap:wrap}.es-mfb{border:0;border-radius:999px;padding:11px 18px;background:#fff;color:#7a1d22;font:inherit;font-weight:800;cursor:pointer}.es-mfn{border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:11px 16px;background:transparent;color:#fff;font:inherit;cursor:pointer}
