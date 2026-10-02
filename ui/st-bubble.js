@@ -87,7 +87,7 @@ function build(){if(root)return;css();root=document.createElement('div');root.id
  addEventListener('resize',()=>{const p=pos();place(p.x,p.y)});
  const p=pos();place(p.x,p.y);setBadge()}
 function destroy(){if(!root)return;root.remove();root=btn=panel=badge=null;open=false}
-function sync(){const ok=typeof canUseSound==='function'&&typeof cloudUser!=='undefined'&&!!cloudUser&&canUseSound();if(ok)build();else destroy()}
+function sync(){const ok=!(window.isMobileDevice&&isMobileDevice())&&typeof canUseSound==='function'&&typeof cloudUser!=='undefined'&&!!cloudUser&&canUseSound();if(ok)build();else destroy()}
 
 /* avisos: alerta novo (para mim) ou resposta chegando */
 addEventListener('iasd-alert-new',e=>{try{const d=e.detail||{};const t=window.alertTargetOf&&alertTargetOf(d);if(t&&typeof cloudUser!=='undefined'&&cloudUser&&t.uid!==cloudUser.id)return}catch(x){}
