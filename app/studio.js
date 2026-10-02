@@ -221,7 +221,7 @@ cfLoadRelease();
 function mirrorProjection(content){const label=$('liveLabel');if(label){const live=!!content&&!!localStorage.getItem('iasd-projetor-token');label.classList.toggle('is-live',live);$('liveLabelText').textContent=live?'AO VIVO · NO TELÃO':'NO TELÃO AGORA'}const frame=$('live');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'iasd-project',content:window.IASDTr?IASDTr.wire(content):content},location.origin)}
 function stThemed(c){
  if(typeof c!=='string')return c;
- for(const pre of ['IASD_BIBLE:','IASD_DRAW_READY:','IASD_DRAW_ANIM:']){if(c.startsWith(pre)){try{const d=JSON.parse(c.slice(pre.length));d.theme=tmTheme;if(pre==='IASD_BIBLE:')d.bt=window.btCur?btCur():'';return pre+JSON.stringify(d)}catch(e){}return c}}
+ for(const pre of ['IASD_BIBLE:','IASD_DRAW_READY:','IASD_DRAW_ANIM:']){if(c.startsWith(pre)){try{const d=JSON.parse(c.slice(pre.length));d.theme=tmTheme;if(pre==='IASD_BIBLE:'){d.bt=window.btCur?btCur():'';d.pt=window.btPage&&btPage()?1:0}return pre+JSON.stringify(d)}catch(e){}return c}}
  if(c.startsWith('IASD_DRAW:'))return 'IASD_DRAW:'+c.slice(10).split('|')[0]+'|'+tmTheme;
  return c}
 function project(content){const orig=content;content=stThemed(content);call('project',content);try{localStorage.setItem('iasd-black',content===''?'1':'0')}catch(e){}mirrorProjection(content);stRenderNow();feedback(content===''?'Tela preta enviada ao telão.':'Conteúdo enviado.');if(nextContent===orig)clearPrepared()}

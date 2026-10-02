@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IASD APP · Tela de projeção</title><link rel="stylesheet" href="/shared/bible-templates.css?v=2"><style>
+<title>IASD APP · Tela de projeção</title><link rel="stylesheet" href="/shared/bible-templates.css?v=2"><script src="/shared/page-turn.js?v=2"></script><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
 body{display:grid;place-items:center;font-family:Inter,system-ui,Arial,sans-serif}
 #out{width:100%;height:100%;display:grid;place-items:center;padding:4vw;text-align:center;font-size:clamp(28px,4.8vw,88px);line-height:1.25;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -254,6 +254,8 @@ function show(value){
  const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(t);
  if(m){const pt=parseTr(m[1]);if(pt)curTr=Object.assign(pt,{ms:Math.min(2000,+m[2])});t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
+ /* Bíblia: ao trocar de versículo, a página vira (só quando o Studio manda pt:1) */
+ if(fam==='IASD_BIBLE'&&prev==='IASD_BIBLE'&&window.IASDPageTurn&&/"pt":1/.test(t)&&out.classList.contains('bible-mode')){++trSeq;trFam=fam;return IASDPageTurn.run(out,()=>showRaw(t),{ms:1250})}
  if(fam==='IASD_LYRIC'){
   let d=null;try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){}
   if(d&&d.end){trFam='';const seq=++trSeq;if(prev==='IASD_LYRIC')lyricEnd(d,seq);else showRaw('');return}

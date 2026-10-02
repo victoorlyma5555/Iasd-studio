@@ -23,7 +23,11 @@ let cur='';try{cur=localStorage.getItem(KEY)||''}catch(e){}
 if(!LIST.some(x=>x[0]===cur))cur='';
 const name=id=>(LIST.find(x=>x[0]===id)||LIST[0])[1];
 window.btCur=()=>cur;
-function label(){const l=document.getElementById('btOpenLabel');if(l)l.textContent=cur?name(cur):'Escolher modelo';const b=document.getElementById('btOpen');if(b)b.classList.toggle('on',!!cur)}
+const PKEY='iasd-bible-pt';let pg=true;try{pg=localStorage.getItem(PKEY)!=='0'}catch(e){}
+window.btPage=()=>pg;
+window.btPageToggle=function(){pg=!pg;try{localStorage.setItem(PKEY,pg?'1':'0')}catch(e){}pageLabel();try{window.feedback&&feedback('Virar página: '+(pg?'ligado':'desligado')+'.')}catch(e){}};
+function pageLabel(){const b=document.getElementById('btPage'),l=document.getElementById('btPageLabel');if(l)l.textContent='📖 Virar página: '+(pg?'ligado':'desligado');if(b){b.classList.toggle('on',pg);b.setAttribute('aria-pressed',String(pg))}}
+function label(){pageLabel();const l=document.getElementById('btOpenLabel');if(l)l.textContent=cur?name(cur):'Escolher modelo';const b=document.getElementById('btOpen');if(b)b.classList.toggle('on',!!cur)}
 function pick(id){
  cur=id;try{localStorage.setItem(KEY,id)}catch(e){}
  label();close();
