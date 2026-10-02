@@ -617,7 +617,7 @@ function mount(){
  sec.appendChild(box);
  const a=$('sthAudio');
  a.addEventListener('timeupdate',()=>{saveState();const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
- a.addEventListener('play',()=>{if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
+ a.addEventListener('play',()=>{if(gapTimer){gapCancel();S.endTok++}if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
  a.addEventListener('ended',()=>{if(S.queue.length){if(GAP>0)gapStart();else next(1)}else{paintPlayer();paintBody();endHymn()}});
  a.addEventListener('error',()=>{if(S.cur&&a.src)say('Falha ao carregar o áudio. Tente de novo.')});
  const style=document.createElement('style');style.textContent=
