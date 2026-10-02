@@ -343,6 +343,9 @@ function mkCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=
 function send(ev,payload){const R=S.room;if(!R||!R.ch)return;try{R.ch.send({type:'broadcast',event:ev,payload})}catch(e){}}
 const FX=(ev,p)=>{try{if(ev==='reset'){window.IASDEstudoFX&&IASDEstudoFX.reset();return}if(ev==='breakgo'){window.IASDEstudoFX&&IASDEstudoFX.breakGo(p.secs);return}window.IASDEstudoFX&&IASDEstudoFX.on(ev,p)}catch(e){console.warn('fx',ev,e)}};
 const RK='iasd-study-room',SAVE_H=12*3600e3;
+/* tempo máximo de sala SUSPENSA: passou disso, a sala fecha (para quem suspendeu e, se foi o dirigente, para todos). Ajuste aqui. */
+const SUSP_MIN=30,SUSP_MS=SUSP_MIN*60e3;
+function suspOver(r){return !!(r&&r.pk&&Date.now()-r.pk>SUSP_MS)}
 function saveRoom(){const R=S.room;if(!R)return;try{localStorage.setItem(RK,JSON.stringify({code:R.code,host:R.host,me:R.me,cid:S.cid,li:S.li,view:S.view,mode:R.mode,lock:R.lock,ts:Date.now()}))}catch(e){}}
 function clearRoom(){try{localStorage.removeItem(RK)}catch(e){}}
 function applyLock(){const R=S.room;document.body.classList.toggle('es-lk-v',!!(R&&!R.host&&R.lock&&R.lock.v))}
@@ -372,10 +375,12 @@ async function startRoom(code,host,opts){
  ch.on('broadcast',{event:'exp'},({payload})=>{if(!R.host)showExp(payload)});
  ch.on('broadcast',{event:'vo'},async({payload})=>{if(R.host||!R.follow)return;if(!!S.openV[payload.key]!==!!payload.open)await toggleVerse(payload.key,payload.ref,true)});
  ['chs','cha','chr','chx','hl','brk','call','mute','end'].forEach(ev=>ch.on('broadcast',{event:ev},({payload})=>FX(ev,payload)));
+ ch.on('broadcast',{event:'hp'},({payload})=>{if(R.host)return;clearTimeout(R.hpT);const ms=Math.min(Math.max(+(payload&&payload.ms)||SUSP_MS,6e4),SUSP_MS);toast('O dirigente suspendeu a sala. Se não voltar em '+Math.round(ms/6e4)+' min, ela fecha.');
+  R.hpT=setTimeout(()=>{if(S.room!==R||Object.values(R.peers).some(p=>p.host))return;try{window.IASDStudyMe&&IASDStudyMe.has()&&setTimeout(()=>IASDStudyMe.finish(false),900)}catch(e){}clearRoom();leave(true);S.view='home';paint();toast('Sala fechada: o dirigente ficou suspenso por mais de '+SUSP_MIN+' min.')},ms)});
  ch.on('broadcast',{event:'rx'},({payload})=>floatReact(payload.e,payload.name));
  ch.on('broadcast',{event:'sig'},({payload})=>{if(payload.to===me)onSig(payload)});
  const onSync=()=>{R.syncT=0;const st=ch.presenceState(),prev=R.peers;R.peers={};Object.keys(st).forEach(k=>{if(k!==me&&st[k][0])R.peers[k]=st[k][0]});
-  Object.keys(R.peers).forEach(k=>{const p=R.peers[k];if(p.host)R.hostSeen=true;if(p.hand&&!(prev[k]&&prev[k].hand))handFx(p.name||'Alguém',false)});
+  Object.keys(R.peers).forEach(k=>{const p=R.peers[k];if(p.host){R.hostSeen=true;if(R.hpT){clearTimeout(R.hpT);R.hpT=0;toast('O dirigente voltou à sala.')}}if(p.hand&&!(prev[k]&&prev[k].hand))handFx(p.name||'Alguém',false)});
   Object.keys(R.voice?R.voice.pcs:{}).forEach(id=>{if(!R.peers[id])closePeer(id)});
   paintBar();paintDock();syncVoicePeers()};
  ch.on('presence',{event:'sync'},()=>{if(R.syncT)return;R.syncT=setTimeout(onSync,Object.keys(R.peers).length>12?500:150)});
@@ -429,18 +434,19 @@ function backToRoom(){const R=S.room;
  if(R.mode==='study'&&lesson())S.view='lesson';paint()}
 /* Sala suspensa: ao sair do módulo do estudo a pessoa SAI da conexão (sem câmera, microfone, vídeo nem dados da sala).
    O código da sala fica guardado por 12 h, então dá para voltar depois, até fechando e abrindo o navegador. */
-function parkRec(){let r=null;try{r=JSON.parse(localStorage.getItem(RK)||'null')}catch(e){}return r&&r.code&&Date.now()-(r.ts||0)<=SAVE_H?r:null}
+function parkRec(){let r=null;try{r=JSON.parse(localStorage.getItem(RK)||'null')}catch(e){}if(r&&suspOver(r)){clearRoom();S.suspClosed=r.code;return null}return r&&r.code&&Date.now()-(r.ts||0)<=SAVE_H?r:null}
 function bar0(b){return b}
 function parkBar(){
  let bar=$('es-bar');const r=(!S.room&&!$('es-root'))?parkRec():null;
- if(!r){if(bar&&bar.dataset.park)bar.remove();return}
+ if(!r){if(bar&&bar.dataset.park){bar.remove();if(S.suspClosed){toast('A sala '+S.suspClosed+' foi fechada: ficou suspensa por mais de '+SUSP_MIN+' min.');S.suspClosed=null}}return}
  if(!bar){bar=document.createElement('div');bar.id='es-bar';bar.className='es-bar';document.body.appendChild(bar)}
  if(bar.dataset.park===r.code)return;bar.dataset.park=r.code;
  bar.innerHTML='<div class="es-bar-in es-bar-susp"><span class="es-sp"><b>⏸ Sala '+esc(r.code)+' suspensa</b><small>Sem câmera, microfone e dados. Toque para reconectar quando quiser.</small></span><button class="es-bt es-go" onclick="IASDEstudo.backToRoom()">Voltar à sala</button><button class="es-bt danger" onclick="IASDEstudo.leaveParked()">Sair</button></div>'}
 async function leaveParked(){const r=parkRec();if(!r){parkBar();return}
  if(await IASDDialog.confirm('Sair de vez da sala '+r.code+'?',{title:'Sair da sala',ok:'Sair',danger:true})){clearRoom();const b=$('es-bar');if(b)b.remove();toast('Você saiu da sala.')}}
-function parkRoom(){const R=S.room;if(!R||R.reconnecting||R.parking)return;R.parking=true;saveRoom();leave(true);S.resumed=false;
- toast('Sala suspensa: câmera, microfone e dados desligados. Use “Voltar à sala” para reconectar.')}
+function parkRoom(){const R=S.room;if(!R||R.reconnecting||R.parking)return;R.parking=true;saveRoom();try{const r=JSON.parse(localStorage.getItem(RK)||'null');if(r){r.pk=Date.now();localStorage.setItem(RK,JSON.stringify(r))}}catch(e){}
+ if(R.host){send('hp',{ms:SUSP_MS});setTimeout(()=>{if(S.room===R)leave(true);S.resumed=false},250)}else{leave(true);S.resumed=false}
+ toast('Sala suspensa: câmera, microfone e dados desligados. Volte em até '+SUSP_MIN+' min, ou a sala fecha.')}
 function suspSync(){if(S.room){if(!$('es-root'))parkRoom();return}parkBar()}
 setInterval(suspSync,300);setTimeout(suspSync,500);
 function toggleHand(){const R=S.room;if(!R)return;R.hand=!R.hand;if(R.hand)handFx('Você',true);track();paintBar();refreshLobby()}
@@ -810,6 +816,7 @@ function tryResume(){
  if(S.room||S.resumed)return;S.resumed=true;
  let r=null;try{r=JSON.parse(localStorage.getItem(RK)||'null')}catch(e){}
  if(!r||!r.code||Date.now()-(r.ts||0)>SAVE_H)return;
+ if(suspOver(r)){clearRoom();toast('A sala '+r.code+' foi fechada: ficou suspensa por mais de '+SUSP_MIN+' min.');return}
  const uc=urlCode();if(uc&&uc!==r.code)return;
  if(r.host){
   if(!isF())return;const c=(S.courses||[]).find(x=>x.id===r.cid);if(!c)return;
