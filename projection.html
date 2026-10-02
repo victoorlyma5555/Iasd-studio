@@ -185,7 +185,7 @@ function drawStyle(t){
  if(m.tpl&&TPLS.includes(m.tpl)&&m.tpl!==box.dataset.tpl){const txt=box.getAttribute('aria-label')||'0';TPLS.forEach(x=>box.classList.remove('tpl-'+x));box.classList.add('tpl-'+m.tpl);box.dataset.tpl=m.tpl;box.replaceChildren();drawSet(box,txt)}
 }
 /* ---- transições: o conteúdo antigo sai e o novo entra (sem corte seco) ---- */
-let curTr={type:'fade',ms:600,ease:'soft',exit:'mirror'},trSeq=0,trFam='';
+let curTr={type:'fade',ms:600,ease:'soft',exit:'mirror'},trSeq=0,trFam='',lastBibleT='';
 const trFamily=t=>t===''?'':t.startsWith('IASD_TIMER:')?'timer':t.startsWith('IASD_DRAW')?'draw':(t.match(/^IASD_[A-Z_]+/)||['text'])[0];
 const TR_OUT={fade:[{opacity:1},{opacity:0}],zoom:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.07)'}],zoomout:[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.94)'}],slide:[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-7vw)'}],slideup:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-7vh)'}],slidedown:[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(7vh)'}],blur:[{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(26px)'}],glow:[{opacity:1,filter:'brightness(1) blur(0px)'},{opacity:0,filter:'brightness(2.2) blur(10px)'}],wipe:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 0 100%)'}],curtain:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 50% 0 50%)'}],iris:[{clipPath:'circle(75% at 50% 50%)'},{clipPath:'circle(0% at 50% 50%)'}],flip:[{opacity:1,transform:'perspective(1200px) rotateY(0deg)'},{opacity:0,transform:'perspective(1200px) rotateY(70deg)'}],corner:[{clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'},{clipPath:'polygon(100% 100%,100% 100%,100% 100%,100% 100%)'}]};
 const TR_IN={fade:[{opacity:0},{opacity:1}],zoom:[{opacity:0,transform:'scale(.93)'},{opacity:1,transform:'scale(1)'}],zoomout:[{opacity:0,transform:'scale(1.08)'},{opacity:1,transform:'scale(1)'}],slide:[{opacity:0,transform:'translateX(7vw)'},{opacity:1,transform:'translateX(0)'}],slideup:[{opacity:0,transform:'translateY(7vh)'},{opacity:1,transform:'translateY(0)'}],slidedown:[{opacity:0,transform:'translateY(-7vh)'},{opacity:1,transform:'translateY(0)'}],blur:[{opacity:0,filter:'blur(26px)'},{opacity:1,filter:'blur(0px)'}],glow:[{opacity:0,filter:'brightness(2.2) blur(10px)'},{opacity:1,filter:'brightness(1) blur(0px)'}],wipe:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],curtain:[{clipPath:'inset(0 50% 0 50%)'},{clipPath:'inset(0 0 0 0)'}],iris:[{clipPath:'circle(0% at 50% 50%)'},{clipPath:'circle(75% at 50% 50%)'}],flip:[{opacity:0,transform:'perspective(1200px) rotateY(-70deg)'},{opacity:1,transform:'perspective(1200px) rotateY(0deg)'}],corner:[{clipPath:'polygon(0 0,0 0,0 0,0 0)'},{clipPath:'polygon(0 0,100% 0,100% 100%,0 100%)'}]};
@@ -255,7 +255,7 @@ function show(value){
  if(m){const pt=parseTr(m[1]);if(pt)curTr=Object.assign(pt,{ms:Math.min(2000,+m[2])});t=t.slice(m[0].length)}
  const fam=trFamily(t),prev=trFam;
  /* Bíblia: ao trocar de versículo, a página vira (só quando o Studio manda pt:1) */
- if(fam==='IASD_BIBLE'&&prev==='IASD_BIBLE'&&window.IASDPageTurn&&/"pt":1/.test(t)&&out.classList.contains('bible-mode')){++trSeq;trFam=fam;return IASDPageTurn.run(out,()=>showRaw(t),{ms:1250})}
+ if(fam==='IASD_BIBLE'&&prev==='IASD_BIBLE'&&window.IASDPageTurn&&/"pt":1/.test(t)&&out.classList.contains('bible-mode')){if(t===lastBibleT)return;/* a mesma passagem chega por 3 canais (mensagem, canal e storage): só a primeira vira a página */++trSeq;trFam=fam;return IASDPageTurn.run(out,()=>showRaw(t),{ms:1250})}
  if(fam==='IASD_LYRIC'){
   let d=null;try{d=JSON.parse(t.slice('IASD_LYRIC:'.length))}catch(e){}
   if(d&&d.end){trFam='';const seq=++trSeq;if(prev==='IASD_LYRIC')lyricEnd(d,seq);else showRaw('');return}
@@ -288,7 +288,7 @@ function showRaw(value){
   try{
    const data=JSON.parse(t.slice('IASD_BIBLE:'.length));
    if(typeof data.ref!=='string'||typeof data.text!=='string'||data.ref.length>100||data.text.length>12000)throw Error('Invalid Bible content');
-   out.classList.add('bible-mode');
+   out.classList.add('bible-mode');lastBibleT=t;
    const bt=['pergaminho','estrelada','aurora','minimalista','dourado','amanhecer','floresta','oceano','contraste','editorial'].includes(data.bt)?data.bt:'';if(bt)out.classList.add('btx','bt-'+bt);
    const slide=document.createElement('article');slide.className='bible-slide';
    const quote=document.createElement('p');quote.className='bible-text';quote.textContent=data.text.replace(/\\n/g,' ').replace(/\s+/g,' ').trim();
