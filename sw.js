@@ -4,7 +4,7 @@ self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
 self.addEventListener('push',e=>{
  let d={};try{d=e.data?e.data.json():{}}catch{try{d={body:e.data.text()}}catch{}}
  const title=String(d.title||'IASD APP').slice(0,80);
- const opt={body:String(d.body||'').slice(0,300),icon:'/icon-192.png?v=4',badge:'/icon-192.png?v=4',tag:String(d.tag||'iasd-push'),renotify:true,requireInteraction:!!d.sticky,vibrate:[160,80,160],data:{url:String(d.url||'/')}};
+ const opt={body:String(d.body||'').slice(0,300),icon:'/icon-192.png?v=4',badge:'/icon-192.png?v=4',tag:String(d.tag||'iasd-push'),renotify:false,requireInteraction:!!d.sticky,vibrate:[160,80,160],data:{url:String(d.url||'/')}};
  e.waitUntil(self.registration.showNotification(title,opt));
 });
 self.addEventListener('notificationclick',e=>{

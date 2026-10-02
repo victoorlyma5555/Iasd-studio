@@ -3,6 +3,7 @@
 // Variáveis no Vercel (Settings → Environment Variables):
 //  VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY  (par gerado com: npx web-push generate-vapid-keys)
 //  SUPABASE_SERVICE_ROLE_KEY            (Supabase → Project Settings → API → service_role)
+//  PUSH_WEBHOOK_SECRET (segredo do gatilho do banco: docs/supabase-push-gatilho.sql)
 //  SUPABASE_URL (opcional; padrão do projeto)
 // GET  /api/push            → {publicKey}
 // POST /api/push {alert_id,kind:'alert'|'reply'} com "Authorization: Bearer <token do usuário>"
@@ -22,23 +23,25 @@ module.exports=async function handler(req,res){
   const body=typeof req.body==='string'?JSON.parse(req.body||'{}'):(req.body||{});
   const kind=body.kind==='reply'?'reply':'alert',id=String(body.alert_id||'');
   const token=String(req.headers.authorization||'').replace(/^Bearer /,'');
-  if(!UUID.test(id)||!token)return res.status(400).json({error:'Pedido inválido'});
-  // quem é o usuário (token validado pelo Supabase)
-  const who=await sb('/auth/v1/user',svc,{token});if(!who.ok||!who.json?.id)return res.status(401).json({error:'Sessão inválida'});
-  const uid=who.json.id;
+  const secret=process.env.PUSH_WEBHOOK_SECRET,given=String(req.headers['x-push-secret']||'');
+  // modo confiável: o gatilho do banco chama com o segredo compartilhado (não depende de nenhum aparelho ou do Projetor)
+  const trusted=!!secret&&given.length===secret.length&&require('crypto').timingSafeEqual(Buffer.from(given),Buffer.from(secret));
+  if(!UUID.test(id)||(!token&&!trusted))return res.status(400).json({error:'Pedido inválido'});
+  let uid=null;
+  if(!trusted){const who=await sb('/auth/v1/user',svc,{token});if(!who.ok||!who.json?.id)return res.status(401).json({error:'Sessão inválida'});uid=who.json.id}
   const al=await sb('/rest/v1/iasd_sound_alerts?id=eq.'+id+'&select=id,created_by,sender_name,message,schedule_name,created_at,reply_message,replied_by,replied_by_name,replied_at',svc);
   const a=al.json&&al.json[0];if(!a)return res.status(404).json({error:'Alerta não encontrado'});
   const fresh=iso=>Date.now()-Date.parse(iso)<10*60*1000;
   let recipients=[],payload;
   if(kind==='alert'){
-   if(a.created_by!==uid||!fresh(a.created_at))return res.status(403).json({error:'Não permitido'});
+   if((!trusted&&a.created_by!==uid)||!fresh(a.created_at))return res.status(403).json({error:'Não permitido'});
    const t=TARGET_RE.exec(String(a.schedule_name||''));
    if(t)recipients=[t[1]];
    else{const m=await sb('/rest/v1/iasd_members?role=in.(sonoplasta,founder,cofounder)&select=user_id',svc);recipients=(m.json||[]).map(x=>x.user_id)}
    recipients=recipients.filter(u=>u!==a.created_by);
    payload={title:'🔔 Alerta para a Sonoplastia',body:(a.sender_name||'Equipe')+': '+String(a.message||'').slice(0,200),tag:'iasd-alert-'+a.id,url:'/',sticky:true};
   }else{
-   if(!a.reply_message||a.replied_by!==uid||!fresh(a.replied_at))return res.status(403).json({error:'Não permitido'});
+   if(!a.reply_message||(!trusted&&a.replied_by!==uid)||!fresh(a.replied_at))return res.status(403).json({error:'Não permitido'});
    recipients=[a.created_by];
    payload={title:'↩ '+(a.replied_by_name||'Sonoplastia')+' respondeu',body:String(a.reply_message).slice(0,200),tag:'iasd-reply-'+a.id+'-'+Date.parse(a.replied_at),url:'/'};
   }
