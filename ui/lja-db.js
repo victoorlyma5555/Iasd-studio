@@ -59,31 +59,44 @@ async function open(file){
  db.tables={};await db.scan(1,r=>{if(r[0]==='table')db.tables[r[1]]=r[3]});return db
 }
 const sec=t=>{const m=/^(\d+):(\d+):(\d+)(?:[.,](\d+))?/.exec(String(t||''));return m?(+m[1])*3600+(+m[2])*60+(+m[3])+(m[4]?+('0.'+m[4]):0):0};
-/* Lê só o que o IASD Studio precisa: hinários, letras com tempo e nomes dos arquivos */
+/* Coleções que o IASD Studio mostra (as mesmas do Louvor JA que a igreja usa) */
+const COLS=[
+ {id:'novo',slugs:['hymnal']},{id:'antigo',slugs:['hymnal_1996']},
+ {id:'jamin',slugs:['aym']},
+ {id:'misc',slugs:['misc','worshipers','singers','celebrate_sp']},
+ {id:'kids',slugs:['children']}
+];
+/* Lê só o que o IASD Studio precisa: músicas, letras com tempo, capas e nomes dos arquivos */
 async function buildIndex(file,prog){
  const say=s=>{try{prog&&prog(s)}catch(e){}};
  say('Abrindo o banco…');const db=await open(file);
- for(const t of ['categories','categories_albums','albums_musics','musics','lyrics','files'])if(!db.tables[t])throw Error('Banco sem a tabela "'+t+'". Versão do Louvor JA não reconhecida.');
- const cat={};await db.scan(db.tables.categories,r=>{if(r[2]==='hymnal'||r[2]==='hymnal_1996')cat[r[0]]=r[2]});
- const alb={};await db.scan(db.tables.categories_albums,r=>{if(cat[r[1]])alb[r[2]]={slug:cat[r[1]],name:r[3]}});
- say('Lendo hinários…');
+ for(const t of ['categories','categories_albums','albums','albums_musics','musics','lyrics','files'])if(!db.tables[t])throw Error('Banco sem a tabela "'+t+'". Versão do Louvor JA não reconhecida.');
+ const slugCol={};COLS.forEach(c=>c.slugs.forEach(sl=>slugCol[sl]=c.id));
+ const cat={};await db.scan(db.tables.categories,r=>{if(slugCol[r[2]])cat[r[0]]={col:slugCol[r[2]],name:r[1],ord:r[3]}});
+ const alb={};await db.scan(db.tables.categories_albums,r=>{const c=cat[r[1]];if(c&&!alb[r[2]])alb[r[2]]={col:c.col,cat:c.name,corder:c.ord,name:r[3],order:r[4]}});
+ const albRow={};await db.scan(db.tables.albums,r=>{if(alb[r[0]])albRow[r[0]]={name:r[1],cover:r[2]}});
+ say('Lendo as coletâneas…');
  const am=[];await db.scan(db.tables.albums_musics,r=>{if(alb[r[1]])am.push({a:r[1],m:r[2],tr:r[3]})});
  const need={};am.forEach(x=>need[x.m]=1);
  const mus={};await db.scan(db.tables.musics,r=>{if(need[r[0]])mus[r[0]]={name:r[1],img:r[2],mp3:r[3],pb:r[4]}});
  say('Lendo letras e tempos…');
- const lyr={};const fneed={};
+ const lyr={},fneed={};
  Object.values(mus).forEach(m=>{[m.img,m.mp3,m.pb].forEach(f=>{if(f)fneed[f]=1})});
+ Object.values(albRow).forEach(a=>{if(a.cover)fneed[a.cover]=1});
  await db.scan(db.tables.lyrics,r=>{if(!need[r[1]])return;(lyr[r[1]]=lyr[r[1]]||[]).push({o:r[8],t:sec(r[5]),tp:sec(r[6]),x:r[2],ax:r[3],img:r[4],s:r[7]});if(r[4])fneed[r[4]]=1});
  say('Lendo nomes dos arquivos…');
  const files={};await db.scan(db.tables.files,r=>{if(fneed[r[0]])files[r[0]]={dir:r[4],name:r[5]}});
- const out={v:1,at:Date.now(),ed:{antigo:[],novo:[]}};
- am.forEach(x=>{const m=mus[x.m];if(!m)return;const ls=(lyr[x.m]||[]).sort((a,b)=>a.o-b.o);
-  const f=id=>id&&files[id]?files[id].name:'';
-  const e={tr:x.tr,name:m.name,mp3:f(m.mp3),mp3dir:m.mp3&&files[m.mp3]?files[m.mp3].dir:'',pb:f(m.pb),img:f(m.img),
-   L:ls.filter(l=>l.s&&String(l.x||'').trim()).map(l=>[l.t,l.tp,String(l.x).trim(),f(l.img)||f(m.img),l.ax||''])};
-  out.ed[alb[x.a].slug==='hymnal_1996'?'antigo':'novo'].push(e)});
- Object.values(out.ed).forEach(a=>a.sort((p,q)=>p.tr-q.tr));
- say('Pronto: '+out.ed.novo.length+' hinos do novo e '+out.ed.antigo.length+' do antigo.');
+ const f=id=>id&&files[id]?files[id].name:'',fd=id=>id&&files[id]?files[id].dir:'';
+ const albums={};
+ am.forEach(x=>{const m=mus[x.m];if(!m)return;const ls=(lyr[x.m]||[]).sort((p,q)=>p.o-q.o);const A=alb[x.a];
+  (albums[x.a]=albums[x.a]||{aid:x.a,col:A.col,cat:A.cat,corder:A.corder,order:A.order,name:(albRow[x.a]&&albRow[x.a].name)||A.name||A.cat,cover:albRow[x.a]?f(albRow[x.a].cover):'',tracks:[]}).tracks.push(
+   {tr:x.tr,name:m.name,mp3:f(m.mp3),mp3dir:fd(m.mp3),pb:f(m.pb),pbdir:fd(m.pb),img:f(m.img),
+    L:ls.filter(l=>l.s&&String(l.x||'').trim()).map(l=>[l.t,l.tp,String(l.x).trim(),f(l.img)||f(m.img),l.ax||''])})});
+ const out={v:2,at:Date.now(),cols:{}};COLS.forEach(c=>out.cols[c.id]=[]);
+ Object.values(albums).forEach(a=>{a.tracks.sort((p,q)=>p.tr-q.tr);out.cols[a.col].push(a)});
+ Object.values(out.cols).forEach(arr=>arr.sort((p,q)=>(p.corder-q.corder)||(p.order-q.order)||String(p.name).localeCompare(String(q.name))));
+ const cnt=id=>out.cols[id].reduce((n,a)=>n+a.tracks.length,0);
+ say('Pronto: '+cnt('novo')+' hinos (novo), '+cnt('antigo')+' (1996), '+cnt('jamin')+' em JA/Min., '+cnt('misc')+' em Diversas, '+cnt('kids')+' infantis.');
  return out
 }
 window.LJADB={open,buildIndex,rec,sec};
