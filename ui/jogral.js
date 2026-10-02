@@ -34,6 +34,7 @@ const logged=()=>typeof cloudUser!=='undefined'&&!!cloudUser;
 const isManager=()=>{try{return !!(window.IASDAccess&&IASDAccess.canManage(cloudRole))}catch(e){return false}};
 function titleOf(t){const l=String(t||'').split('\n').map(x=>x.trim()).find(Boolean)||'Jogral sem título';return l.replace(/^JOGRAL\s*[—–-]\s*/i,'').slice(0,80)||'Jogral sem título'}
 function names(){return J.nomes.split('\n').map(x=>x.replace(/[:\[\]]/g,'').trim()).filter(Boolean).slice(0,30)}
+function toOut(){const o=document.querySelector('.jg-out');if(o&&o.scrollIntoView&&window.matchMedia('(max-width:980px)').matches)setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),60)}
 function say(msg,kind){J.msg=msg;J.msgKind=kind||'';const e=document.getElementById('jg-msg');if(e){e.textContent=msg;e.className='jg-msg '+(kind||'')}}
 /* ---------- roteiro formatado ---------- */
 const HUES=[212,262,172,28,330,142,196,48];
@@ -69,7 +70,7 @@ function aiNotice(){
 function formHTML(){
  const nm=names().length;
  return '<section class="pg-card jg-form"><div class="pg-head"><h2 class="pg-h">'+I('pen',22)+'Monte seu jogral</h2>'+aiBadge()+'</div>'+aiNotice()+
- '<div class="jg-f"><label for="jg-tema">Tema</label><input id="jg-tema" maxlength="120" value="'+esc(J.tema)+'" oninput="IASDJogral.set(\'tema\',this.value)" placeholder="Ex.: A volta de Jesus"><div class="jg-chips sm">'+TEMAS.map((t,i)=>'<button type="button" class="jg-chip" onclick="IASDJogral.tema('+i+')">'+esc(t)+'</button>').join('')+'</div></div>'+
+ '<div class="jg-f"><label for="jg-tema">Tema</label><input id="jg-tema" maxlength="120" value="'+esc(J.tema)+'" oninput="IASDJogral.set(\'tema\',this.value)" placeholder="Ex.: A volta de Jesus"><div class="jg-chips sm">'+TEMAS.slice(0,4).map((t,i)=>'<button type="button" class="jg-chip" onclick="IASDJogral.tema('+i+')">'+esc(t)+'</button>').join('')+'</div></div>'+
  '<div class="jg-f"><label>Ocasião</label>'+chips(OCASIOES,J.ocasiao,'ocasiao')+'</div>'+
  '<div class="jg-row"><div class="jg-f"><label>Participantes</label><div class="jg-step"><button type="button" onclick="IASDJogral.n(-1)" aria-label="Menos um">−</button><output id="jg-n">'+J.n+'</output><button type="button" onclick="IASDJogral.n(1)" aria-label="Mais um">+</button></div></div>'+
  '<div class="jg-f"><label>Duração</label><div class="jg-seg">'+DURACOES.map((d,i)=>'<button type="button" class="'+(i===J.dur?'on':'')+'" onclick="IASDJogral.dur('+i+')">'+esc(d.replace(' minutos',' min'))+'</button>').join('')+'</div></div></div>'+
@@ -110,7 +111,7 @@ async function gerar(){
   let r;try{r=await fetch('/api/gerar-jogral',{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify(p)})}finally{clearTimeout(to)}
   let j={};try{j=await r.json()}catch(e){}
   if(!r.ok){if(j&&j.code==='no_key')J.ai=false;throw Error((j&&j.error)||'Não foi possível gerar o roteiro.')}
-  J.text=j.text;J.view='roteiro';J.id=null;J.busy=false;redraw();
+  J.text=j.text;J.view='roteiro';J.id=null;J.busy=false;redraw();toOut();
   say(j.truncated?'Roteiro criado, mas ficou cortado no fim. Gere de novo com duração menor ou complete na aba “Editar texto”.':'Jogral criado! Revise as falas e confira as referências bíblicas antes do culto.','ok');
  }catch(e){J.busy=false;redraw();say('Erro: '+(e.name==='AbortError'?'a IA demorou demais. Tente de novo.':e.message),'err')}}
 const FR_A=['Hoje nos reunimos para anunciar uma esperança que não se apaga.','Mesmo quando os dias são difíceis, a fé nos lembra que não caminhamos sozinhos.','A Palavra de Deus nos convida a olhar além das circunstâncias.','Nossa esperança não está no que vemos, mas naquele em quem confiamos.','Cada promessa do Senhor é um convite à coragem e à perseverança.','Que nossa voz anuncie o amor de Cristo a quem precisa de esperança.'];
@@ -122,7 +123,7 @@ function modelo(){
  L.push('','TODOS: Nossa esperança está em Jesus!','',p.referencia?'[Leitura bíblica: '+p.referencia+' — ler da Bíblia e conferir o texto antes da apresentação.]':'[Leitura bíblica: escolha e confira uma passagem adequada ao tema.]','','[Pausa. Música instrumental; todos olham para a congregação.]','');
  who.forEach((w,i)=>L.push(w+': '+FR_B[i%FR_B.length]));
  L.push('','TODOS (com firmeza): Até aquele grande dia, permaneceremos firmes na esperança!','','[Encerramento. Breve silêncio; a música diminui aos poucos.]');
- J.text=L.join('\n');J.view='roteiro';J.id=null;redraw();say('Modelo criado. Personalize as falas para o seu tema na aba “Editar texto”.','ok')}
+ J.text=L.join('\n');J.view='roteiro';J.id=null;redraw();toOut();say('Modelo criado. Personalize as falas para o seu tema na aba “Editar texto”.','ok')}
 function salvar(){
  const t=J.text.trim();if(!t)return;const now=new Date().toISOString();
  const i=J.id?saved.findIndex(s=>s.id===J.id):-1;
