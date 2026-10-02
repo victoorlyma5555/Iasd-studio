@@ -1,0 +1,9 @@
+{
+  "name": "iasd-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "IASD APP — site estático com funções serverless (api/).",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}
