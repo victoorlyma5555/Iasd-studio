@@ -66,6 +66,27 @@ async function walk(dir,out,depth,path){path=path||'';
   else if(AUD.test(name))out.push({handle:e,name,dir:path});
   else if(IMG.test(name))S.imgs[name.toLowerCase()]={handle:e}}
 }
+/* ---------- IASD Projetor (app do Windows): lê a pasta do Louvor JA sem passar pelo Chrome ---------- */
+const CP='http://127.0.0.1:38741';
+const cpTok=()=>{try{return localStorage.getItem('iasd-projetor-token')||''}catch(e){return ''}};
+S.cp=null;S.cpInfo=null;
+async function cpFetch(route,opt,ms){
+ const t=cpTok();if(!t)throw Error('Pareie o IASD Projetor para usar a pasta do Louvor JA.');
+ const o=Object.assign({targetAddressSpace:'loopback',cache:'no-store'},opt||{});o.headers=Object.assign({Authorization:'Bearer '+t},o.headers||{});if(ms)o.signal=AbortSignal.timeout(ms);
+ try{return await fetch(CP+route,o)}catch(e){throw Error('O IASD Projetor não está aberto neste computador.')}
+}
+async function cpJson(route,body,ms){
+ const r=await cpFetch(route,body!==undefined?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{},ms);
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'IASD Projetor indisponível');return j
+}
+const cpFile=async rel=>{const r=await cpFetch('/lja/file?p='+encodeURIComponent(rel));if(!r.ok)throw Error('Arquivo não encontrado no computador. Toque em Sincronizar.');return r.blob()};
+async function cpProbe(){
+ S.cp=null;S.cpInfo=null;
+ try{const r=await fetch(CP+'/status',{targetAddressSpace:'loopback',cache:'no-store',signal:AbortSignal.timeout(1500)});const b=await r.json();S.cpInfo={online:!!b.online,paired:!!b.paired,version:b.version||''}}catch(e){S.cpInfo=null;return null}
+ if(!cpTok())return null;
+ try{S.cp=await cpJson('/lja/state',undefined,2500)}catch(e){S.cp=null}
+ return S.cp
+}
 S.scanAt=0;S.syncAt=0;S.rootH=null;S.dbH=null;S.stOpen={};S.syncing=false;S.cnt=null;S.statV=0;
 const baseOf=d=>String(d||'').split(/[\\/]/).filter(Boolean).pop()?.toLowerCase()||'';
 function setFiles(raw){S.files=raw;S.aidx=new Map();raw.forEach(it=>{const k=it.name.toLowerCase();let a=S.aidx.get(k);if(!a)S.aidx.set(k,a=[]);a.push(it)})}
@@ -87,7 +108,12 @@ async function rematch(){
  for(const id of KEYS){if(S.data[id]){S.local[id]=matchCol(id);S.lstat[id]='ok';await yieldUI()}}
  S.scanAt=Date.now();S.statV++
 }
-function saveScan(){if(S.files.every(x=>x.handle))idbSet('scan',{files:S.files,imgs:S.imgs,cnt:S.cnt,at:S.syncAt||Date.now()})}
+function saveScan(){if(S.files.every(x=>x.handle||x.rel))idbSet('scan',{files:S.files,imgs:S.imgs,cnt:S.cnt,at:S.syncAt||Date.now()})}
+async function scanCp(){
+ const r=await cpJson('/lja/scan',{});S.imgs={};const raw=[];
+ r.items.forEach(([name,dir,k])=>{const rel=dir?dir+'/'+name:name;if(k==='a')raw.push({name,dir,rel});else S.imgs[name.toLowerCase()]={rel}});
+ setFiles(raw);return raw.length
+}
 async function scanRoot(h){S.imgs={};const raw=[];await walk(h,raw,0,h.name||'');setFiles(raw);return raw.length}
 /* contagem por coleção: quantos itens, quantos têm arquivo aqui, quantos faltam */
 async function computeCounts(){
@@ -118,7 +144,19 @@ async function applyIndex(ix,f){
 async function syncAll(why){
  if(S.syncing)return;S.syncing=true;S.busy='Sincronizando com a pasta e o banco…';paintBar();const notes=[];
  try{
-  if(S.dbH){
+  if(await cpProbe()){
+   try{
+    const st=S.cp;
+    if(st.db){const m=S.ljaMeta&&S.ljaMeta.meta;
+     if(!m||m.size!==st.db.size||m.mod!==st.db.mtime){S.busy='Lendo o banco do Louvor JA…';paintBar();
+      const r=await cpFetch('/lja/db');if(!r.ok)throw Error('banco indisponível');const f=new File([await r.blob()],'database.db',{lastModified:st.db.mtime});
+      await applyIndex(await window.LJADB.buildIndex(f,m=>{S.busy=m;paintBar()}),f);notes.push('banco atualizado')}}
+    else notes.push('banco do Louvor JA não encontrado: escolha o database.db')
+    if(st.root){S.busy='Contando os arquivos da pasta…';paintBar();await scanCp();S.syncAt=Date.now();await computeCounts();saveScan()}
+    else notes.push('escolha a pasta do Louvor JA')
+   }catch(e){notes.push(e.message||String(e))}
+  }
+  else if(S.dbH){
    let p='granted';try{p=await S.dbH.queryPermission({mode:'read'})}catch(e){}
    if(p==='granted'){
     try{const f=await S.dbH.getFile(),m=S.ljaMeta&&S.ljaMeta.meta;
@@ -126,7 +164,7 @@ async function syncAll(why){
     catch(e){notes.push('banco: '+(e.message||e))}
    }else S.lstat.db='perm'
   }
-  if(S.rootH){
+  if(!S.cp&&S.rootH){
    let p='granted';try{p=await S.rootH.queryPermission({mode:'read'})}catch(e){}
    if(p==='granted'){try{S.busy='Contando os arquivos da pasta…';paintBar();await scanRoot(S.rootH);S.syncAt=Date.now();await computeCounts();saveScan()}catch(e){notes.push('pasta: '+(e.message||e))}}else{S.lstat.novo='perm'}
   }
@@ -135,7 +173,15 @@ async function syncAll(why){
  if(why==='manual'||notes.length){const c=S.cnt;say('Sincronizado. '+(c?KEYS.filter(k=>c[k].total).map(k=>ED[k].nome+': '+c[k].found+' de '+c[k].total).join(' · '):'')+(notes.length?' ('+notes.join('; ')+')':''))}
  paint()
 }
+async function cpPick(kind){
+ try{S.busy='Escolha no IASD Projetor (a janela abre no Windows)…';paintBar();
+  const r=await cpJson('/lja/pick',{kind});S.cp=r;S.busy='';
+  if(r.canceled){paint();return}
+  await syncAll('manual')}
+ catch(e){S.busy='';say('IASD Projetor: '+(e.message||e));paint()}
+}
 async function connectFolder(){
+ if(cpTok()){if(!S.cp)await cpProbe();if(S.cp)return cpPick('root')}
  if(window.showDirectoryPicker){
   try{const h=await window.showDirectoryPicker({id:'louvorja-root',mode:'read'});S.rootH=h;await idbSet('root',h);S.permOk=true;await syncAll('manual')}
   catch(e){if(e&&e.name!=='AbortError')say('Não foi possível abrir a pasta: '+(e.message||e))}
@@ -151,11 +197,11 @@ async function reconnectFolder(){
  }catch(e){say('Não foi possível reconectar: '+(e.message||e))}
 }
 async function ensureRead(){
- if(S.permOk||!S.rootH)return;
+ if(S.permOk||S.cp||!S.rootH)return;
  try{const q=await S.rootH.queryPermission({mode:'read'});if(q!=='granted')await S.rootH.requestPermission({mode:'read'});S.permOk=true}catch(e){}
 }
 async function restoreLocal(){
- await loadLja();S.rootH=await idbGet('root');S.dbH=await idbGet('ljadb');
+ await loadLja();await cpProbe();S.rootH=await idbGet('root');S.dbH=await idbGet('ljadb');
  const sv=await idbGet('scan');
  if(sv&&sv.files){setFiles(sv.files);S.imgs=sv.imgs||{};S.cnt=sv.cnt||null;S.syncAt=sv.at||0;S.lstat.novo='saved';await rematch()}
  paint()
@@ -183,6 +229,7 @@ async function loadCol(id){
  S.data[id]=items;S.status[id]=items.length?'ok':'nodb'
 }
 async function connectDb(){
+ if(cpTok()){if(!S.cp)await cpProbe();if(S.cp)return cpPick('db')}
  const run=async f=>{
   try{S.busy='Lendo o banco do Louvor JA…';paintBar();const ix=await window.LJADB.buildIndex(f,m=>{S.busy=m;paintBar()});
    await applyIndex(ix,f);
@@ -196,7 +243,7 @@ async function connectDb(){
 /* imagem da pasta -> fundo reduzido (poucos KB) ou miniatura de capa */
 async function imgBlob(name,w,q){
  const r=S.imgs[String(name).toLowerCase()];if(!r)return null;
- try{const f=r.file||await r.handle.getFile();const bm=await createImageBitmap(f);const W=Math.min(w,bm.width),H=Math.round(bm.height*W/bm.width);
+ try{const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());const bm=await createImageBitmap(f);const W=Math.min(w,bm.width),H=Math.round(bm.height*W/bm.width);
   const c=document.createElement('canvas');c.width=W;c.height=H;c.getContext('2d').drawImage(bm,0,0,W,H);if(bm.close)bm.close();return c}catch(e){return null}
 }
 async function bgFor(name){
@@ -260,7 +307,7 @@ async function urlFor(ed,n,mode){
  if(L){
   await ensureRead();let r=L,note='';
   if(mode==='pb'){if(L.pb)r=L.pb;else if(!L.onlyPb)note='Este item não tem playback; tocando o cantado.'}
-  const f=r.file||await r.handle.getFile();if(objUrl)try{URL.revokeObjectURL(objUrl)}catch(e){}objUrl=URL.createObjectURL(f);
+  const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());if(objUrl)try{URL.revokeObjectURL(objUrl)}catch(e){}objUrl=URL.createObjectURL(f);
   return{url:objUrl,name:r.name,pb:(mode==='pb'&&!!L.pb)||(r===L&&!!L.onlyPb),note}
  }
  throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
@@ -312,7 +359,7 @@ window.STHymn=api;
 
 /* ---------- desenho ---------- */
 const ico=n=>'<svg class="ti"><use href="#i-'+n+'"/></svg>';
-const hasFolder=()=>!!(S.rootH||S.files.length),hasDb=()=>!!(S.dbH||S.ljaMeta),connected=()=>hasFolder()||hasDb();
+const hasFolder=()=>!!((S.cp&&S.cp.root)||S.rootH||S.files.length),hasDb=()=>!!((S.cp&&S.cp.db)||S.dbH||S.ljaMeta),connected=()=>hasFolder()||hasDb();
 function setQ(v){const i=$('sthq');if(i)i.value=v}
 function scrollTop(){const b=$('sth-body');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest'})}
 function filtered(){
@@ -323,18 +370,26 @@ function filtered(){
   else{const f=fold(q);r=r.filter(h=>h.key.includes(f)).concat(r.filter(h=>!h.key.includes(f)&&h.body.includes(f)))}}
  return r;
 }
+function cpHint(){
+ if(S.cp)return '<div class="sth-via ok">Lendo pelo <b>IASD Projetor</b>, sem pedir permissão ao Chrome.</div>';
+ const i=S.cpInfo;
+ if(!i)return '<div class="sth-via">Dica: abra o <b>IASD Projetor</b> neste computador. Assim o site lê a pasta do Louvor JA sozinho, sem permissão do Chrome.</div>';
+ if(!cpTok()||!i.paired)return '<div class="sth-via">O IASD Projetor está aberto, mas não está pareado com este site. Em <b>Sonoplastia → Conectar IASD Projetor</b>, digite o código.</div>';
+ return '<div class="sth-via">O IASD Projetor aberto é antigo (v'+esc(i.version)+'). Atualize para a 0.5.7 ou mais nova para ler a pasta do Louvor JA.</div>'
+}
 /* 1) conexão: três passos na primeira vez; depois, uma linha só */
 let _cnHtml='';
 function paintConn(){
  const el=$('sth-conn');if(!el)return;let html;
  if(S.busy){html='<div class="sth-conn"><div class="sth-busy"><i class="sth-spin"></i><span>'+esc(S.busy)+'</span></div></div>'}
  else if(!(hasFolder()&&hasDb()&&S.cnt)){
+  const pth=x=>x?'<small class="sth-path" title="'+esc(x)+'">'+esc(x)+'</small>':'';
   const st=(n,done,t,d,btn,fn,pri)=>'<li class="'+(done?'ok':'')+'"><span class="n">'+(done?ico('check'):n)+'</span><div class="t"><b>'+t+'</b><small>'+d+'</small></div><button type="button" class="'+(pri?'mp-blue':'mp-btn')+'" onclick="STHymn.'+fn+'()"'+(fn==='sync'&&!(hasFolder()||hasDb())?' disabled':'')+'>'+btn+'</button></li>';
   html='<div class="sth-conn"><div class="sth-ch"><b>Conectar o Louvor JA</b><small>Só na primeira vez neste computador. Nada é enviado para a internet.</small></div><ol class="sth-steps">'
-   +st(1,hasFolder(),'Pasta do programa','Escolha a pasta <code>config</code> (a que tem <code>musicas</code> e <code>imagens</code>).',hasFolder()?'Trocar':'Escolher pasta','folder',!hasFolder())
-   +st(2,hasDb(),'Banco de dados','Escolha o arquivo <code>database.db</code> do programa.',hasDb()?'Trocar':'Escolher arquivo','db',hasFolder()&&!hasDb())
+   +st(1,hasFolder(),'Pasta do programa',(S.cp&&S.cp.root?'Encontrada neste computador.'+pth(S.cp.root):'Escolha a pasta <code>config</code> (a que tem <code>musicas</code> e <code>imagens</code>).'),hasFolder()?'Trocar':'Escolher pasta','folder',!hasFolder())
+   +st(2,hasDb(),'Banco de dados',(S.cp&&S.cp.db?'Encontrado neste computador.'+pth(S.cp.db.path):'Escolha o arquivo <code>database.db</code> do programa.'),hasDb()?'Trocar':'Escolher arquivo','db',hasFolder()&&!hasDb())
    +st(3,!!S.cnt,'Sincronizar','Confere o que já está neste computador.','Sincronizar agora','sync',hasFolder()&&hasDb()&&!S.cnt)
-   +'</ol><details class="sth-help"><summary>O Chrome disse que a pasta contém arquivos do sistema?</summary><p>O Chrome não deixa abrir pastas como <code>Program Files</code>, <code>ProgramData</code>, <code>Windows</code> ou a raiz do disco. Se o Louvor JA estiver em uma delas, escolha uma pasta de outro lugar (por exemplo, em <code>Documentos</code>) que contenha os mesmos arquivos.</p></details></div>'
+   +'</ol>'+cpHint()+(S.cp?'':'<details class="sth-help"><summary>O Chrome disse que a pasta contém arquivos do sistema?</summary><p>O Chrome não deixa abrir pastas como <code>Program Files</code>, <code>ProgramData</code>, <code>Windows</code> ou a raiz do disco. Se o Louvor JA estiver em uma delas, use o <b>IASD Projetor</b> (ele lê a pasta sem esse bloqueio) ou escolha uma pasta de outro lugar que tenha os mesmos arquivos.</p></details>')+'</div>'
  }else{
   const c=S.cnt,tot=KEYS.reduce((a,k)=>a+(c[k]?c[k].found:0),0),all=KEYS.reduce((a,k)=>a+(c[k]?c[k].total:0),0);
   const perm=S.lstat.novo==='perm'||S.lstat.db==='perm';
@@ -343,7 +398,7 @@ function paintConn(){
    if(x.prog!==null)ln.push(x.synced+' com letra sincronizada');else if(x.synced!==x.found)ln.push(x.synced+' com letra');
    if(x.noBg)ln.push(x.noBg+' sem fundo');
    return '<div class="sth-sc"><b>'+esc(ED[id].nome)+'</b><span>'+ln.join(' · ')+'</span>'+det(id,'faltando na pasta',x.miss)+det(id,'sem correspondência no programa',x.noProg)+'</div>'};
-  html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'Sincronizado '+ago(S.syncAt))+'</small></div>'
+  html='<div class="sth-conn ok"><div class="sth-sum"><span class="sth-dot'+(perm?' warn':'')+'"></span><div class="t"><b>'+tot+' de '+all+' itens com áudio neste computador</b><small>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'Sincronizado '+ago(S.syncAt)+(S.cp?' · via IASD Projetor':''))+'</small></div>'
    +(perm?'<button type="button" class="mp-blue" onclick="STHymn.reconnect()">Reconectar</button>':'<button type="button" class="mp-btn" onclick="STHymn.sync()">'+ico('shuffle')+'Sincronizar agora</button>')+'</div>'
    +'<details class="sth-more-d"'+(S.stOpen.all?' open':'')+' ontoggle="STHymn.tg(\'all\',this.open)"><summary>Detalhes por coleção</summary><div class="sth-cards">'+KEYS.map(card).join('')+'</div><div class="sth-acts"><button type="button" class="mp-btn" onclick="STHymn.folder()">Trocar pasta</button><button type="button" class="mp-btn" onclick="STHymn.db()">Trocar banco</button>'+(perm?'':'<button type="button" class="mp-btn" onclick="STHymn.reconnect()">Reconectar</button>')+'</div></details></div>'
  }
@@ -425,7 +480,7 @@ function mount(){
  '#sth{display:grid;gap:14px;min-width:0;max-width:100%}#sth *{box-sizing:border-box;min-width:0}#sth code{background:rgba(127,150,200,.18);padding:1px 6px;border-radius:5px;font-size:12px}#sth input[type=range]{width:auto;accent-color:#3574f3}'
  +'.sth-conn{border:1px solid var(--bd);border-radius:12px;background:var(--sf2);padding:14px;display:grid;gap:12px}.sth-ch{display:grid;gap:2px}.sth-ch small,.sth-conn small{color:var(--mu);font-size:12.5px}'
  +'.sth-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}.sth-steps li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--sf)}.sth-steps .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:700;background:var(--sf3);color:var(--tx)}.sth-steps .n .ti{width:16px;height:16px}.sth-steps li.ok .n{background:#16a34a;color:#fff}.sth-steps .t{flex:1;display:grid;gap:2px}.sth-steps .t b{font-size:14px}.sth-steps button{flex:none}.sth-steps button[disabled]{opacity:.45;cursor:not-allowed}'
- +'.sth-help summary,.sth-more-d summary{cursor:pointer;color:#7fa6ff;font-size:13px;font-weight:600}.sth-help p{margin:8px 0 0;font-size:13px;color:var(--mu);line-height:1.5}'
+ +'.sth-path{display:block;word-break:break-all;color:var(--mu);font-size:11.5px}.sth-via{font-size:12.5px;color:var(--mu);line-height:1.45;padding:8px 10px;border-radius:9px;background:var(--sf)}.sth-via.ok{color:#4ade80}.sth-help summary,.sth-more-d summary{cursor:pointer;color:#7fa6ff;font-size:13px;font-weight:600}.sth-help p{margin:8px 0 0;font-size:13px;color:var(--mu);line-height:1.5}'
  +'.sth-conn.ok{padding:10px 12px;gap:8px}.sth-sum{display:flex;align-items:center;gap:12px}.sth-sum .t{flex:1;display:grid;gap:2px}.sth-sum .t b{font-size:14px}.sth-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18);flex:none}.sth-dot.warn{background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.2)}'
  +'.sth-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}.sth-sc{display:grid;gap:4px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);font-size:12.5px}.sth-sc span{color:var(--mu)}.sth-sc summary{cursor:pointer;color:#7fa6ff}.sth-miss{max-height:140px;overflow:auto;padding:4px 0 2px 10px;color:var(--mu)}.sth-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}'
  +'.sth-busy{display:flex;align-items:center;gap:10px;font-size:13.5px}.sth-spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd2);border-top-color:#5b93ff;animation:sthspin .8s linear infinite;flex:none}@keyframes sthspin{to{transform:rotate(360deg)}}'

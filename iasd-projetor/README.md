@@ -14,6 +14,10 @@ Aplicativo auxiliar do IASD APP para o painel de Sonoplastia. O programa mantém
 
 Na primeira utilização, abra o IASD APP e vá a Sonoplastia → Conectar IASD Projetor. Digite o código exibido no aplicativo. O token é armazenado no perfil local do Windows para ser reutilizado nas próximas inicializações. Se os dados do aplicativo forem apagados ou o site perder seu token, será necessário parear novamente. Não compartilhe o código com pessoas não autorizadas.
 
+## Biblioteca do Louvor JA (versão 0.5.7)
+
+O Projetor lê, somente leitura, a pasta do Louvor JA e o `database.db` do programa e entrega ao site (Sonoplastia → Hinário). Isso evita o bloqueio do Chrome para pastas de sistema (`Program Files`) e dispensa pedidos de permissão. Ele procura sozinho em `Louvor JA` dentro de `Program Files (x86)`, `Program Files` e `ProgramData`; o site também pode abrir a escolha de pasta/arquivo pelo Projetor. Rotas (todas exigem o pareamento): `GET /lja/state`, `POST /lja/scan`, `POST /lja/pick`, `GET /lja/db`, `GET /lja/file?p=`. Só serve arquivos dentro da pasta escolhida; nada é enviado para a internet.
+
 ## Instalação e desenvolvimento
 
 No computador de desenvolvimento com Node.js LTS:

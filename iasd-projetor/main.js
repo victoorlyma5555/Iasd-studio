@@ -9,6 +9,7 @@ const path=require('node:path');
 const zlib=require('node:zlib');
 const {execFile}=require('node:child_process');
 const {createClient}=require('@supabase/supabase-js');
+const ljaLib=require('./lja.js');
 // Ícone PNG desenhado localmente, sem depender de arquivos externos.
 function createTrayIcon(){
  const iconPath=path.join(__dirname,'assets','iasd-app.ico');
@@ -345,6 +346,7 @@ ipcMain.handle('iasd:set-background',async(_,v)=>{try{const a=loadAppearance();i
 ipcMain.handle('iasd:set-wallpaper',async(_,file)=>new Promise(resolve=>{if(typeof file!=='string'||!fs.existsSync(file))return resolve({error:'Imagem não encontrada'});const safe=file.replace(/'/g,"''");const ps=`$p='${safe}'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name WallpaperStyle -Value '10'; Set-ItemProperty -Path 'HKCU:\\Control Panel\\Desktop' -Name TileWallpaper -Value '0'; Add-Type -TypeDefinition 'using System.Runtime.InteropServices; public class W { [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int SystemParametersInfo(int a,int b,string c,int d); }'; $r=[W]::SystemParametersInfo(20,0,$p,3); if(-not $r){exit 1}`;execFile('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-Command',ps],{windowsHide:true},e=>resolve(e?{error:'O Windows não conseguiu aplicar esta imagem como papel de parede.'}:{ok:true}))}));
 // Atualizações são verificadas online; a instalação requer confirmação do usuário.
 function latestWindowsRelease(){return new Promise((resolve,reject)=>{const req=https.get('https://api.github.com/repos/victoorlyma5555/Iasd-studio/releases?per_page=12',{headers:{'User-Agent':'IASD-Projetor/'+app.getVersion(),'Accept':'application/vnd.github+json'}},res=>{let body='';res.on('data',chunk=>{body+=chunk;if(body.length>250000)req.destroy(Error('Resposta muito grande'))});res.on('end',()=>{try{if(res.statusCode!==200)throw Error('GitHub indisponível ('+res.statusCode+')');const releases=JSON.parse(body),release=releases.find(x=>/^iasd-projetor-v/i.test(x.tag_name||'')&&!x.draft&&x.assets?.some(a=>/\.exe$/i.test(a.name)));if(!release){resolve({available:false,current:app.getVersion(),message:'Nenhuma versão Windows publicada.'});return}const match=/^iasd-projetor-v(\d+\.\d+\.\d+)/i.exec(release.tag_name),current=app.getVersion().split('.').map(Number),latest=match?match[1].split('.').map(Number):null;const newer=latest&&latest.some((n,i)=>n>current[i]&&latest.slice(0,i).every((v,j)=>v===current[j]));resolve({available:!!newer,current:app.getVersion(),latest:match?.[1]||release.tag_name,url:release.html_url,downloadUrl:release.assets.find(a=>/\.exe$/i.test(a.name))?.browser_download_url,tag:release.tag_name,hasMetadata:release.assets.some(a=>a.name==='latest.yml')})}catch(e){reject(e)}})});req.on('error',reject);req.setTimeout(8000,()=>req.destroy(Error('Tempo de verificação excedido')))})}
+let _lja=null;const ljaStore=()=>_lja||(_lja=ljaLib.create(app.getPath('userData')));
 function reply(res,code,data,req){const origin=req?allowedOrigin(req):(res.__iasdOrigin||SITE);res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':origin||SITE,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Cache-Control':'no-store','Vary':'Origin'});res.end(JSON.stringify(data))}
 async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(!allowedOrigin(req)&&!(req.method==='GET'&&/^\/media\/[a-f0-9]{32}$/.test(req.url||'')&&!req.headers.origin)){res.writeHead(403);res.end();return}
@@ -364,8 +366,34 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
 
  if(req.url==='/youtube/frame'&&req.method==='GET'){if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}try{reply(res,200,{image:await youtubeFrame(),id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/status'&&req.method==='GET'){reply(res,200,{online:true,paired:pairedTokens.size>0,secondMonitor:!!chooseDisplay(),projecting:!!windowRef&&!windowRef.isDestroyed(),version:app.getVersion(),youtubePreview:!!youtubeRef&&!youtubeRef.isDestroyed(),monitors:monitorInfo(),siteConnected:Date.now()-lastSiteContact<45000,siteIdentity});return}
+
+ /* Biblioteca do Louvor JA (somente leitura): o site lê a pasta do programa por aqui, sem passar pelo Chrome */
+ if(req.method==='GET'&&(req.url||'').startsWith('/lja/')){
+  if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
+  const lja=ljaStore(),u=new URL(req.url,'http://127.0.0.1');
+  if(u.pathname==='/lja/state'){reply(res,200,lja.state());return}
+  const cors={'Access-Control-Allow-Origin':allowedOrigin(req)||SITE,'Cross-Origin-Resource-Policy':'cross-origin','Vary':'Origin'};
+  if(u.pathname==='/lja/db'){const f=lja.dbPath();if(!f){reply(res,404,{error:'Banco do Louvor JA não encontrado'});return}lja.sendFile(req,res,f,cors);return}
+  if(u.pathname==='/lja/file'){const f=lja.resolveRel(u.searchParams.get('p')||'');if(!f){reply(res,404,{error:'Arquivo não encontrado'});return}lja.sendFile(req,res,f,cors);return}
+  reply(res,404,{error:'Rota desconhecida'});return
+ }
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100000){reply(res,413,{error:'Mensagem muito grande'});return}}
  let data={};try{data=JSON.parse(raw||'{}')}catch{reply(res,400,{error:'JSON inválido'});return}
+ if(req.url==='/lja/scan'&&req.method==='POST'){
+  if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
+  try{reply(res,200,await ljaStore().scan())}catch(e){reply(res,409,{error:e.message})}return
+ }
+ if(req.url==='/lja/pick'&&req.method==='POST'){
+  if(!authorized(req)){reply(res,401,{error:'Pareamento necessário'});return}
+  try{
+   const lja=ljaStore(),kind=data.kind==='db'?'db':'root';
+   const parent=dashboardRef&&!dashboardRef.isDestroyed()?dashboardRef:undefined;
+   if(parent){try{parent.show();parent.focus()}catch{}}
+   const r=await dialog.showOpenDialog(parent,kind==='db'?{title:'Escolha o database.db do Louvor JA',properties:['openFile'],filters:[{name:'Banco do Louvor JA',extensions:['db']}]}:{title:'Escolha a pasta do Louvor JA',properties:['openDirectory']});
+   if(r.canceled||!r.filePaths[0]){reply(res,200,Object.assign(lja.state(),{canceled:true}));return}
+   reply(res,200,kind==='db'?lja.setDb(r.filePaths[0]):lja.setRoot(r.filePaths[0]))
+  }catch(e){reply(res,409,{error:e.message})}return
+ }
  if(req.url==='/pair'&&req.method==='POST'){
   if(data.code!==pairingCode){reply(res,403,{error:'Código incorreto'});return}
   const newToken=crypto.randomBytes(32).toString('hex');
