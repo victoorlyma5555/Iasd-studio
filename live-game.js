@@ -906,9 +906,10 @@ function phBlock(){
  const u=CU(),ph=myPhoto();API._ph=!!ph;
  if(!u)return '<button type="button" class="gj-ph off" onclick="IASDLive.login()"><span class="pi">🔒</span><span class="pt"><b>Conecte-se para aparecer com sua foto</b><small>Toque para entrar na sua conta</small></span><i>Entrar ›</i></button>';
  const nm=esc(String((MP()&&MP().full_name)||(u.user_metadata||{}).full_name||u.email||'').split(' ')[0]);
- if(!ph)return '<div class="gj-ph"><span class="pi">👤</span><span class="pt"><b>Conectado'+(nm?' como '+nm:'')+'</b><small>Coloque uma foto no seu Perfil para aparecer no jogo</small></span></div>';
+ if(!ph)return '<button type="button" class="gj-ph off" onclick="IASDLive.profile()"><span class="pi">👤</span><span class="pt"><b>Conectado'+(nm?' como '+nm:'')+'</b><small>Coloque uma foto no seu Perfil para aparecer no jogo</small></span><i>Ir ao Perfil ›</i></button>';
  return '<button type="button" class="gj-ph on" id="lg-ph" onclick="IASDLive.togglePhoto()"><span class="pi"><img src="'+esc(ph.u)+'" alt="" style="object-position:'+ph.x+'% '+ph.y+'%;transform:scale('+ph.z+')"></span><span class="pt"><b>Usar minha foto de perfil</b><small>Conectado'+(nm?' como '+nm:'')+' · aparece no telão</small></span><i class="sw"></i></button>'}
 function togglePhoto(){API._ph=!API._ph;const b=$('lg-ph');if(b)b.classList.toggle('on',API._ph);A().sfx('tap')}
+function profileForPhoto(){try{sessionStorage.setItem('iasd_live_code',($('lg-code')?.value||'').replace(/\D/g,''))}catch(e){}if(typeof go==='function')go('Perfil')}
 function loginForPhoto(){try{sessionStorage.setItem('iasd_live_code',($('lg-code')?.value||'').replace(/\D/g,''))}catch(e){}if(typeof openAuthModal==='function')openAuthModal()}
 function joinForm(pre){
  try{pre=pre||sessionStorage.getItem('iasd_live_code')||''}catch(e){}
@@ -1340,7 +1341,7 @@ function install(){
  if(gameCode){setTimeout(async()=>{if(await reconnect(1,gameCode))return;await home();joinForm(gameCode)},300)}
  else if(location.pathname==='/jogos'&&(localStorage.getItem('iasd_live_host')||localStorage.getItem('iasd_live_player')))reconnect();
 }
-const API={login:loginForPhoto,togglePhoto,home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
+const API={login:loginForPhoto,profile:profileForPhoto,togglePhoto,home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
  sound:new Proxy({},{get:(_,k)=>()=>{try{window.IASDGameAudio?.sfx(k)}catch(e){}}}),
  _state:()=>({S,HS,PS}),_deck:c=>deckFor(c)};
 window.IASDLive=API;
