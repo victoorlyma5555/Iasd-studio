@@ -33,6 +33,8 @@ module.exports=async function handler(req,res){
   const a=al.json&&al.json[0];if(!a)return res.status(404).json({error:'Alerta não encontrado'});
   const fresh=iso=>Date.now()-Date.parse(iso)<10*60*1000;
   let recipients=[],payload;
+  // Só a RESPOSTA gera notificação, e só para quem enviou o alerta. O alerta em si não notifica ninguém por push.
+  if(kind==='alert')return res.status(200).json({sent:0,devices:0,skipped:'alerta não notifica'});
   if(kind==='alert'){
    if((!trusted&&a.created_by!==uid)||!fresh(a.created_at))return res.status(403).json({error:'Não permitido'});
    const t=TARGET_RE.exec(String(a.schedule_name||''));
