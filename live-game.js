@@ -901,6 +901,22 @@ button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255
 .lg2-center:has(.lg2-pod) .lg2-pill{margin:0}
 @media (max-height:760px){.lg2-pod .p1 .bar{height:clamp(50px,13vh,100px)}.lg2-pod .p2 .bar{height:clamp(40px,9.5vh,80px)}.lg2-pod .p3 .bar{height:clamp(32px,7vh,60px)}.lg2-pod .lg2-av.big{font-size:clamp(18px,4.4vh,40px)}.lg2-center:has(.lg2-pod) .lg2-ppl{display:none}}
 @media (max-height:620px){.lg2-center:has(.lg2-pod) .lg2-awards{display:none}}
+/* classificação no celular */
+.lgp{width:min(440px,100%);display:grid;gap:8px;margin:12px auto 4px;text-align:center}
+.lgp h3{margin:0;font-size:14px;letter-spacing:.04em;color:#ffd24a}
+.lgp-pod{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:end}.lgp-pod.one{grid-template-columns:minmax(0,140px);justify-content:center}
+.lgp-pod .s{display:grid;justify-items:center;gap:2px;min-width:0}.lgp-pod .nm{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lgp-pod .pt{font-size:12px;opacity:.85;font-weight:700}
+.lgp-pod .lg2-av{font-size:13px}.lgp-pod .crown{font-size:18px;line-height:1}
+.lgp-pod .bar{width:100%;border-radius:10px 10px 0 0;display:grid;place-items:center;font-weight:900;font-size:20px;color:rgba(0,0,0,.55)}
+.lgp-pod .p1 .bar{height:62px;background:linear-gradient(180deg,#fde68a,#f5b73a)}.lgp-pod .p2 .bar{height:44px;background:linear-gradient(180deg,#e5e7eb,#9ca3af)}.lgp-pod .p3 .bar{height:32px;background:linear-gradient(180deg,#f6ad6b,#c2570f)}
+.lgp-pod .s.me .nm{color:#ffd24a}
+.lgp-l{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.lgp-r{display:grid;grid-template-columns:30px 30px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);text-align:left;margin:0}
+.lgp-r b{opacity:.85;font-size:13px}.lgp-r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:14px}.lgp-r em{font-style:normal;font-weight:800;font-size:13px;color:#ffd24a}
+.lgp-r .lg2-av{font-size:11px}.lgp-r.me{background:rgba(255,210,74,.16);border-color:rgba(255,210,74,.55)}
+.lgp-mine{margin-top:2px}.lgp-mine:before{content:'Sua posição';font-size:11px;opacity:.7;text-align:left}
+.lgp-more{display:flex;align-items:center;justify-content:center;gap:0;margin-top:2px}.lgp-more .lg2-av{font-size:9px;margin-left:-6px;border:2px solid #0f1c4d}.lgp-more .lg2-av:first-child{margin-left:0}
+.lgp-more .plus{margin-left:8px;font-weight:800;font-size:13px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.14)}
 `;document.head.appendChild(s);
  if(!document.getElementById('lg2-font')){const l=document.createElement('link');l.id='lg2-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap';document.head.appendChild(l)}
 }
@@ -1246,14 +1262,27 @@ async function answer(i){
  try{const s=JSON.parse(localStorage.getItem('iasd_live_player')||'null');await rpc('live_submit_answer',{p_room:S.room.id,p_player:S.player.id,p_token:s?.token,p_question:ix,p_answer:i});PS.lastPick=i;PS.pickFor=ix;try{localStorage.setItem('iasd_live_ans',JSON.stringify({room:S.room.id,q:ix,pick:i}))}catch(e){}}catch(e){console.warn(e)}
  clearInterval(S.clock);sentScreen();
 }
+/* classificação no celular: pódio dos 3 primeiros + 4º ao 7º; o resto vira 3 ícones pequenos com "+N"; quem está fora do top 7 vê a própria linha */
+function phoneBoardHTML(ps,meId,title){
+ if(!ps||!ps.length)return '';
+ const nm=p=>esc(splitName(p.name).name),top=ps.slice(0,7),rest=ps.slice(7);
+ const col=(p,cl,pos)=>p?'<div class="s '+cl+(p.id===meId?' me':'')+'">'+(cl==='p1'?'<span class="crown">👑</span>':'')+avatarHTML(p.name)+'<div class="nm">'+nm(p)+(p.id===meId?' (você)':'')+'</div><div class="pt">'+fmt(p.score)+'</div><div class="bar">'+pos+'</div></div>':'<div class="s '+cl+'"></div>';
+ const pod=ps.length>=2?'<div class="lgp-pod">'+col(top[1],'p2','2')+col(top[0],'p1','1')+col(top[2],'p3','3')+'</div>':'<div class="lgp-pod one">'+col(top[0],'p1','1')+'</div>';
+ const row=(p,k)=>'<li class="lgp-r'+(p.id===meId?' me':'')+'"><b>'+(k+1)+'º</b>'+avatarHTML(p.name)+'<span>'+nm(p)+(p.id===meId?' (você)':'')+'</span><em>'+fmt(p.score)+'</em></li>';
+ const list=top.slice(3).map((p,k)=>row(p,k+3)).join('');
+ const mi=ps.findIndex(p=>p.id===meId),mine=mi>=7?'<ul class="lgp-l lgp-mine">'+row(ps[mi],mi)+'</ul>':'';
+ const more=rest.length?'<div class="lgp-more" title="'+rest.length+' jogador(es) a mais">'+rest.slice(0,3).map(p=>avatarHTML(p.name)).join('')+(rest.length>3?'<span class="plus">+'+(rest.length-3)+'</span>':'')+'</div>':'';
+ return '<div class="lgp">'+(title?'<h3>'+title+'</h3>':'')+pod+(list?'<ul class="lgp-l">'+list+'</ul>':'')+more+mine+'</div>';
+}
 async function phoneReveal(i){
  clearTimers();const q=deckFor(code())[i],mine=PS.pickFor===i?PS.lastPick:-1,ok=mine===q.ans;
- screen('<div class="lg2-phone"><div class="lg2-res '+(ok?'':'bad')+'"><div class="big">'+(ok?'🎉':mine<0?'⏰':'😅')+'</div><h2>'+(ok?'Acertou!':mine<0?'Tempo esgotado':'Quase!')+'</h2><div class="pts" id="lg-pts">'+(ok?'calculando…':'')+'</div><p class="lg2-sub">Resposta certa: <b>'+esc(q.a)+'</b></p><div id="lg-rank" class="lg2-pill" style="visibility:hidden"></div><div id="lg-team" class="tm-ln"></div></div></div>','');
+ screen('<div class="lg2-phone"><div class="lg2-res '+(ok?'':'bad')+'"><div class="big">'+(ok?'🎉':mine<0?'⏰':'😅')+'</div><h2>'+(ok?'Acertou!':mine<0?'Tempo esgotado':'Quase!')+'</h2><div class="pts" id="lg-pts">'+(ok?'calculando…':'')+'</div><p class="lg2-sub">Resposta certa: <b>'+esc(q.a)+'</b></p><div id="lg-rank" class="lg2-pill" style="visibility:hidden"></div><div id="lg-team" class="tm-ln"></div></div><div id="lg-board"></div></div>','');
  A().sfx(ok?'correct':'wrong');if(navigator.vibrate)navigator.vibrate(ok?[60,40,60]:200);if(ok)confetti(1800);
  for(const wait of [1300+Math.random()*1500,1600+Math.random()*800]){
   await new Promise(r=>setTimeout(r,wait/speed()));if(S.phase!=='p-reveal'||PS.revealFor!==i)return;
   try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score),me=ps.find(p=>p.id===S.player.id);
    if(me){const d=me.score-PS.lastScore;const pts=$('lg-pts');if(pts)pts.textContent=d>0?'+'+fmt(d)+' pontos':(ok?'':'+0');PS.cur=me.score;if(cfgOf(code()).teams){const R=teamResult(ps),el=$('lg-team'),m=teamOf(S.player),o=m==='A'?'B':'A';if(el)el.innerHTML=teamBadge(m)+' <b>'+fmt_(R.t[m].pts)+'</b> × <b>'+fmt_(R.t[o].pts)+'</b> '+TEAMS[o].e+(R.fmt===2&&PS.tt?'<br><small>🪢 rodadas: '+R.rw[m]+' × '+R.rw[o]+'</small>':'')}
+    {const bd=$('lg-board');if(bd)bd.innerHTML=phoneBoardHTML(ps,S.player.id,'🏅 Classificação parcial')}
     const pos=ps.findIndex(p=>p.id===S.player.id)+1,r=$('lg-rank');if(r){r.style.visibility='visible';r.textContent=pos+'º lugar · '+fmt(me.score)+' pts'+(pos>1?' · faltam '+fmt(ps[pos-2].score-me.score+1)+' p/ subir':'')}}}catch(e){}
   if(PS.cur!=null&&(!ok||PS.cur>PS.lastScore))break;
  }
@@ -1261,10 +1290,10 @@ async function phoneReveal(i){
 }
 async function phoneFinal(){
  clearTimers();S.phase='p-final';
- let pos='',pts=0,n=0,tl='';
- try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);n=ps.length;if(cfgOf(code()).teams){const R=teamResult(ps),m=teamOf(S.player);tl='<div class="tm-fin"><div class="tm-win '+(R.w||'')+'">'+(R.w?(R.w===m?'🏆 Seu time venceu!':'😅 O time '+TEAMS[R.w].n+' venceu'):'🤝 Empate!')+'</div><div class="tm-two"><span class="A">🔵 '+fmt_(R.t.A.pts)+'</span><span class="B">🟡 '+fmt_(R.t.B.pts)+'</span></div>'+(R.fmt===2?'<small>🪢 rodadas vencidas: '+R.rw.A+' × '+R.rw.B+'</small>':'')+'</div>'}pos=ps.findIndex(p=>p.id===S.player.id)+1;pts=ps[pos-1]?.score||0}catch(e){}
+ let pos='',pts=0,n=0,tl='',bd='';
+ try{const ps=(await players()).map(p=>({...p,score:Number(p.score)||0})).sort((a,b)=>b.score-a.score);n=ps.length;if(cfgOf(code()).teams){const R=teamResult(ps),m=teamOf(S.player);tl='<div class="tm-fin"><div class="tm-win '+(R.w||'')+'">'+(R.w?(R.w===m?'🏆 Seu time venceu!':'😅 O time '+TEAMS[R.w].n+' venceu'):'🤝 Empate!')+'</div><div class="tm-two"><span class="A">🔵 '+fmt_(R.t.A.pts)+'</span><span class="B">🟡 '+fmt_(R.t.B.pts)+'</span></div>'+(R.fmt===2?'<small>🪢 rodadas vencidas: '+R.rw.A+' × '+R.rw.B+'</small>':'')+'</div>'}pos=ps.findIndex(p=>p.id===S.player.id)+1;pts=ps[pos-1]?.score||0;bd=phoneBoardHTML(ps,S.player.id,'🏆 Pódio final')}catch(e){}
  A().sfx(pos&&pos<=3?'win':'level');if(pos&&pos<=3)confetti(6000);
- screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">'+(pos===1?'🏆':pos===2?'🥈':pos===3?'🥉':'🎖️')+'</div><h2>Fim de jogo!</h2><div class="pts" style="color:#f5b73a">'+(pos?pos+'º lugar':'')+'</div><p class="lg2-sub">'+fmt(pts)+' pontos'+(n?' · '+n+' jogadores':'')+'</p>'+tl+'<button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Jogar de novo</button></div></div>','');
+ screen('<div class="lg2-phone"><div class="lg2-res"><div class="big">'+(pos===1?'🏆':pos===2?'🥈':pos===3?'🥉':'🎖️')+'</div><h2>Fim de jogo!</h2><div class="pts" style="color:#f5b73a">'+(pos?pos+'º lugar':'')+'</div><p class="lg2-sub">'+fmt(pts)+' pontos'+(n?' · '+n+' jogadores':'')+'</p>'+tl+bd+'<button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Jogar de novo</button></div></div>','');
 }
 /* ---------- sincronização ---------- */
 function clearTimers(){clearInterval(S.clock);clearTimeout(S.auto);clearTimeout(S.flashT)}
