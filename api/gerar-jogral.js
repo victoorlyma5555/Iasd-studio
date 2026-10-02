@@ -4,7 +4,25 @@
 // POST → {text}           (precisa de "Authorization: Bearer <token do usuário>")
 const SUPABASE_URL='https://gtsaaixuampeaivugxdm.supabase.co';
 const SUPABASE_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
-const MODELS=['gemini-2.5-flash-lite','gemini-2.5-flash'];
+const FALLBACK_MODELS=['gemini-flash-lite-latest','gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'];
+let found=null,foundAt=0;
+// Descobre os modelos "flash" que a chave realmente pode usar (os nomes mudam com o tempo).
+async function models(key){
+ if(process.env.GEMINI_MODEL)return [String(process.env.GEMINI_MODEL).replace(/[^\w.-]/g,'')];
+ if(found&&Date.now()-foundAt<3600000)return found;
+ try{
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{headers:{'x-goog-api-key':key}});
+  if(r.ok){
+   const j=await r.json();
+   const ok=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>String(m.name||'').replace(/^models\//,'')).filter(n=>/^gemini-[\d.]+-flash(-lite)?$/.test(n));
+   const ver=n=>parseFloat((n.match(/gemini-([\d.]+)/)||[0,0])[1]);
+   ok.sort((a,b)=>ver(b)-ver(a)||(/lite/.test(b)?1:0)-(/lite/.test(a)?1:0));
+   const list=[...new Set([...ok.slice(0,3),...FALLBACK_MODELS])];
+   if(ok.length){found=list;foundAt=Date.now();return list}
+  }
+ }catch(e){}
+ return FALLBACK_MODELS;
+}
 const recent=new Map(); // limite simples por usuário (por instância): 8 roteiros a cada 10 minutos
 function limited(id){const now=Date.now(),list=(recent.get(id)||[]).filter(t=>now-t<600000);if(list.length>=8){recent.set(id,list);return true}list.push(now);recent.set(id,list);return false}
 const clean=(value,max=120)=>String(value||'').replace(/[\u0000-\u001f]+/g,' ').trim().slice(0,max);
@@ -56,17 +74,19 @@ REGRAS
 - Não invente doutrinas nem cite autores; mantenha-se fiel ao tema e ao ensino bíblico.
 - Responda somente com o roteiro, sem introdução, sem explicações e sem comentários finais.`;
   const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),50000);
-  let response,result,lastStatus=0;
+  let response,result,lastStatus=0,detail='';
   try{
-   for(const model of MODELS){
+   for(const model of (await models(key)).slice(0,5)){
     response=await callGemini(model,key,prompt,controller.signal);lastStatus=response.status;
     if(response.ok){result=await response.json();break}
-    if(response.status===429||response.status===400||response.status===401||response.status===403)break; // outro modelo não resolve
+    let em='';try{const e=await response.json();em=String(e&&e.error&&e.error.message||'')}catch(x){}
+    detail=model+' → '+response.status+(em?': '+em.slice(0,180):'');
+    if(response.status===429||response.status===401||response.status===403||(response.status===400&&/API key|API_KEY/i.test(em)))break; // outro modelo não resolve
    }
   }finally{clearTimeout(timeout)}
   if(!result){
-   const exhausted=lastStatus===429,badKey=lastStatus===400||lastStatus===401||lastStatus===403;
-   return res.status(exhausted?429:502).json({code:badKey?'bad_key':undefined,error:exhausted?'Limite gratuito da IA atingido. Tente novamente em alguns minutos.':badKey?'A chave da IA parece inválida. Avise o administrador.':'A IA não respondeu agora. Tente novamente.'});
+   const exhausted=lastStatus===429,badKey=lastStatus===401||lastStatus===403||/API key|API_KEY/i.test(detail);
+   return res.status(exhausted?429:502).json({code:badKey?'bad_key':undefined,detail,error:exhausted?'Limite gratuito da IA atingido. Tente novamente em alguns minutos.':badKey?'A chave da IA parece inválida. Avise o administrador.':'A IA não respondeu agora. Tente novamente.'});
   }
   const cand=result.candidates&&result.candidates[0];
   const text=((cand&&cand.content&&cand.content.parts)||[]).map(p=>p.text||'').join('').replace(/\*\*/g,'').replace(/^#+\s*/gm,'').trim();

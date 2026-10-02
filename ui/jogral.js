@@ -110,7 +110,7 @@ async function gerar(){
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),58000);
   let r;try{r=await fetch('/api/gerar-jogral',{method:'POST',signal:ctl.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tk},body:JSON.stringify(p)})}finally{clearTimeout(to)}
   let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok){if(j&&j.code==='no_key')J.ai=false;throw Error((j&&j.error)||'Não foi possível gerar o roteiro.')}
+  if(!r.ok){if(j&&j.code==='no_key')J.ai=false;throw Error(((j&&j.error)||'Não foi possível gerar o roteiro.')+(j&&j.detail&&isManager()?' [Detalhe técnico: '+j.detail+']':''))}
   J.text=j.text;J.view='roteiro';J.id=null;J.busy=false;redraw();toOut();
   say(j.truncated?'Roteiro criado, mas ficou cortado no fim. Gere de novo com duração menor ou complete na aba “Editar texto”.':'Jogral criado! Revise as falas e confira as referências bíblicas antes do culto.','ok');
  }catch(e){J.busy=false;redraw();say('Erro: '+(e.name==='AbortError'?'a IA demorou demais. Tente de novo.':e.message),'err')}}
