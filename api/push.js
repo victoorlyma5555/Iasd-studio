@@ -45,7 +45,7 @@ module.exports=async function handler(req,res){
   }else{
    if(!a.reply_message||(!trusted&&a.replied_by!==uid)||!fresh(a.replied_at))return res.status(403).json({error:'Não permitido'});
    recipients=[a.created_by];
-   payload={title:'↩ '+(a.replied_by_name||'Sonoplastia')+' respondeu',body:String(a.reply_message).slice(0,200),tag:'iasd-reply-'+a.id+'-'+Date.parse(a.replied_at),url:'/'};
+   payload={title:'↩ '+(a.replied_by_name||'Sonoplastia')+' respondeu',body:String(a.reply_message).slice(0,200),tag:'iasd-reply-'+a.id,url:'/'};
   }
   recipients=[...new Set(recipients.filter(u=>UUID.test(String(u))))];
   if(!recipients.length)return res.status(200).json({sent:0,devices:0});
