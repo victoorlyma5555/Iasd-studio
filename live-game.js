@@ -917,6 +917,9 @@ button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255
 .lgp-mine{margin-top:2px}.lgp-mine:before{content:'Sua posição';font-size:11px;opacity:.7;text-align:left}
 .lgp-more{display:flex;align-items:center;justify-content:center;gap:0;margin-top:2px}.lgp-more .lg2-av{font-size:9px;margin-left:-6px;border:2px solid #0f1c4d}.lgp-more .lg2-av:first-child{margin-left:0}
 .lgp-more .plus{margin-left:8px;font-weight:800;font-size:13px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.14)}
+.lg2-center:has(.lg2-pod) .lg2-ppl{min-height:0}
+.lg2-center:has(.lg2-pod) .lgp-more .lg2-av{font-size:clamp(10px,min(1.2vw,1.9vh),20px)}
+.lg2-center:has(.lg2-pod) .lgp-more .plus{font-size:clamp(12px,min(1.4vw,2.2vh),24px)}
 `;document.head.appendChild(s);
  if(!document.getElementById('lg2-font')){const l=document.createElement('link');l.id='lg2-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap';document.head.appendChild(l)}
 }
@@ -1203,7 +1206,8 @@ async function finalPodium(){
  screen(barHTML()+'<div class="lg2-center" style="width:min(1000px,100%)"><span class="lg2-pill">🏁 FIM DE JOGO · '+total+' RODADAS</span><h1 class="lg2-hero" style="font-size:clamp(30px,5vw,56px)">Pódio</h1>'+
   '<div class="lg2-pod">'+top3.map((p,k)=>p?'<div class="s '+cls[k]+'">'+(cls[k]==='p1'?'<span class="crown">👑</span>':'')+avatarHTML(p.name,'big')+'<div class="nm">'+esc(splitName(p.name).name)+'</div><div class="pt">'+fmt(p.score)+' pts</div><div class="bar">'+pos[k]+'</div></div>':'<div class="s '+cls[k]+'"></div>').join('')+'</div>'+
   '<div class="lg2-awards">'+(bestStreak&&HS.best[bestStreak.id]>=2?'<div>🔥 Sequência de fogo<small>'+esc(splitName(bestStreak.name).name)+' · '+HS.best[bestStreak.id]+' seguidas</small></div>':'')+(mostOk&&HS.correct[mostOk.id]?'<div>🎯 Mais acertos<small>'+esc(splitName(mostOk.name).name)+' · '+HS.correct[mostOk.id]+' de '+total+'</small></div>':'')+'</div>'+
-  (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,12).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
+  (ps.length>3?'<div class="lg2-ppl" style="margin-top:6px">'+ps.slice(3,7).map((p,k)=>'<div class="lg2-pp" style="animation-delay:'+(4+k*.1)+'s"><b>'+(k+4)+'º</b>'+avatarHTML(p.name)+esc(splitName(p.name).name)+' · '+fmt(p.score)+'</div>').join('')+'</div>':'')+
+  (ps.length>7?'<div class="lgp-more" title="'+(ps.length-7)+' jogador(es) a mais">'+ps.slice(7,10).map(p=>avatarHTML(p.name)).join('')+(ps.length>10?'<span class="plus">+'+(ps.length-10)+'</span>':'')+'</div>':'')+
   '<div class="lg2-row"><button class="lg2-btn gold" onclick="IASDLive.leave();IASDLive.home()">Nova partida</button><button class="lg2-btn" onclick="IASDLive.leave()">Encerrar</button></div></div>','bgx qz');
 }
 function teamFinal(ps){
