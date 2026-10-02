@@ -715,6 +715,22 @@ const IASD_ICONS={
  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6"/>',bible:'<path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v18H7.5A3.5 3.5 0 0 0 4 23z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H12v18h4.5A3.5 3.5 0 0 1 20 23z"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',agenda:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M8 8h-5M8 12h-5M8 16h-5M12 8h4M12 12h4M12 16h3"/>',spark:'<path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',sound:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',crown:'<path d="m3 7 4 4 5-7 5 7 4-4-2 12H5z"/>',plus:'<path d="M12 5v14M5 12h14"/>',project:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="m8 21 4-4 4 4"/>'};
 function iconSvg(name){return '<svg class="iasd-icon" viewBox="0 0 24 24" aria-hidden="true">'+(IASD_ICONS[name]||IASD_ICONS.spark)+'</svg>'}
 
+/* aviso: o Studio segue tocando em segundo plano; páginas com som próprio vão tocar junto */
+let _stNotePage='',_stNoteT=0;
+function studioPlaying(){try{const f=document.getElementById('iasd-studio-frame'),w=f&&f.contentWindow;return !!(w&&[...w.document.querySelectorAll('audio,video')].some(a=>!a.paused&&!a.ended&&a.readyState>2))}catch(e){return false}}
+function studioPauseAll(){try{const w=document.getElementById('iasd-studio-frame').contentWindow;w.document.querySelectorAll('audio,video').forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}hideStudioNote()}
+function hideStudioNote(){clearTimeout(_stNoteT);const n=document.getElementById('st-sound-note');if(n)n.classList.remove('on')}
+function studioSoundNote(){
+ const page=current;if(page===_stNotePage)return;_stNotePage=page;
+ if(page==='Projeção'||!canUseSound()||!studioPlaying()){hideStudioNote();return}
+ const withSound=['Jogo','Estudo','Mídia'].includes(page);
+ let n=document.getElementById('st-sound-note');
+ if(!n){const st=document.createElement('style');st.textContent='#st-sound-note{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:9998;max-width:min(560px,calc(100vw - 24px));display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(10,24,52,.96);color:#fff;border:1px solid rgba(140,172,255,.4);box-shadow:0 12px 34px rgba(0,0,0,.45);font:600 13px/1.4 Inter,system-ui,sans-serif;opacity:0;pointer-events:none;transition:.25s}#st-sound-note.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}#st-sound-note.warn{border-color:#f5b73a}#st-sound-note span{flex:1}#st-sound-note button{border:0;border-radius:10px;padding:8px 12px;font:700 12px inherit;cursor:pointer;background:#2f6bff;color:#fff}#st-sound-note button.x{background:rgba(255,255,255,.12)}';document.head.appendChild(st);
+  n=document.createElement('div');n.id='st-sound-note';n.setAttribute('role','status');document.body.appendChild(n)}
+ n.className=withSound?'warn':'';
+ n.innerHTML='<span>'+(withSound?'🔊 O áudio da Projeção continua tocando. Esta página também tem som, então os dois vão tocar juntos.':'🎵 O áudio da Projeção continua tocando em segundo plano.')+'</span><button type="button" onclick="studioPauseAll()">Pausar</button><button type="button" class="x" onclick="hideStudioNote()" aria-label="Fechar">✕</button>';
+ requestAnimationFrame(()=>n.classList.add('on'));clearTimeout(_stNoteT);_stNoteT=setTimeout(hideStudioNote,withSound?14000:7000)
+}
 function render(){
 if(current==='Sonoplastia'&&canUseSound()){current='Projeção';try{sessionStorage.setItem('iasd-current-page','Projeção');window.IASDRouter?.sync?.('Projeção',{replace:true})}catch(e){}}
 const headerActions=document.querySelector('body > header .header-actions');if(!headerActions){const detached=document.querySelector('#dashboard-account-slot .header-actions');if(detached)document.querySelector('body > header').appendChild(detached)}
@@ -774,7 +790,7 @@ if(!out)out='<div class="panel"><h2>Em breve</h2><p class="muted">Esta área ain
   if(!want&&out)keep.insertAdjacentHTML('beforebegin',out)
  }else box.innerHTML=out;
  const nf=document.getElementById('iasd-studio-frame');if(nf&&!keep){nf.classList.toggle('st-bg',!want)}}
-if(current==='Painel')startHomeCarousel();positionDashboardAccount();applyInlineEditors();if(current==='Projeção')updateProjectionConsole();
+studioSoundNote();if(current==='Painel')startHomeCarousel();positionDashboardAccount();applyInlineEditors();if(current==='Projeção')updateProjectionConsole();
 try{window.IASDUI?.afterRender?.()}catch(e){console.error('IASD UI',e)}
 }
 const SABBATH_API='https://sabbath-school.adventech.io/api/v1';
