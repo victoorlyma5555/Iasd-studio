@@ -42,29 +42,36 @@ S.local={antigo:{},novo:{}};S.lstat={};
 const hasLocal=(ed,n)=>!!(S.local[ed]&&S.local[ed][n]);
 const hasAudio=(ed,n)=>hasLocal(ed,n)||!!(S.audio[ed]&&S.audio[ed][n]);
 const countAudio=ed=>{const k=new Set(Object.keys(S.audio[ed]||{}));Object.keys(S.local[ed]||{}).forEach(x=>k.add(x));return k.size};
-const AUD=/\.(mp3|m4a|aac|wav|ogg|opus|flac|mp4)$/i;
+const AUD=/\.(mp3|m4a|aac|wav|ogg|opus|flac|mp4|m4v|webm)$/i;
+const tkey=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+function parseName(name){let b=String(name||'').replace(/\.[^.]+$/,'');const pb=/\s*[-–_]\s*(pb|playback|instrumental)\s*$/i.test(b);b=b.replace(/\s*[-–_]\s*(pb|playback|instrumental)\s*$/i,'');return{key:tkey(b.replace(/^\s*\d{1,3}\s*[-.–_]\s*/,'')),pb}}
+/* casa os arquivos (nomeados pelo TÍTULO, como no Louvor JA) com os hinos da edição; prefere o cantado, usa o playback (PB) se for só ele */
+function matchEd(ed,items){const out={};const byKey={};items.forEach(it=>{const p=parseName(it.name);(byKey[p.key]=byKey[p.key]||[]).push(Object.assign({pb:p.pb},it))});
+ list(ed).forEach(h=>{const c=byKey[tkey(h.t)];if(!c||!c.length)return;const want=ed==='novo'?/2022|nha|novo/i:/adventista(?!.*2022)|hasd|antigo/i;
+  c.sort((a,b)=>(a.pb-b.pb)||((want.test(b.dir||'')?1:0)-(want.test(a.dir||'')?1:0)));
+  const f=c.find(x=>!x.pb&&want.test(x.dir||''))||c.find(x=>want.test(x.dir||''))||c[0];out[h.n]=f});
+ items.forEach(it=>{if(/^\s*\d/.test(it.name)){const n=numOf(it.name);if(n&&!out[n]&&n<=list(ed).length)out[n]=it}});return out}
+
 function numOf(name){const b=String(name||'').replace(/\.[^.]+$/,'');
  let m=/^\s*(?:hino\s*(?:n[º°o.]*)?\s*)?0*(\d{1,3})(?!\d)/i.exec(b);if(m&&+m[1]>0)return +m[1];
  const g=(b.match(/\d+/g)||[]);const pad3=g.filter(x=>x.length>=3&&+x>0&&+x<1000);const pick=pad3.length?pad3[pad3.length-1]:g.filter(x=>+x>0&&+x<1000).pop();return pick?+pick:0}
 const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('iasd-sth-fs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 async function idbGet(k){try{const d=await idb();return await new Promise(res=>{const q=d.transaction('h').objectStore('h').get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}catch(e){return null}}
 async function idbSet(k,v){try{const d=await idb();await new Promise(res=>{const t=d.transaction('h','readwrite');t.objectStore('h').put(v,k);t.oncomplete=res;t.onerror=res})}catch(e){}}
-async function walk(dir,out,depth){
+async function walk(dir,out,depth,path){path=path||'';
  for await(const [name,e] of dir.entries()){
-  if(e.kind==='directory'){if(depth<4)await walk(e,out,depth+1)}
-  else if(AUD.test(name)){const n=numOf(name);if(n&&!out[n])out[n]={handle:e,name}}}
+  if(e.kind==='directory'){if(depth<5)await walk(e,out,depth+1,path+'/'+name)}
+  else if(AUD.test(name))out.push({handle:e,name,dir:path})}
 }
 async function indexHandle(ed,h){
- S.busy='Lendo a pasta de hinos…';paintBar();const out={};
- try{await walk(h,out,0)}catch(e){S.busy='';say('Não consegui ler a pasta: '+(e.message||e));return}
- const max=list(ed).length;if(max)Object.keys(out).forEach(n=>{if(+n>max)delete out[n]});
- S.local[ed]=out;S.lstat[ed]='ok';S.busy='';
- say(Object.keys(out).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Eles tocam direto do computador, sem internet.');paint();
+ S.busy='Lendo a pasta de hinos…';paintBar();const raw=[];
+ try{await walk(h,raw,0,h.name||'')}catch(e){S.busy='';say('Não consegui ler a pasta: '+(e.message||e));return}
+ const out=matchEd(ed,raw);S.local[ed]=out;S.lstat[ed]='ok';S.busy='';
+ say(Object.keys(out).length+' de '+list(ed).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Eles tocam direto do computador, sem internet.');paint();
 }
 function indexFiles(ed,files){
- const out={};[...files].forEach(f=>{if(!AUD.test(f.name||''))return;const n=numOf(f.name);if(n&&!out[n])out[n]={file:f,name:f.name}});
- const max=list(ed).length;if(max)Object.keys(out).forEach(n=>{if(+n>max)delete out[n]});
- S.local[ed]=out;S.lstat[ed]='ok';say(Object.keys(out).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Valem até fechar esta página (neste navegador, use Chrome ou Edge para lembrar a pasta).');paint();
+ const raw=[...files].filter(f=>AUD.test(f.name||'')).map(f=>({file:f,name:f.name,dir:f.webkitRelativePath||''}));const out=matchEd(ed,raw);
+ S.local[ed]=out;S.lstat[ed]='ok';say(Object.keys(out).length+' de '+list(ed).length+' hinos encontrados na pasta ('+ED[ed].nome+'). Valem até fechar esta página (neste navegador, use Chrome ou Edge para lembrar a pasta).');paint();
 }
 async function connectFolder(){
  const ed=S.ed;
