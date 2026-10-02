@@ -157,18 +157,18 @@ function lessonHTML(){
 function nextBtn(li){const c=course();if(!c||li>=c.lessons.length-1)return '';return '<button class="pg-ghost" onclick="IASDEstudo.openLesson('+(li+1)+')">Próxima lição ›</button>'}
 function gl(b,i){return '<span class="es-bctl">'+(S.edit&&!S.room?'<button onclick="IASDEstudo.moveBlock('+i+',-1)">▲</button><button onclick="IASDEstudo.moveBlock('+i+',1)">▼</button><button onclick="IASDEstudo.editBlock('+i+')">✎</button><button onclick="IASDEstudo.delBlock('+i+')">🗑</button>':'')+'</span>'}
 function optVals(b,P){const v=((P.a||{})[b.id]||'');if(b.kind==='vf'){const a=v.split(',');while(a.length<b.opts.length)a.push('');return a}return v}
-function fmtAns(b,v){if(b.kind==='vf')return b.opts.map((o,i)=>(v.split(',')[i]||'—')+' · '+o).join('\n');if(b.kind==='x'){const i=+v;return isNaN(i)||v===''?'':b.opts[i]}return v}
+function fmtAns(b,v){if(b.kind==='vf'){if(!/[VF]/.test(v))return ''}if(b.kind==='vf')return b.opts.map((o,i)=>(v.split(',')[i]||'—')+' · '+o).join('\n');if(b.kind==='x'){const i=+v;return isNaN(i)||v===''?'':b.opts[i]}return v}
 function optsHTML(b,P,editing){
  const v=optVals(b,P),dis=editing?' disabled':'';
- if(b.kind==='vf')return '<div class="es-opts">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
- return '<div class="es-opts">'+b.opts.map((o,i)=>'<label class="es-opt"><input type="radio"'+dis+' name="o-'+esc(b.id)+'" '+(String(v)===String(i)?'checked':'')+' onchange="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
+ if(b.kind==='vf')return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
+ return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<label class="es-opt"><input type="radio"'+dis+' name="o-'+esc(b.id)+'" '+(String(v)===String(i)?'checked':'')+' onchange="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
 }
 function guideHTML(b){
  let h='';
  if(b.opts&&b.keys){h+='<div class="es-gab">'+b.opts.map((o,i)=>'<div>'+(b.kind==='vf'?'<b>'+esc(b.keys[i])+'</b>':(b.keys[i]==='X'?'<b>✔</b>':'<b>·</b>'))+' '+esc(o)+'</div>').join('')+'</div>'}
- if(b.guide)h+='<p>'+esc(b.guide).replace(/\n/g,'<br>')+'</p>';
+ h+='<textarea class="es-gt" data-gid="'+esc(b.id)+'" rows="3" placeholder="Escreva aqui a resposta desta pergunta (só você vê)…">'+esc(b.guide||'')+'</textarea>';
  if(b.note)h+='<p class="es-cm">'+esc(b.note)+'</p>';
- return h?'<details class="es-guide"><summary>Resposta-guia e comentário</summary>'+h+'</details>':'';
+ return '<details class="es-guide"'+(b.guide||b.opts?' open':'')+'><summary>🔒 Resposta da pergunta (só você vê)</summary>'+h+'</details>';
 }
 function blockHTML(b,i,li,P,editing){
  const R=S.room,cur=R&&R.bi===i,host=!R||R.host;
@@ -227,14 +227,14 @@ function markMe(li,bid,r){try{const ci=courseInfo();window.IASDStudyMe&&IASDStud
 /* o dirigente (que tem a resposta-guia) corrige o que chega e devolve o resultado só para quem enviou */
 function gradeIncoming(m){
  const R=S.room;if(!R||!R.host||!window.IASDGuia)return;const L=lessonSrc();const b=L&&L.blocks.find(x=>x.id===m.bid);if(!b)return;
- const g=IASDGuia.grade(b,m.raw!=null?m.raw:m.text);if(g)send('gr',{to:m.id,bid:m.bid,r:g.r,msg:g.msg})}
+ const g=(b.opts&&b.keys)?IASDGuia.grade(b,m.raw!=null?m.raw:m.text):null;if(g)send('gr',{to:m.id,bid:m.bid,r:g.r,msg:g.msg})}
 function sendAns(bid){
  const L=lessonSrc();if(!L)return;const li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;
  const t=curAns(b,lp(li));if(!String(t).replace(/[,\s]/g,'')){toast('Escreva ou escolha sua resposta primeiro.');return}
  const R=S.room;
  if(R){(R.ans[bid]=R.ans[bid]||{})[R.me]={name:myName(),text:t};send('ans',{bid,id:R.me,name:myName(),text:t,raw:(lp(li).a||{})[bid]||''})}
  delete S.verdict[bid];
- if(!R||R.host){try{const g=window.IASDGuia&&IASDGuia.grade(b,(lp(li).a||{})[bid]||'');if(g){S.verdict[bid]=g;markMe(li,bid,g.r)}}catch(e){}}
+ if(!R||R.host){try{const g=(b.opts&&b.keys&&window.IASDGuia)?IASDGuia.grade(b,(lp(li).a||{})[bid]||''):null;if(g){S.verdict[bid]=g;markMe(li,bid,g.r)}}catch(e){}}
  S.sent[bid]=t;saveToMe(li,b,t);paintSend(bid);if(R)paintReveals();
  toast(R?'Resposta enviada ✔':(window.IASDStudyMe&&IASDStudyMe.isGuest()?'Resposta guardada neste aparelho.':'Resposta salva no seu perfil ✔'))}
 function editorHTML(){
@@ -249,6 +249,7 @@ function afterPaint(){
  root.querySelectorAll('.es-ans').forEach(t=>{
   t.addEventListener('input',()=>{const L=lessonSrc(),li=L.li!=null?L.li:S.li,bid=t.dataset.bid;lp(li).a[bid]=t.value;saveProg();dirty(bid)});
  });
+ root.querySelectorAll('.es-gt').forEach(t=>{t.addEventListener('input',()=>{const L=lessonSrc(),b=L&&L.blocks.find(x=>x.id===t.dataset.gid);if(!b||(S.room&&!S.room.host))return;b.guide=t.value;saveCourse(false)})});
  root.querySelectorAll('.es-vt').forEach(el=>{const k=el.dataset.vk;if(S.openV[k])el.innerHTML=S.openV[k]});
  if(S.room){paintReveals();markCur(false)}
 }
@@ -331,8 +332,7 @@ function setOpt(bid,idx,val){
  const L=lessonSrc(),li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;const P=lp(li);
  if(b.kind==='vf'){const a=optVals(b,P);a[idx]=a[idx]===val?'':val;P.a[bid]=a.join(',')}else P.a[bid]=String(idx);
  saveProg();
- const box=[...document.querySelectorAll('.es-b.es-q')].find(x=>x.querySelector('[onclick*="\''+bid+'\'"],[name="o-'+bid+'"]'));
- if(box){const old=box.querySelector('.es-opts');if(old){old.outerHTML=optsHTML(b,P,false)}}
+ document.querySelectorAll('.es-opts').forEach(old=>{if(old.getAttribute('data-oid')===bid)old.outerHTML=optsHTML(b,P,false)});
  paintSend(bid);
 }
 function toggleCheck(bid,k){

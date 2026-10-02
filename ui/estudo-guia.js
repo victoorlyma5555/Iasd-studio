@@ -99,8 +99,8 @@ function grade(b,raw){
   if(!ans)return null;if(hit===tot)return {r:'ok',msg:'✅ Certo! Todas as afirmações estão corretas.'};
   return hit>=Math.ceil(tot/2)?{r:'part',msg:'🟡 Quase! Você acertou '+hit+' de '+tot+'. Revise as outras e envie de novo.'}:{r:'no',msg:'❌ Ainda não: '+hit+' de '+tot+' corretas. Releia o texto e tente de novo.'};
  }
- if(!b.guide)return null;
- const ref=firstSent(b.guide,360),T=[...new Map(toks(ref).map(w=>[stem(w),w])).entries()];
+ return null; /* resposta digitada não é corrigida pelo sistema: quem conduz confere */
+ const ref=firstSent(b.guide||'',360),T=[...new Map(toks(ref).map(w=>[stem(w),w])).entries()];
  const S=toks(raw).map(stem);
  if(!T.length)return null;
  if(S.length<2){const h1=T.some(([st])=>S.some(x=>same(x,st)));return h1?{r:'part',msg:'🟡 Está no caminho. Explique um pouco mais, com suas palavras.'}:{r:'no',msg:'❌ Escreva um pouco mais para eu conferir, com suas próprias palavras.'}}
