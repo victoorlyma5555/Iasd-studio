@@ -13,7 +13,7 @@ async function closeTestimonyProjection(){
 
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='iasd-studio-error')feedback(e.data.message)});
 function closeScreen(){const tr=window.IASDTr?IASDTr.get():{type:'none',ms:0};if(tr.type!=='none'&&tr.ms&&!window.__closing){window.__closing=true;try{project('')}catch(e){}setTimeout(()=>{window.__closing=false;closeScreenNow()},tr.ms+120);return}closeScreenNow()}
-function closeScreenNow(){call('stopProjection');$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+function closeScreenNow(){call('stopProjection');try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}try{document.querySelectorAll('audio,video').forEach(a=>{try{a.pause()}catch(e){}})}catch(e){}$('testimonyEmbed')?.replaceChildren();try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
 function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
