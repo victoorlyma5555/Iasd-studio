@@ -30,12 +30,21 @@ function stYtTitle(kind,id){try{if(kind==='testimony'){const it=(window.PROVAI_E
  return {ambient:'Música ambiente',testimony:'Provai e Vede',offering:'Vídeo de dízimos e ofertas',special:'Música especial'}[kind]||'Vídeo do YouTube'}
 function stYtCard(kind,id){stAdWarned=false;stYtSt={ad:false,skippable:false,onPrimary:false};stYtInfo={kind,id,title:stYtTitle(kind,id),paused:false,muted:false};stYtCardRender()}
 function stYtCardHide(){stYtInfo=null;const c=document.getElementById('ytLiveCard');if(c)c.remove()}
+async function stPrerollWait(){const P=window.parent,t0=Date.now();let okc=0,legacyAt=0;
+ while(true){const r=await (P.youtubeStateRequest?P.youtubeStateRequest():null).catch(()=>null);
+  if(!r)return null;
+  if(r&&r.active){if(r.ad)return r;if(r.playing){if(++okc>=2)return null}else okc=0;if(r.playing===undefined&&!legacyAt)legacyAt=Date.now()}
+  const lim=legacyAt?1300:2600;if(Date.now()-t0>lim)return null;await new Promise(z=>setTimeout(z,300))}}
+async function stPrerollFinish(){const P=window.parent;if(!stYtInfo||!stYtInfo.preroll||stYtInfo.busy)return;stYtInfo.busy=true;
+ try{await P.projectPreparedYoutube();try{await P.controlPreparedYoutube('unmute')}catch(e){}stYtInfo.preroll=false;window.__ytLive=true;stYtSt={ad:false,skippable:false,onPrimary:false};feedback('Anúncio terminou: vídeo no telão.')}
+ catch(e){feedback('Não foi possível projetar: '+(e.message||e))}finally{if(stYtInfo)stYtInfo.busy=false}stYtCardRender()}
 let stYtSt={ad:false,skippable:false,onPrimary:false},stYtPoll=0,stAdWarned=false;
-async function stYtPollState(){if(!window.__ytLive||!stYtInfo||Date.now()-stYtPoll<1200)return;stYtPoll=Date.now();const r=await window.parent.youtubeStateRequest?.().catch(()=>null);if(!r||!r.active){return}
+async function stYtPollState(){if(!stYtInfo||(!window.__ytLive&&!stYtInfo.preroll)||Date.now()-stYtPoll<(stYtInfo.preroll?500:1200))return;stYtPoll=Date.now();const r=await window.parent.youtubeStateRequest?.().catch(()=>null);if(!r||!r.active){if(stYtInfo.preroll){stYtCardHide();feedback('O vídeo foi fechado.')}return}
+ if(stYtInfo.preroll){stYtSt={ad:!!r.ad,skippable:!!r.skippable,onPrimary:false};if(r.ad)stYtInfo.clean=0;else if(++stYtInfo.clean>=3){void stPrerollFinish();return}stYtCardRender();return}
  if(r.ad&&!stAdWarned){stAdWarned=true;feedback('⚠ Anúncio no vídeo do telão. Use o cartão para pular ou trazer para a tela 1.')}if(!r.ad)stAdWarned=false;
  stYtSt={ad:!!r.ad,skippable:!!r.skippable,onPrimary:!!r.onPrimary};stYtCardRender()}
 function stYtCardRender(){const scr=document.querySelector('#preview-layout .screen');if(!scr)return;let c=document.getElementById('ytLiveCard');
- const live=!!(stYtInfo&&window.__ytLive),as=typeof window.ambState==='function'?window.ambState():null,amb=!live&&as!==null;
+ const live=!!(stYtInfo&&(window.__ytLive||stYtInfo.preroll)),as=typeof window.ambState==='function'?window.ambState():null,amb=!live&&as!==null;
  if(!live&&!amb){if(c)c.remove();return}
  if(!c){c=document.createElement('div');c.id='ytLiveCard';c.className='yt-live-card';scr.append(c);
   c.addEventListener('click',async e=>{const b=e.target.closest('[data-yl]');if(!b)return;const a=b.dataset.yl,P=window.parent;
@@ -46,15 +55,18 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
     else if(a==='pp'){const next=stYtInfo.paused?'play':'pause';await P.controlPreparedYoutube(next);stYtInfo.paused=!stYtInfo.paused}
     else if(a==='mu'){const next=stYtInfo.muted?'unmute':'mute';await P.controlPreparedYoutube(next);stYtInfo.muted=!stYtInfo.muted}
     else if(a==='skip'){await P.youtubeSkipAdRequest()}
+    else if(a==='now'){await stPrerollFinish();return}
     else if(a==='p1'){await P.youtubeMoveRequest('primary');stYtSt.onPrimary=true}
     else if(a==='back'){await P.youtubeMoveRequest('projector');stYtSt.onPrimary=false;stYtSt.ad=false}
-    else if(a==='cl'){await P.closePreparedYoutube();window.__ytLive=false;stYtSt={ad:false,skippable:false,onPrimary:false};stYtCardHide();feedback('Vídeo fechado no telão.');return}
+    else if(a==='cl'){stYtInfo.preroll=false;await P.closePreparedYoutube();window.__ytLive=false;stYtSt={ad:false,skippable:false,onPrimary:false};stYtCardHide();feedback('Vídeo fechado no telão.');return}
    }catch(err){feedback('Não foi possível controlar o vídeo: '+(err.message||err))}
    stYtCardRender()})}
  const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
  let id,title,badge,sub,btns,tone='';
  if(live){id=stYtInfo.id;title=stYtInfo.title;const S=stYtSt;
-  if(S.onPrimary){tone=S.ad?'warn':'ok';badge=S.ad?'⚠ ANÚNCIO NA TELA 1 · TELÃO EM PRETO':'✓ ANÚNCIO ACABOU · TELÃO EM PRETO';sub=S.ad?'Pule o anúncio na janela do vídeo (tela 1) e devolva ao telão.':'Pronto: devolva o vídeo ao telão.';
+  if(stYtInfo.preroll){tone='warn';badge='⚠ ANÚNCIO ANTES DO VÍDEO · TELÃO AINDA NÃO MOSTRA';sub='Quando o anúncio acabar, o vídeo vai sozinho para o telão (sem som no anúncio).';
+   btns=(S.skippable?'<button type="button" data-yl="skip">⏭ Pular anúncio</button>':'')+'<button type="button" data-yl="now" class="main">📺 Projetar assim mesmo</button><button type="button" data-yl="cl">✕ Cancelar</button>'}
+  else if(S.onPrimary){tone=S.ad?'warn':'ok';badge=S.ad?'⚠ ANÚNCIO NA TELA 1 · TELÃO EM PRETO':'✓ ANÚNCIO ACABOU · TELÃO EM PRETO';sub=S.ad?'Pule o anúncio na janela do vídeo (tela 1) e devolva ao telão.':'Pronto: devolva o vídeo ao telão.';
    btns=(S.ad&&S.skippable?'<button type="button" data-yl="skip">⏭ Pular anúncio</button>':'')+'<button type="button" data-yl="back" class="'+(S.ad?'':'main')+'">📺 Devolver ao telão</button><button type="button" data-yl="cl">✕ Fechar vídeo</button>'}
   else if(S.ad){tone='warn';badge='⚠ ANÚNCIO NO TELÃO';sub='O público está vendo um anúncio.';
    btns=(S.skippable?'<button type="button" data-yl="skip">⏭ Pular anúncio</button>':'')+'<button type="button" data-yl="p1" class="main">🖥 Trazer p/ tela 1</button><button type="button" data-yl="cl">✕ Fechar vídeo</button>'}
@@ -66,7 +78,7 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
  const k=JSON.stringify([live,id,title,badge,btns]);if(c.dataset.k===k)return;c.dataset.k=k;c.dataset.tone=tone;
  c.style.setProperty('--yt-bg',id?'url(https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg)':'none');
  c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
-setInterval(()=>{if(stYtInfo&&!window.__ytLive){stYtCardHide()}void stYtPollState();stYtCardRender()},1000);
+setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
  if(keep!=='hymn'){try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}}
@@ -250,7 +262,12 @@ function saveYouTubeList(kind){const ids=youtubeList(kind);localStorage.setItem(
 async function closePrivateYoutube(){for(const kind of ['ambient','testimony','offering','special']){$(kind+'Embed')?.replaceChildren();$(kind+'Private')?.classList.add('hide')}try{await window.parent.closePreparedYoutube?.();window.__ytLive=false}catch(e){console.warn(e)}let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}if(st.startsWith('IASD_LOCAL_MEDIA:'))call('stopProjection');feedback('Vídeo fechado (prévia e telão). Para fechar a janela do telão use “Fechar telão”.')}
 function youtubeEmbed(id,target){if(target==='ambientEmbed')stTakeover('ambient');const host=$(target);host.replaceChildren();const frame=document.createElement('iframe');frame.className='youtube-player';frame.src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0'+(target==='ambientEmbed'?'&autoplay=1&enablejsapi=1&origin='+encodeURIComponent(location.origin):'');frame.title='Reprodutor do YouTube';frame.allow='accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;fullscreen';frame.allowFullscreen=true;host.append(frame);if(target==='ambientEmbed'){frame.dataset.ys='';const hs=()=>{try{frame.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),'*')}catch(e){}};frame.addEventListener('load',()=>{hs();setTimeout(hs,800);setTimeout(hs,2500)})}}
 const selectedYouTube={testimony:null,ambient:null,offering:null,special:null};
-async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt');if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');await window.parent.prepareYoutubePreview(id);await window.parent.projectPreparedYoutube();window.__ytLive=true;stYtCard(kind,id);feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
+async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt');if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');const P=window.parent;await P.prepareYoutubePreview(id);
+  /* anúncio antes do vídeo: o telão só mostra o vídeo de verdade (o som fica mudo até lá) */
+  try{await P.controlPreparedYoutube('mute')}catch(e){}
+  const pre=await stPrerollWait();
+  if(pre){stYtCard(kind,id);stYtInfo.preroll=true;stYtInfo.clean=0;stYtSt={ad:true,skippable:!!pre.skippable,onPrimary:false};stYtCardRender();feedback('⚠ Anúncio antes do vídeo: o telão ainda não mostra. Pule o anúncio ou projete assim mesmo.');return}
+  await P.projectPreparedYoutube();try{await P.controlPreparedYoutube('unmute')}catch(e){}window.__ytLive=true;stYtCard(kind,id);feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
 function randomYouTube(){const ids=youtubeList('testimony');if(!ids.length){feedback('A biblioteca está temporariamente vazia.');return}let seen=[];try{seen=JSON.parse(localStorage.getItem('iasd-testimony-seen')||'[]')}catch{}let available=ids.filter(id=>!seen.includes(id));if(!available.length){seen=[];available=ids}const id=available[Math.floor(Math.random()*available.length)];seen.push(id);localStorage.setItem('iasd-testimony-seen',JSON.stringify(seen));const item=PROVAI_E_VEDE_LIBRARY.find(v=>v.id===id);$('testimonyChosen').textContent=(item?item.title+' · '+item.year:'Vídeo adicional')+' · '+(ids.length-seen.length)+' ainda não vistos nesta rodada';selectedYouTube.testimony=id;youtubeEmbed(id,'testimonyEmbed');feedback('Vídeo sorteado e pronto para dar play.')}
 function resetYouTubeHistory(){localStorage.removeItem('iasd-testimony-seen');feedback('Histórico do Provai e Vede reiniciado.')}
 function addAmbientExample(){const id='cDffo1ae83o',el=$('ambientLinks');if(!youtubeList('ambient').includes(id)){el.value+=(el.value.trim()?'\n':'')+'https://www.youtube.com/watch?v='+id;saveYouTubeList('ambient')}feedback('Pad de referência adicionado à seleção.')}

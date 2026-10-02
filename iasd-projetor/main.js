@@ -266,9 +266,9 @@ function dropYoutubeCover(){if(youtubeCover&&!youtubeCover.isDestroyed())youtube
 // Anúncio no vídeo do telão: lê o player (classe ad-showing) e o botão de pular, se houver.
 async function youtubeAdState(){
  if(!youtubeRef||youtubeRef.isDestroyed())return {active:false};
- let r={ad:false,sk:false};
- try{r=await youtubeRef.webContents.executeJavaScript("(()=>{const p=document.querySelector('.html5-video-player');return {ad:!!p&&p.classList.contains('ad-showing'),sk:!!document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern')}})()")}catch{}
- return {active:true,shown:youtubeShown,onPrimary:youtubeOnPrimary,ad:!!r.ad,skippable:!!r.sk}
+ let r={ad:false,sk:false,pl:false};
+ try{r=await youtubeRef.webContents.executeJavaScript("(()=>{const p=document.querySelector('.html5-video-player'),ad=!!p&&p.classList.contains('ad-showing'),v=document.querySelector('video');return {ad,sk:!!document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern'),pl:!ad&&!!v&&!v.paused&&v.currentTime>0.3}})()")}catch{}
+ return {active:true,shown:youtubeShown,onPrimary:youtubeOnPrimary,ad:!!r.ad,skippable:!!r.sk,playing:!!r.pl}
 }
 async function youtubeSkipAd(){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return !!(await youtubeRef.webContents.executeJavaScript("(()=>{const b=document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern');if(!b)return false;b.click();return true})()"))}catch{return false}}
 // Traz o vídeo para o monitor principal (mudo) para o operador pular o anúncio; o telão fica preto até devolver.
