@@ -310,7 +310,7 @@ async function companionRequest(route,payload,token=companionToken){
 async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id})}
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{targetAddressSpace:'loopback',headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
 async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');const tr=window.IASDTr&&IASDTr.get();return companionRequest('/youtube/project',{ms:tr&&tr.type!=='none'?tr.ms:0})}
-async function closePreparedYoutube(){if(!companionToken)return;return companionRequest('/youtube/close')}
+async function closePreparedYoutube(ms){if(!companionToken)return;return companionRequest('/youtube/close',{ms:ms==null?900:ms})}
 async function youtubeStateRequest(){if(!companionToken)return null;try{return await companionRequest('/youtube/state',{})}catch{return null}}
 async function youtubeSkipAdRequest(){if(!companionToken)return;return companionRequest('/youtube/skip',{})}
 async function youtubeMoveRequest(to){if(!companionToken)return;return companionRequest('/youtube/move',{to})}
@@ -408,7 +408,7 @@ function stopProjection(){
  // ao aplicativo (isso recriaria a janela do telão em preto logo após fechá-la).
  sendProjection('',{localOnly:true});
  if(canReachProjection())projectionWindow.close();
- if(companionToken)void companionRequest('/close').catch(e=>projectionFeedback(e.message,true));
+ if(companionToken)void companionRequest('/close',{ms:900}).catch(e=>projectionFeedback(e.message,true));
  projectionWindow=null;
  projectionFeedback('Projeção encerrada.');
  render();
@@ -815,7 +815,7 @@ function studioSoundNote(){
 /* mini player flutuante: controla o áudio da Projeção de qualquer página */
 function stAudioEl(){try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow.document.getElementById('sthAudio')}catch(e){return null}}
 function stMiniToggle(){const a=stAudioEl();if(!a)return;if(a.paused)a.play().catch(()=>{});else a.pause();stMiniUpdate()}
-function stMiniStop(){const a=stAudioEl();if(!a)return;try{a.pause();a.currentTime=0}catch(e){}stMiniUpdate()}
+function stMiniStop(){const a=stAudioEl();if(!a)return;try{const w=document.getElementById('iasd-studio-frame')?.contentWindow;if(w&&w.stFadePause){w.stFadePause(a,700);setTimeout(()=>{try{a.currentTime=0}catch(e){}stMiniUpdate()},800)}else{a.pause();a.currentTime=0}}catch(e){}stMiniUpdate()}
 function stMiniUpdate(){
  let m=document.getElementById('st-mini');
  const a=canUseSound()&&current!=='Projeção'?stAudioEl():null;

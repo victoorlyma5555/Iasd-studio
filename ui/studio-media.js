@@ -111,8 +111,8 @@ function actionsBar(kind){
 }
 window.stActionsBar=actionsBar;
 function closeVideo(kind){
- if(kind==='video'){const v=$('serviceVideo');if(v)try{v.pause()}catch(e){}}
- if(kind==='testimony'){const p=$('testimonyPlayer');if(p)try{p.pause()}catch(e){}}
+ if(kind==='video'){const v=$('serviceVideo');if(v)try{stFadePause(v,900)}catch(e){}}
+ if(kind==='testimony'){const p=$('testimonyPlayer');if(p)try{stFadePause(p,900)}catch(e){}}
  closePrivateYoutube();
 }
 

@@ -274,6 +274,8 @@ function show(value){
  ex.onfinish=()=>{if(seq!==trSeq){try{ex.cancel()}catch(e){}return}showRaw(t);try{ex.cancel()}catch(e){}if(t!=='')enter()};
 }
 function showRaw(value){
+ /* mídia local que estava tocando sai com fade (o novo conteúdo já aparece) */
+ if(!isPreview){try{out.querySelectorAll('audio,video').forEach(m=>{if(m.paused||m.dataset.fo)return;m.dataset.fo='1';m.controls=false;m.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';document.body.append(m);const v0=m.volume,t0=performance.now(),st=()=>{const k=Math.min(1,(performance.now()-t0)/900);try{m.volume=v0*(1-k)}catch(e){}if(k<1)setTimeout(st,30);else{try{m.pause()}catch(e){}m.remove()}};st()})}catch(e){}}
  const t=typeof value==='string'?value:'';
  if(t.startsWith('IASD_GAME:'))return gameShow(t);
  if(t.startsWith('IASD_DRAW_STYLE:'))return drawStyle(t);

@@ -289,6 +289,12 @@ async function youtubeToProjector(){
  await projectPreparedYoutube(0);
  setTimeout(dropYoutubeCover,350)
 }
+// Fade do áudio (nenhum som corta seco): rampa o volume dos <video>/<audio> da janela e pausa no fim.
+function fadeAudioIn(win,ms){
+ if(!win||win.isDestroyed()||!ms||ms<80)return Promise.resolve();
+ const code="(()=>{const m=[...document.querySelectorAll('video,audio')];if(!m.length)return 0;const v0=m.map(x=>x.volume),t0=Date.now(),D="+Math.round(ms)+";return new Promise(r=>{const iv=setInterval(()=>{const k=Math.min(1,(Date.now()-t0)/D);m.forEach((x,i)=>{try{x.volume=Math.max(0,v0[i]*(1-k))}catch{}});if(k>=1){clearInterval(iv);m.forEach(x=>{try{x.pause()}catch{}});r(1)}},30)})})()";
+ return Promise.race([win.webContents.executeJavaScript(code).catch(()=>{}),new Promise(r=>setTimeout(r,ms+400))])
+}
 function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed()){try{youtubeRef.webContents.setAudioMuted(true)}catch{}youtubeRef.destroy()}youtubeRef=null;youtubeVideoId=null;youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 const YT_VIDEO=(code)=>"(()=>{const v=document.querySelector('video');if(!v)return false;"+code+";return true})()";
 async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return await youtubeRef.webContents.executeJavaScript(YT_VIDEO(code))}catch{return false}}
@@ -531,7 +537,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector();reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}const code={play:'v.play()',pause:'v.pause()',mute:'v.muted=true',unmute:'v.muted=false'}[data.action];if(!await youtubeVideoDo(code)){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
  if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/close'&&req.method==='POST'){closeYoutube();reply(res,200,{ok:true});return}
+ if(req.url==='/youtube/close'&&req.method==='POST'){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms&&youtubeRef&&!youtubeRef.isDestroyed())await fadeAudioIn(youtubeRef,ms);closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
   try{const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
@@ -549,7 +555,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/close'&&req.method==='POST'){if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms)await fadeWin(youtubeRef,0,ms)}closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
+ if(req.url==='/close'&&req.method==='POST'){if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms)await Promise.all([fadeWin(youtubeRef,0,ms),fadeAudioIn(youtubeRef,ms)])}else if(windowRef&&!windowRef.isDestroyed()){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms)await fadeAudioIn(windowRef,ms)}closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
