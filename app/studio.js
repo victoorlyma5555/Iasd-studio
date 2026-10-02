@@ -20,7 +20,7 @@ window.addEventListener('message',e=>{if(typeof e.data!=='string'||!/youtube/.te
  document.querySelectorAll('#ambientEmbed iframe').forEach(f=>{if(f.contentWindow===e.source)f.dataset.ys=String(v)})});
 /* fade: nenhum som da sonoplastia corta seco (os hinos já têm o fade na própria música) */
 /* para o hino com fade (usado ao fechar telão/janela); sem hino tocando, só para */
-window.stHymnFadeStop=function(ms){try{const ha=document.getElementById('sthAudio');const st=()=>{try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}};if(ha&&ha.src&&!ha.paused){stFadePause(ha,ms||900);setTimeout(st,stFm(ms||900)+80)}else st()}catch(e){}};
+window.stHymnFadeStop=function(ms){try{if(ms===0){window.STHymn&&STHymn.stop&&STHymn.stop()}else if(window.STHymn&&STHymn.fadeStop)STHymn.fadeStop(ms||900);else if(window.STHymn&&STHymn.stop)STHymn.stop()}catch(e){}};
 function stFi(ms){try{return window.parent.stFadeInMs?window.parent.stFadeInMs(ms):0}catch(e){return 0}}
 function stFm(ms){try{const m=Object.assign({on:true,f:1},JSON.parse(localStorage.getItem('iasd-fade')||'{}'));return m.on===false?0:Math.round(ms*(m.f||1))}catch(e){return ms}}
 window.stFadePause=function(a,ms){ms=stFm(ms||900);try{if(!a)return;if(a.paused){return}if(!ms){a.pause();return}if(a._fading)return;if(a._fi){clearInterval(a._fi.t);try{a.volume=a._fi.v}catch(e){}a._fi=null}a._fading=true;const v0=a.volume,t0=performance.now();const step=()=>{const k=Math.min(1,(performance.now()-t0)/ms);try{a.volume=v0*(1-k)}catch(e){}if(k<1)setTimeout(step,30);else{try{a.pause()}catch(e){}try{a.volume=v0}catch(e){}a._fading=false}};step()}catch(e){try{a.pause()}catch(x){}}};
@@ -90,12 +90,12 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep){
  let wait=null;const P=window.parent;
- if(keep!=='hymn'){try{const ha=document.getElementById('sthAudio');if(keep&&ha&&ha.src&&!ha.paused){stFadePause(ha,700);setTimeout(()=>{try{window.STHymn&&STHymn.stop&&STHymn.stop()}catch(e){}},stFm(700)+80)}else{window.STHymn&&STHymn.stop&&STHymn.stop()}}catch(e){}}
+ if(keep!=='hymn'){stHymnFadeStop(keep?700:0)}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
  if(keep!=='yt'){window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
  if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
-  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,1100)));else P.project&&P.project('')}catch(e){}}}
+  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:''})).catch(()=>{}).then(()=>new Promise(r=>setTimeout(r,1100)));else P.project&&P.project('')}catch(e){}}else if(keep==='yt'&&st){try{P.sendProjection&&P.sendProjection('',{localOnly:true})}catch(e){}}}
  /* prévias do YouTube dentro do Studio (música ambiente, Provai e Vede…) também calam quando outra mídia começa */
  try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(keep==='ambient'&&f.closest('#ambientEmbed'))return;const ms=stFm(800);if(!ms){f.remove();return}const t0=performance.now(),send=v=>{try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:'setVolume',args:[Math.max(0,Math.round(v))]}),'*')}catch(e){}};f.style.pointerEvents='none';const step=()=>{const k=Math.min(1,(performance.now()-t0)/ms);send(100*(1-k));if(k<1)setTimeout(step,60);else try{f.remove()}catch(e){}};step()})}catch(e){}
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{stFadePause(a,700)}catch(e){}}})}catch(e){}

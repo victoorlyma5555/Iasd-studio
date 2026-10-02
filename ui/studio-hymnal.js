@@ -384,6 +384,7 @@ async function urlFor(ed,n,mode){
  throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
 }
 function audioEl(){return $('sthAudio')}
+function fadeMs(ms){try{return window.parent.stFadeMs?window.parent.stFadeMs(ms):ms}catch(e){return ms}}
 async function play(ed,n,opts){
  const a=audioEl();if(!a)return;const h=find(ed,n);
  window.stTakeover&&stTakeover('hymn');
@@ -430,6 +431,8 @@ const api={
  clearQueue(){S.queue=[];paintPlayer()},
  toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
  next(){next(1)},prev(){next(-1)},
+ /* encerra o hino já (letra/sincronia param na hora) e deixa só o SOM baixar com fade antes de limpar */
+ fadeStop(ms){const a=audioEl();S.endTok++;S.cur=null;S.sync=null;paintPlayer();paintBody();if(!a)return;const src=a.src,clr=()=>{if(a.src===src){a.pause();a.removeAttribute('src');a.load()}};if(src&&!a.paused&&window.stFadePause){window.stFadePause(a,ms||900);setTimeout(clr,fadeMs(ms||900)+90)}else clr()},
  stop(){const a=audioEl();if(a){a.pause();a.removeAttribute('src');a.load()}S.cur=null;S.sync=null;paintPlayer();paintBody()},
  seek(v){const a=audioEl();if(a&&a.duration)a.currentTime=a.duration*(+v/1000)},
  vol(v){const a=audioEl();if(a)a.volume=+v/100},
