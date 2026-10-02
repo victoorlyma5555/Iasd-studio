@@ -371,9 +371,9 @@ async function startRoom(code,host,opts){
   if(R.mode==='study'&&R.lesson&&R.follow)S.view='lesson';paint();paintBar();paintDock()});
  ch.on('broadcast',{event:'lk'},({payload})=>{if(R.host)return;R.lock={v:!!payload.v,f:!!payload.f,c:!!payload.c,r:!!payload.r};applyLock();
   if(R.lock.f&&!R.follow){R.follow=true;if(R.mode==='study'&&R.lesson){S.view='lesson'}paint();markCur(true)}else paint();paintBar()});
- ch.on('broadcast',{event:'st'},({payload})=>{if(R.host)return;R.lesson=payload.lesson||null;R.bi=payload.bi;R.rev=payload.rev||{};if(payload.course)R.course=payload.course;if(R.mode==='lobby'){paintBar();return}if(!R.lesson){paint();paintBar();return}if(R.follow){S.view='lesson';paint()}else paintBar()});
+ ch.on('broadcast',{event:'st'},({payload})=>{if(R.host)return;R.lesson=payload.lesson||null;R.bi=payload.bi;R.rev=payload.rev||{};if(payload.revKeys&&typeof payload.revKeys==='object')R.revKeys=payload.revKeys;if(payload.course)R.course=payload.course;if(R.mode==='lobby'){paintBar();return}if(!R.lesson){paint();paintBar();return}if(R.follow){S.view='lesson';paint()}else paintBar()});
  ch.on('broadcast',{event:'pos'},({payload})=>{if(R.host)return;R.bi=payload.bi;markCur(true)});
- ch.on('broadcast',{event:'rev'},({payload})=>{R.rev[payload.bid]=payload.on;FX('stage',payload);paintReveals()});
+ ch.on('broadcast',{event:'rev'},({payload})=>{R.rev[payload.bid]=payload.on;if(Array.isArray(payload.keys)&&/^[\w-]{1,64}$/.test(String(payload.bid)))(R.revKeys=R.revKeys||{})[payload.bid]=payload.keys.slice(0,12).map(x=>String(x).slice(0,2));FX('stage',payload);paintReveals()});
  ch.on('broadcast',{event:'gr'},({payload})=>{if(payload.to!==me)return;S.verdict[payload.bid]={r:payload.r,msg:payload.msg};const L=lessonSrc();markMe(L&&L.li!=null?L.li:S.li,payload.bid,payload.r);paintSend(payload.bid)});
  ch.on('broadcast',{event:'ans'},({payload})=>{if(R.host)gradeIncoming(payload);(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};FX('ans',payload);paintReveals()});
  ch.on('broadcast',{event:'mf'},({payload})=>{if(payload.to===me)handleMf(payload.stage,payload.from)});
@@ -408,14 +408,18 @@ async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().
  await startRoom(v,false);if(S.room)toast('Aguardando o dirigente…')}
 function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();
  if(!l||S.view!=='lesson'){R.lesson=null;send('st',{lesson:null,bi:-1,rev:{}});saveRoom();return}
- R.lesson={li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev,course:courseInfo()});saveRoom()}
+ R.lesson={li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev,revKeys:R.revKeys||{},course:courseInfo()});saveRoom()}
 function setPos(i){const R=S.room;if(!R||!R.host)return;R.bi=i;send('pos',{bi:i});markCur(false)}
 function markCur(scroll){const R=S.room;if(!R)return;document.querySelectorAll('.es-b').forEach(el=>el.classList.toggle('es-cur',R.bi===+el.dataset.bi));
  if(scroll&&R.follow){const el=document.querySelector('.es-b.es-cur');if(el)el.scrollIntoView({block:'center',behavior:'smooth'})}}
 function toggleFollow(){const R=S.room;if(!R||R.host)return;if(R.lock&&R.lock.f){toast('O dirigente travou a lição para todos.');return}R.follow=!R.follow;paint();if(R.follow)markCur(true)}
 function myAnswer(bid){const L=lessonSrc();if(!L)return '';const li=L.li!=null?L.li:S.li;return ((S.prog[li]||{}).a||{})[bid]||''}
 function shareAnswer(bid){const R=S.room;if(!R)return;const text=myAnswer(bid);if(!text.trim())return;(R.ans[bid]=R.ans[bid]||{})[R.me]={name:myName(),text};send('ans',{bid,id:R.me,name:myName(),text})}
-function revealToggle(bid){const R=S.room;if(!R||!R.host)return;R.rev[bid]=true;send('rev',{bid,on:true});FX('stage',{bid,on:true});paintReveals()}
+function revealToggle(bid){const R=S.room;if(!R||!R.host)return;R.rev[bid]=true;
+ /* V/F: só na hora de revelar o gabarito vai para a turma, para mostrar o que cada um acertou */
+ const L=lessonSrc(),qb=L&&L.blocks.find(x=>x.id===bid),keys=qb&&qb.kind==='vf'&&Array.isArray(qb.keys)?qb.keys.slice(0,12).map(String):null;
+ if(keys)(R.revKeys=R.revKeys||{})[bid]=keys;
+ send('rev',{bid,on:true,keys});FX('stage',{bid,on:true});paintReveals()}
 function openStage(bid){FX('stage',{bid,on:true})}
 function ansCount(bid){const R=S.room;return Object.values((R&&R.ans[bid])||{}).filter(a=>a&&String(a.text||'').trim()).length}
 function paintReveals(){

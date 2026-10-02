@@ -424,6 +424,15 @@ function armClose(st){
  const dwell=(all?8000:12000)+Math.min(9000,chars*30);
  st.cl=setTimeout(()=>{if(F.stage!==st)return;if(R.host)stageEnd();else stageClose(true)},dwell)}
 function fmtFor(b,text){return String(text||'')}
+/* V/F: mostra cada afirmação com ✔ (acertou) ou ✖ (errou), usando o gabarito revelado pelo dirigente */
+function keysFor(bid){const k=K(),R=k.S.room;if(!R)return null;const K1=(R.revKeys||{})[bid];if(Array.isArray(K1))return K1;
+ if(R.host){const L=k.lessonSrc(),b=L&&L.blocks.find(x=>x.id===bid);if(b&&b.kind==='vf'&&Array.isArray(b.keys))return b.keys.map(String)}return null}
+function vfView(bid,text){
+ const b=F.stage&&F.stage.bid===bid?F.stage.b:null,keys=keysFor(bid);if(!keys||!b||b.kind!=='vf'||!b.opts)return null;
+ const lines=String(text||'').split('\n');let hit=0;
+ const rows=b.opts.map((o,i)=>{const m=/^\s*([VF—])\s*·/.exec(lines[i]||''),v=m?m[1]:'—',key=String(keys[i]||'').trim(),st=v==='—'?'no':(v===key?'ok':'bad');if(st==='ok')hit++;
+  return '<li class="vf-'+st+'"><i>'+(st==='ok'?'✔':st==='bad'?'✖':'–')+'</i><span>'+esc(o)+'</span><b>'+(v==='—'?'sem resposta':v)+(st==='bad'?' · era '+esc(key):'')+'</b></li>'}).join('');
+ return '<div class="stg-vf"><div class="vf-sc">'+hit+' de '+b.opts.length+' certas</div><ul>'+rows+'</ul></div>'}
 function picHTML(a,big){const k=K(),ms=k.stream(a.id);return {html:'<div class="stg-pic'+(big?' big':'')+(ms?' vid':'')+'" style="--h:'+hue(a.name)+'"><video autoplay playsinline muted></video><span class="stg-sil">'+sil+'</span><i class="stg-in">'+esc((a.name||'?').charAt(0).toUpperCase())+'</i></div>',ms}}
 function bindPic(root,ms,id){const v=root.querySelector('video'),pic=root.querySelector('.stg-pic');
  const put=m=>{if(!v||!m)return false;v.srcObject=m;const p=v.play&&v.play();if(p&&p.catch)p.catch(()=>{});if(pic)pic.classList.add('vid');return true};
@@ -437,7 +446,7 @@ function addCard(a){
  d.innerHTML=pc.html+'<b class="stg-nm">'+esc(a.id===R.me?a.name+' (você)':a.name)+'</b><p class="stg-tx"></p>';
  bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(R.host)k.send('hl',{bid:F.stage&&F.stage.bid,id:a.id}),spot(F.stage&&F.stage.bid,a.id)};
- g.appendChild(d);SFX.pop();setTimeout(()=>typeText(d.querySelector('.stg-tx'),a.text),380);d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
+ g.appendChild(d);SFX.pop();{const vf=vfView(F.stage&&F.stage.bid,a.text);if(vf)setTimeout(()=>{const t=d.querySelector('.stg-tx');if(t)t.innerHTML=vf},380);else setTimeout(()=>typeText(d.querySelector('.stg-tx'),a.text),380)}d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
 }
 function stageTally(){
  const S2=F.stage;if(!S2)return;const b=S2.b,t=$('stg-tally');if(!t||b.kind!=='x'||!b.opts)return;
@@ -456,7 +465,7 @@ function spot(bid,id){
  if(!id||S2.spot===id){S2.spot=null;return}
  const a=ansList(bid).find(x=>x.id===id);if(!a)return;S2.spot=id;
  const d=document.createElement('div');d.className='stg-spot';d.style.setProperty('--h',hue(a.name));
- const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><p>'+esc(a.text)+'</p><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
+ const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><div class="stg-spt">'+(vfView(bid,a.text)||'<p>'+esc(a.text)+'</p>')+'</div><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(K().S.room.host){K().send('hl',{bid,id:null});spot(bid,null)}else{d.remove();S2.spot=null}};
  $('es-stage').appendChild(d);SFX.chime();if(S2.cl)armClose(S2);
 }
