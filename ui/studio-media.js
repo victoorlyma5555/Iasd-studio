@@ -254,6 +254,7 @@ const OFFER_BUCKET_='iasd-offering-videos';
 function vlUrl(item){const c=offeringCloud();const {data}=c.storage.from(OFFER_BUCKET_).getPublicUrl(item.storage_path);return data&&data.publicUrl}
 function vlKind(it){return KINDS.includes(it.kind)?it.kind:(/inform/i.test(it.title||'')?'Informativo':'Dízimos e ofertas')}
 function vlDate(s){try{return new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}catch(e){return''}}
+window.__offNew=true;
 window.renderOfferings=async function(){
  const box=$('offeringLibrary');if(!box)return;
  if(!vlItems.length)box.replaceChildren(h('p','amb-empty muted','Carregando vídeos do site…'));
