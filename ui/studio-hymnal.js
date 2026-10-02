@@ -46,11 +46,13 @@ const AUD=/\.(mp3|m4a|aac|wav|ogg|opus|flac|mp4|m4v|webm)$/i;
 const tkey=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'');
 function parseName(name){let b=String(name||'').replace(/\.[^.]+$/,'');const pb=/\s*[-–_]\s*(pb|playback|instrumental)\s*$/i.test(b);b=b.replace(/\s*[-–_]\s*(pb|playback|instrumental)\s*$/i,'');return{key:tkey(b.replace(/^\s*\d{1,3}\s*[-.–_]\s*/,'')),pb}}
 /* casa os arquivos (nomeados pelo TÍTULO, como no Louvor JA) com os hinos da edição; prefere o cantado, usa o playback (PB) se for só ele */
-function matchEd(ed,items){const out={};const byKey={};items.forEach(it=>{const p=parseName(it.name);(byKey[p.key]=byKey[p.key]||[]).push(Object.assign({pb:p.pb},it))});
- list(ed).forEach(h=>{const c=byKey[tkey(h.t)];if(!c||!c.length)return;const want=ed==='novo'?/2022|nha|novo/i:/adventista(?!.*2022)|hasd|antigo/i;
-  c.sort((a,b)=>(a.pb-b.pb)||((want.test(b.dir||'')?1:0)-(want.test(a.dir||'')?1:0)));
-  const f=c.find(x=>!x.pb&&want.test(x.dir||''))||c.find(x=>want.test(x.dir||''))||c[0];out[h.n]=f});
- items.forEach(it=>{if(/^\s*\d/.test(it.name)){const n=numOf(it.name);if(n&&!out[n]&&n<=list(ed).length)out[n]=it}});return out}
+function dirScore(ed,its){const ks=new Set(its.map(i=>parseName(i.name).key));let n=0;list(ed).forEach(h=>{if(ks.has(tkey(h.t)))n++});return n}
+function matchEd(ed,items){const out={};const other=ed==='novo'?'antigo':'novo';const dirs={};items.forEach(it=>{(dirs[it.dir||'']=dirs[it.dir||'']||[]).push(it)});
+ /* a pasta só vale para a edição com a qual os títulos mais combinam (não depende do nome da pasta) */
+ const mine=[];Object.keys(dirs).forEach(d=>{const a=dirScore(ed,dirs[d]),o=dirScore(other,dirs[d]);if(a>=o&&a>0)mine.push(...dirs[d])});
+ const byKey={};mine.forEach(it=>{const p=parseName(it.name);(byKey[p.key]=byKey[p.key]||[]).push(Object.assign({pb:p.pb},it))});
+ list(ed).forEach(h=>{const c=byKey[tkey(h.t)];if(!c||!c.length)return;c.sort((x,y)=>x.pb-y.pb);out[h.n]=c[0]});
+ mine.forEach(it=>{if(/^\s*\d/.test(it.name)){const n=numOf(it.name);if(n&&!out[n]&&n<=list(ed).length)out[n]=it}});return out}
 
 function numOf(name){const b=String(name||'').replace(/\.[^.]+$/,'');
  let m=/^\s*(?:hino\s*(?:n[º°o.]*)?\s*)?0*(\d{1,3})(?!\d)/i.exec(b);if(m&&+m[1]>0)return +m[1];
