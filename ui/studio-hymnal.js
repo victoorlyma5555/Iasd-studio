@@ -389,7 +389,7 @@ let GAP=0;try{GAP=Math.max(0,Math.min(120,+localStorage.getItem('iasd-sth-gap')|
 let gapTimer=0,gapLeft=0;
 function gapCancel(){clearInterval(gapTimer);gapTimer=0;gapLeft=0}
 function gapStart(){
- gapCancel();gapLeft=GAP;if(!S.endClose)try{endHymn()}catch(e){}
+ gapCancel();gapLeft=GAP;try{endHymn()}catch(e){}
  paintPlayer();
  gapTimer=setInterval(()=>{if(!S.queue.length){gapCancel();paintPlayer();return}gapLeft--;if(gapLeft<=0){gapCancel();if(S.queue.length)next(1);else paintPlayer()}else paintGap()},1000)}
 function paintGap(){const el=$('sth-gap');if(el)el.textContent=gapLeft>0?'Próximo hino em '+gapLeft+'s':''}
