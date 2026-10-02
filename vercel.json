@@ -259,5 +259,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/gerar-jogral.js": {
+      "maxDuration": 60
+    }
+  }
 }
