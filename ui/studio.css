@@ -256,6 +256,7 @@ body.st2 main{grid-template-rows:auto auto auto auto!important}
 .cf-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#9cc0ff;margin-bottom:4px}
 .cf-body p{margin:6px 0 12px;font-size:13px;line-height:1.45}
 .cf-act{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cf-warn{margin-top:12px;font-size:13px;color:var(--mu,#9fb0d0)}.cf-warn summary{cursor:pointer;font-weight:600}.cf-warn p{margin:8px 0 0;line-height:1.5}.cf-warn b{color:var(--tx,#fff)}
 .cf-btn{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:12px;background:linear-gradient(180deg,#f8c14f,#e38a10);color:#1c1406!important;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 8px 22px rgba(227,138,16,.32);transition:transform .12s,filter .12s}.cf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}.cf-btn .ti{width:19px;height:19px}
 .cf-link{color:#9cc0ff;font-size:13px;font-weight:600;text-decoration:none}.cf-link:hover{text-decoration:underline}
 .cf-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
