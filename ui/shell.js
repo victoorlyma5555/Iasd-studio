@@ -68,11 +68,29 @@ function searchable(){
 }
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 
+const PROJECTOR_MENU_KEY='iasd-projector-menu-collapsed';
+function isProjectorPage(cur=S.cur()){return cur==='Projeção'||cur==='Sonoplastia'}
+function projectorMenuCollapsed(){
+  if(!isProjectorPage())return false;
+  try{return localStorage.getItem(PROJECTOR_MENU_KEY)==='1'}catch(e){return false}
+}
+function syncProjectorMenu(){
+  document.body.classList.toggle('iu-projector-menu-collapsed',isProjectorPage()&&projectorMenuCollapsed());
+}
+function toggleProjectorMenu(){
+  if(!isProjectorPage())return;
+  const next=!projectorMenuCollapsed();
+  try{localStorage.setItem(PROJECTOR_MENU_KEY,next?'1':'0')}catch(e){}
+  syncProjectorMenu();
+  refresh();
+}
+
 /* ---------- menu lateral ---------- */
-function navBtn(id,iconHtml,label,cur){return `<button class="iu-nav${cur===id?' on':''}" data-go="${E(id)}">${iconHtml}<span>${E(label)}</span></button>`}
+function navBtn(id,iconHtml,label,cur){return `<button class="iu-nav${cur===id?' on':''}" data-go="${E(id)}" aria-label="${E(label)}" data-label="${E(label)}">${iconHtml}<span>${E(label)}</span></button>`}
 function sideHTML(){
-  const cur=S.cur();
+  const cur=S.cur(),projector=isProjectorPage(cur),collapsed=projector&&projectorMenuCollapsed();
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
+  if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
   h+=mainPages().map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
   if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
@@ -82,7 +100,7 @@ function sideHTML(){
     h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
     if(S.founder())h+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
     h+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
-    h+=`<button class="iu-nav" data-act="newtab">${ic('plus',19)}<span>Criar aba</span></button>`;
+    h+=`<button class="iu-nav" data-act="newtab" aria-label="Criar aba" data-label="Criar aba">${ic('plus',19)}<span>Criar aba</span></button>`;
   }
   h+='<div class="iu-tag"><b>IASD APP</b>Mais que tecnologia, uma ferramenta para o Reino de Deus.</div>';
   return h;
@@ -550,6 +568,7 @@ function bind(){
       else if(a==='pres-toggle'){g(()=>IASDPresence.setVisible(!!act.checked));visIcon()}
       else if(a==='account')g(()=>toggleAccountMenu());
       else if(a==='newtab'){document.body.classList.remove('iu-open');g(()=>newTab())}
+      else if(a==='projector-menu-toggle')toggleProjectorMenu();
       else if(a==='banner')g(()=>editHomeCarousel());
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
       else if(a==='cards-next'){const r=$('iu-cards');if(r)r.scrollBy({left:Math.max(300,r.clientWidth*.72),behavior:'smooth'})}
@@ -584,6 +603,7 @@ function bind(){
 function refresh(){
   const cur=S.cur();
   if(!S.sound()){proj.state='idle';proj.data=null}
+  syncProjectorMenu();
   document.body.classList.toggle('iu-is-home',cur==='Painel');
   const side=$('iu-side');if(side)side.innerHTML=sideHTML();
   const bn=$('iu-bn');if(bn)bn.innerHTML=barHTML();
@@ -605,7 +625,7 @@ api.afterRender=function(){
 api.fail=function(e){
   console.error('[IASD UI] desativado por erro:',e);
   api.enabled=false;
-  document.body.classList.remove('iu','iu-open');
+  document.body.classList.remove('iu','iu-open','iu-projector-menu-collapsed');
   ['iu-side','iu-ov','iu-top','iu-bn'].forEach(id=>{const el=$(id);if(el)el.remove()});
   mounted=false;
   setTimeout(()=>g(()=>render()),0);

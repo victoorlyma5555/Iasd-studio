@@ -507,6 +507,21 @@ async function fetchStudioBibleChapter(book,chapter){
 async function searchBible(){const book=$('book').value,chapter=Number($('chapter').value),v=$('verse').value.trim(),result=$('bibleResult');$('bibleProject').disabled=true;bibleResult=null;if(!Number.isInteger(chapter)||chapter<1||chapter>150||!/^\d{1,3}(-\d{1,3})?$/.test(v)){result.textContent='Informe capítulo e versículo válidos.';return}const [first,lastRaw]=v.split('-').map(Number),last=lastRaw||first;if(first<1||last<first||last-first>20){result.textContent='Selecione até 21 versículos em sequência.';return}const name=books.selectedOptions[0].textContent,ref=name+' '+chapter+':'+v+' ('+($('studioTranslation')?.selectedOptions[0]?.text||'Almeida')+')';result.textContent='Buscando '+ref+'…';try{const translation=$('studioTranslation')?.value||'almeida';const key=book+'|'+chapter+'|'+translation;let verses=bibleCache.get(key);if(!verses){try{verses=window.parent!==window&&typeof window.parent.fetchBibleChapter==='function'?await window.parent.fetchBibleChapter(book,chapter,translation):await fetchStudioBibleChapter(book,chapter)}catch(e){if(book!=='psalms')throw e;verses=await fetchStudioBibleChapter(book,chapter)}bibleCache.set(key,verses)}const chosen=verses.filter(x=>Number(x.verse)>=first&&Number(x.verse)<=last).sort((a,b)=>Number(a.verse)-Number(b.verse));if(chosen.length!==last-first+1||chosen.some((x,i)=>Number(x.verse)!==first+i))throw Error('Versículos ausentes nesta tradução; não é seguro projetar uma passagem incompleta.');const text=chosen.map(x=>x.text.trim()).join(' ').replace(/\s+/g,' ');bibleResult={ref,text};result.replaceChildren();const title=document.createElement('h3');title.textContent=ref;const para=document.createElement('p');para.textContent=text;result.append(title,para);$('bibleProject').disabled=false;prepare('IASD_BIBLE:'+JSON.stringify(bibleResult),ref+'\n\n'+text)}catch(e){result.textContent='Não foi possível buscar: '+e.message}}
 function projectBible(){if(!bibleResult)return;project('IASD_BIBLE:'+JSON.stringify(bibleResult))}
 function bibleNext(){const v=$('verse').value.trim();if(!/^\d+$/.test(v)){feedback('Para avançar, selecione um único versículo.');return}$('verse').value=String(Number(v)+1);searchBible()}
+const ST_BANNER_KEY='iasd-studio-banner-collapsed';
+function stBannerStored(){try{return localStorage.getItem(ST_BANNER_KEY)==='1'}catch(e){return false}}
+function stApplyBannerState(collapsed=stBannerStored()){
+ document.body.classList.toggle('st-banner-collapsed',!!collapsed);
+ const b=$('stBannerToggle');if(b){b.setAttribute('aria-expanded',collapsed?'false':'true');b.setAttribute('aria-label',collapsed?'Expandir banner':'Recolher banner');b.title=collapsed?'Expandir banner':'Recolher banner'}
+ requestAnimationFrame(()=>{requestStudioHeight();setTimeout(requestStudioHeight,240)});
+}
+function stToggleBanner(){
+ const collapsed=!document.body.classList.contains('st-banner-collapsed');
+ try{localStorage.setItem(ST_BANNER_KEY,collapsed?'1':'0')}catch(e){}
+ stApplyBannerState(collapsed);
+}
+window.stToggleBanner=stToggleBanner;
+stApplyBannerState();
+
 function sync(){try{const p=window.parent;if(p===window)return;const stage=localStorage.getItem('iasd-stage')||'';const live=!!stage&&!!localStorage.getItem('iasd-projetor-token');$('liveLabel').classList.toggle('is-live',live);$('liveLabelText').textContent=live?'AO VIVO · NO TELÃO':'NO TELÃO AGORA';if(stage.startsWith('IASD_BIBLE:')){try{const x=JSON.parse(stage.slice(11));$('live').textContent=x.ref+'\n\n'+x.text}catch(e){}}else if(stage.startsWith('IASD_DRAW:'))$('live').textContent='Número: '+stage.slice(10).split('|')[0];else if(stage.startsWith('IASD_LOCAL_MEDIA:'))$('live').textContent='Mídia no telão';else if(stage.startsWith('IASD_YOUTUBE:')){$('connection').textContent='YouTube no telão';}else $('live').textContent=stage||'Tela preta';$('connection').textContent=localStorage.getItem('iasd-projetor-token')?'IASD Projetor pareado':p.canReachProjection?.()?'Janela aberta':'Aguardando telão'}catch(e){}}setInterval(sync,1100);sync();
 initYouTubeTools();
 const previousTool=sessionStorage.getItem('iasd-studio-tool');showTool(previousTool&&document.getElementById(previousTool)?.classList.contains('work')?previousTool:'ambient');

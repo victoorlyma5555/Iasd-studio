@@ -41,6 +41,33 @@ html body.iu .iu-top{margin-left:var(--iu-side)}
 .iu-tag{margin-top:auto;padding:16px;border-radius:14px;background:linear-gradient(135deg,#1e3a8a,#5b3a8f 70%,#c2683a);color:#fff;font-size:13px;line-height:1.4}
 .iu-tag b{font-size:15px;display:block;margin-bottom:4px}
 .iu-ov{display:none}
+.iu-side-collapse{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:38px;padding:8px 11px;margin:0 0 4px;border:1px solid var(--iu-bd);border-radius:10px;background:var(--iu-sf2);color:var(--iu-mu);font:600 12px/1 Inter,system-ui,sans-serif;cursor:pointer}
+.iu-side-collapse:hover{color:var(--iu-tx);border-color:color-mix(in srgb,var(--iu-pr) 55%,var(--iu-bd))}
+.iu-side-collapse svg{flex:none}
+
+@media (min-width:901px){
+  body.iu.iu-projector-menu-collapsed{--iu-side:72px}
+  html body.iu main,html body.iu .iu-top,.iu-side{transition:margin-left .2s ease,width .2s ease}
+  body.iu.iu-projector-menu-collapsed .iu-side{padding-left:8px;padding-right:8px;overflow-x:visible}
+  body.iu.iu-projector-menu-collapsed .iu-logo{justify-content:center;padding-left:0;padding-right:0}
+  body.iu.iu-projector-menu-collapsed .iu-logo>div,
+  body.iu.iu-projector-menu-collapsed .iu-side-collapse span,
+  body.iu.iu-projector-menu-collapsed .iu-nav>span:not(.iu-glyph),
+  body.iu.iu-projector-menu-collapsed .iu-sec,
+  body.iu.iu-projector-menu-collapsed .iu-tag{display:none}
+  body.iu.iu-projector-menu-collapsed .iu-logo img{width:38px;height:38px}
+  body.iu.iu-projector-menu-collapsed .iu-side-collapse,
+  body.iu.iu-projector-menu-collapsed .iu-nav{justify-content:center;gap:0;padding-left:0;padding-right:0}
+  body.iu.iu-projector-menu-collapsed .iu-nav{position:relative;overflow:visible}
+  body.iu.iu-projector-menu-collapsed .iu-nav:hover::after{
+    content:attr(data-label);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+    z-index:80;white-space:nowrap;padding:7px 9px;border:1px solid var(--iu-bd);border-radius:8px;
+    background:var(--iu-sf);color:var(--iu-tx);box-shadow:0 8px 24px rgba(0,0,0,.24);font-size:12px;font-weight:600;
+    pointer-events:none
+  }
+}
+@media (max-width:900px){.iu-side-collapse{display:none}}
+@media (prefers-reduced-motion:reduce){html body.iu main,html body.iu .iu-top,.iu-side{transition:none!important}}
 
 /* ---------- barra superior ---------- */
 .iu-top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--iu-bg)}

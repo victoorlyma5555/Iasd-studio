@@ -205,7 +205,24 @@ body.st2 main{background:transparent!important}
 /* ===== IASD Projetor: layout da referência (banner + cartão do projetor + controles rápidos) ===== */
 body.st2 main{grid-template-rows:auto auto auto auto!important}
 .st-title{display:none!important}
-.st-banner{grid-area:1 / 1 / 2 / -1;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:136px;padding:18px 22px;border-radius:16px;border:1px solid var(--bd);overflow:hidden;background:linear-gradient(90deg,#060d1f 0%,#09163a 50%,#0b1026 100%)}
+.st-banner{grid-area:1 / 1 / 2 / -1;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:136px;padding:18px 22px;border-radius:16px;border:1px solid var(--bd);overflow:hidden;background:linear-gradient(90deg,#060d1f 0%,#09163a 50%,#0b1026 100%);transition:min-height .2s ease,height .2s ease,padding .2s ease}
+.st-banner-toggle{position:absolute;left:50%;bottom:3px;z-index:5;display:grid;place-items:center;width:44px;height:18px;padding:0;transform:translateX(-50%);border:1px solid rgba(148,170,210,.35);border-radius:9px 9px 4px 4px;background:rgba(5,11,26,.78);color:#b9c8ea;cursor:pointer;backdrop-filter:blur(5px)}
+.st-banner-toggle:hover{color:#fff;border-color:#5b93ff;background:rgba(12,28,62,.92)}
+.st-banner-toggle .ti{width:14px;height:14px;transition:transform .2s ease}
+body.st-banner-collapsed .st-banner{min-height:56px;height:56px;padding:7px 18px 11px;gap:12px}
+body.st-banner-collapsed .st-banner .st-bn-art,
+body.st-banner-collapsed .st-banner .st-bn-txt p,
+body.st-banner-collapsed .st-banner .st-proj-rows{display:none}
+body.st-banner-collapsed .st-banner .st-bn-txt{gap:10px}
+body.st-banner-collapsed .st-banner .st-hp{width:28px;height:28px}
+body.st-banner-collapsed .st-banner .st-bn-txt b{font-size:20px;letter-spacing:-.2px}
+body.st-banner-collapsed .st-banner .st-bn-txt small{font-size:12px;margin:2px 0 0;color:#b9c8ea}
+body.st-banner-collapsed .st-banner .st-proj{width:auto;padding:0;border:0;background:transparent;backdrop-filter:none;gap:0}
+body.st-banner-collapsed .st-banner .st-proj-top{gap:0}
+body.st-banner-collapsed .st-banner .st-proj #chipProj{min-height:30px!important;padding:0 10px!important;border:1px solid #27407a!important;border-radius:999px!important;background:rgba(6,13,31,.78)!important;font-size:12.5px}
+body.st-banner-collapsed .st-banner .st-proj #chipProj em{display:none}
+body.st-banner-collapsed .st-banner-toggle .ti{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.st-banner,.st-banner-toggle .ti{transition:none!important}}
 .st-bn-art{position:absolute;inset:0;pointer-events:none;opacity:.95}.st-bn-art svg{position:absolute;right:0;top:0;height:100%;width:70%;min-width:420px}
 .st-bn-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#060d1f 0%,rgba(6,13,31,.92) 34%,rgba(6,13,31,.25) 70%,rgba(6,13,31,.55) 100%)}
 .st-bn-txt{position:relative;z-index:2;display:flex;align-items:center;gap:16px;min-width:0}
