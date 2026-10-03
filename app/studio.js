@@ -9,7 +9,7 @@ async function closeTestimonyProjection(){
  try{await window.parent.closePreparedYoutube?.();window.__ytLive=false}catch(e){feedback('Não foi possível fechar o vídeo no IASD Projetor: '+(e.message||e));return}
  if(stage.startsWith('IASD_LOCAL_MEDIA:'))call('stopProjection');
  $('testimonyEmbed').replaceChildren();$('testimonyPrivate')?.classList.add('hide');selectedYouTube.testimony=null;
- $('testimonyChosen').textContent='Vídeo fechado. Escolha outro quando desejar.';feedback('Vídeo fechado: o player e o áudio foram encerrados no Projetor.')}
+ feedback('Vídeo fechado: o player e o áudio foram encerrados no Projetor.')}
 
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='iasd-studio-error')feedback(e.data.message)});
 function closeScreen(){const tr=window.IASDTr?IASDTr.get():{type:'none',ms:0};if(tr.type!=='none'&&tr.ms&&!window.__closing){window.__closing=true;try{project('')}catch(e){}setTimeout(()=>{window.__closing=false;closeScreenNow()},tr.ms+120);return}closeScreenNow()}
@@ -201,6 +201,13 @@ const stSt={data:null,ok:false,paired:false,at:0};
 function stPill(id,dot,html){const el=$(id);if(!el)return;const d=el.querySelector('.st-dot');if(d&&dot)d.className='st-dot '+dot;el.querySelector('.st-txt').innerHTML=html}
 function stEsc2(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}
 function stQuality(w,h){return w>=3800?' (4K)':w>=2500?' (2K)':w>=1900?' (Full HD)':w>=1200?' (HD)':''}
+function stSetHealth(id,on){const el=$(id);if(!el)return;el.classList.toggle('off',!on);const mark=el.querySelector('.st-health-mark');if(mark)mark.textContent=on?'✓':'×'}
+function stRenderCompactHealth(d,token,m){
+ let inApp=false;try{inApp=window.parent!==window&&window.parent.location.origin===location.origin&&navigator.onLine!==false}catch(e){inApp=false}
+ stSetHealth('stHealthApp',inApp);
+ stSetHealth('stHealthPair',!!(d&&d.online&&d.paired&&token));
+ stSetHealth('stHealthScreen',!!(d&&d.online&&d.secondMonitor&&m));
+}
 function stRenderChips(){const d=stSt.data,token=!!localStorage.getItem('iasd-projetor-token');
  if(d&&d.online&&d.paired&&token)stPill('chipProj','ok','IASD Projetor <em class="ok">Conectado</em>');
  else if(d&&d.online)stPill('chipProj','warn','IASD Projetor <em class="warn">Sem pareamento</em>');
@@ -209,6 +216,7 @@ function stRenderChips(){const d=stSt.data,token=!!localStorage.getItem('iasd-pr
  stPill('chipRes',null,mm?stEsc2(mm.width+' × '+mm.height+stQuality(mm.width,mm.height)):'Resolução —');
  const idx=d&&mm?(d.monitors||[]).indexOf(mm)+1:0;
  stPill('chipMon',null,!d?'Telão —':d.secondMonitor&&m?'Monitor '+idx+' - Telão Principal':'Telão não detectado');
+ stRenderCompactHealth(d,token,m);
  stRenderNow()}
 function stRenderNow(){const st=localStorage.getItem('iasd-stage')||'';const live=!!st;
  const el=$('chipNow');if(!el)return;const black=!live&&localStorage.getItem('iasd-black')==='1';el.classList.toggle('is-live',live);el.classList.toggle('is-black',black);stPill('chipNow',live?'live':black?'black':'off',live?'Ao vivo':black?'Tela preta':'Sem Conteúdo');const lb=$('liveLabel');if(lb&&black){lb.classList.remove('is-live');$('liveLabelText').textContent='TELA PRETA NO TELÃO'}}
@@ -438,7 +446,7 @@ async function projectSelectedYouTube(kind){if(kind==='offering'&&!selectedYouTu
   const pre=await stPrerollWait();
   if(pre){stYtCard(kind,id);stYtInfo.preroll=true;stYtInfo.clean=0;stYtSt={ad:true,skippable:!!pre.skippable,onPrimary:false};stYtCardRender();feedback('⚠ Anúncio antes do vídeo: o telão ainda não mostra. Pule o anúncio ou projete assim mesmo.');return}
   await P.projectPreparedYoutube();try{await P.controlPreparedYoutube('unmute')}catch(e){}window.__ytLive=true;stYtCard(kind,id);feedback('Vídeo enviado diretamente ao telão pelo IASD Projetor.');}catch(e){feedback('Falha ao projetar YouTube: '+(e.message||e));}}
-function randomYouTube(){const ids=youtubeList('testimony');if(!ids.length){feedback('A biblioteca está temporariamente vazia.');return}let seen=[];try{seen=JSON.parse(localStorage.getItem('iasd-testimony-seen')||'[]')}catch{}let available=ids.filter(id=>!seen.includes(id));if(!available.length){seen=[];available=ids}const id=available[Math.floor(Math.random()*available.length)];seen.push(id);localStorage.setItem('iasd-testimony-seen',JSON.stringify(seen));const item=PROVAI_E_VEDE_LIBRARY.find(v=>v.id===id);$('testimonyChosen').textContent=(item?item.title+' · '+item.year:'Vídeo adicional')+' · '+(ids.length-seen.length)+' ainda não vistos nesta rodada';selectedYouTube.testimony=id;youtubeEmbed(id,'testimonyEmbed');feedback('Vídeo sorteado e pronto para dar play.')}
+function randomYouTube(){const ids=youtubeList('testimony');if(!ids.length){feedback('A biblioteca está temporariamente vazia.');return}let seen=[];try{seen=JSON.parse(localStorage.getItem('iasd-testimony-seen')||'[]')}catch{}let available=ids.filter(id=>!seen.includes(id));if(!available.length){seen=[];available=ids}const id=available[Math.floor(Math.random()*available.length)];seen.push(id);localStorage.setItem('iasd-testimony-seen',JSON.stringify(seen));selectedYouTube.testimony=id;youtubeEmbed(id,'testimonyEmbed');feedback('Vídeo sorteado e pronto para dar play.')}
 function resetYouTubeHistory(){localStorage.removeItem('iasd-testimony-seen');feedback('Histórico do Provai e Vede reiniciado.')}
 function addAmbientExample(){const id='cDffo1ae83o',el=$('ambientLinks');if(!youtubeList('ambient').includes(id)){el.value+=(el.value.trim()?'\n':'')+'https://www.youtube.com/watch?v='+id;saveYouTubeList('ambient')}feedback('Pad de referência adicionado à seleção.')}
 function resetAmbientRound(){localStorage.removeItem('iasd-ambient-seen');feedback('Seleção reiniciada.')}
@@ -506,7 +514,7 @@ async function fetchStudioBibleChapter(book,chapter){
 }
 async function searchBible(){const book=$('book').value,chapter=Number($('chapter').value),v=$('verse').value.trim(),result=$('bibleResult');$('bibleProject').disabled=true;bibleResult=null;if(!Number.isInteger(chapter)||chapter<1||chapter>150||!/^\d{1,3}(-\d{1,3})?$/.test(v)){result.textContent='Informe capítulo e versículo válidos.';return}const [first,lastRaw]=v.split('-').map(Number),last=lastRaw||first;if(first<1||last<first||last-first>20){result.textContent='Selecione até 21 versículos em sequência.';return}const name=books.selectedOptions[0].textContent,ref=name+' '+chapter+':'+v+' ('+($('studioTranslation')?.selectedOptions[0]?.text||'Almeida')+')';result.textContent='Buscando '+ref+'…';try{const translation=$('studioTranslation')?.value||'almeida';const key=book+'|'+chapter+'|'+translation;let verses=bibleCache.get(key);if(!verses){try{verses=window.parent!==window&&typeof window.parent.fetchBibleChapter==='function'?await window.parent.fetchBibleChapter(book,chapter,translation):await fetchStudioBibleChapter(book,chapter)}catch(e){if(book!=='psalms')throw e;verses=await fetchStudioBibleChapter(book,chapter)}bibleCache.set(key,verses)}const chosen=verses.filter(x=>Number(x.verse)>=first&&Number(x.verse)<=last).sort((a,b)=>Number(a.verse)-Number(b.verse));if(chosen.length!==last-first+1||chosen.some((x,i)=>Number(x.verse)!==first+i))throw Error('Versículos ausentes nesta tradução; não é seguro projetar uma passagem incompleta.');const text=chosen.map(x=>x.text.trim()).join(' ').replace(/\s+/g,' ');bibleResult={ref,text};result.replaceChildren();const title=document.createElement('h3');title.textContent=ref;const para=document.createElement('p');para.textContent=text;result.append(title,para);$('bibleProject').disabled=false;prepare('IASD_BIBLE:'+JSON.stringify(bibleResult),ref+'\n\n'+text)}catch(e){result.textContent='Não foi possível buscar: '+e.message}}
 function projectBible(){if(!bibleResult)return;project('IASD_BIBLE:'+JSON.stringify(bibleResult))}
-function bibleNext(){const v=$('verse').value.trim();if(!/^\d+$/.test(v)){feedback('Para avançar, selecione um único versículo.');return}$('verse').value=String(Number(v)+1);searchBible()}
+async function bibleNext(){const v=$('verse').value.trim();if(!/^\d+$/.test(v)){feedback('Para avançar, selecione um único versículo.');return}let wasLive=false;try{wasLive=(localStorage.getItem('iasd-stage')||'').startsWith('IASD_BIBLE:')}catch(e){}$('verse').value=String(Number(v)+1);await searchBible();if(wasLive&&bibleResult)projectBible()}
 const ST_BANNER_KEY='iasd-studio-banner-collapsed';
 function stBannerStored(){try{return localStorage.getItem(ST_BANNER_KEY)==='1'}catch(e){return false}}
 function stApplyBannerState(collapsed=stBannerStored()){
