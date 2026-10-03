@@ -119,25 +119,25 @@ function closeVideo(kind){
 /* ---------- cartão "selecionado" (embaixo de cada módulo) ---------- */
 const embedOpen={special:false,testimony:false};
 function renderNow(kind){
- const box=$(kind+'Now');if(!box)return;box.replaceChildren();const id=sel[kind];
+ const box=$(kind+'Now');if(!box)return;box.replaceChildren();const id=sel[kind],isTestimony=kind==='testimony';
  box.classList.toggle('has',!!id);
- if(!id){box.append(h('p','mm-none','Nenhum vídeo selecionado. Escolha um nos resultados, na galeria ou na fila.'),actionsBar(kind));syncGrow();return}
- ensureTitle(id);
+ if(!id){box.append(h('p','mm-none','Nenhum vídeo selecionado. Escolha um nos resultados, na galeria ou na fila.'));if(!isTestimony)box.append(actionsBar(kind));syncGrow();return}
+ ensureTitle(id);if(isTestimony)embedOpen[kind]=true;
  const row=h('div','mm-sel');row.append(thumb(id));const inf=h('div','amb-info');inf.append(h('small','','SELECIONADO'),h('b','',titleOf(id)));
  const acts=h('div','mm-sel-acts');
- acts.append(btn(embedOpen[kind]?'Ocultar':'Ver','mp-btn',()=>{embedOpen[kind]=!embedOpen[kind];if(embedOpen[kind])youtubeEmbed(id,kind+'Embed');else $(kind+'Embed')?.replaceChildren();renderNow(kind)},'eye','Mostra o player aqui no painel (só para o sonoplasta)'));
+ if(!isTestimony)acts.append(btn(embedOpen[kind]?'Ocultar':'Ver','mp-btn',()=>{embedOpen[kind]=!embedOpen[kind];if(embedOpen[kind])youtubeEmbed(id,kind+'Embed');else $(kind+'Embed')?.replaceChildren();renderNow(kind)},'eye','Mostra o player aqui no painel (só para o sonoplasta)'));
  if(!queueHas(kind,id))acts.append(btn('Fila','mp-btn',()=>qadd(kind,id),'plus','Adicionar à fila'));
  if(!inLib(kind,id))acts.append(btn('Salvar','mp-btn',()=>libAdd(kind,{id,title:titleOf(id,'')}),'star','Salvar na biblioteca'));
  acts.append(btn('','amb-x',()=>{sel[kind]=null;selectedYouTube[kind]=null;embedOpen[kind]=false;renderNow(kind);renderQueue();renderAll()},'x','Limpar seleção'));
  row.append(inf,acts);
  const em=h('div','mm-embed');em.id=kind+'Embed';
- box.append(row,em,actionsBar(kind));
+ box.append(row,em);if(!isTestimony)box.append(actionsBar(kind));
  if(embedOpen[kind])youtubeEmbed(id,kind+'Embed');
  syncGrow();resize();
 }
 const queueHas=(kind,id)=>qlist(kind).includes(id);
 function select(kind,id){
- if(!valid(id))return;sel[kind]=id;selectedYouTube[kind]=id;embedOpen[kind]=false;
+ if(!valid(id))return;sel[kind]=id;selectedYouTube[kind]=id;embedOpen[kind]=kind==='testimony';
  const l=qlist(kind);const p=l.indexOf(id);if(p>=0)qpos[kind]=p;
  renderNow(kind);renderQueue();renderAll();toast('Selecionado: '+titleOf(id)+'. Toque em Projetar no telão.');
 }
@@ -207,8 +207,7 @@ window.randomYouTube=function(){
  let seen=seenList().filter(x=>ids.includes(x));let avail=ids.filter(id=>!seen.includes(id));
  if(!avail.length){seen=[];avail=ids}
  const id=avail[Math.floor(Math.random()*avail.length)];seen.push(id);wr(SEEN,seen);
- select('testimony',id);const b=builtinOf(id);
- $('testimonyChosen').textContent=(b?b.title+' · '+b.year:titleOf(id))+' — sorteado';
+ select('testimony',id);
  renderTsDraw();
 };
 window.resetYouTubeHistory=function(){try{localStorage.removeItem(SEEN)}catch(e){}renderTsDraw();toast('Histórico reiniciado: todos os vídeos voltam ao sorteio.')};
@@ -363,7 +362,7 @@ window.bibleRecentClear=async function(){if(!bibleRecentList().length){toast('N�
 function growNeeded(){
  const t=document.body.dataset.tool;
  if(t==='special')return !!sel.special;
- if(t==='testimony')return !!sel.testimony||(!$('testimonyPlayer').hidden);
+ if(t==='testimony')return false;
  if(t==='video')return !!vlSel||!!vlFile;
  return false;
 }
