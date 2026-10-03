@@ -92,3 +92,26 @@ body[data-tool=testimony] .st-queue{display:block}
 }
 .vl-card{grid-template-columns:minmax(0,1fr)}.vl-info{min-width:0}.vl-info b,.vl-info small{display:block;max-width:100%}
 #tsRecentBtn{flex:none;height:44px;padding:0 14px!important;white-space:nowrap}#tsRecentBtn.on{background:linear-gradient(180deg,#3574f3,#1e4fd0)!important;border-color:#5b93ff!important;color:#fff!important}
+
+/* Pack 2026-10-03 — Provai e Vede: altura fixa, rolagem interna e ações sempre visíveis */
+#testimony .ts-head-count{margin-left:auto;flex:none;padding:5px 10px;border-radius:999px;border:1px solid var(--bd2);background:#0d2145;color:#d9e7fb;font-size:11px;font-weight:800;letter-spacing:.02em}
+#testimony .ts-scroll{display:flex;flex-direction:column;gap:12px;min-height:0}
+#testimony .ts-fixed-actions{flex:0 0 auto;padding-top:10px;border-top:1px solid var(--bd);background:var(--sf)}
+#testimony .ts-draw{grid-template-columns:minmax(0,1.55fr) minmax(145px,.75fr)}
+#testimony .ts-draw .ts-dice{grid-column:auto}
+#testimony .ts-draw .ts-reset{height:54px}
+#testimony .mm-now{position:static;bottom:auto;margin:0;padding:12px;display:grid;background:var(--sf2);border:1px solid var(--bd);border-radius:12px;backdrop-filter:none}
+#testimony .mm-embed:empty{display:block;min-height:180px;border:1px dashed rgba(148,170,210,.28);border-radius:10px;background:#05070d}
+#testimony .mm-embed:empty::before{content:"Selecione um vídeo para mostrar a prévia";display:grid;place-items:center;min-height:180px;padding:14px;color:#8fa3c7;font-size:13px;text-align:center}
+@media (min-width:1001px){
+ body.st2 #testimony.work.active{height:var(--stH,auto)!important;max-height:var(--stH,none)!important;min-height:0!important;overflow:hidden!important;contain:size!important}
+ body.st2 #testimony.work.active>.mp-head{flex:0 0 auto}
+ body.st2 #testimony.work.active>.ts-scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#2a4385 transparent}
+ body.st2 #testimony.work.active>.ts-scroll::-webkit-scrollbar{width:8px}
+ body.st2 #testimony.work.active>.ts-scroll::-webkit-scrollbar-thumb{background:#315992;border-radius:999px}
+ body.st2 #testimony.work.active>.ts-fixed-actions{flex:0 0 auto}
+}
+@media (max-width:700px){
+ #testimony .ts-draw{grid-template-columns:1fr}
+ #testimony .ts-fixed-actions{position:sticky;bottom:0;z-index:4;padding:10px 0 0}
+}
