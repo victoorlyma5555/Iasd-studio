@@ -101,13 +101,13 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
  c.style.setProperty('--yt-bg',id?'url(https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg)':'none');
  c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
-window.stTakeover=function(keep){
+window.stTakeover=function(keep,preserveVisual=false){
  let wait=null;const P=window.parent;
  if(keep!=='hymn'){stHymnFadeStop(keep?180:0)}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
  if(keep!=='yt'){++youtubeSelection;window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
- if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
+ if((keep==='yt'||keep==='hymn'||keep===''||keep==='ambient')&&!(preserveVisual&&window.__ytLive)){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
   if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{});else P.project&&P.project('')}catch(e){}}else if(keep==='yt'&&st){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{})}catch(e){}}}
  /* prévias do YouTube dentro do Studio (música ambiente, Provai e Vede…) também calam quando outra mídia começa */
  try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(keep==='ambient'&&f.closest('#ambientEmbed'))return;void IASDAudio.pause(iframeAudio(f),stFm(180),()=>removeYoutubeFrame(f))})}catch(e){}
@@ -462,7 +462,7 @@ document.querySelectorAll("audio,video").forEach(a=>IASDAudio.install(a));
 new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1){if(n.matches("audio,video"))IASDAudio.install(n);n.querySelectorAll("audio,video").forEach(a=>IASDAudio.install(a))}}).observe(document.body,{childList:true,subtree:true});
 let youtubeSelection=0;
 const selectedYouTube={testimony:null,ambient:null,offering:null,special:null};
-async function projectSelectedYouTube(kind){const request=++youtubeSelection;if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt');if(request!==youtubeSelection)return;if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');const P=window.parent;await P.prepareYoutubePreview(id);if(request!==youtubeSelection)return;
+async function projectSelectedYouTube(kind){const request=++youtubeSelection;if(kind==='offering'&&!selectedYouTube.offering)prepareOffering();const id=selectedYouTube[kind];if(!id){feedback('Prepare um vídeo primeiro.');return}const preserveVisual=kind==='special'||kind==='testimony';feedback('Preparando vídeo no IASD Projetor…');try{await stTakeover('yt',preserveVisual);if(request!==youtubeSelection)return;if(typeof window.parent.prepareYoutubePreview!=='function'||typeof window.parent.projectPreparedYoutube!=='function')throw Error('Atualize a página do IASD APP.');const P=window.parent;await P.prepareYoutubePreview(id,preserveVisual);if(request!==youtubeSelection)return;
   /* anúncio antes do vídeo: o telão só mostra o vídeo de verdade (o som fica mudo até lá) */
   try{await P.controlPreparedYoutube('mute')}catch(e){}
   const pre=await stPrerollWait();if(request!==youtubeSelection)return;

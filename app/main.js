@@ -350,7 +350,7 @@ async function companionRequest(route,payload,token=companionToken){
  if(!res.ok)throw Error(body.error||'IASD Projetor indisponível');
  return body;
 }
-async function prepareYoutubePreview(id){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id,ms:stFadeMs(180),visualMs:window.stFadeVisualMs?stFadeVisualMs(180):stFadeMs(180)})}
+async function prepareYoutubePreview(id,preserveVisual=false){if(!companionToken)throw Error('Pareie o IASD Projetor para usar a prévia privada.');return companionRequest('/youtube/prepare',{id,ms:stFadeMs(180),visualMs:window.stFadeVisualMs?stFadeVisualMs(180):stFadeMs(180),preserveVisual})}
 async function youtubePreviewFrame(){if(!companionToken)throw Error('IASD Projetor não pareado');const res=await fetch(companionURL+'/youtube/frame',{targetAddressSpace:'loopback',headers:{Authorization:'Bearer '+companionToken},cache:'no-store'});const data=await res.json();if(!res.ok)throw Error(data.error||'Prévia indisponível');return 'data:image/jpeg;base64,'+data.image}
 function projectionFadeConfig(){try{const c=JSON.parse(localStorage.getItem('iasd-fade')||'{}');return{on:c.on!==false,i:c.i!==false,f:Number(c.f)||1}}catch{return{on:true,i:true,f:1}}}
 async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Projetor não pareado');const tr=window.IASDTr&&IASDTr.get();return companionRequest('/youtube/project',{ms:tr&&tr.type!=='none'?tr.ms:0,inms:window.stFadeInMs?stFadeInMs(220):0,outms:stFadeMs(180),visualMs:window.stFadeVisualMs?stFadeVisualMs(180):stFadeMs(180)})}
