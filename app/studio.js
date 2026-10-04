@@ -12,7 +12,7 @@ async function closeTestimonyProjection(){const request=++youtubeSelection;
  $('testimonyChosen').textContent='Vídeo fechado. Escolha outro quando desejar.';feedback('Vídeo fechado: o player e o áudio foram encerrados no Projetor.')}
 
 window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===window.parent&&e.data?.type==='iasd-studio-error')feedback(e.data.message)});
-function closeScreen(){closeScreenNow()}
+function closeScreen(){return closeScreenNow()}
 /* Uma mídia por vez: quem começa a tocar/projetar para todas as outras (hino, YouTube, mídia local, vídeo de oferta, trilha, arquivos). keep = id do elemento de áudio/vídeo, 'hymn' ou 'yt' */
 /* controle da música ambiente (prévia do YouTube) a partir de qualquer módulo/página: pausar, retomar, fechar */
 window.addEventListener('message',e=>{if(typeof e.data!=='string'||!/youtube/.test(e.origin))return;let d;try{d=JSON.parse(e.data)}catch(x){return}
@@ -108,13 +108,13 @@ window.stTakeover=function(keep){
  if(keep!=='yt'){++youtubeSelection;window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
  if(keep==='yt'||keep==='hymn'||keep===''||keep==='ambient'){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
-  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180)})).catch(()=>{});else P.project&&P.project('')}catch(e){}}else if(keep==='yt'&&st){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180)})).catch(()=>{})}catch(e){}}}
+  if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{});else P.project&&P.project('')}catch(e){}}else if(keep==='yt'&&st){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{})}catch(e){}}}
  /* prévias do YouTube dentro do Studio (música ambiente, Provai e Vede…) também calam quando outra mídia começa */
  try{document.querySelectorAll('#ambientEmbed iframe,#testimonyEmbed iframe,#offeringEmbed iframe,#specialEmbed iframe').forEach(f=>{if(keep==='ambient'&&f.closest('#ambientEmbed'))return;void IASDAudio.pause(iframeAudio(f),stFm(180),()=>removeYoutubeFrame(f))})}catch(e){}
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{stFadePause(a,180)}catch(e){}}})}catch(e){}
  return wait
 };
-function closeScreenNow(){++youtubeSelection;call('stopProjection');stHymnFadeStop(180);try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'){try{stFadePause(a,180)}catch(e){}}})}catch(e){}closeYoutubeEmbeds($('testimonyEmbed'));try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection('');stRenderNow();feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+async function closeScreenNow(){++youtubeSelection;const closing=call('stopProjection');stHymnFadeStop(180);try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'){try{stFadePause(a,180)}catch(e){}}})}catch(e){}closeYoutubeEmbeds($('testimonyEmbed'));try{localStorage.setItem('iasd-black','0')}catch(e){}stRenderNow();await Promise.resolve(closing);feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
 function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
@@ -163,7 +163,7 @@ function tmSetTotal(sec,fromPreset){sec=Math.max(1,Math.min(36000,Math.round(sec
 function tmFromInputs(){tmSetTotal((+$('tmMin').value||0)*60+(+$('tmSec').value||0)||60)}
 function tmToggle(){if(TM.state==='running'){TM.remaining=tmLeft();TM.state='paused';tmSync();tmRender();return}if(TM.remaining<=0)TM.remaining=TM.total;TM.endsAt=Date.now()+TM.remaining*1000;TM.state='running';tmSend();tmRender()}
 /* fecha o telão e já reinicia o cronômetro (fecha primeiro, assim o reinício não reaparece no telão) */
-function tmClose(){closeScreen();tmReset()}
+async function tmClose(){await closeScreen();tmReset()}
 function tmReset(){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;tmSync();tmRender()}
 function tmAdjust(delta){const left=tmLeft(),next=Math.max(1,Math.min(36000,left+delta));if(TM.state==='running')TM.endsAt=Date.now()+next*1000;else{TM.remaining=next;if(TM.state==='idle')TM.total=next}TM.total=Math.max(TM.total,Math.ceil(next));tmSync();tmRender()}
 let tmPrev=null;

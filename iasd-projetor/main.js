@@ -267,7 +267,7 @@ function fadeWin(win,to,ms){
  });
 }
 function trMs(content){const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(String(content||''));return m&&m[1]!=='none'?Math.min(2000,+m[2]):0}
-async function prepareYoutube(id,ms=0){const command=++audioCommand;if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;const old=youtubeRef;if(old&&!old.isDestroyed()){youtubeRef=null;youtubeVideoId=null;youtubeShown=false;void fadeAudioIn(old,ms).finally(()=>{if(!old.isDestroyed())old.destroy()})}const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false,partition:YT_PARTITION}});youtubeRef=win;youtubeVideoId=id;/* a janela preparada fica MUDA (o vídeo já carrega e toca escondido); o som só é liberado ao projetar */try{win.webContents.setAudioMuted(true)}catch{}win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});const host=(await googleLogged())?'https://www.youtube.com':'https://www.youtube-nocookie.com';if(command!==audioCommand||win.isDestroyed())return;await win.loadURL(host+'/embed/'+id+'?autoplay=1&rel=0&playsinline=1',{httpReferrer:{url:SITE+'/',policy:'strict-origin-when-cross-origin'}});if(!win.isDestroyed())win.webContents.setFrameRate(15)}
+async function prepareYoutube(id,ms=0){const command=++audioCommand;if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;const old=youtubeRef;if(old&&!old.isDestroyed()){youtubeRef=null;youtubeVideoId=null;youtubeShown=false;void Promise.all([fadeAudioIn(old,ms),fadeWin(old,0,lastVisualFadeMs)]).finally(()=>{if(!old.isDestroyed())old.destroy()})}const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false,partition:YT_PARTITION}});youtubeRef=win;youtubeVideoId=id;/* a janela preparada fica MUDA (o vídeo já carrega e toca escondido); o som só é liberado ao projetar */try{win.webContents.setAudioMuted(true)}catch{}win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});const host=(await googleLogged())?'https://www.youtube.com':'https://www.youtube-nocookie.com';if(command!==audioCommand||win.isDestroyed())return;await win.loadURL(host+'/embed/'+id+'?autoplay=1&rel=0&playsinline=1',{httpReferrer:{url:SITE+'/',policy:'strict-origin-when-cross-origin'}});if(!win.isDestroyed())win.webContents.setFrameRate(15)}
 let youtubeOnPrimary=false,youtubeCover=null;
 function dropYoutubeCover(){if(youtubeCover&&!youtubeCover.isDestroyed())youtubeCover.destroy();youtubeCover=null}
 // Anúncio no vídeo do telão: lê o player (classe ad-showing) e o botão de pular, se houver.
@@ -279,27 +279,27 @@ async function youtubeAdState(){
 }
 async function youtubeSkipAd(){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return !!(await youtubeRef.webContents.executeJavaScript("(()=>{const b=document.querySelector('.ytp-skip-ad-button,.ytp-ad-skip-button,.ytp-ad-skip-button-modern');if(!b)return false;b.click();return true})()"))}catch{return false}}
 // Traz o vídeo para o monitor principal (mudo) para o operador pular o anúncio; o telão fica preto até devolver.
-function youtubeToPrimary(){
+async function youtubeToPrimary(visualMs=lastVisualFadeMs){
  if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)throw Error('Não há vídeo no telão');
+ const command=++audioCommand,win=youtubeRef;win.webContents.setAudioMuted(true);await fadeWin(win,0,visualMs);if(command!==audioCommand||win!==youtubeRef||win.isDestroyed())return;
  const display=chooseDisplay(),area=screen.getPrimaryDisplay().workArea;
  if(display&&!youtubeCover){const c=new BrowserWindow({x:display.bounds.x,y:display.bounds.y,width:display.bounds.width,height:display.bounds.height,frame:false,show:false,focusable:false,skipTaskbar:true,backgroundColor:'#000',webPreferences:{sandbox:true}});c.setAlwaysOnTop(true,'screen-saver');c.on('closed',()=>{if(youtubeCover===c)youtubeCover=null});c.loadURL('data:text/html,<body style="margin:0;background:#000">').catch(()=>{});c.once('ready-to-show',()=>{if(!c.isDestroyed())c.showInactive()});youtubeCover=c}
  const w=Math.min(960,area.width-40),h=Math.round(w*9/16);
- youtubeRef.webContents.setAudioMuted(true);
- youtubeRef.setFullScreen(false);
- youtubeRef.setBounds({x:area.x+Math.round((area.width-w)/2),y:area.y+Math.round((area.height-h)/2),width:w,height:h});
- youtubeRef.setAlwaysOnTop(true,'floating');youtubeRef.show();youtubeRef.focus();youtubeOnPrimary=true
+  youtubeRef.setFullScreen(false);
+  youtubeRef.setBounds({x:area.x+Math.round((area.width-w)/2),y:area.y+Math.round((area.height-h)/2),width:w,height:h});
+  youtubeRef.setOpacity(1);youtubeRef.setAlwaysOnTop(true,'floating');youtubeRef.show();youtubeRef.focus();youtubeOnPrimary=true
 }
-async function youtubeToProjector(inMs=0,outMs=lastFadeOutMs){
+async function youtubeToProjector(inMs=0,outMs=lastFadeOutMs,visualMs=lastVisualFadeMs){
  if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Não há vídeo');
  youtubeOnPrimary=false;
  try{youtubeRef.setAlwaysOnTop(false)}catch{}
- await projectPreparedYoutube(0,inMs,outMs);
+  await projectPreparedYoutube(0,inMs,outMs,visualMs);
  setTimeout(dropYoutubeCover,350)
 }
 // Shared media envelopes; injecting the same factory avoids a second fade engine.
 const createAudioFade=require('./audio-fade');
 const audioBootstrap='window.IASDAudio=window.IASDAudio||('+createAudioFade.toString()+')();';
-let audioCommand=0,lastFadeOutMs=3000;
+let audioCommand=0,lastFadeOutMs=3000,lastVisualFadeMs=0;
 function fadeAudioIn(win,ms){
  if(!win||win.isDestroyed())return Promise.resolve();
  return win.webContents.executeJavaScript(audioBootstrap+'Promise.all([...document.querySelectorAll("video,audio")].map(v=>IASDAudio.pause(v,'+Math.max(0,ms)+')))').catch(()=>{});
@@ -309,10 +309,11 @@ async function youtubeAudio(win,action,ms,arm=false){
  const body=action==='play'?(arm?'IASDAudio.cancel(v);v.volume=0;s.kind="armed";v.muted=false;':'')+'void IASDAudio.play(v,'+ms+').catch(()=>{});':action==='pause'?'void IASDAudio.pause(v,'+ms+');':action==='mute'?'v.muted=true;':'v.muted=false;';
  return win.webContents.executeJavaScript(audioBootstrap+'(()=>{const v=document.querySelector("video");if(!v)return false;const s=IASDAudio.state(v);'+(action==='play'?'if(!s.kind&&v.volume>0)s.target=v.volume;':'')+body+'return true})()');
 }
-async function closeProjectionAudio(ms){
+async function closeProjectionAudio(ms,visualMs=lastVisualFadeMs){
  const command=++audioCommand,yt=youtubeRef,win=windowRef;
  lastFadeOutMs=ms;
- await Promise.all([fadeAudioIn(yt,ms),fadeAudioIn(win,ms),fadeWin(yt,0,ms)]);
+ const visual=win&&!win.isDestroyed()&&win.webContents?win.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>false):Promise.resolve(true);
+ await Promise.all([fadeAudioIn(yt,ms),fadeAudioIn(win,ms),fadeWin(yt,0,visualMs),visual]);
  if(command!==audioCommand)return;
  if(yt===youtubeRef)closeYoutube();
  if(win===windowRef&&win&&!win.isDestroyed()){win.close();windowRef=null}
@@ -323,7 +324,7 @@ async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())ret
 // Tela preta com vídeo no telão: esconde a janela do vídeo, pausa e silencia (a projeção continua aberta).
 async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
-async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs){
+async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs,visualInMs=lastVisualFadeMs){
  const command=++audioCommand,win=youtubeRef,display=chooseDisplay();
  if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');
  if(!win||win.isDestroyed())throw Error('Prepare um vídeo primeiro');
@@ -331,10 +332,10 @@ async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs){
  if(!await youtubeAudio(win,'play',inMs,true))throw Error('O player ainda está carregando. Tente novamente.');
  if(command!==audioCommand||win!==youtubeRef||win.isDestroyed())return display;
  if(windowRef&&!windowRef.isDestroyed()){
-  const old=windowRef;void fadeAudioIn(old,outMs);old.setAlwaysOnTop(false);old.hide();lastProjectionContent='';
+   const old=windowRef;await Promise.all([fadeAudioIn(old,outMs),old.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>false)]);if(command!==audioCommand||old!==windowRef)return display;old.setAlwaysOnTop(false);old.hide();try{old.setOpacity(1)}catch{}lastProjectionContent='';
  }
- win.setBounds(display.bounds);void fadeWin(win,ms?0:1,0);
- win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);if(ms)void fadeWin(win,1,ms);
+ win.setBounds(display.bounds);void fadeWin(win,visualInMs?0:1,0);
+ win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);if(visualInMs)void fadeWin(win,1,visualInMs);
  return display;
 }
 
@@ -435,7 +436,7 @@ function showDashboard(){
  dashboardRef.once('ready-to-show',()=>{closeStartSplash();if(!dashboardRef||dashboardRef.isDestroyed())return;dashboardRef.show();dashboardRef.moveTop();dashboardRef.focus()});
  dashboardRef.on('closed',()=>{dashboardRef=null});
 }
-function closeProjection(){if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}
+async function closeProjection(){const win=windowRef;if(!win||win.isDestroyed()){windowRef=null;return}await win.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>false);if(win===windowRef&&!win.isDestroyed())win.close();if(win===windowRef)windowRef=null}
 ipcMain.handle('iasd:alert-login',async(_,credentials)=>{try{const email=String(credentials?.email||'').trim(),password=String(credentials?.password||'');if(!email||!password)return {error:'Informe e-mail e senha.'};const {data,error}=await alertCloud.auth.signInWithPassword({email,password});if(error)throw error;await alertStart(data.session);return {ok:true,...alertStatus()}}catch(e){return {error:e.message}}});
 ipcMain.handle('iasd:test-alert',()=>{if(!alertAccount)return {error:'Ative os alertas independentes entrando com sua conta no aplicativo.'};showSoundAlert({sender_name:'IASD APP · Teste',message:'Este aviso deve aparecer no Windows mesmo com o navegador fechado. A projeção não será interrompida.',schedule_name:'Teste local'});return {ok:true}});
 ipcMain.handle('iasd:google-login',()=>googleLogin());ipcMain.handle('iasd:google-logout',()=>googleLogout());ipcMain.handle('iasd:google-status',async()=>({logged:await googleLogged()}));
@@ -454,7 +455,7 @@ ipcMain.handle('iasd:install-on-quit',()=>{if(!downloadedUpdate)return{error:'Ne
 ipcMain.handle('iasd:update-status',()=>updateStatus);
 ipcMain.handle('iasd:release',(_,url)=>{if(typeof url!=='string'||!/^https:\/\/github\.com\/victoorlyma5555\/Iasd-studio\/releases\//.test(url))throw Error('Endereço não autorizado');return shell.openExternal(url)});
 ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){return{error:e.message}}});
-ipcMain.handle('iasd:close',()=>{closeProjection();return{ok:true}});
+ipcMain.handle('iasd:close',async()=>{await closeProjection();return{ok:true}});
 ipcMain.handle('iasd:window',(_,action)=>{if(!dashboardRef||dashboardRef.isDestroyed())return{error:'Janela indisponível'};if(action==='minimize')dashboardRef.minimize();else if(action==='maximize')return{ok:false};else if(action==='close')dashboardRef.close();else return{error:'Ação inválida'};return{ok:true,maximized:dashboardRef&&!dashboardRef.isDestroyed()&&dashboardRef.isMaximized()}});
 async function projectorScript(script){if(!windowRef||windowRef.isDestroyed())showProjector();if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(Error(desc)))});return windowRef.webContents.executeJavaScript(script)}
 ipcMain.handle('iasd:blackout',async(_,enabled)=>{try{await projectorScript(`(()=>{let x=document.getElementById('iasd-desktop-blackout');if(!x){x=document.createElement('div');x.id='iasd-desktop-blackout';Object.assign(x.style,{position:'fixed',inset:'0',background:'#000',zIndex:'2147483647',display:'none'});document.body.appendChild(x)}x.style.display=${enabled?'\'block\'':'\'none\''};return true})()`);return{ok:true,enabled:!!enabled}}catch(e){return{error:e.message}}});
@@ -567,33 +568,33 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(req.url==='/alert-replies/wait'&&req.method==='POST'){if(pendingAlertReplies.length){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}const w={res};w.t=setTimeout(()=>{alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w);if(!res.writableEnded)reply(res,200,{replies:[]})},25000);alertReplyWaiters.push(w);req.on('close',()=>{clearTimeout(w.t);alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w)});return}
  if(req.url==='/alert-replies'&&req.method==='POST'){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''),Math.min(5000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/prepare'&&req.method==='POST'){try{lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));await prepareYoutube(String(data.id||''),Math.min(5000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/state'&&req.method==='POST'){reply(res,200,await youtubeAdState());return}
  if(req.url==='/youtube/skip'&&req.method==='POST'){reply(res,200,{ok:await youtubeSkipAd()});return}
- if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector(Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
+  if(req.url==='/youtube/move'&&req.method==='POST'){try{lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));if(data.to==='primary')await youtubeToPrimary(lastVisualFadeMs);else await youtubeToProjector(Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)),lastVisualFadeMs);reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}++audioCommand;const win=youtubeRef;if(!await youtubeAudio(win,data.action,Math.min(5000,Math.max(0,+data.ms||0)))){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/close'&&req.method==='POST'){const command=++audioCommand,win=youtubeRef,ms=Math.min(5000,Math.max(0,+data.ms||0));await fadeAudioIn(win,ms);if(command===audioCommand&&win===youtubeRef)closeYoutube();reply(res,200,{ok:true});return}
+  if(req.url==='/youtube/project'&&req.method==='POST'){try{const visualMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));lastVisualFadeMs=visualMs;const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)),visualMs);reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
+  if(req.url==='/youtube/close'&&req.method==='POST'){const command=++audioCommand,win=youtubeRef,ms=Math.min(5000,Math.max(0,+data.ms||0));lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));await Promise.all([fadeAudioIn(win,ms),fadeWin(win,0,lastVisualFadeMs)]);if(command===audioCommand&&win===youtubeRef)closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
   try{++audioCommand;const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/project'&&req.method==='POST'){
+  if(req.url==='/project'&&req.method==='POST'){
   if(typeof data.content!=='string'||data.content.length>(data.content.replace(/^IASD_TR:[a-z]+:\d{1,4}\|/,'').startsWith('IASD_LYRIC:')?4000000:50000)){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
-   const command=++audioCommand,content=data.content;
+    const command=++audioCommand,content=data.content;lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));
    if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}
    // Novo conteúdo substitui o vídeo do telão (sem áudio residual); conteúdo vazio = tela preta.
-   if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){await fadeAudioIn(youtubeRef,Math.min(5000,Math.max(0,+data.audioMs||0)));if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
+    if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){await Promise.all([fadeAudioIn(youtubeRef,Math.min(5000,Math.max(0,+data.audioMs||0))),fadeWin(youtubeRef,0,lastVisualFadeMs)]);if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
    showProjector();
    lastProjectionContent=content;
    if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
    if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}
    const fade=data.fade&&{on:data.fade.on!==false,i:data.fade.i!==false,f:Math.max(.1,Math.min(5,Number(data.fade.f)||1))};
-   await windowRef.webContents.executeJavaScript((fade?'localStorage.setItem("iasd-fade",'+JSON.stringify(JSON.stringify(fade))+');':'')+'window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)');
+    await windowRef.webContents.executeJavaScript((fade?'localStorage.setItem("iasd-fade",'+JSON.stringify(JSON.stringify(fade))+');':'')+(content===''?'window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(true):Promise.resolve(true)':'window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)'));
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/close'&&req.method==='POST'){await closeProjectionAudio(Math.min(5000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true});return}
+  if(req.url==='/close'&&req.method==='POST'){lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));await closeProjectionAudio(Math.min(5000,Math.max(0,+data.ms||0)),lastVisualFadeMs);reply(res,200,{ok:true});return}
 
  reply(res,404,{error:'Rota desconhecida'});
 }

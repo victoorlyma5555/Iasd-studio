@@ -30,6 +30,9 @@ test('Assistive Touch respeita desligado, entrada desligada e velocidade',()=>{
 test('presets Curto, Médio e Longo aplicam os mesmos tempos na entrada e na saída',()=>{
  for(const [f,ms] of [[.6,1500],[1,3000],[1.8,5000]]){const {api}=fixture({f});assert.equal(api.duration(220,true),ms);assert.equal(api.duration(180),ms)}
 });
+test('duração visual usa o preset mesmo com fade de áudio desligado',()=>{
+ for(const [f,ms] of [[.6,1500],[1,3000],[1.8,5000]]){const {api}=fixture({on:false,i:false,f});assert.equal(api.duration(180),0);assert.equal(api.presetDuration(180),ms)}
+});
 test('volume alterado durante entrada usa o novo alvo',async()=>{
  const {api,media,tick}=fixture();await api.play(media,200);await tick(32);api.volume(media,.25);await tick(220);assert.equal(media.volume,.25);
 });
@@ -56,7 +59,7 @@ test('fechamento pendente não destrói uma nova projeção',async()=>{
  const fn=main.slice(main.indexOf('async function closeProjectionAudio('),main.indexOf('\nfunction closeYoutube'));
  let finish;let closes=0;
  const win={isDestroyed:()=>false,close:()=>closes++};
- const ctx=vm.createContext({audioCommand:0,lastFadeOutMs:180,youtubeRef:win,windowRef:win,fadeAudioIn:()=>new Promise(r=>finish=r),fadeWin:()=>Promise.resolve(),closeYoutube:()=>closes++});
+ const ctx=vm.createContext({audioCommand:0,lastFadeOutMs:180,lastVisualFadeMs:3000,youtubeRef:win,windowRef:win,fadeAudioIn:()=>new Promise(r=>finish=r),fadeWin:()=>Promise.resolve(),closeYoutube:()=>closes++});
  // Independent windows resolve independently, just like executeJavaScript promises.
  const resolvers=[];ctx.fadeAudioIn=()=>new Promise(r=>resolvers.push(r));vm.runInContext(fn,ctx);
  const pending=ctx.closeProjectionAudio(180);ctx.audioCommand++;resolvers.forEach(r=>r());await pending;assert.equal(closes,0);
@@ -67,6 +70,16 @@ test('fechamento não destrói janelas substituídas durante a espera',async()=>
  const fn=main.slice(main.indexOf('async function closeProjectionAudio('),main.indexOf('\nfunction closeYoutube'));
  const resolvers=[];let closes=0;
  const win={isDestroyed:()=>false,close:()=>closes++};
- const ctx=vm.createContext({audioCommand:0,lastFadeOutMs:180,youtubeRef:win,windowRef:win,fadeAudioIn:()=>new Promise(r=>resolvers.push(r)),fadeWin:()=>Promise.resolve(),closeYoutube:()=>closes++});vm.runInContext(fn,ctx);
+ const ctx=vm.createContext({audioCommand:0,lastFadeOutMs:180,lastVisualFadeMs:3000,youtubeRef:win,windowRef:win,fadeAudioIn:()=>new Promise(r=>resolvers.push(r)),fadeWin:()=>Promise.resolve(),closeYoutube:()=>closes++});vm.runInContext(fn,ctx);
  const pending=ctx.closeProjectionAudio(180);ctx.youtubeRef={};ctx.windowRef={};resolvers.forEach(r=>r());await pending;assert.equal(closes,0);
+});
+test('fechamento aguarda o fade visual sem alterar a duração do fade de áudio',async()=>{
+ const main=fs.readFileSync(new URL('../iasd-projetor/main.js',import.meta.url),'utf8');
+ const fn=main.slice(main.indexOf('async function closeProjectionAudio('),main.indexOf('\nfunction closeYoutube'));
+ let finishVisual;const audioDurations=[],visualCalls=[];let closes=0;
+ const win={isDestroyed:()=>false,webContents:{executeJavaScript:code=>{visualCalls.push(code);return new Promise(r=>finishVisual=r)}},close:()=>closes++};
+ const ctx=vm.createContext({audioCommand:0,lastFadeOutMs:3000,lastVisualFadeMs:5000,youtubeRef:null,windowRef:win,fadeAudioIn:(target,ms)=>{if(target)audioDurations.push(ms);return Promise.resolve()},fadeWin:(_,__,ms)=>{visualCalls.push(ms);return Promise.resolve()},closeYoutube:()=>{}});vm.runInContext(fn,ctx);
+ let completed=false;const pending=ctx.closeProjectionAudio(3000,5000).then(()=>{completed=true});
+ await Promise.resolve();assert.deepEqual(audioDurations,[3000]);assert.ok(visualCalls.includes(5000));assert.ok(visualCalls.some(call=>typeof call==='string'&&/iasdFadeProjectionOut\(false\)/.test(call)));assert.equal(closes,0);assert.equal(completed,false);
+ finishVisual(true);await pending;assert.equal(closes,1);assert.equal(completed,true);
 });

@@ -8,6 +8,7 @@ const fadeCfg=()=>Object.assign({on:true,f:1},LS.get(FADE_KEY,{}));
 const fadeDuration=(c,base)=>({0.6:1500,1:3000,1.8:5000}[Number(c.f)||1]??Math.round(base*(c.f||1)));
 /* usado pelo site (e lido igual pelo Studio/telão): duração do fade já com a velocidade escolhida */
 window.stFadeMs=base=>{const c=fadeCfg();return c.on===false?0:fadeDuration(c,base)};
+window.stFadeVisualMs=base=>fadeDuration(fadeCfg(),base);
 /* fade de ENTRADA (início de vídeos/músicas): liga/desliga próprio, mesma velocidade */
 window.stFadeInMs=base=>{const c=fadeCfg();return c.on===false||c.i===false?0:fadeDuration(c,base)};
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
