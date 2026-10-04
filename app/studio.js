@@ -447,7 +447,11 @@ function saveYouTubeList(kind){const ids=youtubeList(kind);localStorage.setItem(
 async function closePrivateYoutube(){const request=++youtubeSelection;for(const kind of ['ambient','testimony','offering','special']){if(kind==='ambient'&&$('ambientEmbed')?.querySelector('iframe')){ambFade(180,f=>f&&removeYoutubeFrame(f))}else closeYoutubeEmbeds($(kind+'Embed'));$(kind+'Private')?.classList.add('hide')}try{await window.parent.closePreparedYoutube?.();if(request!==youtubeSelection)return;window.__ytLive=false}catch(e){console.warn(e)}let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}if(st.startsWith('IASD_LOCAL_MEDIA:'))call('stopProjection');feedback('Vídeo fechado (prévia e telão). Para fechar a janela do telão use “Fechar telão”.')}
 async function youtubeEmbed(id,target){
  if(target==='ambientEmbed')stTakeover('ambient');const host=$(target);
- host.querySelectorAll('iframe').forEach(old=>{old.style.display='none';void IASDAudio.pause(iframeAudio(old),stFm(180),()=>removeYoutubeFrame(old))});
+ if(target==='ambientEmbed'){
+  const request=host._ambientSelection=(host._ambientSelection||0)+1;
+  await Promise.all([...host.querySelectorAll('iframe')].map(old=>IASDAudio.pause(iframeAudio(old),stFm(180),()=>removeYoutubeFrame(old))));
+  if(request!==host._ambientSelection)return;
+ }else host.querySelectorAll('iframe').forEach(old=>{old.style.display='none';void IASDAudio.pause(iframeAudio(old),stFm(180),()=>removeYoutubeFrame(old))});
  const frame=document.createElement('iframe');frame.className='youtube-player';frame.src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0&enablejsapi=1&autoplay=0&mute=1&origin='+encodeURIComponent(location.origin);frame.title='Reprodutor do YouTube';frame.allow='autoplay;encrypted-media;picture-in-picture;fullscreen';frame.allowFullscreen=true;host.append(frame);
  try{await loadYoutubeApi();if(!frame.isConnected)return;
   frame._player=new YT.Player(frame,{events:{onReady:()=>{if(!frame.isConnected)return;if(target==='ambientEmbed'){void IASDAudio.play(iframeAudio(frame),stFi(220));frame.dataset.ys='1'}},onStateChange:e=>{if(e.data===1){frame._started?.();frame._started=null}frame.dataset.ys=String(e.data)}}});
