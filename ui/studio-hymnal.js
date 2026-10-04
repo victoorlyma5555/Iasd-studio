@@ -372,14 +372,14 @@ document.addEventListener('timeupdate',ev=>{if(ev.target&&ev.target.id==='sthAud
 document.addEventListener('seeked',ev=>{if(ev.target&&ev.target.id==='sthAudio'){if(S.sync)S.sync.last=-9;tick()}},true);
 
 /* ---------- player ---------- */
-let objUrl='';
+let objUrl='',audioCommand=0;
 async function urlFor(ed,n,mode){
  const L=S.local[ed]&&S.local[ed][n];
  if(L){
   await ensureRead();let r=L,note='';
   if(mode==='pb'){if(L.pb)r=L.pb;else if(!L.onlyPb)note='Este item não tem playback; tocando o cantado.'}
-  const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());if(objUrl)try{URL.revokeObjectURL(objUrl)}catch(e){}objUrl=URL.createObjectURL(f);
-  return{url:objUrl,name:r.name,pb:(mode==='pb'&&!!L.pb)||(r===L&&!!L.onlyPb),note}
+  const f=r.file||(r.rel?await cpFile(r.rel):await r.handle.getFile());const url=URL.createObjectURL(f);
+  return{url,name:r.name,pb:(mode==='pb'&&!!L.pb)||(r===L&&!!L.onlyPb),note}
  }
  throw Error('Este item não tem arquivo neste computador. Toque em Sincronizar.')
 }
@@ -407,8 +407,8 @@ async function restoreState(){
  const c=v.cur;
  if(c&&ED[c.ed]&&v.mode!=='sem'&&v.mode===S.mode){
   try{const a=audioEl(),u=await urlFor(c.ed,+c.n,S.mode);if(!a||S.cur)throw 0;
-   S.cur={ed:c.ed,n:+c.n};S.rest={ed:c.ed,n:+c.n,name:u.name,pb:u.pb};a.src=u.url;
-   a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;
+   objUrl=u.url;S.cur={ed:c.ed,n:+c.n};S.rest={ed:c.ed,n:+c.n,name:u.name,pb:u.pb};a.src=u.url;
+   IASDAudio.volume(a,IASDAudio.state(a).target);
    const pos=+v.pos||0;a.addEventListener('loadedmetadata',()=>{try{if(pos>0&&pos<(a.duration||1e9)-1)a.currentTime=pos}catch(e){}},{once:true});
    if(v.pl&&Date.now()-(v.ts||0)<120000){try{await a.play()}catch(e){say('Atualizou a página: toque em ▶ para continuar de onde parou.')}}
    else say('Hino e fila recuperados: toque em ▶ para continuar.');
@@ -416,24 +416,25 @@ async function restoreState(){
  }else if(S.queue.length)say('Fila de hinos recuperada.');
  paintPlayer();paint();
 }
-function fadeMs(ms){try{return window.parent.stFadeMs?window.parent.stFadeMs(ms):ms}catch(e){return ms}}
+function fadeMs(ms){return IASDAudio.duration(ms)}
 async function play(ed,n,opts){
- const a=audioEl();if(!a)return;gapCancel();const h=find(ed,n);
+ const a=audioEl();if(!a)return;const command=++audioCommand;gapCancel();const h=find(ed,n);
  window.stTakeover&&stTakeover('hymn');
  S.endTok++;
  try{
   S.sync=null;
   if(S.mode==='sem'){
-   a.pause();a.removeAttribute('src');a.load();S.cur={ed,n};
+   await IASDAudio.pause(a,Math.min(100,fadeMs(100)));if(command!==audioCommand)return; a.removeAttribute('src');a.load();S.cur={ed,n};
    if(startSync(ed,n,'',{manual:true}))say('Slide sem áudio: '+(h?h.t:'')+'. Use ◀ Estrofe e Estrofe ▶.');
    else{S.cur=null;say('Este item não tem letra para projetar.')}
    paintPlayer();paint();return
   }
-  const u=await urlFor(ed,n,S.mode);
-  S.rest=null;S.cur={ed,n};a.src=u.url;a.volume=typeof window.volume==='number'?Math.min(1,Math.max(0,window.volume)):1;await a.play();
+  const [u]=await Promise.all([urlFor(ed,n,S.mode),IASDAudio.pause(a,Math.min(100,fadeMs(100)))]);
+  if(command!==audioCommand){URL.revokeObjectURL(u.url);return}if(objUrl)URL.revokeObjectURL(objUrl);objUrl=u.url;
+  S.rest=null;S.cur={ed,n};a.src=u.url;IASDAudio.volume(a,IASDAudio.state(a).target);await a.play();if(command!==audioCommand)return;
   if(!(opts&&opts.silent))startSync(ed,n,u.name,{pb:u.pb});
   say(u.note||('Tocando: '+(ED[ed].coll?'':n+' · ')+(h?h.t:'')))
- }catch(e){say('Não foi possível tocar: '+(e&&e.message||e))}
+ }catch(e){if(command!==audioCommand)return;say('Não foi possível tocar: '+(e&&e.message||e))}
  paintPlayer();paint();saveState(true);
 }
 function next(dir){
@@ -457,19 +458,19 @@ const api={
  edQ(id){S.ed=id;S.album=null;S.scopeCol=true;S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
  more(){S.limit+=120;paintBody()},
  play(ed,n){play(ed,n)},
- rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){a.paused?a.play():a.pause()}else play(ed,n)},
+ rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){++audioCommand;IASDAudio.toggle(a)}else play(ed,n)},
  queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});saveState(true);say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
  unqueue(i){S.queue.splice(i,1);paintPlayer();saveState(true)},
  clearQueue(){S.queue=[];gapCancel();paintPlayer();saveState(true)},
  gap(v){GAP=Math.max(0,Math.min(120,+v||0));try{localStorage.setItem('iasd-sth-gap',String(GAP))}catch(e){}if(!GAP)gapCancel();paintPlayer()},
  gapSkip(){gapCancel();if(S.queue.length)next(1);else paintPlayer()},
- toggle(){const a=audioEl();if(!a||!a.src)return;a.paused?a.play():a.pause()},
+ toggle(){const a=audioEl();if(!a||!a.src)return;++audioCommand;IASDAudio.toggle(a)},
  next(){next(1)},prev(){next(-1)},
  /* encerra o hino já (letra/sincronia param na hora) e deixa só o SOM baixar com fade antes de limpar */
- fadeStop(ms){const a=audioEl();S.endTok++;S.cur=null;S.sync=null;paintPlayer();paintBody();if(!a)return;const src=a.src,clr=()=>{if(a.src===src){a.pause();a.removeAttribute('src');a.load()}};if(src&&!a.paused&&window.stFadePause){window.stFadePause(a,ms||900);setTimeout(clr,fadeMs(ms||900)+90)}else clr()},
- stop(){const a=audioEl();if(a){a.pause();a.removeAttribute('src');a.load()}S.cur=null;S.sync=null;paintPlayer();paintBody()},
+ fadeStop(ms=180){const a=audioEl(),command=++audioCommand;S.endTok++;S.cur=null;S.sync=null;paintPlayer();paintBody();if(!a)return;return IASDAudio.pause(a,fadeMs(ms),()=>{if(command!==audioCommand)return;a.removeAttribute('src');a.load()})},
+ stop(ms=180){return api.fadeStop(ms)},
  seek(v){const a=audioEl();if(a&&a.duration)a.currentTime=a.duration*(+v/1000)},
- vol(v){const a=audioEl();if(a)a.volume=+v/100},
+ vol(v){const a=audioEl();if(a)IASDAudio.volume(a,+v/100)},
  stz(d){stanzaJump(d)},sync(){syncAll('manual')},tg(k,o){S.stOpen[k]=o},db(){connectDb()},
  folder(){connectFolder()},reconnect(){reconnectFolder()},indexFiles(ed,files){return indexFiles(ed,files)},numOf
 };
@@ -615,7 +616,7 @@ function mount(){
   +'<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar em todas as músicas (nome ou número)…" oninput="STHymn.input(this.value)"></label></div>'
   +'<div id="sth-mode"></div><div id="sthp" class="amb-sel has sth-player" hidden></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
  sec.appendChild(box);
- const a=$('sthAudio');
+ const a=$('sthAudio');IASDAudio.install(a);
  a.addEventListener('timeupdate',()=>{saveState();const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
  a.addEventListener('play',()=>{if(gapTimer){gapCancel();S.endTok++}if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
  a.addEventListener('ended',()=>{if(S.queue.length){if(GAP>0)gapStart();else next(1)}else{paintPlayer();paintBody();endHymn()}});

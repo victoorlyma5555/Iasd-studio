@@ -29,9 +29,9 @@ html[data-theme="light"] body.st2 input::placeholder,html[data-theme="light"] bo
 html[data-theme="light"] .amb-in{color:var(--mu)!important}
 html[data-theme="light"] body.st2 select option{background:#fff;color:#0f1c3a}
 /* botões */
-html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn),
+html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn):not(.st-banner-toggle),
 html[data-theme="light"] .mp-btn,html[data-theme="light"] .seg button:not(.on),html[data-theme="light"] .amb-chips button:not(.on),html[data-theme="light"] .small-action,html[data-theme="light"] .amb-more{background:#fff!important;color:#1b2a4d!important;border:1px solid var(--bd)!important;box-shadow:0 1px 3px rgba(20,40,90,.06)}
-html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn):hover,html[data-theme="light"] .mp-btn:hover{background:var(--sf2)!important}
+html[data-theme="light"] body.st2 button:not(.primary):not(.danger):not(.tool):not(.studio-action):not(.mp-blue):not(.on):not(.active):not(.amb-play):not(.cf-btn):not(.st-banner-toggle):hover,html[data-theme="light"] .mp-btn:hover{background:var(--sf2)!important}
 html[data-theme="light"] body.st2 button.danger,html[data-theme="light"] body.st2 .danger{background:#fff1f2!important;border-color:#f3a4ab!important;color:#b4182a!important}
 html[data-theme="light"] body.st2 button.primary,html[data-theme="light"] body.st2 .primary,html[data-theme="light"] .mp-blue,html[data-theme="light"] .seg button.on,html[data-theme="light"] .amb-chips button.on{background:linear-gradient(180deg,#3b82f6,#1d4ed8)!important;border-color:#2563eb!important;color:#fff!important}
 html[data-theme="light"] .amb-play{background:#2563eb!important;color:#fff!important}

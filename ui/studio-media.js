@@ -295,7 +295,7 @@ function renderVl(){
  resize();
 }
 function vlChoose(it){
- vlSel=it;vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v){v.src=vlUrl(it);v._iasdFile=null;v._iasdRemote=it}
+ vlSel=it;vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v){stMediaSource(v,vlUrl(it));v._iasdFile=null;v._iasdRemote=it}
  renderNowVideo();renderVl();toast('Selecionado: '+it.title+'.');
 }
 window.chooseOffering=vlChoose;
@@ -305,7 +305,7 @@ function renderNowVideo(){
  if(!vlSel&&!vlFile){v.hidden=true;head.append(h('p','mm-none','Nenhum vídeo selecionado. Escolha um da biblioteca ou envie um novo.'));act.append(actionsBar('video'));syncGrow();return}
  const row=h('div','mm-sel');const inf=h('div','amb-info');
  inf.append(h('small','',vlSel?'SELECIONADO · '+vlKind(vlSel).toUpperCase():'ARQUIVO DO COMPUTADOR · AINDA NÃO SALVO'),h('b','',vlSel?vlSel.title:vlFile.name));
- row.append(inf,btn('','amb-x',()=>{vlSel=null;vlFile=null;$('vlUpBox').hidden=true;try{v.pause()}catch(e){}v.removeAttribute('src');v._iasdRemote=null;v._iasdFile=null;renderNowVideo();renderVl()},'x','Limpar seleção'));
+ row.append(inf,btn('','amb-x',()=>{vlSel=null;vlFile=null;$('vlUpBox').hidden=true;stMediaSource(v,'');v._iasdRemote=null;v._iasdFile=null;renderNowVideo();renderVl()},'x','Limpar seleção'));
  head.append(row);v.hidden=false;act.append(actionsBar('video'));syncGrow();resize();
 }
 async function vlRename(it){
@@ -331,8 +331,8 @@ window.vlPick=function(input){
  vlFile=f;const v=$('serviceVideo');loadVideoFile(f,v);
  vlSel=null;renderNowVideo();renderVl();$('vlName').value=f.name.replace(/\.[^.]+$/,'').slice(0,80);$('vlUpBox').hidden=false;$('vlUpSt').textContent=(f.size/1048576).toFixed(1)+' MB · pronto para salvar.';$('vlName').focus();resize();
 };
-function loadVideoFile(f,v){v._iasdFile=f;v._iasdRemote=null;if(urls.has('serviceVideo'))URL.revokeObjectURL(urls.get('serviceVideo'));const u=URL.createObjectURL(f);urls.set('serviceVideo',u);v.src=u;v.volume=muted?0:volume;v.hidden=false}
-window.vlCancel=function(){vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v&&v._iasdFile){try{v.pause()}catch(e){}v.removeAttribute('src');v._iasdFile=null}renderNowVideo();resize()};
+function loadVideoFile(f,v){v._iasdFile=f;v._iasdRemote=null;const u=URL.createObjectURL(f);urls.set('serviceVideo',u);stMediaSource(v,u);IASDAudio.volume(v,muted?0:volume);v.hidden=false}
+window.vlCancel=function(){vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v&&v._iasdFile){stMediaSource(v,'');v._iasdFile=null}renderNowVideo();resize()};
 window.vlProjectLocal=function(){if(!vlFile){toast('Escolha um vídeo primeiro.');return}projectLocalMedia('serviceVideo','video')};
 window.vlSave=async function(){
  if(!vlFile||vlBusy)return;vlBusy=true;const b=$('vlSave');b.disabled=true;$('vlUpSt').textContent='Enviando vídeo… não feche esta janela.';
@@ -345,7 +345,7 @@ window.vlSave=async function(){
   if(r.error)r=await c.from('iasd_offering_videos').insert({title,storage_path:path,uploaded_by:user.id});
   if(r.error){await c.storage.from(OFFER_BUCKET_).remove([path]);throw r.error}
   toast('Vídeo salvo na biblioteca.');vlFile=null;$('vlUpBox').hidden=true;
-  const v=$('serviceVideo');if(v){try{v.pause()}catch(e){}v.removeAttribute('src');v._iasdFile=null}
+  const v=$('serviceVideo');if(v){stMediaSource(v,'');v._iasdFile=null}
   renderNowVideo();await renderOfferings();
  }catch(e){$('vlUpSt').textContent='Não foi possível salvar: '+(e.message||e)}
  finally{vlBusy=false;b.disabled=false;resize()}

@@ -77,7 +77,7 @@ body{background:#080e19}
 .draw-flash{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 52%,var(--c2) 0,var(--c1) 14%,transparent 52%);opacity:0;animation:drawFlash 1.9s ease-out forwards;mix-blend-mode:screen}
 @keyframes drawFlash{0%{opacity:0;transform:scale(.3)}18%{opacity:.9}100%{opacity:0;transform:scale(1.9)}}
 </style></head><body><main id="out" aria-live="polite"></main>
-<script src="/shared/timer-display.js?v=9"></script>
+<script src="/iasd-projetor/audio-fade.js?v=1"></script><script src="/shared/timer-display.js?v=9"></script>
 <script>
 const out=document.getElementById('out');
 let drawSerial=0,timerView=null;
@@ -275,7 +275,7 @@ function show(value){
 }
 function showRaw(value){
  /* mídia local que estava tocando sai com fade (o novo conteúdo já aparece) */
- if(!isPreview){try{out.querySelectorAll('audio,video').forEach(m=>{if(m.paused||m.dataset.fo)return;m.dataset.fo='1';m.controls=false;m.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';document.body.append(m);let FD=900;try{const c=Object.assign({on:true,f:1},JSON.parse(localStorage.getItem('iasd-fade')||'{}'));FD=c.on===false?0:Math.round(900*(c.f||1))}catch(e){}if(!FD){try{m.pause()}catch(e){}m.remove();return}const v0=m.volume,t0=performance.now(),st=()=>{const k=Math.min(1,(performance.now()-t0)/FD);try{m.volume=v0*(1-k)}catch(e){}if(k<1)setTimeout(st,30);else{try{m.pause()}catch(e){}m.remove()}};st()})}catch(e){}}
+ if(!isPreview){out.querySelectorAll('audio,video').forEach(m=>{if(m.paused)return;m.controls=false;m.style.display='none';document.body.append(m);void IASDAudio.pause(m,IASDAudio.duration(180),()=>m.remove())})}
  const t=typeof value==='string'?value:'';
  if(t.startsWith('IASD_GAME:'))return gameShow(t);
  if(t.startsWith('IASD_DRAW_STYLE:'))return drawStyle(t);
@@ -365,8 +365,8 @@ function showRaw(value){
   try{
    const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
    if(!['audio','video'].includes(media.kind)||typeof media.url!=='string'||!(media.url.startsWith('blob:'+location.origin+'/')||/^http:\/\/127\.0\.0\.1:38741\/media\/[a-f0-9]{32}$/.test(media.url)||/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/public\/iasd-offering-videos\/[a-zA-Z0-9_./%-]+$/.test(media.url)||/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/sign\/iasd-media-files\/[a-zA-Z0-9_./%-]+\?token=[A-Za-z0-9_.-]+$/.test(media.url)))throw Error('Arquivo inválido');
-   out.classList.add('local-media-mode');const el=document.createElement(media.kind);el.src=media.url;el.controls=!isPreview;el.autoplay=!isPreview;el.muted=isPreview;el.volume=isPreview?0:Math.max(0,Math.min(1,Number(media.volume??.75)));if(!isPreview&&+media.fin>80){const tv=el.volume;el.volume=0;el.addEventListener('playing',function f(){el.removeEventListener('playing',f);const t0=Date.now(),D=Math.min(3000,+media.fin),iv=setInterval(()=>{const k=Math.min(1,(Date.now()-t0)/D);try{el.volume=tv*k}catch(e){}if(k>=1)clearInterval(iv)},40)})}if(media.kind==='video'){el.setAttribute('playsinline','');el.style.cssText='position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;object-fit:contain!important;background:#000!important;z-index:9999!important;'}out.append(el);
-   if(!isPreview)el.play().catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
+   out.classList.add('local-media-mode');const el=document.createElement(media.kind);el.src=media.url;el.controls=!isPreview;el.autoplay=!isPreview;el.muted=isPreview;el.volume=isPreview?0:Math.max(0,Math.min(1,Number(media.volume??.75)));if(media.kind==='video'){el.setAttribute('playsinline','');el.style.cssText='position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;object-fit:contain!important;background:#000!important;z-index:9999!important;'}out.append(el);
+   if(!isPreview)IASDAudio.play(el,Math.max(0,Math.min(3000,+media.fin||0))).catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
   }catch(e){out.textContent='Não foi possível carregar esta mídia. Abra o telão neste navegador e tente novamente.'}
  }else if(t.startsWith('IASD_IMAGE:')){
   const url=t.slice(11);
@@ -394,7 +394,7 @@ window.addEventListener('message',e=>{
  if(e.data.type==='iasd-fullscreen')void setProjectionFullscreen(!!e.data.enable);
  if(e.data.type==='iasd-studio-volume'){
   const v=Math.max(0,Math.min(1,Number(e.data.value)||0));
-  out.querySelectorAll('audio,video').forEach(el=>el.volume=v);
+  document.querySelectorAll('audio,video').forEach(el=>IASDAudio.volume(el,v));
  }
 });
 show(localStorage.getItem('iasd-stage')||'');

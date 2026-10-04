@@ -206,12 +206,13 @@ body.st2 main{background:transparent!important}
 body.st2 main{grid-template-rows:auto auto auto auto!important}
 .st-title{display:none!important}
 .st-banner{grid-area:1 / 1 / 2 / -1;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:136px;padding:18px 22px;border-radius:16px;border:1px solid var(--bd);overflow:hidden;background:linear-gradient(90deg,#060d1f 0%,#09163a 50%,#0b1026 100%);transition:min-height .2s ease,height .2s ease,padding .2s ease}
-.st-banner-toggle{position:absolute;left:50%;bottom:7px;z-index:5;display:flex;align-items:center;justify-content:center;width:78px;height:28px;padding:0;transform:translateX(-50%);border:1px solid rgba(78,180,255,.95);border-radius:999px;background:linear-gradient(180deg,rgba(17,55,96,.98) 0%,rgba(7,28,56,.98) 52%,rgba(4,18,39,.98) 100%);color:#fff;cursor:pointer;box-shadow:0 0 0 1px rgba(70,154,255,.28),0 0 18px rgba(0,145,255,.34),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -8px 18px rgba(0,64,145,.16);backdrop-filter:blur(10px);transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .12s ease}
-.st-banner-toggle:hover{border-color:#7fd0ff;background:linear-gradient(180deg,rgba(23,70,120,.99) 0%,rgba(8,34,68,.99) 55%,rgba(5,21,45,.99) 100%);box-shadow:0 0 0 1px rgba(112,203,255,.38),0 0 24px rgba(0,157,255,.48),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -8px 18px rgba(0,78,170,.18)}
-.st-banner-toggle:active{transform:translateX(-50%) scale(.96)}
-.st-banner-toggle:focus-visible{outline:2px solid #9bdcff;outline-offset:3px}
-.st-banner-toggle .ti{display:none}
-.st-banner-toggle::before{content:"";display:block;width:13px;height:13px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;border-radius:1px;transform:translateY(3px) rotate(225deg);filter:drop-shadow(0 0 4px rgba(255,255,255,.28));transition:transform .2s ease}
+body.st2 .st-banner-toggle{position:absolute;left:50%;bottom:7px;z-index:5;display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:56px;height:24px;min-height:0;padding:0;transform:translateX(-50%);border:1px solid transparent;border-color:transparent!important;border-radius:999px;background:linear-gradient(180deg,#1b4d7b 0%,#08213f 30%,#020e24 65%,#061b36 100%) padding-box,linear-gradient(180deg,#c0f3ff 0%,#20baff 22%,#087cd8 55%,#65d9ff 90%,#d4f6ff 100%) border-box!important;color:#fff!important;cursor:pointer;box-shadow:0 0 8px rgba(0,145,255,.28),inset 0 1px 1px rgba(255,255,255,.25),inset 0 -1px 2px rgba(0,120,255,.3);transition:box-shadow .18s ease,transform .12s ease}
+body.st2 .st-banner-toggle::after{content:"";position:absolute;inset:2px;border:1px solid rgba(20,150,240,.7);border-top-color:rgba(180,227,255,.6);border-radius:inherit;pointer-events:none}
+body.st2 .st-banner-toggle:hover{box-shadow:0 0 12px rgba(0,157,255,.5),inset 0 1px 2px rgba(255,255,255,.4)}
+body.st2 .st-banner-toggle:active{transform:translateX(-50%) scale(.96)}
+body.st2 .st-banner-toggle:focus-visible{outline:2px solid #9bdcff;outline-offset:3px}
+body.st2 .st-banner-toggle .ti{display:none}
+body.st2 .st-banner-toggle::before{content:"";display:block;width:8px;height:8px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;border-radius:1px;transform:translateY(2px) rotate(225deg);filter:drop-shadow(0 0 3px rgba(45,145,255,.65));transition:transform .2s ease}
 body.st-banner-collapsed .st-banner{min-height:56px;height:56px;padding:7px 18px 11px;gap:12px}
 body.st-banner-collapsed .st-banner .st-bn-art,
 body.st-banner-collapsed .st-banner .st-bn-txt p,
@@ -224,7 +225,7 @@ body.st-banner-collapsed .st-banner .st-proj{width:auto;padding:0;border:0;backg
 body.st-banner-collapsed .st-banner .st-proj-top{gap:0}
 body.st-banner-collapsed .st-banner .st-proj #chipProj{min-height:30px!important;padding:0 10px!important;border:1px solid #27407a!important;border-radius:999px!important;background:rgba(6,13,31,.78)!important;font-size:12.5px}
 body.st-banner-collapsed .st-banner .st-proj #chipProj em{display:none}
-body.st-banner-collapsed .st-banner-toggle::before{transform:translateY(-3px) rotate(45deg)}
+body.st2.st-banner-collapsed .st-banner-toggle::before{transform:translateY(-2px) rotate(45deg)}
 @media (prefers-reduced-motion:reduce){.st-banner,.st-banner-toggle,.st-banner-toggle::before{transition:none!important}}
 .st-bn-art{position:absolute;inset:0;pointer-events:none;opacity:.95}.st-bn-art svg{position:absolute;right:0;top:0;height:100%;width:70%;min-width:420px}
 .st-bn-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#060d1f 0%,rgba(6,13,31,.92) 34%,rgba(6,13,31,.25) 70%,rgba(6,13,31,.55) 100%)}
@@ -353,3 +354,20 @@ body.st2 main>.tools .tool{flex:0 0 auto;scroll-snap-align:start}
 .st-mem[hidden]{display:none}
 .st-mem select,.st-mem textarea{width:100%;font:inherit;padding:9px 10px;border-radius:10px;box-sizing:border-box}
 .st-mem-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Status compactos permanecem visíveis com o banner recolhido. */
+.st-connection-cluster{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0;flex-wrap:wrap}
+.st-health{display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 11px;border:1px solid #294779;border-radius:10px;background:rgba(5,15,36,.7)}
+.st-health-item{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:11px;font-weight:600;color:#c2d0e9}
+.st-health-dot{display:block;flex:none;width:7px;height:7px;border-radius:50%;background:#ef5b66;box-shadow:0 0 6px rgba(239,91,102,.3)}
+.st-health-item[data-connected="true"] .st-health-dot{background:#27d36a;box-shadow:0 0 6px rgba(39,211,106,.35)}
+body.st-banner-collapsed .st-connection-cluster{gap:10px;padding-left:40px}
+body.st-banner-collapsed .st-health{padding:6px 9px}
+html[data-theme="light"] .st-health{background:rgba(255,255,255,.85);border-color:#b4c3dc}
+html[data-theme="light"] .st-health-item{color:#243b61}
+@media(max-width:1000px){
+ .st-connection-cluster{justify-content:flex-start;width:100%}
+ body.st-banner-collapsed .st-banner{height:auto;min-height:56px;flex-wrap:wrap;padding-bottom:36px}
+ body.st-banner-collapsed .st-connection-cluster{padding-left:0}
+}
+@media(max-width:480px){.st-health{gap:10px;padding:7px 8px}.st-health-item{font-size:10px;gap:5px}}

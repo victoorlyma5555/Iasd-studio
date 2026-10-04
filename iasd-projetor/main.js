@@ -258,9 +258,16 @@ let googleWin=null;
 function googleLogin(){return new Promise(resolve=>{if(googleWin&&!googleWin.isDestroyed()){googleWin.focus();return resolve({ok:true,opened:true})}const ses=require('electron').session.fromPartition(YT_PARTITION);ses.setUserAgent(CHROME_UA);const w=new BrowserWindow({width:520,height:720,title:'Entrar no Google (YouTube Premium)',autoHideMenuBar:true,backgroundColor:'#fff',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,partition:YT_PARTITION}});googleWin=w;w.webContents.setUserAgent(CHROME_UA);w.on('closed',()=>{googleWin=null;googleLogged().then(ok=>resolve({ok,logged:ok}))});let done=false;const check=async()=>{if(done||w.isDestroyed())return;if(await googleLogged()){done=true;setTimeout(()=>{if(!w.isDestroyed())w.close()},1200)}};w.webContents.on('did-navigate',check);w.webContents.on('did-navigate-in-page',check);w.loadURL('https://accounts.google.com/ServiceLogin?service=youtube&continue='+encodeURIComponent('https://www.youtube.com/')).catch(()=>{})})}
 async function googleLogout(){try{await require('electron').session.fromPartition(YT_PARTITION).clearStorageData()}catch{}closeYoutube();return{ok:true}}
 // Transição por opacidade na janela do vídeo (o Windows anima a janela inteira).
-function fadeWin(win,to,ms){return new Promise(resolve=>{if(!win||win.isDestroyed()||!ms||ms<60){try{if(win&&!win.isDestroyed())win.setOpacity(to)}catch{}return resolve()}let from;try{from=win.getOpacity()}catch{from=1-to}const t0=Date.now();const iv=setInterval(()=>{if(win.isDestroyed()){clearInterval(iv);return resolve()}const k=Math.min(1,(Date.now()-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;try{win.setOpacity(from+(to-from)*e)}catch{}if(k>=1){clearInterval(iv);resolve()}},16)})}
+const windowFades=new WeakMap();
+function fadeWin(win,to,ms){
+ if(!win||win.isDestroyed())return Promise.resolve();
+ windowFades.get(win)?.();
+ return new Promise(resolve=>{let timer;const cancel=()=>{clearTimeout(timer);windowFades.delete(win);resolve()};windowFades.set(win,cancel);const from=win.getOpacity(),start=Date.now();
+  const step=()=>{if(win.isDestroyed())return cancel();const k=ms>0?Math.min(1,(Date.now()-start)/ms):1;win.setOpacity(from+(to-from)*k);if(k<1)timer=setTimeout(step,16);else cancel()};step();
+ });
+}
 function trMs(content){const m=/^IASD_TR:([a-z]+):(\d{1,4})\|/.exec(String(content||''));return m&&m[1]!=='none'?Math.min(2000,+m[2]):0}
-async function prepareYoutube(id){if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;closeYoutube();const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false,partition:YT_PARTITION}});youtubeRef=win;youtubeVideoId=id;/* a janela preparada fica MUDA (o vídeo já carrega e toca escondido); o som só é liberado ao projetar */try{win.webContents.setAudioMuted(true)}catch{}win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});const host=(await googleLogged())?'https://www.youtube.com':'https://www.youtube-nocookie.com';await win.loadURL(host+'/embed/'+id+'?autoplay=1&rel=0&playsinline=1',{httpReferrer:{url:SITE+'/',policy:'strict-origin-when-cross-origin'}});win.webContents.setFrameRate(15)}
+async function prepareYoutube(id,ms=0){const command=++audioCommand;if(!/^[a-zA-Z0-9_-]{11}$/.test(id))throw Error('ID do YouTube inválido');if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeVideoId===id)return;const old=youtubeRef;if(old&&!old.isDestroyed()){youtubeRef=null;youtubeVideoId=null;youtubeShown=false;void fadeAudioIn(old,ms).finally(()=>{if(!old.isDestroyed())old.destroy()})}const d=screen.getPrimaryDisplay(),b=d.workArea;const win=new BrowserWindow({x:b.x,y:b.y,width:960,height:540,show:false,frame:false,backgroundColor:'#000',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true,backgroundThrottling:false,partition:YT_PARTITION}});youtubeRef=win;youtubeVideoId=id;/* a janela preparada fica MUDA (o vídeo já carrega e toca escondido); o som só é liberado ao projetar */try{win.webContents.setAudioMuted(true)}catch{}win.on('closed',()=>{if(youtubeRef===win){youtubeRef=null;youtubeVideoId=null}});const host=(await googleLogged())?'https://www.youtube.com':'https://www.youtube-nocookie.com';if(command!==audioCommand||win.isDestroyed())return;await win.loadURL(host+'/embed/'+id+'?autoplay=1&rel=0&playsinline=1',{httpReferrer:{url:SITE+'/',policy:'strict-origin-when-cross-origin'}});if(!win.isDestroyed())win.webContents.setFrameRate(15)}
 let youtubeOnPrimary=false,youtubeCover=null;
 function dropYoutubeCover(){if(youtubeCover&&!youtubeCover.isDestroyed())youtubeCover.destroy();youtubeCover=null}
 // Anúncio no vídeo do telão: lê o player (classe ad-showing) e o botão de pular, se houver.
@@ -282,25 +289,33 @@ function youtubeToPrimary(){
  youtubeRef.setBounds({x:area.x+Math.round((area.width-w)/2),y:area.y+Math.round((area.height-h)/2),width:w,height:h});
  youtubeRef.setAlwaysOnTop(true,'floating');youtubeRef.show();youtubeRef.focus();youtubeOnPrimary=true
 }
-async function youtubeToProjector(){
+async function youtubeToProjector(inMs=0){
  if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Não há vídeo');
  youtubeOnPrimary=false;
  try{youtubeRef.setAlwaysOnTop(false)}catch{}
- await projectPreparedYoutube(0);
+ await projectPreparedYoutube(0,inMs);
  setTimeout(dropYoutubeCover,350)
 }
-// Fade do áudio (nenhum som corta seco): rampa o volume dos <video>/<audio> da janela e pausa no fim.
+// Shared media envelopes; injecting the same factory avoids a second fade engine.
+const createAudioFade=require('./audio-fade');
+const audioBootstrap='window.IASDAudio=window.IASDAudio||('+createAudioFade.toString()+')();';
+let audioCommand=0,lastFadeOutMs=180;
 function fadeAudioIn(win,ms){
- if(!win||win.isDestroyed()||!ms||ms<80)return Promise.resolve();
- const code="(()=>{const m=[...document.querySelectorAll('video,audio')];if(!m.length)return 0;const v0=m.map(x=>x.volume),t0=Date.now(),D="+Math.round(ms)+";return new Promise(r=>{const iv=setInterval(()=>{const k=Math.min(1,(Date.now()-t0)/D);m.forEach((x,i)=>{try{x.volume=Math.max(0,v0[i]*(1-k))}catch{}});if(k>=1){clearInterval(iv);m.forEach(x=>{try{x.pause()}catch{}});r(1)}},30)})})()";
- return Promise.race([win.webContents.executeJavaScript(code).catch(()=>{}),new Promise(r=>setTimeout(r,ms+400))])
+ if(!win||win.isDestroyed())return Promise.resolve();
+ return win.webContents.executeJavaScript(audioBootstrap+'Promise.all([...document.querySelectorAll("video,audio")].map(v=>IASDAudio.pause(v,'+Math.max(0,ms)+')))').catch(()=>{});
 }
-// Fade de entrada: sobe o volume do vídeo de 0 ao normal (sem estouro no início).
-function fadeAudioUp(win,ms){
- if(!win||win.isDestroyed()||!ms||ms<80)return Promise.resolve();
- // Mantém o volume em ZERO até o vídeo realmente começar a tocar (o YouTube reseta o volume ao iniciar) e só então sobe.
- const code="(()=>{const D="+Math.round(ms)+";return new Promise(r=>{let t0=0,n=0,v0=null;const iv=setInterval(()=>{const v=document.querySelector('video');n++;if(!v){if(n>600){clearInterval(iv);r(0)}return}if(v!==v0){v0=v;try{v.volume=0}catch(e){}v.addEventListener('volumechange',()=>{if(!t0&&v.volume>0){try{v.volume=0}catch(e){}}})}if(!t0){try{v.volume=0}catch(e){}if(!v.paused&&v.readyState>2&&v.currentTime>0){t0=Date.now();try{v.muted=false}catch(e){}}else if(n>600){clearInterval(iv);try{v.volume=1;v.muted=false}catch(e){}r(0)}return}const k=Math.min(1,(Date.now()-t0)/D);try{v.volume=k}catch(e){}if(k>=1){clearInterval(iv);r(1)}},30)})})()";
- return Promise.race([win.webContents.executeJavaScript(code).catch(()=>{}),new Promise(r=>setTimeout(r,ms+20000))])
+async function youtubeAudio(win,action,ms,arm=false){
+ if(!win||win.isDestroyed())return false;
+ const body=action==='play'?(arm?'IASDAudio.cancel(v);v.volume=0;s.kind="armed";v.muted=false;':'')+'void IASDAudio.play(v,'+ms+').catch(()=>{});':action==='pause'?'void IASDAudio.pause(v,'+ms+');':action==='mute'?'v.muted=true;':'v.muted=false;';
+ return win.webContents.executeJavaScript(audioBootstrap+'(()=>{const v=document.querySelector("video");if(!v)return false;const s=IASDAudio.state(v);'+(action==='play'?'if(!s.kind&&v.volume>0)s.target=v.volume;':'')+body+'return true})()');
+}
+async function closeProjectionAudio(ms){
+ const command=++audioCommand,yt=youtubeRef,win=windowRef;
+ lastFadeOutMs=ms;
+ await Promise.all([fadeAudioIn(yt,ms),fadeAudioIn(win,ms),fadeWin(yt,0,ms)]);
+ if(command!==audioCommand)return;
+ if(yt===youtubeRef)closeYoutube();
+ if(win===windowRef&&win&&!win.isDestroyed()){win.close();windowRef=null}
 }
 function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed()){try{youtubeRef.webContents.setAudioMuted(true)}catch{}youtubeRef.destroy()}youtubeRef=null;youtubeVideoId=null;youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 const YT_VIDEO=(code)=>"(()=>{const v=document.querySelector('video');if(!v)return false;"+code+";return true})()";
@@ -308,7 +323,21 @@ async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())ret
 // Tela preta com vídeo no telão: esconde a janela do vídeo, pausa e silencia (a projeção continua aberta).
 async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
-async function projectPreparedYoutube(ms=0,inMs=0){const display=chooseDisplay();if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');if(inMs){try{await youtubeVideoDo('v.muted=true;v.volume=0')}catch{}}if(windowRef&&!windowRef.isDestroyed()){windowRef.setAlwaysOnTop(false);windowRef.hide();/* esvazia o que estava projetado (letra de hino, versículo…) para não reaparecer por baixo quando o vídeo fechar */lastProjectionContent='';try{if(!windowRef.webContents.isLoadingMainFrame())void windowRef.webContents.executeJavaScript('window.postMessage('+JSON.stringify({type:'iasd-project',content:''})+', location.origin)').catch(()=>{})}catch{}}youtubeRef.setBounds(display.bounds);youtubeRef.webContents.setAudioMuted(false);try{youtubeRef.setOpacity(ms?0:1)}catch{}youtubeRef.show();youtubeRef.setFullScreen(true);youtubeRef.focus();youtubeShown=true;void youtubeVideoDo(inMs?'v.muted=true;v.volume=0;v.play()':'v.play()');if(inMs)void fadeAudioUp(youtubeRef,inMs);if(ms)void fadeWin(youtubeRef,1,ms);return display}
+async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs){
+ const command=++audioCommand,win=youtubeRef,display=chooseDisplay();
+ if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');
+ if(!win||win.isDestroyed())throw Error('Prepare um vídeo primeiro');
+ win.webContents.setAudioMuted(true);
+ if(!await youtubeAudio(win,'play',inMs,true))throw Error('O player ainda está carregando. Tente novamente.');
+ if(command!==audioCommand||win!==youtubeRef||win.isDestroyed())return display;
+ if(windowRef&&!windowRef.isDestroyed()){
+  const old=windowRef;void fadeAudioIn(old,outMs);old.setAlwaysOnTop(false);old.hide();lastProjectionContent='';
+ }
+ win.setBounds(display.bounds);void fadeWin(win,ms?0:1,0);
+ win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);if(ms)void fadeWin(win,1,ms);
+ return display;
+}
+
 let alertCurrent=null,pendingAlertReplies=[];
 let alertReplyWaiters=[];
 function flushAlertReplyWaiters(){if(!pendingAlertReplies.length)return;const out=pendingAlertReplies;for(const w of alertReplyWaiters.splice(0)){try{clearTimeout(w.t);if(!w.res.writableEnded){pendingAlertReplies=[];reply(w.res,200,{replies:out});return}}catch{}}}
@@ -538,31 +567,34 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(req.url==='/alert-replies/wait'&&req.method==='POST'){if(pendingAlertReplies.length){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}const w={res};w.t=setTimeout(()=>{alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w);if(!res.writableEnded)reply(res,200,{replies:[]})},25000);alertReplyWaiters.push(w);req.on('close',()=>{clearTimeout(w.t);alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w)});return}
  if(req.url==='/alert-replies'&&req.method==='POST'){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''),Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/state'&&req.method==='POST'){reply(res,200,await youtubeAdState());return}
  if(req.url==='/youtube/skip'&&req.method==='POST'){reply(res,200,{ok:await youtubeSkipAd()});return}
- if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector();reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}const code={play:'v.play()',pause:'v.pause()',mute:'v.muted=true',unmute:'v.muted=false'}[data.action];if(!await youtubeVideoDo(code)){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(3000,Math.max(0,+data.inms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/close'&&req.method==='POST'){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms&&youtubeRef&&!youtubeRef.isDestroyed())await fadeAudioIn(youtubeRef,ms);closeYoutube();reply(res,200,{ok:true});return}
+ if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector(Math.min(3000,Math.max(0,+data.inms||0)));reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}++audioCommand;const win=youtubeRef;if(!await youtubeAudio(win,data.action,Math.min(3000,Math.max(0,+data.ms||0)))){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
+ if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(3000,Math.max(0,+data.inms||0)),Math.min(2000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/close'&&req.method==='POST'){const command=++audioCommand,win=youtubeRef,ms=Math.min(2000,Math.max(0,+data.ms||0));await fadeAudioIn(win,ms);if(command===audioCommand&&win===youtubeRef)closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
-  try{const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
+  try{++audioCommand;const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
  if(req.url==='/project'&&req.method==='POST'){
   if(typeof data.content!=='string'||data.content.length>(data.content.replace(/^IASD_TR:[a-z]+:\d{1,4}\|/,'').startsWith('IASD_LYRIC:')?4000000:50000)){reply(res,400,{error:'Conteúdo inválido'});return}
   try{
-   const content=data.content;
+   const command=++audioCommand,content=data.content;
    if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}
    // Novo conteúdo substitui o vídeo do telão (sem áudio residual); conteúdo vazio = tela preta.
-   if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){const ms=trMs(content);if(ms)await fadeWin(youtubeRef,0,Math.round(ms*.5));if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
+   if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){await fadeAudioIn(youtubeRef,Math.min(2000,Math.max(0,+data.audioMs||0)));if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
    showProjector();
    lastProjectionContent=content;
    if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
-   await windowRef.webContents.executeJavaScript('window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)');
+   if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}
+   const fade=data.fade&&{on:data.fade.on!==false,i:data.fade.i!==false,f:Math.max(.1,Math.min(5,Number(data.fade.f)||1))};
+   await windowRef.webContents.executeJavaScript((fade?'localStorage.setItem("iasd-fade",'+JSON.stringify(JSON.stringify(fade))+');':'')+'window.postMessage('+JSON.stringify({type:'iasd-project',content})+', location.origin)');
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/close'&&req.method==='POST'){if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms)await Promise.all([fadeWin(youtubeRef,0,ms),fadeAudioIn(youtubeRef,ms)])}else if(windowRef&&!windowRef.isDestroyed()){const ms=Math.min(2000,Math.max(0,+data.ms||0));if(ms)await fadeAudioIn(windowRef,ms)}closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null;reply(res,200,{ok:true});return}
+ if(req.url==='/close'&&req.method==='POST'){await closeProjectionAudio(Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true});return}
+
  reply(res,404,{error:'Rota desconhecida'});
 }
 if(primaryInstance)app.whenReady().then(()=>{
@@ -585,7 +617,7 @@ if(primaryInstance)app.whenReady().then(()=>{
    {label:'Abrir painel',click:showDashboard},
    {label:'Abrir IASD Projetor no site',click:()=>{void refreshRemoteConfig().finally(()=>shell.openExternal(projectionUrl()))}},
    {type:'separator'},
-   {label:screenOpen?'Fechar telão':'Abrir telão',click:()=>{try{if(projectionActive()){closeYoutube();if(windowRef&&!windowRef.isDestroyed())windowRef.close();windowRef=null}else showProjector();setTimeout(refreshTrayMenu,150)}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
+   {label:screenOpen?'Fechar telão':'Abrir telão',click:()=>{try{if(projectionActive()){void closeProjectionAudio(lastFadeOutMs)}else showProjector();setTimeout(refreshTrayMenu,150)}catch(e){dialog.showErrorBox('IASD Projetor',e.message)}}},
    {label:'Código de pareamento: '+pairingCode,click:()=>dialog.showMessageBox({type:'info',title:'Pareamento · IASD Projetor',message:'Código: '+pairingCode,detail:'Digite este código no IASD APP para autorizar este computador.'})},
    {type:'separator'},
    {label:'Sobre',click:()=>dialog.showMessageBox({type:'info',title:'IASD Projetor',message:'IASD Projetor · v'+app.getVersion(),detail:'Desenvolvido por Victor Lima\\nIASD APP'})},
