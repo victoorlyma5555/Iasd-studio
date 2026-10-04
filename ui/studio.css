@@ -211,7 +211,7 @@ body.st2 main{grid-template-rows:auto auto auto auto!important}
 .st-banner-toggle:active{transform:translateX(-50%) scale(.96)}
 .st-banner-toggle:focus-visible{outline:2px solid #9bdcff;outline-offset:3px}
 .st-banner-toggle .ti{display:none}
-.st-banner-toggle::before{content:"";display:block;width:13px;height:13px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;border-radius:1px;transform:translateY(-3px) rotate(45deg);filter:drop-shadow(0 0 4px rgba(255,255,255,.28));transition:transform .2s ease}
+.st-banner-toggle::before{content:"";display:block;width:13px;height:13px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;border-radius:1px;transform:translateY(3px) rotate(225deg);filter:drop-shadow(0 0 4px rgba(255,255,255,.28));transition:transform .2s ease}
 body.st-banner-collapsed .st-banner{min-height:56px;height:56px;padding:7px 18px 11px;gap:12px}
 body.st-banner-collapsed .st-banner .st-bn-art,
 body.st-banner-collapsed .st-banner .st-bn-txt p,
@@ -224,7 +224,7 @@ body.st-banner-collapsed .st-banner .st-proj{width:auto;padding:0;border:0;backg
 body.st-banner-collapsed .st-banner .st-proj-top{gap:0}
 body.st-banner-collapsed .st-banner .st-proj #chipProj{min-height:30px!important;padding:0 10px!important;border:1px solid #27407a!important;border-radius:999px!important;background:rgba(6,13,31,.78)!important;font-size:12.5px}
 body.st-banner-collapsed .st-banner .st-proj #chipProj em{display:none}
-body.st-banner-collapsed .st-banner-toggle::before{transform:translateY(3px) rotate(225deg)}
+body.st-banner-collapsed .st-banner-toggle::before{transform:translateY(-3px) rotate(45deg)}
 @media (prefers-reduced-motion:reduce){.st-banner,.st-banner-toggle,.st-banner-toggle::before{transition:none!important}}
 .st-bn-art{position:absolute;inset:0;pointer-events:none;opacity:.95}.st-bn-art svg{position:absolute;right:0;top:0;height:100%;width:70%;min-width:420px}
 .st-bn-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#060d1f 0%,rgba(6,13,31,.92) 34%,rgba(6,13,31,.25) 70%,rgba(6,13,31,.55) 100%)}
