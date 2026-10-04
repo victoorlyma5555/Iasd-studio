@@ -102,10 +102,11 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
  c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep,preserveVisual=false){
- let wait=null;const P=window.parent;
+ let wait=null;const P=window.parent,preserveHymnVisual=keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony')));
+ window.__ytHymnVisual=!!preserveHymnVisual;
  if(keep!=='hymn'){stHymnFadeStop(keep?180:0)}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
- if(keep!=='yt'){++youtubeSelection;window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube();r&&r.catch&&r.catch(()=>{})}catch(e){}}
+ if(keep!=='yt'){++youtubeSelection;window.__ytLive=false;stYtCardHide();try{const r=P.closePreparedYoutube&&P.closePreparedYoutube(undefined,preserveHymnVisual);r&&r.catch&&r.catch(()=>{})}catch(e){}}
  /* vídeo/áudio local (dízimos, oferta, arquivos) tocando no telão: esvazia o telão e ESPERA o Projetor confirmar, para não competir com a mídia nova */
  if((keep==='yt'||keep==='hymn'||keep===''||keep==='ambient')&&!(preserveVisual&&window.__ytLive)){let st='';try{st=localStorage.getItem('iasd-stage')||''}catch(e){}
   if(st.startsWith('IASD_LOCAL_MEDIA:')){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())wait=Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{});else P.project&&P.project('')}catch(e){}}else if(keep==='yt'&&st){try{P.sendProjection&&P.sendProjection('',{localOnly:true});if(P.companionRequest&&P.canUseSound&&P.canUseSound())Promise.resolve(P.companionRequest('/project',{content:'',audioMs:stFm(180),visualMs:P.stFadeVisualMs?P.stFadeVisualMs(180):stFm(180)})).catch(()=>{})}catch(e){}}}
