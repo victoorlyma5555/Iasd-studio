@@ -25,7 +25,10 @@ test('zero significa imediato, inclusive callback de encerramento',async()=>{
  const {api,media}=fixture();media.paused=false;let stopped=false;await api.pause(media,0,()=>{stopped=true});assert.equal(stopped,true);assert.equal(media.paused,true);
 });
 test('Assistive Touch respeita desligado, entrada desligada e velocidade',()=>{
- assert.equal(fixture({on:false}).api.duration(220,true),0);assert.equal(fixture({i:false}).api.duration(220,true),0);assert.equal(fixture({i:false}).api.duration(180),180);assert.equal(fixture({f:2}).api.duration(180),360);
+ assert.equal(fixture({on:false}).api.duration(220,true),0);assert.equal(fixture({i:false}).api.duration(220,true),0);assert.equal(fixture({i:false}).api.duration(180),3000);assert.equal(fixture({f:2}).api.duration(180),360);
+});
+test('presets Curto, Médio e Longo aplicam os mesmos tempos na entrada e na saída',()=>{
+ for(const [f,ms] of [[.6,1500],[1,3000],[1.8,5000]]){const {api}=fixture({f});assert.equal(api.duration(220,true),ms);assert.equal(api.duration(180),ms)}
 });
 test('volume alterado durante entrada usa o novo alvo',async()=>{
  const {api,media,tick}=fixture();await api.play(media,200);await tick(32);api.volume(media,.25);await tick(220);assert.equal(media.volume,.25);
@@ -34,7 +37,7 @@ test('play pendente antigo não reativa som depois de stop',async()=>{
  const {api,media,tick}=fixture();let ready;media.play=()=>{media.paused=false;return new Promise(r=>ready=r)};const p=api.play(media,200);await tick(300);assert.equal(media.volume,0);await api.pause(media,0);ready();await p;await tick(300);assert.equal(media.paused,true);assert.equal(media.volume,.6);
 });
 test('elementos instalados usam a mesma rampa e alternância rápida',async()=>{
- const {api,media,tick}=fixture();api.install(media);await media.play();await tick(300);media.pause();await tick(32);await api.toggle(media);await tick(400);assert.equal(media.paused,false);assert.equal(media.volume,.6);
+ const {api,media,tick}=fixture();api.install(media);await media.play();await tick(300);media.pause();await tick(32);await api.toggle(media);await tick(3100);assert.equal(media.paused,false);assert.equal(media.volume,.6);
 });
 test('falha de play anterior não cancela comando posterior',async()=>{
  const {api,media,tick}=fixture();let reject;let calls=0;media.play=()=>{media.paused=false;return ++calls===1?new Promise((_,r)=>reject=r):Promise.resolve()};const old=api.play(media,200).catch(()=>{});await api.play(media,100);reject(Error('interrompido'));await old;await tick(200);assert.equal(media.paused,false);assert.equal(media.volume,.6);

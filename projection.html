@@ -77,7 +77,7 @@ body{background:#080e19}
 .draw-flash{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at 50% 52%,var(--c2) 0,var(--c1) 14%,transparent 52%);opacity:0;animation:drawFlash 1.9s ease-out forwards;mix-blend-mode:screen}
 @keyframes drawFlash{0%{opacity:0;transform:scale(.3)}18%{opacity:.9}100%{opacity:0;transform:scale(1.9)}}
 </style></head><body><main id="out" aria-live="polite"></main>
-<script src="/iasd-projetor/audio-fade.js?v=1"></script><script src="/shared/timer-display.js?v=9"></script>
+<script src="/iasd-projetor/audio-fade.js?v=2"></script><script src="/shared/timer-display.js?v=9"></script>
 <script>
 const out=document.getElementById('out');
 let drawSerial=0,timerView=null;
@@ -366,7 +366,7 @@ function showRaw(value){
    const media=JSON.parse(t.slice('IASD_LOCAL_MEDIA:'.length));
    if(!['audio','video'].includes(media.kind)||typeof media.url!=='string'||!(media.url.startsWith('blob:'+location.origin+'/')||/^http:\/\/127\.0\.0\.1:38741\/media\/[a-f0-9]{32}$/.test(media.url)||/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/public\/iasd-offering-videos\/[a-zA-Z0-9_./%-]+$/.test(media.url)||/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/sign\/iasd-media-files\/[a-zA-Z0-9_./%-]+\?token=[A-Za-z0-9_.-]+$/.test(media.url)))throw Error('Arquivo inválido');
    out.classList.add('local-media-mode');const el=document.createElement(media.kind);el.src=media.url;el.controls=!isPreview;el.autoplay=!isPreview;el.muted=isPreview;el.volume=isPreview?0:Math.max(0,Math.min(1,Number(media.volume??.75)));if(media.kind==='video'){el.setAttribute('playsinline','');el.style.cssText='position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;object-fit:contain!important;background:#000!important;z-index:9999!important;'}out.append(el);
-   if(!isPreview)IASDAudio.play(el,Math.max(0,Math.min(3000,+media.fin||0))).catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
+   if(!isPreview)IASDAudio.play(el,Math.max(0,Math.min(5000,+media.fin||0))).catch(()=>{const msg=document.createElement('p');msg.textContent='Clique no botão de reprodução para iniciar a mídia.';msg.style.fontSize='20px';out.append(msg)});
   }catch(e){out.textContent='Não foi possível carregar esta mídia. Abra o telão neste navegador e tente novamente.'}
  }else if(t.startsWith('IASD_IMAGE:')){
   const url=t.slice(11);

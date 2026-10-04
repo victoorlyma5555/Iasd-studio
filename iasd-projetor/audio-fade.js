@@ -7,7 +7,7 @@
  const clamp=v=>Math.max(0,Math.min(1,Number(v)||0));
  function state(a){let s=states.get(a);if(!s){s={target:clamp(a.volume),timer:0,finish:null,kind:'',generation:0,play:a.play.bind(a),pause:a.pause.bind(a)};states.set(a,s);a.addEventListener?.('volumechange',()=>{if(s.kind&&s.expected!=null&&Math.abs(a.volume-s.expected)>.001)a.volume=s.expected})}return s}
  function cancel(a){const s=state(a);++s.generation;clearTimeout(s.timer);s.timer=0;if(s.finish)s.finish(false);s.finish=null;s.kind='';s.expected=null;return s}
- function duration(base,entry=false){try{const c=JSON.parse(localStorage.getItem('iasd-fade')||'{}');return c.on===false||(entry&&c.i===false)?0:Math.max(0,Math.round(base*(Number(c.f)||1)))}catch{return base}}
+ function duration(base,entry=false){try{const c=JSON.parse(localStorage.getItem('iasd-fade')||'{}');if(c.on===false||(entry&&c.i===false))return 0;const f=Number(c.f)||1;const preset={0.6:1500,1:3000,1.8:5000}[f];return preset??Math.max(0,Math.round(base*f))}catch{return base}}
  function ramp(a,to,ms,kind,done){
   const s=cancel(a),from=clamp(a.volume);s.kind=kind;
   return new Promise(resolve=>{s.finish=resolve;const start=performance.now();

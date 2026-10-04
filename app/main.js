@@ -357,7 +357,7 @@ async function projectPreparedYoutube(){if(!companionToken)throw Error('IASD Pro
 async function closePreparedYoutube(ms){if(!companionToken)return;return companionRequest('/youtube/close',{ms:ms==null?(window.stFadeMs?stFadeMs(180):180):ms})}
 async function youtubeStateRequest(){if(!companionToken)return null;try{return await companionRequest('/youtube/state',{})}catch{return null}}
 async function youtubeSkipAdRequest(){if(!companionToken)return;return companionRequest('/youtube/skip',{})}
-async function youtubeMoveRequest(to){if(!companionToken)return;return companionRequest('/youtube/move',{to,inms:stFadeInMs(220)})}
+async function youtubeMoveRequest(to){if(!companionToken)return;return companionRequest('/youtube/move',{to,inms:stFadeInMs(220),outms:stFadeMs(180)})}
 async function controlPreparedYoutube(action){if(!companionToken)return;return companionRequest('/youtube/control',{action,ms:action==='play'?stFadeInMs(220):stFadeMs(180)})}
 async function pairCompanion(){
  if(!canUseSound())return;

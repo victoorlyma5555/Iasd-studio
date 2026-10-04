@@ -289,17 +289,17 @@ function youtubeToPrimary(){
  youtubeRef.setBounds({x:area.x+Math.round((area.width-w)/2),y:area.y+Math.round((area.height-h)/2),width:w,height:h});
  youtubeRef.setAlwaysOnTop(true,'floating');youtubeRef.show();youtubeRef.focus();youtubeOnPrimary=true
 }
-async function youtubeToProjector(inMs=0){
+async function youtubeToProjector(inMs=0,outMs=lastFadeOutMs){
  if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Não há vídeo');
  youtubeOnPrimary=false;
  try{youtubeRef.setAlwaysOnTop(false)}catch{}
- await projectPreparedYoutube(0,inMs);
+ await projectPreparedYoutube(0,inMs,outMs);
  setTimeout(dropYoutubeCover,350)
 }
 // Shared media envelopes; injecting the same factory avoids a second fade engine.
 const createAudioFade=require('./audio-fade');
 const audioBootstrap='window.IASDAudio=window.IASDAudio||('+createAudioFade.toString()+')();';
-let audioCommand=0,lastFadeOutMs=180;
+let audioCommand=0,lastFadeOutMs=3000;
 function fadeAudioIn(win,ms){
  if(!win||win.isDestroyed())return Promise.resolve();
  return win.webContents.executeJavaScript(audioBootstrap+'Promise.all([...document.querySelectorAll("video,audio")].map(v=>IASDAudio.pause(v,'+Math.max(0,ms)+')))').catch(()=>{});
@@ -567,13 +567,13 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
  if(req.url==='/alert-replies/wait'&&req.method==='POST'){if(pendingAlertReplies.length){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}const w={res};w.t=setTimeout(()=>{alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w);if(!res.writableEnded)reply(res,200,{replies:[]})},25000);alertReplyWaiters.push(w);req.on('close',()=>{clearTimeout(w.t);alertReplyWaiters=alertReplyWaiters.filter(x=>x!==w)});return}
  if(req.url==='/alert-replies'&&req.method==='POST'){const out=pendingAlertReplies;pendingAlertReplies=[];reply(res,200,{replies:out});return}
  if(req.url==='/alert'&&req.method==='POST'){if(typeof data.id!=='string'||!/^[a-f0-9-]{36}$/.test(data.id)||typeof data.message!=='string'||!data.message.trim()||data.message.length>500){reply(res,400,{error:'Alerta inválido'});return}if(!alertSeen.has(data.id)&&lastAlertId!==data.id){alertSeen.add(data.id);lastAlertId=data.id;storeAlert(data);if(!alertsMuted)showSoundAlert(data);if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:alert-history-changed')}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''),Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/prepare'&&req.method==='POST'){try{await prepareYoutube(String(data.id||''),Math.min(5000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true,id:youtubeVideoId})}catch(e){reply(res,409,{error:e.message})}return}
  if(req.url==='/youtube/state'&&req.method==='POST'){reply(res,200,await youtubeAdState());return}
  if(req.url==='/youtube/skip'&&req.method==='POST'){reply(res,200,{ok:await youtubeSkipAd()});return}
- if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector(Math.min(3000,Math.max(0,+data.inms||0)));reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}++audioCommand;const win=youtubeRef;if(!await youtubeAudio(win,data.action,Math.min(3000,Math.max(0,+data.ms||0)))){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
- if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(3000,Math.max(0,+data.inms||0)),Math.min(2000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
- if(req.url==='/youtube/close'&&req.method==='POST'){const command=++audioCommand,win=youtubeRef,ms=Math.min(2000,Math.max(0,+data.ms||0));await fadeAudioIn(win,ms);if(command===audioCommand&&win===youtubeRef)closeYoutube();reply(res,200,{ok:true});return}
+ if(req.url==='/youtube/move'&&req.method==='POST'){try{if(data.to==='primary')youtubeToPrimary();else await youtubeToProjector(Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/control'&&req.method==='POST'){if(!['play','pause','mute','unmute'].includes(data.action)){reply(res,400,{error:'Controle inválido'});return}if(!youtubeRef||youtubeRef.isDestroyed()){reply(res,409,{error:'Prepare o vídeo primeiro'});return}++audioCommand;const win=youtubeRef;if(!await youtubeAudio(win,data.action,Math.min(5000,Math.max(0,+data.ms||0)))){reply(res,409,{error:'O player ainda está carregando. Tente novamente em instantes.'});return}reply(res,200,{ok:true});return}
+ if(req.url==='/youtube/project'&&req.method==='POST'){try{const display=await projectPreparedYoutube(Math.min(2000,Math.max(0,+data.ms||0)),Math.min(5000,Math.max(0,+data.inms||0)),Math.min(5000,Math.max(0,+data.outms||0)));reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return}
+ if(req.url==='/youtube/close'&&req.method==='POST'){const command=++audioCommand,win=youtubeRef,ms=Math.min(5000,Math.max(0,+data.ms||0));await fadeAudioIn(win,ms);if(command===audioCommand&&win===youtubeRef)closeYoutube();reply(res,200,{ok:true});return}
  if(req.url==='/open'&&req.method==='POST'){
   try{++audioCommand;const display=showProjector();reply(res,200,{ok:true,monitor:display.label||'Monitor secundário'})}catch(e){reply(res,409,{error:e.message})}return;
  }
@@ -583,7 +583,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
    const command=++audioCommand,content=data.content;
    if(content===''&&(!windowRef||windowRef.isDestroyed())&&!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown)){lastProjectionContent='';reply(res,200,{ok:true,closed:true});return}
    // Novo conteúdo substitui o vídeo do telão (sem áudio residual); conteúdo vazio = tela preta.
-   if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){await fadeAudioIn(youtubeRef,Math.min(2000,Math.max(0,+data.audioMs||0)));if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
+   if(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeShown){await fadeAudioIn(youtubeRef,Math.min(5000,Math.max(0,+data.audioMs||0)));if(command!==audioCommand){reply(res,200,{ok:true,superseded:true});return}if(content==='')await blackoutYoutube();else closeYoutube();try{if(youtubeRef&&!youtubeRef.isDestroyed())youtubeRef.setOpacity(1)}catch{}}
    showProjector();
    lastProjectionContent=content;
    if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
@@ -593,7 +593,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
    reply(res,200,{ok:true});
   }catch(e){reply(res,409,{error:e.message})}return;
  }
- if(req.url==='/close'&&req.method==='POST'){await closeProjectionAudio(Math.min(2000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true});return}
+ if(req.url==='/close'&&req.method==='POST'){await closeProjectionAudio(Math.min(5000,Math.max(0,+data.ms||0)));reply(res,200,{ok:true});return}
 
  reply(res,404,{error:'Rota desconhecida'});
 }

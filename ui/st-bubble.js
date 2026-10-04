@@ -5,10 +5,11 @@
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const FADE_KEY='iasd-fade',POS_KEY='iasd-bubble-pos';
 const fadeCfg=()=>Object.assign({on:true,f:1},LS.get(FADE_KEY,{}));
+const fadeDuration=(c,base)=>({0.6:1500,1:3000,1.8:5000}[Number(c.f)||1]??Math.round(base*(c.f||1)));
 /* usado pelo site (e lido igual pelo Studio/telão): duração do fade já com a velocidade escolhida */
-window.stFadeMs=base=>{const c=fadeCfg();return c.on===false?0:Math.round(base*(c.f||1))};
+window.stFadeMs=base=>{const c=fadeCfg();return c.on===false?0:fadeDuration(c,base)};
 /* fade de ENTRADA (início de vídeos/músicas): liga/desliga próprio, mesma velocidade */
-window.stFadeInMs=base=>{const c=fadeCfg();return c.on===false||c.i===false?0:Math.round(base*(c.f||1))};
+window.stFadeInMs=base=>{const c=fadeCfg();return c.on===false||c.i===false?0:fadeDuration(c,base)};
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fw=()=>{try{const f=document.getElementById('iasd-studio-frame');return f&&f.contentWindow}catch(e){return null}};
 let root=null,btn=null,panel=null,badge=null,open=false,view='main',unseen=0,drag=null;

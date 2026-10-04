@@ -22,7 +22,7 @@ window.addEventListener('message',e=>{if(typeof e.data!=='string'||!/youtube/.te
 /* para o hino com fade (usado ao fechar telão/janela); sem hino tocando, só para */
 window.stHymnFadeStop=function(ms){try{if(ms===0){window.STHymn&&STHymn.stop&&STHymn.stop(0)}else if(window.STHymn&&STHymn.fadeStop)STHymn.fadeStop(ms??180);else if(window.STHymn&&STHymn.stop)STHymn.stop()}catch(e){}};
 function stFi(ms){return IASDAudio.duration(ms,true)}
-function stFm(ms){try{const m=Object.assign({on:true,f:1},JSON.parse(localStorage.getItem('iasd-fade')||'{}'));return m.on===false?0:Math.round(ms*(m.f||1))}catch(e){return ms}}
+function stFm(ms){return IASDAudio.duration(ms)}
 window.stFadePause=function(a,ms=180,done){return a?IASDAudio.pause(a,stFm(ms),done):Promise.resolve(true)};
 let youtubeApiReady;
 function loadYoutubeApi(){
