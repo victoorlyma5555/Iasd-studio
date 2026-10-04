@@ -206,10 +206,12 @@ body.st2 main{background:transparent!important}
 body.st2 main{grid-template-rows:auto auto auto auto!important}
 .st-title{display:none!important}
 .st-banner{grid-area:1 / 1 / 2 / -1;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:136px;padding:18px 22px;border-radius:16px;border:1px solid var(--bd);overflow:hidden;background:linear-gradient(90deg,#060d1f 0%,#09163a 50%,#0b1026 100%);transition:min-height .2s ease,height .2s ease,padding .2s ease}
-.st-banner-toggle{position:absolute;inset-inline-start:50%;bottom:4px;z-index:5;display:grid;place-items:center;width:36px;height:16px;padding:0;translate:-50% 0;border:1px solid rgba(112,147,205,.42);border-radius:999px;background:linear-gradient(180deg,rgba(16,35,72,.94),rgba(7,18,42,.94));color:#9fb8df;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(6px)}
-.st-banner-toggle:hover{color:#fff;border-color:rgba(91,147,255,.8);background:linear-gradient(180deg,rgba(25,57,118,.98),rgba(10,29,65,.98));box-shadow:0 4px 14px rgba(0,0,0,.34),0 0 0 1px rgba(91,147,255,.12)}
-.st-banner-toggle:focus-visible{outline:2px solid #7ca8ff;outline-offset:2px}
-.st-banner-toggle .ti{display:block;width:12px;height:12px;transition:transform .2s ease}
+.st-banner-toggle{position:absolute;left:50%;bottom:7px;z-index:5;display:flex;align-items:center;justify-content:center;width:78px;height:28px;padding:0;transform:translateX(-50%);border:1px solid rgba(78,180,255,.95);border-radius:999px;background:linear-gradient(180deg,rgba(17,55,96,.98) 0%,rgba(7,28,56,.98) 52%,rgba(4,18,39,.98) 100%);color:#fff;cursor:pointer;box-shadow:0 0 0 1px rgba(70,154,255,.28),0 0 18px rgba(0,145,255,.34),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -8px 18px rgba(0,64,145,.16);backdrop-filter:blur(10px);transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .12s ease}
+.st-banner-toggle:hover{border-color:#7fd0ff;background:linear-gradient(180deg,rgba(23,70,120,.99) 0%,rgba(8,34,68,.99) 55%,rgba(5,21,45,.99) 100%);box-shadow:0 0 0 1px rgba(112,203,255,.38),0 0 24px rgba(0,157,255,.48),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -8px 18px rgba(0,78,170,.18)}
+.st-banner-toggle:active{transform:translateX(-50%) scale(.96)}
+.st-banner-toggle:focus-visible{outline:2px solid #9bdcff;outline-offset:3px}
+.st-banner-toggle .ti{display:none}
+.st-banner-toggle::before{content:"";display:block;width:13px;height:13px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;border-radius:1px;transform:translateY(-3px) rotate(45deg);filter:drop-shadow(0 0 4px rgba(255,255,255,.28));transition:transform .2s ease}
 body.st-banner-collapsed .st-banner{min-height:56px;height:56px;padding:7px 18px 11px;gap:12px}
 body.st-banner-collapsed .st-banner .st-bn-art,
 body.st-banner-collapsed .st-banner .st-bn-txt p,
@@ -222,8 +224,8 @@ body.st-banner-collapsed .st-banner .st-proj{width:auto;padding:0;border:0;backg
 body.st-banner-collapsed .st-banner .st-proj-top{gap:0}
 body.st-banner-collapsed .st-banner .st-proj #chipProj{min-height:30px!important;padding:0 10px!important;border:1px solid #27407a!important;border-radius:999px!important;background:rgba(6,13,31,.78)!important;font-size:12.5px}
 body.st-banner-collapsed .st-banner .st-proj #chipProj em{display:none}
-body.st-banner-collapsed .st-banner-toggle .ti{transform:rotate(180deg)}
-@media (prefers-reduced-motion:reduce){.st-banner,.st-banner-toggle .ti{transition:none!important}}
+body.st-banner-collapsed .st-banner-toggle::before{transform:translateY(3px) rotate(225deg)}
+@media (prefers-reduced-motion:reduce){.st-banner,.st-banner-toggle,.st-banner-toggle::before{transition:none!important}}
 .st-bn-art{position:absolute;inset:0;pointer-events:none;opacity:.95}.st-bn-art svg{position:absolute;right:0;top:0;height:100%;width:70%;min-width:420px}
 .st-bn-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#060d1f 0%,rgba(6,13,31,.92) 34%,rgba(6,13,31,.25) 70%,rgba(6,13,31,.55) 100%)}
 .st-bn-txt{position:relative;z-index:2;display:flex;align-items:center;gap:16px;min-width:0}
