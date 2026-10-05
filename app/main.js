@@ -855,6 +855,7 @@ function projectionPreviewText(value){
  if(t.startsWith('IASD_LYRIC:')){try{return JSON.parse(t.slice(11)).text||''}catch(e){return 'Letra do hino'}}
  if(t.startsWith('IASD_BIBLE:')){try{const b=JSON.parse(t.slice(11));return (b.ref||'Passagem bíblica')+'\\n\\n'+(b.text||'')}catch(e){return 'Passagem bíblica'}}
  if(t.startsWith('IASD_IMAGE:'))return 'Imagem projetada';
+ if(t.startsWith('IASD_SLIDE:')){try{return 'Slide '+(JSON.parse(t.slice(11)).n||'')}catch(e){return 'Slide projetado'}}
  return t||'TELA PRETA';
 }
 function updateProjectionConsole(){
@@ -960,7 +961,7 @@ if(current==='Painel'){ensureSchedules()}if(current==='Painel'&&!window.IASDUI?.
 if(current==='Painel'&&window.IASDUI?.enabled)out=window.IASDUI.home();
 if(current.startsWith('custom:'))out=customPage(current.slice(7));
 if(current==='Projeção'&&canUseSound()&&isMobileDevice())out='<section class="panel" style="text-align:center;padding:26px 18px"><h2 style="margin:0 0 8px">🖥 IASD Projetor é só para o computador</h2><p class="muted" style="margin:0 0 16px;line-height:1.5">A projeção, as músicas e o telão funcionam no computador da igreja. No celular, use os <b>Alertas</b>: dá para enviar avisos, ler respostas e receber notificações.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="go(\'Alertas\')">🔔 Ir para Alertas</button></div></section>';
-else if(current==='Projeção'&&canUseSound())out=document.getElementById('iasd-studio-frame')?'':'<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=59" class="projection-studio-frame" scrolling="no" loading="eager" allow="autoplay;fullscreen"></iframe>';
+else if(current==='Projeção'&&canUseSound())out=document.getElementById('iasd-studio-frame')?'':'<iframe id="iasd-studio-frame" title="Studio profissional de projeção" src="/projection-studio.html?v=60" class="projection-studio-frame" scrolling="no" loading="eager" allow="autoplay;fullscreen"></iframe>';
 if(current==='Cronograma')out=window.IASDModules?.render('cronogramas',{schedulePage})??schedulePage();
 if(current==='Escalas')out=window.IASDPages?.escalas?.()??window.IASDModules?.render('escalas',{section})??section('escalas','Escalados do dia e do mês','Data — nome — função');
 if(current==='Datas especiais')out=window.IASDModules?.render('datas-especiais',{section})??section('datas','Datas especiais','Data — evento');

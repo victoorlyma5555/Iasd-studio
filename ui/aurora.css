@@ -485,3 +485,5 @@ html[data-skin="aurora"][data-theme="dark"] select{color-scheme:dark}
 html[data-skin="aurora"][data-theme="light"] select{color-scheme:light}
 html[data-skin="aurora"] select option,html[data-skin="aurora"] select optgroup{background-color:var(--au-pop,#151a2e);color:var(--au-tx)}
 html[data-skin="aurora"] select option:checked{background:var(--au-a1);color:var(--au-on,#111)}
+.stt-gear{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(var(--au-w),.07);border:1px solid rgba(var(--au-w),.1);color:var(--au-tx);cursor:pointer}
+.stt-gear:hover{background:rgba(var(--au-a1-rgb),.2)}
