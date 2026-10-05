@@ -399,7 +399,9 @@ function projectionPreviewLabel(t){
  if(t.startsWith('IASD_LOCAL_MEDIA:'))return 'Mídia em projeção';
  return t;
 }
+let projEpoch=0;
 function sendProjection(t,opts){
+ if(String(t??'')!=='')++projEpoch;/* conteúdo novo substitui qualquer fechamento em andamento */
  const wire=window.IASDTr?IASDTr.wire(t):t;
  data.stage=t;
  localStorage.setItem('iasd-studio',JSON.stringify(data));
@@ -482,6 +484,7 @@ function project(t){
  void guardedProjection(async()=>{sendProjection(String(t??''));projectionFeedback('Conteúdo enviado ao IASD Projetor.');});
 }
 async function stopProjection(){
+ const epoch=projEpoch;
  try{const w=document.getElementById('iasd-studio-frame')?.contentWindow;w&&w.stHymnFadeStop&&w.stHymnFadeStop(180)}catch(e){}
  // Fechar projeção: só atualiza o estado local e pede o fechamento real. Nunca envia conteúdo vazio
  // ao aplicativo (isso recriaria a janela do telão em preto logo após fechá-la).
@@ -489,6 +492,8 @@ async function stopProjection(){
  if(win){try{closing.push(Promise.resolve(win.iasdFadeProjectionOut?.()));const a=win.IASDAudio;if(a)closing.push(Promise.all([...win.document.querySelectorAll('audio,video')].map(el=>a.pause(el,stFadeMs(180)))))}catch{}}
  if(companionToken)closing.push(companionRequest('/close',{ms:window.stFadeMs?stFadeMs(180):180,visualMs:window.stFadeVisualMs?stFadeVisualMs(180):stFadeMs(180)}).catch(e=>projectionFeedback(e.message,true)));
  await Promise.all(closing);
+ /* Se algo novo foi projetado enquanto o telão fechava, a nova projeção vence: não fecha a janela nem limpa o conteúdo (era isso que cortava o áudio). */
+ if(projEpoch!==epoch){projectionFeedback('Nova projeção iniciada durante o fechamento.');return}
  if(win&&!win.closed)win.close();
  if(projectionWindow===win)projectionWindow=null;
  sendProjection('',{localOnly:true});
