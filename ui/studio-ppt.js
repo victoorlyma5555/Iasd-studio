@@ -414,14 +414,69 @@ async function del(id){
   await loadDecks();
  }catch(e){st('Não foi possível excluir: '+(e.message||e))}
 }
-async function importFile(file){
- if(!file)return;
+/* ---------- outros formatos ---------- */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function loadScript(src){return new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>rej(Error('Não foi possível carregar o leitor de PDF (verifique a internet).'));document.head.append(e)})}
+const toJpg=(cv,q=.88)=>new Promise(r=>cv.toBlob(r,'image/jpeg',q));
+async function convertPdf(file,onProgress){
+ if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js')}
+ pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';
+ const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,out=[];let ratio=16/9;
+ for(let n=1;n<=pdf.numPages;n++){
+  onProgress&&onProgress(n,pdf.numPages);
+  const pg=await pdf.getPage(n),v0=pg.getViewport({scale:1}),sc=W/v0.width,vp=pg.getViewport({scale:sc});
+  const cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
+  const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+  await pg.render({canvasContext:cx,viewport:vp}).promise;
+  if(n===1)ratio=v0.width/v0.height;
+  out.push(await toJpg(cv));
+ }
+ return{slides:out,ratio};
+}
+async function convertImages(files,onProgress){
+ const out=[];let ratio=16/9;
+ const list=[...files].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+ for(let i=0;i<list.length;i++){
+  onProgress&&onProgress(i+1,list.length);
+  const bm=await createImageBitmap(list[i]);
+  const w=Math.min(bm.width,W),h=Math.round(w*bm.height/bm.width);
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.fillStyle='#000';cx.fillRect(0,0,w,h);cx.drawImage(bm,0,0,w,h);
+  if(i===0)ratio=bm.width/bm.height;
+  out.push(await toJpg(cv,.9));
+ }
+ return{slides:out,ratio};
+}
+/* descobre o formato pelo conteúdo (não só pela extensão) */
+async function detect(file){
+ const head=new Uint8Array(await file.slice(0,8).arrayBuffer()),n=file.name.toLowerCase();
+ if(head[0]===0x25&&head[1]===0x50&&head[2]===0x44&&head[3]===0x46)return'pdf';
+ if(/^image\//.test(file.type)||/\.(png|jpe?g|webp|gif|bmp)$/.test(n))return'img';
+ if(head[0]===0xD0&&head[1]===0xCF)return'ppt';
+ if(head[0]===0x50&&head[1]===0x4B){
+  try{const z=await readZip(await file.arrayBuffer());
+   if(z.has('ppt/presentation.xml'))return'pptx';
+   if(z.has('content.xml')&&z.has('mimetype'))return'odp';
+   if(z.names().some(x=>/^Index\//.test(x)))return'key';
+  }catch(e){}
+ }
+ return'';
+}
+const HOW={ppt:'Arquivo .ppt (PowerPoint antigo). Abra no PowerPoint e use Arquivo › Salvar como › .pptx ou PDF.',odp:'Arquivo .odp (LibreOffice/OpenOffice). Use Arquivo › Exportar como › PDF ou salve como .pptx.',key:'Arquivo do Keynote. Use Arquivo › Exportar para › PDF ou PowerPoint.','':'Formato não reconhecido. Use .pptx, .ppsx, PDF ou imagens (PNG/JPG). No Google Slides: Arquivo › Fazer download › PDF ou .pptx.'};
+async function importFile(input){
+ const files=input&&input.length!=null?[...input]:(input?[input]:[]);
+ if(!files.length)return;
  try{
   const u=user();if(!u)throw Error('Entre na conta de sonoplastia antes de importar.');
-  if(!/\.(pptx|ppsx|pptm|potx)$/i.test(file.name))throw Error('Use um arquivo .pptx. Se for .ppt, abra no PowerPoint e use Salvar como .pptx.');
-  if(file.size>150*1024*1024)throw Error('Arquivo muito grande (limite de 150 MB).');
+  if(files.reduce((a,f)=>a+f.size,0)>150*1024*1024)throw Error('Arquivos muito grandes (limite de 150 MB).');
   st('Lendo apresentação…');
-  const conv=await convert(file,(n,t)=>st('Convertendo slide '+n+' de '+t+'…'));
+  const kinds=await Promise.all(files.map(detect)),kind=kinds[0];
+  if(kinds.some(k=>k!==kind))throw Error('Envie arquivos de um só tipo por vez (ou várias imagens juntas).');
+  const prog=(n,t)=>st('Convertendo '+(kind==='img'?'imagem':kind==='pdf'?'página':'slide')+' '+n+' de '+t+'…');
+  let conv;
+  if(kind==='pptx')conv=await convert(files[0],prog);
+  else if(kind==='pdf')conv=await convertPdf(files[0],prog);
+  else if(kind==='img')conv=await convertImages(files,prog);
+  else throw Error(HOW[kind]!==undefined?HOW[kind]:HOW['']);
   const c=cloud(),id=crypto.randomUUID(),paths=[];
   for(let i=0;i<conv.slides.length;i++){
    st('Enviando slide '+(i+1)+' de '+conv.slides.length+'…');
@@ -429,14 +484,14 @@ async function importFile(file){
    const {error}=await c.storage.from(BUCKET).upload(p,conv.slides[i],{contentType:'image/jpeg',upsert:false});
    if(error)throw error;paths.push(p);
   }
-  const title=file.name.replace(/\.(pptx|ppsx|pptm|potx)$/i,'').slice(0,120)||'Apresentação';
+  const title=(files.length>1?'Imagens — '+files[0].name:files[0].name).replace(/\.[a-z0-9]{2,5}$/i,'').slice(0,120)||'Apresentação';
   const {error}=await c.from('iasd_presentations').insert({id,title,slides:paths,ratio:conv.ratio,created_by:u.id});
   if(error)throw error;
   st('');await loadDecks();open(id);
-  try{feedback('PowerPoint importado: '+conv.slides.length+' slides.')}catch(e){}
+  try{feedback('Apresentação importada: '+conv.slides.length+' slides.')}catch(e){}
  }catch(e){st('Não foi possível importar: '+(e.message||e))}
 }
-$('pptFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';importFile(f)});
+$('pptFile').addEventListener('change',e=>{const f=[...(e.target.files||[])];e.target.value='';importFile(f)});
 document.addEventListener('keydown',e=>{
  if(document.body.dataset.tool!=='ppt'||!cur)return;
  if(/input|select|textarea/i.test((e.target.tagName||'')))return;
@@ -444,7 +499,7 @@ document.addEventListener('keydown',e=>{
  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();nav(-1)}
  else if(e.key==='Enter'){e.preventDefault();show()}
 });
-window.STPpt={nav,show,import:importFile,convert,reload:loadDecks};
+window.STPpt={nav,show,import:importFile,convert,convertPdf,convertImages,detect,reload:loadDecks};
 const _show=window.showTool;
 if(typeof _show==='function')window.showTool=function(name){const r=_show.apply(this,arguments);if(name==='ppt'&&!window.__pptLoaded){window.__pptLoaded=true;loadDecks()}return r};
 })();
