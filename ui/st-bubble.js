@@ -41,7 +41,7 @@ function css(){if(document.getElementById('stb-css'))return;const s=document.cre
 #stb .sw{all:unset;box-sizing:border-box;flex:none;position:relative;width:42px;height:24px;border-radius:12px;background:rgba(var(--au-w,255,255,255),.22);cursor:pointer;transition:background .15s}
 #stb .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
 #stb .sw.on{background:var(--au-c1,#35f0b9)}#stb .sw.on::after{left:21px}#stb .sw:focus-visible{outline:2px solid var(--au-a1);outline-offset:2px}
-#stb .seg{display:flex;gap:6px;margin:-2px 0 8px;width:100%}#stb .seg button{flex:1;padding:8px 4px;border-radius:12px;border:1px solid rgba(var(--au-w,255,255,255),.2);background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}#stb .seg button.on{background:var(--au-grad,#2f6bff);border-color:transparent;color:var(--au-on,#fff)}
+#stb .seg.wrapseg{flex-wrap:wrap}#stb .seg.wrapseg button{flex:1 1 30%}#stb .seg{display:flex;gap:6px;margin:-2px 0 8px;width:100%}#stb .seg button{flex:1;padding:8px 4px;border-radius:12px;border:1px solid rgba(var(--au-w,255,255,255),.2);background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer}#stb .seg button.on{background:var(--au-grad,#2f6bff);border-color:transparent;color:var(--au-on,#fff)}
 #stb .go{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border-radius:16px;border:1px solid rgba(var(--au-w,255,255,255),.14);background:rgba(var(--au-w,255,255,255),.06);cursor:pointer;margin-bottom:8px;position:relative}
 #stb .go:hover{background:rgba(var(--au-w,255,255,255),.12)}#stb .go .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(var(--au-a1-rgb,255,193,94),.16);color:var(--au-a1,#ffc15e);flex:none}#stb .go .ic svg{width:17px;height:17px}
 #stb .go>div{flex:1}#stb .go b{display:block;font-size:13.5px}#stb .go small{font-size:11.5px;color:var(--au-mu,#a8a2bd);font-weight:500}#stb .go em{font-style:normal;color:var(--au-mu);font-size:18px}
@@ -70,15 +70,18 @@ function placePanel(x,y){if(!panel)return;const w=innerWidth,h=innerHeight,pw=Ma
 function save(x,y){LS.set(POS_KEY,{x:Math.max(0,Math.min(1,(x)/(innerWidth-SIZE||1))),y:Math.max(0,Math.min(1,y/(innerHeight-SIZE||1)))})}
 
 function mainView(){const c=fadeCfg(),hasW=!!fw();const IC={mon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',vol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/></svg>',vol2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/></svg>',pal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16" cy="10" r="1"/><path d="M12 21a2.5 2.5 0 010-5h2a2 2 0 000-4"/></svg>',bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 004 0"/></svg>',head:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'};
- const fOn=c.on!==false,iOn=c.on!==false&&c.i!==false;
+ const fOn=c.on!==false,T=window.IASDTr,tr=T?T.get():{type:'fade',ms:600},trTypes=T?['fade','zoom','slide','blur','wipe','iris','none'].map(k=>[k,T.types[k]]):[],trSpeeds=T?[350,600,1000,1600].map(k=>[k,T.speeds[k]]):[];
  return `<div class="ph"><i>${IC.head}</i><div><b>Atalhos da sonoplastia</b><small>Controle rápido do telão e do som</small></div></div>
  <div class="sec">Telão</div>
  <div class="tl"><button class="t" data-a="black"><span class="ic">${IC.mon}</span><b>Tela preta</b><small>Cobre o telão</small></button>
  <button class="t danger" data-a="close"><span class="ic">${IC.x}</span><b>Fechar telão</b><small>Com fade no som</small></button></div>
  <div class="sec">Som</div>
- <div class="row"><div><b>Fade ao fechar/pausar</b><small>Sem corte seco no som</small></div><button class="sw${fOn?' on':''}" data-a="fade" role="switch" aria-checked="${fOn}" aria-label="Fade dos sons"></button></div>
+ <div class="row"><div><b>Fade do som</b><small>Entrada, saída e pausa sem corte seco</small></div><button class="sw${fOn?' on':''}" data-a="fade" role="switch" aria-checked="${fOn}" aria-label="Fade dos sons"></button></div>
  <div class="seg">${[['Curto',.6],['Médio',1],['Longo',1.8]].map(([n,f])=>`<button data-a="speed" data-f="${f}" class="${(c.f||1)===f?'on':''}">${n}</button>`).join('')}</div>
- <div class="row"><div><b>Fade de entrada</b><small>Som sobe devagar ao iniciar</small></div><button class="sw${iOn?' on':''}" data-a="fadein" role="switch" aria-checked="${iOn}" aria-label="Fade de entrada"></button></div>
+ <div class="sec">Entrada da imagem</div>
+ <div class="seg wrapseg">${trTypes.map(([k,n])=>`<button data-a="trtype" data-k="${k}" class="${tr.type===k?'on':''}">${n}</button>`).join('')}</div>
+ <div class="seg">${trSpeeds.map(([k,n])=>`<button data-a="trspeed" data-k="${k}" class="${tr.ms==k?'on':''}">${n}</button>`).join('')}</div>
+ <p class="nt">${tr.type==='fade'&&fOn?'“Suave” acompanha o tempo do fade do som.':'Velocidade da entrada do conteúdo no telão.'}</p>
  <div class="sec">Mais</div>
  <button class="go" data-a="themes"><span class="ic">${IC.pal}</span><div><b>Temas do telão</b><small>Fundo e animações</small></div><em>›</em></button>
  <button class="go" data-a="alerts"><span class="ic">${IC.bell}</span><div><b>Alertas</b><small>Ler e responder</small></div><span class="tn${unseen?' on':''}">${unseen}</span><em>›</em></button>
@@ -105,7 +108,9 @@ function toggle(v){open=typeof v==='boolean'?v:!open;root.classList.toggle('open
 function act(e){const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,w=fw();
  if(a==='black'){try{w.blackScreen()}catch(x){}toggle(false)}
  else if(a==='close'){try{w.closeScreenNow()}catch(x){}toggle(false)}
- else if(a==='fade'){const c=fadeCfg();c.on=!(c.on!==false);LS.set(FADE_KEY,c);render()}
+ else if(a==='fade'){const c=fadeCfg();c.on=!(c.on!==false);c.i=c.on;LS.set(FADE_KEY,c);render()}
+ else if(a==='trtype'){try{IASDTr.set({type:b.dataset.k})}catch(x){}render()}
+ else if(a==='trspeed'){try{IASDTr.set({ms:+b.dataset.k})}catch(x){}render()}
  else if(a==='themefx'){try{const w=fw();w.stSetThemeFx(!w.stThemeFxOn())}catch(x){}setTimeout(render,80)}
  else if(a==='fadein'){const c=fadeCfg();c.i=(c.i===false);if(c.i)c.on=true;LS.set(FADE_KEY,c);render()}
  else if(a==='speed'){const c=fadeCfg();c.f=+b.dataset.f;c.on=true;LS.set(FADE_KEY,c);render()}
