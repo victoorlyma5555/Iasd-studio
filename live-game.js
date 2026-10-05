@@ -48,7 +48,7 @@ let libP=null;
 const loadScript=src=>new Promise((ok,no)=>{if(document.querySelector('script[data-g="'+src+'"]'))return ok();const s=document.createElement('script');s.src=src;s.dataset.g=src;s.onload=ok;s.onerror=()=>no(Error('Falha ao carregar '+src));document.head.appendChild(s)});
 function libs(){
  if(window.IASDGameEngine&&window.IASDGameAudio)return Promise.resolve();
- if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study'])await loadScript('/games/'+f+'.js?v=7');await loadScript('/games/engine.js?v=7')})().catch(e=>{libP=null;throw e});
+ if(!libP)libP=(async()=>{for(const f of ['audio','bank-quiz','bank-people','bank-study','bank-extra'])await loadScript('/games/'+f+'.js?v=8');await loadScript('/games/engine.js?v=8')})().catch(e=>{libP=null;throw e});
  return libP;
 }
 
@@ -94,29 +94,69 @@ function flashQ(r,E){
  const opts=E.shuffle([missing].concat(E.sample(shown,3,r)),r);
  return{type:'mc',flashKind:'missing',shown,q:'Qual destes NÃO apareceu?',opts,ans:opts.indexOf(missing),a:missing,ref:'',showMs:4600};
 }
-function build(type,seed){
+function build(type,seed,plan,ptr){
  const E=window.IASDGameEngine,r=E.rng(seed);let q=null;
- if(type==='quiz')q=E.quiz({n:1,seed,mix:.3})[0];
- else if(type==='vf')q=E.tf({n:1,seed})[0];
+ if(type==='quiz'){
+  if(r()<.22)q=E.quiz({n:1,seed,mix:1})[0];                       /* parte vem dos geradores (livros, versículos, linha do tempo…) */
+  else{const i=plan&&plan.quiz[ptr.quiz++];q=i!=null?E.quizRow(i,seed):E.quiz({n:1,seed,mix:.3})[0]}
+ }
+ else if(type==='vf'){
+  const it=plan&&plan.vf[ptr.vf++];q=it?E.vfItem(it):E.tf({n:1,seed})[0];
+  if(q&&q.claim)q={...q,q0:q.q,q:q.q+'  →  “'+q.claim+'”. Está certo?'};
+ }
  else if(type==='who'){q=E.who({n:1,seed})[0];if(q)q={...q,type:'mc',q:'Quem sou eu?',ans:q.opts.indexOf(q.a)}}
  else if(type==='verse')q=E.GEN.verse(r);
  else if(type==='tempo')q=(r()<.6?E.GEN.before(r):E.GEN.last(r));
  else if(type==='said')q=E.GEN.said(r);
  else if(type==='flash')q=flashQ(r,E);
  if(!q||q.ans<0||!q.opts||q.opts.length<2)return null;
- if(type==='vf')q={...q,q0:q.q,q:q.q+'  →  “'+q.claim+'”. Está certo?'};
  return{...q,ltype:type};
 }
+/* partida montada só a partir do código da sala: host e celulares chegam ao mesmo baralho.
+   Quiz e V/F usam seleção equilibrada (categorias em rodízio, dificuldade variada, sem repetir referência, verdadeiras/falsas sorteadas
+   por partida); nenhum assunto repete na mesma partida; a posição da resposta certa é redistribuída entre A–D. */
 function deckFor(code){
  if(decks[code])return decks[code];
  const E=window.IASDGameEngine,{mode,total}=cfgOf(code),r=E.rng('deck|'+code);
  const seq=mode.types.length>1?E.shuffle(mode.types,r):mode.types;
- const out=[],seen=new Set();let i=0,guard=0;
- while(out.length<total&&guard++<total*30){
-  const type=seq[out.length%seq.length];
-  const q=build(type,code+'|'+out.length+'|'+(i++%50));
-  if(!q)continue;const key=E.fold(q.q)+'|'+E.fold(q.a);if(seen.has(key)){continue}seen.add(key);out.push(q);i=0}
+ const slotType=k=>seq[k%seq.length],cnt={};
+ for(let k=0;k<total;k++){const t=slotType(k);cnt[t]=(cnt[t]||0)+1}
+ const used=new Set(),plan={quiz:[],vf:[]},ptr={quiz:0,vf:0};
+ try{
+  if(cnt.quiz)plan.quiz=E.planQuiz(cnt.quiz+6,code+'|pq',used);
+  if(cnt.vf)plan.vf=E.planVF(cnt.vf+4,code+'|pv',used);
+ }catch(e){console.warn('plano',e)}
+ const out=[],seen=new Set(),topics=new Set();let i=0,guard=0,books=0;
+ while(out.length<total&&guard++<total*40){
+  const type=slotType(out.length);
+  const q=build(type,code+'|'+out.length+'|'+(i++%50),plan,ptr);
+  if(!q)continue;
+  const key=E.fold(q.q)+'|'+E.fold(q.a)+(q.ltype==='flash'?'|'+q.q+'|'+q.a+'|'+(q.seq||q.shown||[]).join(''):'');if(seen.has(key))continue;   /* emojis não passam pelo fold: sem isso todas as perguntas do relâmpago pareciam iguais */
+  const tk=q.kind==='versiculo'?'v|'+q.ref:q.kind==='tempo'?'t|'+q.ref:q.kind==='quemdisse'?'s|'+E.fold(q.a):q.kind==='quemsou'?'w|'+E.fold(q.a):null;
+  if(tk&&topics.has(tk))continue;
+  if(q.kind==='livros'&&books>=2)continue;
+  seen.add(key);if(tk)topics.add(tk);if(q.kind==='livros')books++;out.push(q);i=0}
+ try{E.balanceAnswers(out,'bal|'+code)}catch(e){console.warn('posições',e)}
  return decks[code]=out;
+}
+
+/* memória das últimas partidas (neste aparelho): o código novo é escolhido entre vários candidatos para repetir o mínimo de perguntas recentes */
+const HIST_K='iasd_live_hist';
+const qKey=q=>window.IASDGameEngine.hash(q.ltype+'|'+q.q+'|'+q.a).toString(36);
+function histGet(){try{const a=JSON.parse(localStorage.getItem(HIST_K)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function histAdd(c){try{const h=histGet().concat(deckFor(c).map(qKey)).slice(-450);localStorage.setItem(HIST_K,JSON.stringify(h))}catch(e){}}
+function pickSuffix(pre){
+ const rnd=()=>String(Math.floor(100+Math.random()*900));
+ try{
+  const h=histGet();if(!h.length)return rnd();
+  const w=new Map();h.forEach((k,i)=>w.set(k,1+i/h.length));
+  const tried=new Set(),tmp=[];let best=null,bs=1e9;
+  for(let t=0;t<36;t++){let sfx;do{sfx=rnd()}while(tried.has(sfx)&&tried.size<800);tried.add(sfx);
+   const c=pre+sfx;tmp.push(c);const d=deckFor(c);let sc=0;d.forEach(q=>{sc+=w.get(qKey(q))||0});
+   if(sc<bs){bs=sc;best=sfx}if(sc===0)break}
+  tmp.forEach(c=>{if(c!==pre+best)delete decks[c]});
+  return best||rnd();
+ }catch(e){return rnd()}
 }
 const specialOf=(i,total)=>i===total-1&&total>=10?{n:'BATALHA FINAL',e:'🔥',m:2}:(i===Math.floor(total/2)-1&&total>=10?{n:'RODADA DUPLA',e:'✨',m:2}:null);
 const spOf=i=>cfgOf(code()).teams?specialOf(i,cfgOf(code()).total):null;
@@ -1064,7 +1104,7 @@ async function join(){
 /* ---------- APRESENTADOR ---------- */
 async function create(){
  try{
-  const c=String(SET.mode)+String(SET.rounds)+String(SET.fmt)+String(Math.floor(100+Math.random()*900));
+  const pre=String(SET.mode)+String(SET.rounds)+String(SET.fmt),c=pre+pickSuffix(pre);
   const r=await rpc('live_create_room',{p_code:c});if(!r?.length)throw Error('room_not_created');
   Object.keys(PHOTO).forEach(k=>delete PHOTO[k]);EV.on=SET.ev!==0;EV.count=0;EV.last=-9;EV.used=[];S.room=r[0];S.host=true;HS={prev:{},streak:{},correct:{},best:{},joined:new Set(),order:[],rw:{A:0,B:0},bonus:{A:0,B:0}};S.tm=null;try{localStorage.removeItem('iasd_live_tm')}catch(e){}
   localStorage.setItem('iasd_live_host',JSON.stringify({id:S.room.id,token:S.room.host_token,code:c}));
@@ -1115,6 +1155,7 @@ function paintLobbyPlayers(ps,first){
  lists.forEach(l=>{const tot=cfgOf(code()).teams?ps.filter(p=>teamOf(p)===l.id.slice(-1)).length:ps.length,extra=tot-l.querySelectorAll('.lg2-pp:not(.more)').length;let m=l.querySelector('.more');if(extra>0){if(!m){m=document.createElement('div');m.className='lg2-pp more';l.appendChild(m)}m.textContent='+'+extra+' jogadores'}else if(m)m.remove()});
 }
 async function start(){
+ try{histAdd(code())}catch(e){}
  const ps=await players();if(!ps.length&&!(await IASDDialog.confirm('Ninguém entrou ainda. Começar assim mesmo?')))return;
  if(cfgOf(code()).teams){const tm={};ps.forEach(p=>tm[p.id]=teamTag(p.name)||'A');const cnt=k=>ps.filter(p=>tm[p.id]===k).length;for(let g=0;g<40&&Math.abs(cnt('A')-cnt('B'))>1;g++){const big=cnt('A')>cnt('B')?'A':'B',small=big==='A'?'B':'A',mv=ps.slice().reverse().find(p=>tm[p.id]===big);tm[mv.id]=small}S.tm=tm;HS.rw={A:0,B:0};HS.bonus={A:0,B:0};saveTm()}
  A().sfx('start');HS.prev={};ps.forEach(p=>{HS.prev[p.id]=Number(p.score)||0;HS.streak[p.id]=0;HS.correct[p.id]=0;HS.best[p.id]=0});
@@ -1673,7 +1714,7 @@ function install(){
 }
 const API={login:loginForPhoto,profile:profileForPhoto,togglePhoto,home,setup,create,joinForm,join,start,reveal,next,answer,close:closeAll,leave,exit,telao,cancel:cancelRoom,fullscreen,sndMenu,
  sound:new Proxy({},{get:(_,k)=>()=>{try{window.IASDGameAudio?.sfx(k)}catch(e){}}}),
- _state:()=>({S,HS,PS}),_ev:{EV,SY,get PE(){return PE},force(k){EV.force=k}},_deck:c=>deckFor(c)};
+ _state:()=>({S,HS,PS}),_deck:deckFor,_pick:pickSuffix,_hist:{get:histGet,add:histAdd},_ev:{EV,SY,get PE(){return PE},force(k){EV.force=k}},_deck:c=>deckFor(c)};
 window.IASDLive=API;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();

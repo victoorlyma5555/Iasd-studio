@@ -56,7 +56,7 @@ const GEN={
   return mc({kind:'tempo',cat:'Linha do Tempo',q:'Entre estes acontecimentos, qual foi '+(last?'o ÚLTIMO':'o PRIMEIRO')+'? ('+set.t+')',a:set.items[last?idx[3]:idx[0]],wrong:(last?idx.slice(0,3):idx.slice(1)).map(k=>set.items[k]),ref:set.ref,d:set.d||2},r)},
  who(r){const w=B.who;if(!w||!w.length)return null;const x=pick(w,r);return mc({kind:'quemsou',cat:'Quem sou eu?',q:'Quem sou eu? '+x[2][0]+' '+x[2][1],a:x[0],wrong:x[5],ref:x[3],d:x[6]||2},r)}
 };
-const GEN_W={bookNext:2,bookPrev:1,bookOrdinalAT:1,bookOrdinalNT:1,bookTestament:1,bookIntruder:1,bookChapters:1,bookByChapters:1,verse:5,verseRef:2,said:4,before:4,last:3,who:3};
+const GEN_W={bookNext:2,bookPrev:1,bookOrdinalAT:1,bookOrdinalNT:1,bookIntruder:1,bookChapters:1,bookByChapters:1,verse:5,verseRef:2,said:4,before:4,last:3,who:3};
 
 function curated(r,opts){
  let pool=B.quiz||[];
@@ -92,6 +92,82 @@ function tf(opts){
   out.push({type:'tf',kind:'vf',cat:x[0],q:x[1],claim:ans,truth,a:truth?'Verdadeiro':'Falso',opts:['Verdadeiro','Falso'],ans:truth?0:1,ref:x[4],d:x[5],fix:truth?'':x[2]});
  }
  return out;
+}
+
+
+/* ---------- seleção equilibrada para partidas do Jogo Coletivo ----------
+   Tudo é função apenas do código da sala (seed) e dos bancos, então host e celulares montam a mesma partida. */
+const BAD_OPT=/^(nenhuma|nenhum|os dois|as duas|todas|todos|ambos)/i;
+const longestAns=x=>{const a=String(x[2]).length;return x[3].every(o=>String(o).length<a)};
+const isJesus=x=>/\bJesus\b/.test(x[1]+' '+x[2]);
+/* n perguntas do banco de quiz: categorias em rodízio (cada uma com o mesmo peso), sem repetir referência bíblica,
+   dificuldade ~30/45/25, poucas respostas "mais longas" e poucas sobre Jesus; relaxa as regras só se faltar pergunta */
+function planQuiz(n,seed,used){
+ const r=rng(seed),Q=B.quiz||[];used=used||new Set();const out=[];if(n<=0||!Q.length)return out;
+ const byCat={};shuffle(Q.map((x,i)=>i),r).forEach(i=>{if(used.has(i))return;const c=Q[i][0];(byCat[c]=byCat[c]||[]).push(i)});
+ const cats=Object.keys(byCat);if(!cats.length)return out;
+ const tg={1:Math.round(n*.3),2:Math.round(n*.45)};tg[3]=Math.max(0,n-tg[1]-tg[2]);
+ const capL=Math.round(n*.28)+1,capJ=Math.round(n*.2)+1,refs=new Set(),dc={1:0,2:0,3:0};let lc=0,jc=0,lvl=0,miss=0,queue=[],guard=0;
+ const ok=(x,l)=>{const d=x[5]||2;
+  if(l<3&&refs.has(x[4]))return false;
+  if(l<2&&dc[d]>=tg[d]+(l?1:0))return false;
+  if(l<2&&longestAns(x)&&lc>=capL)return false;
+  if(l<2&&isJesus(x)&&jc>=capJ)return false;return true};
+ while(out.length<n&&guard++<n*200){
+  if(!queue.length)queue=shuffle(cats,r);
+  const c=queue.shift(),list=byCat[c];let hit=-1;
+  for(let j=0;j<list.length;j++){if(ok(Q[list[j]],lvl)){hit=j;break}}
+  if(hit<0){if(++miss>=cats.length*2){lvl++;miss=0;if(lvl>4)break}continue}
+  miss=0;const i=list.splice(hit,1)[0],x=Q[i];out.push(i);used.add(i);refs.add(x[4]);dc[x[5]||2]++;if(longestAns(x))lc++;if(isJesus(x))jc++}
+ return out;
+}
+/* sequência de verdadeiro/falso: 40–60% de verdadeiras (varia por partida), sem mais de 3 iguais seguidas e sem alternância certinha */
+function truthPlan(n,r){
+ if(n<=0)return[];
+ const mk=()=>{const lo=Math.floor(n*.4),hi=Math.ceil(n*.6),k=lo+Math.floor(r()*(hi-lo+1));return shuffle(Array.from({length:n},(_,i)=>i<k),r)};
+ let a=mk();if(n<4)return a;
+ for(let t=0;t<60;t++){
+  let run=1,mr=1,ch=0;for(let i=1;i<n;i++){if(a[i]===a[i-1]){run++;mr=Math.max(mr,run)}else{run=1;ch++}}
+  if(mr<=3&&ch<=Math.ceil((n-1)*.72))return a;a=mk()}
+ return a;
+}
+/* itens de V/F: {src:'vf',i,truth} (afirmação própria) ou {src:'q',i,truth,w} (derivada de uma pergunta do quiz) */
+function planVF(n,seed,used){
+ const r=rng(seed),VF=B.vf||[],Q=B.quiz||[];used=used||new Set();const out=[];if(n<=0)return out;
+ const tp=truthPlan(n,r);
+ const mkList=t=>{const byCat={};shuffle(VF.map((x,i)=>i),r).forEach(i=>{if(!!VF[i][2]!==t)return;(byCat[VF[i][0]]=byCat[VF[i][0]]||[]).push(i)});return byCat};
+ const L={true:mkList(true),false:mkList(false)},cq={true:[],false:[]};
+ const spare=planQuiz(n*2+6,seed+'|vq',used);let qi=0;
+ const takeDed=t=>{const byCat=L[t],cs=shuffle(Object.keys(byCat).filter(c=>byCat[c].length),r);return cs.length?byCat[cs[0]].shift():-1};
+ const usedStm=new Set();
+ tp.forEach(t=>{
+  let it=null;
+  if(r()<.55){const i=takeDed(t);if(i>=0&&!usedStm.has(fold(VF[i][1]))){usedStm.add(fold(VF[i][1]));it={src:'vf',i,truth:t}}}
+  while(!it&&qi<spare.length){const i=spare[qi++],x=Q[i];
+   if(t){it={src:'q',i,truth:true};break}
+   const w=x[3].map((o,k)=>k).filter(k=>!BAD_OPT.test(String(x[3][k])));if(!w.length)continue;
+   it={src:'q',i,truth:false,w:w[Math.floor(r()*w.length)]};}
+  if(!it){const i=takeDed(t);if(i>=0)it={src:'vf',i,truth:t}}
+  if(it)out.push(it)});
+ return out;
+}
+function quizRow(i,seed){const x=B.quiz[i];return mc({kind:'quiz',cat:x[0],q:x[1],a:x[2],wrong:x[3],ref:x[4],d:x[5]},rng(seed))}
+function vfItem(it){
+ if(it.src==='vf'){const x=B.vf[it.i];return {type:'tf',kind:'vf',cat:x[0],q:'“'+x[1]+'”',claim:'',truth:!!x[2],a:x[2]?'Verdadeiro':'Falso',opts:['Verdadeiro','Falso'],ans:x[2]?0:1,ref:(x[2]||!x[5]?'':x[5]+' · ')+x[3],d:x[4]||2,hint:'Verdadeiro ou falso?'}}
+ const x=B.quiz[it.i],t=it.truth,claim=t?x[2]:x[3][it.w];
+ return {type:'tf',kind:'vf',cat:x[0],q:x[1],claim,truth:t,a:t?'Verdadeiro':'Falso',opts:['Verdadeiro','Falso'],ans:t?0:1,ref:(t?'':'Certo: '+x[2]+' · ')+x[4],d:x[5]||2,fix:t?'':x[2]};
+}
+/* reposiciona a resposta certa das perguntas de 4 alternativas para que A–D fiquem equilibradas na partida, sem padrão (nunca 3 seguidas iguais) */
+function balanceAnswers(list,seed){
+ const r=rng(seed),idx=[];list.forEach((q,k)=>{if(q&&q.opts&&q.opts.length===4&&q.ans>=0)idx.push(k)});
+ const n=idx.length;if(n<2)return list;
+ const bag=()=>{const a=[];for(let i=0;i<n;i++)a.push(i%4);return shuffle(a,r)};
+ let pos=bag();
+ for(let t=0;t<80;t++){let ok=true,steps=0;for(let i=2;i<n;i++){if(pos[i]===pos[i-1]&&pos[i]===pos[i-2]){ok=false;break}}
+  for(let i=1;i<n;i++){if((pos[i]-pos[i-1]+4)%4===1)steps++}
+  if(ok&&steps<=Math.ceil((n-1)*.5))break;pos=bag()}
+ idx.forEach((k,j)=>{const q=list[k],o=q.opts.slice(),c=q.ans,to=pos[j];if(c===to)return;[o[c],o[to]]=[o[to],o[c]];q.opts=o;q.ans=to});
+ return list;
 }
 
 /* ---------- Quem sou eu ---------- */
@@ -134,10 +210,10 @@ function daily(game,day){day=day||today();const seed='iasd|'+day+'|'+game;
  if(game==='memory')return memory({pairs:DAILY_N.memory,seed});
  return null}
 
-function stats(){const g=Object.keys(GEN_W).length;return {quiz:(B.quiz||[]).length,who:(B.who||[]).length,said:(B.said||[]).length,timeline:(B.timeline||[]).length,memory:(B.memory||[]).length,verses:(B.verses||[]).length,generators:g,
+function stats(){const g=Object.keys(GEN_W).length;return {vf:(B.vf||[]).length,quiz:(B.quiz||[]).length,who:(B.who||[]).length,said:(B.said||[]).length,timeline:(B.timeline||[]).length,memory:(B.memory||[]).length,verses:(B.verses||[]).length,generators:g,
  total:(B.quiz||[]).length+(B.who||[]).length+(B.said||[]).length+(B.verses||[]).length*2+(B.timeline||[]).length*10+BOOKS.length*5}}
 
-window.IASDGameEngine={BOOKS,CH,rng,shuffle,sample,pick,fold,hash,quiz,tf,who,timeline,memory,daily,today,weekStart,DAILY_N,stats,GEN,mc,
+window.IASDGameEngine={BOOKS,CH,rng,shuffle,sample,pick,fold,hash,quiz,tf,who,timeline,memory,daily,today,weekStart,DAILY_N,stats,GEN,mc,planQuiz,planVF,quizRow,vfItem,truthPlan,balanceAnswers,
  cats:()=>[...new Set((B.quiz||[]).map(x=>x[0]))],
  whoCats:()=>[...new Set((B.who||[]).map(x=>x[4]))],
  decks:()=>(B.memory||[]).map(d=>({t:d.t,emoji:d.emoji,n:d.pairs.length}))};
