@@ -70,7 +70,11 @@ const CHURCH_POSITIONS=[["Liderança Executiva e Administrativa",["Pastor Distri
 function churchPositionSelect(id,value){return '<select id="'+id+'" class="church-position-select"><option value="">Sem função definida</option>'+CHURCH_POSITIONS.map(([group,items])=>'<optgroup label="'+esc(group)+'">'+items.map(p=>'<option value="'+esc(p)+'" '+(value===p?'selected':'')+'>'+esc(p)+'</option>').join('')+'</optgroup>').join('')+'</select>'}
 function roleLabel(){const adm=({founder:'Fundador',cofounder:'Co-Fundador',admin:'Administrador'})[cloudRole];if(adm)return adm;if((window.__myCargos||[]).length)return window.__myCargos.join(' · ');return ({sonoplasta:'Sonoplasta',founder:'Fundador',admin:'Administrador',editor:'Programação',operator:'Programação',midia:'Comunicação',lider:'Líder de ministério',viewer:'Usuário comum',cofounder:'Co-Fundador'})[cloudRole]||(cloudUser?'Usuário comum':'Visitante')}
 function syncAccountUI(){const trigger=$('account-trigger');if(!trigger)return;const initials=cloudUser?(myProfile?.full_name||cloudUser.user_metadata?.full_name||cloudUser.email||'U').slice(0,1).toUpperCase():'♙';const avatarHtml=cloudUser&&myProfile?.avatar_path?'<img src="'+esc(profileMediaUrl(myProfile.avatar_path))+'" style="width:100%;height:100%;object-fit:cover;'+profileImageStyle('avatar')+'" alt="">':esc(initials);trigger.innerHTML='<span class="account-avatar" style="overflow:hidden">'+avatarHtml+'</span><span class="account-caption">'+(cloudUser?'<strong>'+esc(myProfile?.full_name||cloudUser.user_metadata?.full_name||(cloudUser.email||'').split('@')[0])+'</strong><small>'+esc(roleLabel())+'</small>':'<strong>Entrar</strong><small>Área da equipe</small>')+'</span><span class="account-chevron">⌄</span>'}
-function setPalette(n){try{localStorage.setItem('iasd-palette',n)}catch(e){}if(n==='aurora')document.documentElement.removeAttribute('data-palette');else document.documentElement.setAttribute('data-palette',n);try{render()}catch(e){}}
+const LIGHT_PAL=['celeste','azulbranco'];
+function defaultMode(){const p=document.documentElement.getAttribute('data-palette')||'aurora';return LIGHT_PAL.includes(p)?'light':'dark'}
+function storedMode(){try{const t=localStorage.getItem('iasd-app-theme');return t==='light'||t==='dark'?t:null}catch(e){return null}}
+function applyPalette(n){n=n||'aurora';try{localStorage.setItem('iasd-palette',n)}catch(e){}if(n==='aurora')document.documentElement.removeAttribute('data-palette');else document.documentElement.setAttribute('data-palette',n);if(!storedMode())applyTheme(defaultMode())}
+async function setPalette(n){if(!canManageSite())return;applyPalette(n);try{render()}catch(e){}const r=await cloud.from('iasd_site_content').upsert({content_key:'site_palette',content_value:n});if(r&&r.error)alert('Não foi possível salvar o tema para todos: '+r.error.message);else siteTextOverrides.site_palette=n}
 function toggleAccountMenu(){const root=$('account-popover-root');if(root.innerHTML){root.innerHTML='';return}root.innerHTML='<div class="account-dismiss" onclick="closeAccountMenu()"></div><div class="account-popover">'+(cloudUser?'<div class="account-popover-head"><span class="account-avatar large">'+esc((cloudUser.email||'U')[0].toUpperCase())+'</span><div><strong>'+esc(cloudUser.email)+'</strong><small>'+esc(roleLabel())+'</small></div></div><button onclick="closeAccountMenu();go(\'Perfil\')">♙ Meu perfil</button>'+(cloudRole==='founder'?'<button onclick="closeAccountMenu();go(\'Fundador\')">♛ Painel do fundador</button>':'')+(canManageSite()?'<button onclick="closeAccountMenu();go(\'Acervo\')">▧ Acervo administrativo</button>':'')+'<button class="account-logout" onclick="closeAccountMenu();cloudLogout()">↪ Sair da conta</button>':'<div class="account-popover-head"><strong>Bem-vindo ao IASD Studio</strong><small>Navegue livremente ou entre para editar.</small></div><button class="account-signin" onclick="closeAccountMenu();openAuthModal()">Entrar na conta</button>'+'<button onclick="closeAccountMenu();openAuthModal(true)">Criar conta</button>')+'</div>'}
 function closeAccountMenu(){$('account-popover-root').innerHTML=''}
 function openAuthModal(signup=false){if(cloudUser){go('Perfil');return}authBusy=false;authSignupMode=signup;authNotice='';renderAuthModal()}
@@ -769,7 +773,7 @@ const DEFAULT_EDITABLE_TEXT={
 'Mais':[['.sectionhead h2','Título das ferramentas']]
 };
 let siteTextOverrides={},siteTextBusy=false;
-async function loadSiteText(){if(!cloud)return;const r=await cloud.from('iasd_site_content').select('content_key,content_value');if(!r.error){siteTextOverrides=Object.fromEntries((r.data||[]).map(x=>[x.content_key,x.content_value]));render()}}
+async function loadSiteText(){if(!cloud)return;const r=await cloud.from('iasd_site_content').select('content_key,content_value');if(!r.error){siteTextOverrides=Object.fromEntries((r.data||[]).map(x=>[x.content_key,x.content_value]));applyPalette(siteTextOverrides.site_palette||'aurora');render()}}
 function contentEditAllowed(){return !!cloudUser&&(window.IASDAccess?.canEditTexts(cloudRole)??['founder','cofounder','admin'].includes(cloudRole))}
 function applyInlineEditors(){const root=$('content');if(!root)return;
  const eligiblePages=['Painel','Projeção','Sorteadores','Mais','Mídia'];if(!eligiblePages.includes(current))return;
@@ -811,7 +815,7 @@ function toggleTheme(){
  try{localStorage.setItem('iasd-app-theme',next)}catch(e){}
  applyTheme(next);
 }
-try{applyTheme(localStorage.getItem('iasd-app-theme')==='light'?'light':'dark')}catch(e){applyTheme('dark')}
+try{applyTheme(storedMode()||defaultMode())}catch(e){applyTheme('dark')}
 
 
 const LAYOUT_STRUCTURES=['Clássico amplo','Menu superior','Barra de ícones','Menu à direita','Painel executivo','Compacto','Editorial central','Minimalista','Vitrine ampla','Menu de aplicativos'];
