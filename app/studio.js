@@ -116,7 +116,7 @@ window.stTakeover=function(keep,preserveVisual=false){
  return wait
 };
 async function closeScreenNow(){++youtubeSelection;const closing=call('stopProjection');stHymnFadeStop(180);try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'){try{stFadePause(a,180)}catch(e){}}})}catch(e){}closeYoutubeEmbeds($('testimonyEmbed'));try{localStorage.setItem('iasd-black','0')}catch(e){}stRenderNow();await Promise.resolve(closing);feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
-function blackScreen(){project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
+function blackScreen(){let on=false;try{on=localStorage.getItem('iasd-black')==='1'}catch(e){}if(on){return closeScreenNow()}project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
 function addSpecial(){const id=youtubeId($('specialUrl').value);if(!id){feedback('Insira um link válido do YouTube.');return}addSpecialId(id);$('specialUrl').value=''}

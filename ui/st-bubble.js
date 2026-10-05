@@ -103,7 +103,7 @@ function setBadge(){if(!badge)return;badge.textContent=unseen>9?'9+':String(unse
 function toggle(v){open=typeof v==='boolean'?v:!open;root.classList.toggle('open',open);if(open){view='main';render()}}
 
 function act(e){const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,w=fw();
- if(a==='black'){try{w.project('')}catch(x){}toggle(false)}
+ if(a==='black'){try{w.blackScreen()}catch(x){}toggle(false)}
  else if(a==='close'){try{w.closeScreenNow()}catch(x){}toggle(false)}
  else if(a==='fade'){const c=fadeCfg();c.on=!(c.on!==false);LS.set(FADE_KEY,c);render()}
  else if(a==='themefx'){try{const w=fw();w.stSetThemeFx(!w.stThemeFxOn())}catch(x){}setTimeout(render,80)}

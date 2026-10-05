@@ -255,3 +255,16 @@ html[data-skin="aurora"] body.st2 .st-fxrow .muted{font-size:13px}
 html[data-skin="aurora"] body.st2 .st-fxrow small{opacity:.7}
 html[data-skin="aurora"] body.st2 #stThemes{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
 html[data-skin="aurora"] body.st2 #themes .tr-box{display:grid;gap:14px}
+/* bolinhas: verde = ok · vermelho = off */
+html[data-skin="aurora"] .st-health-dot{background:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.2)!important}
+html[data-skin="aurora"] .st-health-item[data-connected="true"] .st-health-dot{background:#22c55e!important;box-shadow:0 0 0 3px rgba(34,197,94,.2)!important}
+html[data-skin="aurora"] .st-dot,html[data-skin="aurora"] .st-dot.warn{background:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.2)!important}
+html[data-skin="aurora"] .st-dot.ok{background:#22c55e!important;box-shadow:0 0 0 3px rgba(34,197,94,.2)!important}
+/* cabeçalho fixo */
+html[data-skin="aurora"] .st-banner{position:sticky!important;top:0;z-index:50}
+html[data-skin="aurora"] body.st2 .tools{position:sticky;top:64px;z-index:40}
+/* Fechar telão vermelho */
+html[data-skin="aurora"] .studio-action.close-action{background:linear-gradient(135deg,#ef4444,#b91c1c)!important;color:#fff!important;border-color:#ef4444!important}
+html[data-skin="aurora"]{height:100%;overflow:hidden!important}
+html[data-skin="aurora"] body.st2{height:100%;overflow-y:auto!important;overflow-x:hidden}
+html[data-skin="aurora"] .m-recent[hidden]{display:none!important}
