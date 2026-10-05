@@ -99,7 +99,7 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
   btns='<button type="button" data-yl="apq">'+(paused?'▶ Continuar':'⏸ Pausar')+'</button><button type="button" data-yl="acl">✕ Fechar música</button>'}
  const k=JSON.stringify([live,id,title,badge,btns]);if(c.dataset.k===k)return;c.dataset.k=k;c.dataset.tone=tone;
  c.style.setProperty('--yt-bg',id?'url(https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg)':'none');
- c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
+ c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small>'+(/MÚSICA|COMPUTADOR/.test(badge)?'<span class="yl-note">ⓘ “Fechar telão” não para esta música. Para parar, clique em “✕ Fechar música”.</span>':'')+'<div class="yl-b">'+btns+'</div></div>'}
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep,preserveVisual=false,hold=false){
  let wait=null;const P=window.parent,preserveHymnVisual=(keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony'))))||((keep==='timer'||keep==='ppt'||keep==='serviceVideo'||hold)&&!!window.__ytLive);/* cronômetro/slides: o vídeo fica no telão até o novo conteúdo entrar (sem tela preta no meio) */
