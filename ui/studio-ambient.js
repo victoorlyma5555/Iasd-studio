@@ -6,7 +6,11 @@
 const $=id=>document.getElementById(id);
 if(!$('ambient')||typeof youtubeList!=='function')return;
 const K={meta:'iasd-ambient-meta',queue:'iasd-ambient-queue',pls:'iasd-ambient-playlists'};
-const TAGS=['Espontâneo','Pads','Soaking','Hinos','Piano','Instrumentais','Calmas','Adoração','Natureza','Clássicas'];
+const TAGS_DEF=['Espontâneo','Pads','Soaking','Hinos','Piano','Violão','Instrumentais','Calmas','Adoração','Natureza'];
+let orderMode=false;
+const tagOrder=()=>{let o=[];try{o=JSON.parse(localStorage.getItem('iasd-ambient-tagorder')||'[]')}catch(e){}const base=o.filter(t=>TAGS_DEF.includes(t));TAGS_DEF.forEach(t=>{if(!base.includes(t))base.push(t)});return base};
+const setTagOrder=o=>{try{localStorage.setItem('iasd-ambient-tagorder',JSON.stringify(o))}catch(e){}};
+function moveTag(t,d){const o=tagOrder(),i=o.indexOf(t),j=i+d;if(i<0||j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];setTagOrder(o);renderChips()}
 const rd=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch(e){return d}};
 const wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let meta=rd(K.meta,{}),pls=rd(K.pls,[]),pane='lib',tag='',q='',sel=null,dragFrom=-1,plView=null;
@@ -32,7 +36,7 @@ function closeMenu(){if(menu){menu.remove();menu=null}}
 function openMenu(btn,items){closeMenu();menu=el('div','amb-menu');menu.setAttribute('role','menu');items.forEach(it=>{if(it==='-'){menu.append(el('hr'));return}const b=el('button',it.danger?'danger':'',it.label);b.type='button';b.setAttribute('role','menuitem');b.onclick=e=>{e.stopPropagation();closeMenu();it.fn()};menu.append(b)});document.body.append(menu);const r=btn.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;menu.style.left=Math.max(6,Math.min(innerWidth-w-6,r.right-w))+'px';menu.style.top=(r.bottom+h+6>innerHeight?Math.max(6,r.top-h-4):r.bottom+4)+'px'}
 document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target))closeMenu()});
 addEventListener('scroll',closeMenu,true);addEventListener('resize',closeMenu);
-function libMenu(btn,id){const it=[{label:'Tocar agora',fn:()=>play(id)},'-'];TAGS.forEach(t=>it.push({label:(tagOf(id)===t?'✓ ':'')+'Categoria: '+t,fn:()=>setTag(id,tagOf(id)===t?'':t)}));it.push('-',{label:'Remover da biblioteca',danger:true,fn:()=>removeId(id)});openMenu(btn,it)}
+function libMenu(btn,id){const it=[{label:'Tocar agora',fn:()=>play(id)},'-'];tagOrder().forEach(t=>it.push({label:(tagOf(id)===t?'✓ ':'')+'Categoria: '+t,fn:()=>setTag(id,tagOf(id)===t?'':t)}));it.push('-',{label:'Remover da biblioteca',danger:true,fn:()=>removeId(id)});openMenu(btn,it)}
 /* fila de reprodução: serve somente às Músicas especiais */
 const spList=()=>specialList();
 function spSave(list){try{localStorage.setItem(specialKey,JSON.stringify(list))}catch(e){}}
@@ -42,7 +46,9 @@ function queueMenu(btn,i){const l=spList(),id=l[i];openMenu(btn,[{label:'Selecio
 /* biblioteca */
 function playBtn(id){const b=el('button','amb-play');b.type='button';b.title='Tocar';b.setAttribute('aria-label','Tocar '+title(id));b.append(icon('play'));b.onclick=()=>play(id);return b}
 function moreBtn(fn,label){const b=el('button','amb-more');b.type='button';b.title='Mais opções';b.setAttribute('aria-label',label||'Mais opções');b.textContent='⋮';b.onclick=e=>{e.stopPropagation();fn(b)};return b}
-function renderChips(){const box=$('ambChips');if(!box)return;box.replaceChildren();if(plView){const b=el('button','on','Playlist: '+plName+' ✕');b.type='button';b.title='Voltar a todas as músicas';b.onclick=()=>{plView=null;renderChips();renderList()};box.append(b)}['',...TAGS].forEach(t=>{const b=el('button',t===tag?'on':'',t||'Todas');b.type='button';b.onclick=()=>{tag=t;renderChips();renderList()};box.append(b)})}
+function renderChips(){const box=$('ambChips');if(!box)return;box.replaceChildren();if(plView){const b=el('button','on','Playlist: '+plName+' ✕');b.type='button';b.title='Voltar a todas as músicas';b.onclick=()=>{plView=null;renderChips();renderList()};box.append(b)}['',...tagOrder()].forEach(t=>{if(!t){const b=el('button',t===tag?'on':'','Todas');b.type='button';b.onclick=()=>{tag='';renderChips();renderList()};box.append(b);const o=el('button','amb-org'+(orderMode?' on':''),orderMode?'✓ Pronto':'⇄ Organizar');o.type='button';o.title='Escolher a ordem das categorias';o.onclick=()=>{orderMode=!orderMode;renderChips()};box.append(o);return}
+  if(orderMode){const w=el('span','amb-ord');const l=el('button','',"◀");l.type='button';l.setAttribute('aria-label','Mover '+t+' para a esquerda');l.onclick=()=>moveTag(t,-1);const n=el('b','',t);const r=el('button','',"▶");r.type='button';r.setAttribute('aria-label','Mover '+t+' para a direita');r.onclick=()=>moveTag(t,1);w.append(l,n,r);box.append(w);return}
+  const b=el('button',t===tag?'on':'',t);b.type='button';b.onclick=()=>{tag=t;renderChips();renderList()};box.append(b)})}
 function renderList(){const box=$('ambList');if(!box)return;box.replaceChildren();const ql=q.trim().toLowerCase();
  const ids=visibleIds();
  if(!ids.length){const e=el('div','amb-empty');e.append(el('p','',lib().length?'Nenhuma música encontrada.':'Sua biblioteca está vazia. Adicione uma URL do YouTube ou pesquise na aba YouTube.'));if(!lib().length){const b=el('button','mp-btn','＋ Adicionar pad de referência');b.type='button';b.onclick=()=>{addAmbientExample();renderAll()};e.append(b)}box.append(e);return}
@@ -161,10 +167,6 @@ const PACK=[
 ['-3G_fe034fY','2 horas · Louvores e hinos gospel','Instrumentais']
 ];
 const PACK2=[
-['iLBgcz92Juw','Violão instrumental para relaxar e acalmar a mente','Instrumentais'],
-['dzhWwYNWQOs','25 melhores músicas no violão instrumental para relaxar','Instrumentais'],
-['CMudINWFz00','1 hora de violino, cello, piano, harpa e flauta relaxantes','Instrumentais'],
-['vy2gS_StpYI','1 hora de cello, violino, piano e harpa','Instrumentais'],
 ['9IqxtIQgfsQ','Horas de paz · Hinos ao violão e chuva para orar e meditar','Hinos'],
 ['TcMFyLT66pg','Hinos instrumentais que acalmam o coração','Hinos'],
 ['VHG2GVeAQmM','Hinos instrumentais · acalma o coração','Hinos'],
@@ -180,11 +182,6 @@ const PACK2=[
 ['a1g0VDXJ-G0','Himnos adventistas en piano para orar','Hinos'],
 ['5wKDGQIdNtQ','Himnos adventistas','Hinos'],
 ['OizUYZRE4oY','Himnos instrumentales','Hinos'],
-['Phiro6zDUD4','3 horas de música clássica para relaxar · Debussy, Mozart, Beethoven','Clássicas'],
-['F2A5XjWFwOg','8 horas de música clássica','Clássicas'],
-['Jye1bel-hcc','Bach · música clássica para relaxar','Clássicas'],
-['uk-DSogtQRo','Música clássica para relaxar · Mozart, Bach, Tchaikovsky','Clássicas'],
-['R_LwlEmmEtM','Debussy, Chopin, Satie · piano clássico','Clássicas'],
 ['269AlbEUKQU','Peaceful piano and soft rain','Natureza'],
 ['gabkanj4FMI','Relaxing piano music with rain sounds','Natureza'],
 ['77ZozI0rw7w','Relaxing piano music and water sounds','Natureza'],
@@ -198,7 +195,6 @@ const PACK2=[
 ['6Zkjuiu5IeY','Relaxing forest ambience','Natureza'],
 ['2x94sb4wFLA','Peaceful instrumental worship with nature sounds','Natureza'],
 ['hI1nO9zgt-U','Instrumental worship · 8 horas de violão suave','Natureza'],
-['yIRWqP7L4Jc','2 horas de música instrumental com natureza · Tim Janis','Natureza'],
 ['IvjMgVS6kng','Relaxing river sounds · 3 horas','Natureza'],
 ['MTEhA7SJYNE','Forest sounds and birdsong · 8 horas','Natureza'],
 ['pPrO2jlay40','Rainforest sounds · water meditation','Natureza'],
@@ -299,6 +295,59 @@ const PACK2=[
  $('ambientLinks').value=ids.map(i=>'https://www.youtube.com/watch?v='+i).join('\n');
  try{localStorage.setItem('iasd-youtube-ambient',ids.join('\n'))}catch(e){}
  wr('iasd-ambient-pack',PACK_V);wr(K.meta,meta);
+})();
+
+/* v3: remove músicas clássicas/seculares e acrescenta fundos gospel e hinos (adventistas, Harpa Cristã) */
+const PACK3=[
+['4KHbV8vWYRM','Fundo musical para oração · instrumental gospel · 1 hora de louvor','Adoração'],
+['7j1MDfPfTdk','Fundo musical gospel','Adoração'],
+['MMfQJRDQVto','Fundo musical para orar e adorar','Adoração'],
+['b5RuQTx8nmw','Fundo musical para oração (2)','Adoração'],
+['mzF22elp-J0','Fundo musical para oração e adoração (2)','Adoração'],
+['XZVJ04r4kl8','Fundo musical · Infinita Graça · para orar, pregar e meditar','Adoração'],
+['00QSCxdQY60','Fundo musical para oração (3)','Adoração'],
+['H0Vss_BzOOY','Fundo musical gospel (2)','Adoração'],
+['Z7ELZ_nZp2Y','Fundo musical Pai Nosso · para pregação e oração','Calmas'],
+['rqEFhCRcFLI','Prayer song · instrumental','Calmas'],
+['hEgWSWrurUE','Tu és por quem a minh\'alma esperou · instrumental','Adoração'],
+['wn7Q_3Kzl10','Fundo musical · Só Tu és santo','Adoração'],
+['qnegVgnyeFQ','Louvores instrumentais · 3 horas com Jesus · fundo para oração','Adoração'],
+['8AT4J-iFr40','Tua presença · 1 hora de louvor instrumental para orar e adorar','Adoração'],
+['rO0W3N5FCf8','Fundo musical gospel (3)','Adoração'],
+['u_I9wysnjFg','Fundo musical para oração e adoração (sem anúncio)','Adoração'],
+['hvLkO4wOgfE','Música adventista instrumental · colección','Hinos'],
+['Wm9Pe8XRcLs','1 hora de música adventista instrumental para oración','Hinos'],
+['pwplLiX6miQ','Música adventista para receber o sábado','Hinos'],
+['9_KaI6iEOaU','1 hora de músicas e hinos evangélicos com piano e chuva','Hinos'],
+['0Z7OIwWVJLs','Fundo musical Harpa Cristã · 2 horas instrumental piano','Hinos'],
+['wx7E9GgXc8M','Instrumental Harpa Cristã · 1 hora · canções que marcaram gerações','Hinos'],
+['dd2riY9qRe8','1H instrumental Harpa Cristã','Hinos'],
+['zRLPsIu-VAU','3h Harpa Cristã instrumental · piano','Hinos'],
+['i7RhAX-RTE0','Fundo musical Harpa Cristã 02 · piano','Hinos'],
+['IYfj3SXRZNM','Fundo musical para oração · 388 Harpa Cristã','Hinos'],
+['raQZ2mrwGEU','Fundo musical Harpa Cristã vol. 7','Hinos'],
+['A5C2CwWqS5k','Fundo musical Harpa Cristã','Hinos'],
+['p_zMiR4Ympk','3 horas de louvor no violão para oração e devocional','Violão'],
+['MeX6nnmIgnM','25 músicas gospel no violão fingerstyle','Violão'],
+['M5WxW75_6Zg','Hinos CCB tocados em violino e violão','Violão'],
+['YmSf1DYl6Ec','Hinos CCB instrumental · hinos que acalmam o coração','Hinos'],
+['QkOUi4CS5q0','Hinos CCB na harpa com chuva forte · meditar e orar','Hinos'],
+['uW9MtANqbSE','Fundo musical para oração (4)','Adoração'],
+['cDF8dWftXpI','2 horas de louvor instrumental · fundo musical para orar e adorar','Adoração'],
+['FwBy5rVtUOg','Fundo musical para devocional, oração e ministração','Adoração'],
+['uB9KVKp1az0','Fundo musical · Tua presença','Adoração']
+];
+const RETAG3={'9IqxtIQgfsQ':'Violão','hI1nO9zgt-U':'Violão','I2EMxI8DYGA':'Violão'};
+const PURGE3=['Phiro6zDUD4', 'F2A5XjWFwOg', 'Jye1bel-hcc', 'uk-DSogtQRo', 'R_LwlEmmEtM', 'iLBgcz92Juw', 'dzhWwYNWQOs', 'CMudINWFz00', 'vy2gS_StpYI', 'yIRWqP7L4Jc'];
+(function seed3(){
+ if(rd('iasd-ambient-pack3',0)>=1)return;
+ let ids=lib().filter(i=>!PURGE3.includes(i));
+ PURGE3.forEach(i=>{delete meta[i];try{window.IASDLib&&IASDLib.cloudDel('ambient',i)}catch(e){}});
+ Object.keys(RETAG3).forEach(i=>{meta[i]=Object.assign({},meta[i],{tag:RETAG3[i]})});
+ PACK3.forEach(([id,t,g])=>{if(valid(id)&&!ids.includes(id))ids.push(id);meta[id]=Object.assign({title:t,tag:g},meta[id]||{})});
+ $('ambientLinks').value=ids.map(i=>'https://www.youtube.com/watch?v='+i).join('\n');
+ try{localStorage.setItem('iasd-youtube-ambient',ids.join('\n'))}catch(e){}
+ wr('iasd-ambient-pack3',1);wr(K.meta,meta);
 })();
 lib().forEach(fetchTitle);
 renderAll();

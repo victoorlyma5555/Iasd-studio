@@ -413,3 +413,10 @@ html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button:hover{background:rg
 html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button[data-yl="cl"],html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button[data-yl="acl"]{background:linear-gradient(180deg,#ef3b50,#b3162a)!important;border-color:#ff8a98!important;box-shadow:0 8px 22px -8px rgba(239,59,80,.75)}
 html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button.main{background:var(--au-grad);color:var(--au-on);border:0}
 html[data-skin="aurora"] .yt-live-card .yl-note{display:block;margin:8px auto 0;max-width:420px;padding:7px 12px;border-radius:12px;font-size:12px;line-height:1.35;opacity:1;color:#fff;background:rgba(var(--au-a1-rgb),.28);border:1px solid rgba(var(--au-a1-rgb),.55)}
+
+/* categorias das músicas ambientes: organizar a ordem */
+#ambChips .amb-org{border-style:dashed!important;opacity:.9}
+#ambChips .amb-org.on{background:var(--au-grad,#2563eb)!important;color:var(--au-on,#fff)!important;border-style:solid!important;opacity:1}
+#ambChips .amb-ord{flex:none;display:inline-flex;align-items:center;gap:2px;padding:3px 4px;border-radius:99px;border:1px dashed rgba(var(--au-w,255,255,255),.4);background:rgba(var(--au-w,255,255,255),.06)}
+#ambChips .amb-ord b{font-size:12.5px;font-weight:700;padding:0 4px}
+#ambChips .amb-ord button{min-width:26px;height:26px;padding:0!important;border-radius:50%!important;font-size:11px}
