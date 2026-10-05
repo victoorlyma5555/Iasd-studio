@@ -47,7 +47,8 @@ const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="no
 
 /* ---------- páginas do menu ---------- */
 const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
-function mainPages(){return MAIN.filter(x=>x[0]!=='Projeção'||S.sound())}
+const isAurora=()=>document.documentElement.getAttribute('data-skin')==='aurora';
+function mainPages(){const l=MAIN.filter(x=>x[0]!=='Projeção'||S.sound());if(isAurora())l.push(['Hinário','music','Hinário']);return l}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
 const TITLES={Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
@@ -510,8 +511,36 @@ function bannerHTML(){
   const media=g(()=>homeCarouselMarkup())||'';
   return `<section class="iu-ban">${media?'':'<div class="iu-orb"></div>'}<div class="iu-ban-shade"></div>${S.manage()?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}<div class="in"><div class="iu-eb">${E(b.eyebrow)}</div><h1>${E(b.title[0])} <i>${E(b.title[1])}</i></h1><p>${E(b.verse)}</p><small>${E(b.ref)}</small><br><button class="iu-btn p" data-go="Cronograma">${ic('calendar',17)}${E(b.button)}${ic('chev',16)}</button></div>${media}</section>`;
 }
+
+/* ---------- Home da interface Aurora (organização nova) ---------- */
+function auName(){
+  const prof=g(()=>myProfile)||null,u=S.user();
+  const n=prof?.full_name||u?.user_metadata?.full_name||(u?.email||'').split('@')[0]||'';
+  return String(n).trim().split(/\s+/)[0]||'';
+}
+function auGreeting(){const h=new Date().getHours();return h<5?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','#ffc15e','rgba(255,193,94,.16)'],['Projeção','monitor','IASD Projetor','Studio de Projeção','#35f0b9','rgba(53,240,185,.14)'],['Bíblia','book','Bíblia','Leia e pesquise','#ff7d98','rgba(255,106,136,.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','#a99bff','rgba(139,123,255,.18)'],['Jogo','game','Jogos','Atividades e interação','#ff9a62','rgba(255,138,76,.16)'],['Escalas','users','Escalas','Consulta mensal','#ffc15e','rgba(255,193,94,.16)'],['Datas especiais','star','Datas Especiais','Eventos e comemorações','#35f0b9','rgba(53,240,185,.14)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','#ff7d98','rgba(255,106,136,.15)'],['Hinário','music','Hinário','Adventista','#a99bff','rgba(139,123,255,.18)']];
+function auDock(){
+  const t=AU_DOCK.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
+  S.tabs().forEach(x=>t.push(`<button class="au-tile" data-go="${E('custom:'+x.id)}"><span class="au-ic" style="background:rgba(255,193,94,.16);color:#ffc15e">${E(x.icon||'✦')}</span><span><b>${E(x.title||'Aba')}</b><small>Aba da igreja</small></span></button>`));
+  return `<nav class="au-dock au-c12" aria-label="Atalhos">${t.join('')}</nav>`;
+}
+function auHello(){
+  const d=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'short'});
+  const nm=auName(),b=config.banner;
+  const first=S.sound()?`<button class="iu-btn p" data-go="Projeção">${ic('play',16)}Abrir Studio de Projeção</button>`:`<button class="iu-btn p" data-go="Cronograma">${ic('calendar',16)}Ver cronogramas</button>`;
+  return `<article class="au-card au-hello au-c7"><div class="au-orbit"></div><div class="au-orbit s"></div><span class="au-dot"></span>${S.manage()?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}<div class="au-lab"><i></i>${E(d)}</div><div><h1>${E(auGreeting())}${nm?`,<br><span>${E(nm)}.</span>`:'!'}</h1><p>${E(b.title.join(' '))} · ${E(b.verse)} <em>${E(b.ref)}</em></p></div><div class="au-act">${first}<button class="iu-btn" data-go="Jogo">${ic('game',16)}Jogos</button></div></article>`;
+}
+function auArena(){
+  return `<article class="au-card au-arena au-c4"><div class="au-orbit s"></div><div><div class="au-lab"><i></i>Jogo coletivo</div><h2>Arena<br>da turma</h2><p>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</p></div><div><div class="au-chips"><span>Quiz</span><span>Verdadeiro ou falso</span><span>Travessia</span><span>Aposta</span><span>Votação</span></div><button class="iu-btn p" data-go="Jogo">${ic('game',16)}Abrir jogos</button></div></article>`;
+}
+function homeAurora(){
+  const proj=S.sound()?`<div class="au-c4 au-wrap"><section class="iu-pan" id="iu-proj">${projInner()}</section></div>`:'';
+  return `<div class="iu-home au-home"><div class="au-grid">${auHello()}<div class="au-c5 au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="${S.sound()?'au-c4':'au-c8'} au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
+}
 api.home=function(){
   try{
+    if(isAurora())return homeAurora();
     return `<div class="iu-home">${bannerHTML()}<div class="iu-grid two${sched.expanded?' exp':''}">${scheduleHTML()}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${extrasHTML()}${teamHTML()}${sideTabsHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);

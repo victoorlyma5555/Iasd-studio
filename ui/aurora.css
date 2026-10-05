@@ -103,3 +103,44 @@ html[data-skin="aurora"] .au-switch small{color:#ffc15e}
 html[data-skin="aurora"] .iu-search input{background:transparent!important;box-shadow:none!important;color:#f4efe8!important}
 html[data-skin="aurora"] .iu-search input::placeholder{color:#8f89a0}
 html[data-skin="aurora"] .iu-pas .iu-btn:last-child,html[data-skin="aurora"] .iu-pas button[data-act="vshare"]{background:var(--au-grad)!important;color:#1a0f05!important;border:0!important}
+
+/* ---------- Home Aurora: organização nova ---------- */
+.au-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.au-c4{grid-column:span 4}.au-c5{grid-column:span 5}.au-c7{grid-column:span 7}.au-c12{grid-column:span 12}
+.au-wrap{display:flex}.au-wrap>.iu-pan{flex:1;min-width:0}
+.au-card{position:relative;overflow:hidden;border-radius:26px;padding:24px;border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:260px;background:var(--au-glass)}
+.au-hello{background:linear-gradient(135deg,rgba(255,138,76,.24),rgba(123,92,255,.13) 60%,rgba(255,255,255,.03));border-color:rgba(255,193,94,.22)}
+.au-hello h1{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(38px,4.6vw,60px);line-height:1;font-weight:800;letter-spacing:-.03em}
+.au-hello h1 span{background:linear-gradient(90deg,#ffc15e,#ff6a88 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.au-hello p{margin:12px 0 0;color:#c9c3d6;font-size:15px;max-width:480px}.au-hello p em{font-style:normal;color:#a39db3}
+.au-lab{display:flex;align-items:center;gap:8px;font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#a39db3}
+.au-lab i{width:7px;height:7px;border-radius:50%;background:#ffc15e;box-shadow:0 0 12px #ffc15e}
+.au-act{display:flex;gap:10px;flex-wrap:wrap}
+.au-orbit{position:absolute;right:-110px;top:-140px;width:400px;height:400px;border-radius:50%;border:1px dashed rgba(255,255,255,.16);pointer-events:none;animation:au-spin 60s linear infinite}
+.au-orbit.s{width:240px;height:240px;right:-30px;top:-60px;animation-direction:reverse}
+.au-arena .au-orbit.s{top:auto;bottom:-110px}
+.au-dot{position:absolute;right:46px;top:34px;width:14px;height:14px;border-radius:50%;background:#ffc15e;box-shadow:0 0 24px 6px rgba(255,193,94,.6)}
+@keyframes au-spin{to{transform:rotate(360deg)}}
+.au-dock{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.au-tile{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.09);background:var(--au-glass);color:#f4efe8;text-align:left;font-family:inherit;cursor:pointer;transition:transform .15s,border-color .15s}
+.au-tile:hover{transform:translateY(-2px);border-color:rgba(255,193,94,.45)}
+.au-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;font-size:18px}
+.au-tile b{display:block;font:700 14.5px "Bricolage Grotesque",sans-serif}
+.au-tile small{display:block;color:#a39db3;font-size:12px;margin-top:1px}
+.au-arena{background:linear-gradient(160deg,rgba(255,138,76,.28),rgba(123,92,255,.2) 70%,rgba(255,255,255,.02))}
+.au-arena h2{margin:10px 0 0;font:800 40px/.95 "Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
+.au-arena p{margin:10px 0 0;color:#d6d0e2;font-size:13.5px;max-width:260px}
+.au-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.au-chips span{padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
+.au-home .iu-extras{margin-top:14px}
+@media (max-width:1100px){.au-c4{grid-column:span 6}.au-c5,.au-c7{grid-column:span 12}}
+@media (max-width:700px){.au-c4{grid-column:span 12}.au-card{padding:20px;min-height:0}.au-dock{grid-template-columns:1fr 1fr}.au-tile{padding:10px}.au-ic{width:36px;height:36px}.au-tile small{display:none}}
+
+/* perfil: escolha de interface */
+.pf-skin-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.pf-skin-opts button{padding:14px;border-radius:16px;border:1px solid rgba(128,128,160,.35);background:transparent;color:inherit;text-align:left;font-family:inherit;cursor:pointer}
+.pf-skin-opts button b{display:block;font-size:15px}.pf-skin-opts button small{opacity:.7;font-size:12px}
+.pf-skin-opts button.on{border-color:#ffb347;box-shadow:0 0 0 2px rgba(255,179,71,.3)}
+.au-c8{grid-column:span 8}
+.au-dock{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1100px){.au-c8{grid-column:span 12}.au-dock{grid-template-columns:repeat(2,minmax(0,1fr))}}

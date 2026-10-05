@@ -703,8 +703,12 @@ function profile(){
  '<section class="pg-card pf-ach"><div class="pf-ah"><span>'+I('star','gold')+'</span><div><h3>Minhas conquistas</h3><small>Medalhas que mostram a sua dedicação.</small></div><button class="pf-link inl" onclick="IASDPages.pfAll()">'+(PF.all?'Ver menos':'Ver todas')+' '+I('right')+'</button></div><div class="pf-bds">'+showAll.map(b=>pfBadge(b,b[5](c))).join('')+'</div></section>'+
  pfStudySec(c)+
  '<section class="pg-card pf-nx"><span class="pf-tg">🎯</span><div><h3>Seu próximo passo</h3><small>'+esc(nx[1])+'</small></div><button class="pg-gold" onclick="go(\''+nx[3]+'\')">'+esc(nx[2])+' '+I('right')+'</button></section>'+
- '<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
+ pfSkinSec()+'<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
 }
+function pfSkinSec(){
+ if(!(typeof cloudRole!=='undefined'&&cloudRole==='founder'))return '';
+ const au=document.documentElement.getAttribute('data-skin')==='aurora';
+ return '<section class="pg-card pf-skin"><div class="pf-ah"><span>✦</span><div><h3>Interface do site</h3><small>Somente fundador · vale neste aparelho. A nova interface é a padrão; aqui você pode voltar ao template clássico.</small></div></div><div class="pf-skin-opts"><button class="'+(au?'':'on')+'" onclick="setSkin(\'classic\')"><b>Clássica</b><small>Template anterior</small></button><button class="'+(au?'on':'')+'" onclick="setSkin(\'aurora\')"><b>Nova · Aurora</b><small>Padrão do site</small></button></div></section>'}
 function pfStudySec(c){
  const M=window.IASDStudyMe;if(!M)return '';const cs=M.view();
  const tro=c.tro?'<div class="pf-bds" style="margin-top:10px">'+pfBadge(M.SEALS[M.SEALS.length-1],true)+'</div>':'';
