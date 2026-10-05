@@ -729,7 +729,7 @@ function profile(){
  '<section class="pg-card pf-nx"><span class="pf-tg">🎯</span><div><h3>Seu próximo passo</h3><small>'+esc(nx[1])+'</small></div><button class="pg-gold" onclick="go(\''+nx[3]+'\')">'+esc(nx[2])+' '+I('right')+'</button></section>'+
  pfSkinSec()+'<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
 }
-function pfSkinSec(){
+function pfSkinSec(){return '';
  if(!(typeof cloudRole!=='undefined'&&cloudRole==='founder'))return '';
  const au=document.documentElement.getAttribute('data-skin')==='aurora';
  return '<section class="pg-card pf-skin"><div class="pf-ah"><span>✦</span><div><h3>Interface do site</h3><small>Somente fundador · vale neste aparelho. A nova interface é a padrão; aqui você pode voltar ao template clássico.</small></div></div><div class="pf-skin-opts"><button class="'+(au?'':'on')+'" onclick="setSkin(\'classic\')"><b>Clássica</b><small>Template anterior</small></button><button class="'+(au?'on':'')+'" onclick="setSkin(\'aurora\')"><b>Nova · Aurora</b><small>Padrão do site</small></button></div></section>'}

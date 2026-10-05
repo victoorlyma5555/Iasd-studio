@@ -236,3 +236,20 @@ html[data-skin="aurora"] body.iu .pg-perfil .pf-out .pg-ghost{color:#ff9fb3}
 html[data-skin="aurora"] body.iu .hn .hn-list{grid-template-columns:minmax(0,1fr)}
 html[data-skin="aurora"] body.iu .hn .hn-row{width:100%;min-width:0}
 html[data-skin="aurora"] body.iu .pg-jogral .jg-f input,html[data-skin="aurora"] body.iu .pg-jogral .jg-f textarea{background:var(--ab-fld)}
+
+/* campos: vencem o fundo azul do legacy (dark) */
+html[data-skin="aurora"][data-theme] body.iu :is(.au-datas .au-dt-add,.pg-jogral .jg-f,.hn .hn-search) :is(input,textarea,select){background:var(--ab-fld)!important;border-color:var(--ab-fbd)!important;color:#f4efe8!important}
+html[data-skin="aurora"][data-theme] body.iu .hn .hn-search input{background:transparent!important;border:0!important}
+html[data-skin="aurora"][data-theme] body.iu .iu-search input{background:transparent!important;border:0!important}
+html[data-skin="aurora"][data-theme] body.iu .pg-perfil :is(input,textarea,select){background:var(--ab-fld)!important;border-color:var(--ab-fbd)!important}
+/* convidado no Perfil */
+html[data-skin="aurora"] body.iu .profile-guest{background:var(--ab-glass);border:1px solid var(--ab-bd);border-radius:24px;padding:22px;color:#f4efe8}
+html[data-skin="aurora"] body.iu .profile-guest h2{font:800 28px/1.1 "Bricolage Grotesque",sans-serif}
+html[data-skin="aurora"] body.iu .profile-guest :is(.primary,button){background:var(--ab-grad);color:#1a0f05;border:0;border-radius:22px;font-weight:700}
+/* edições do hinário alinhadas */
+html[data-skin="aurora"] body.iu .hn .hn-eds button{align-items:center;line-height:1}
+html[data-skin="aurora"] body.iu .hn .hn-head{align-items:center}
+/* chips do jogral: texto sem negrito pesado */
+html[data-skin="aurora"] body.iu .pg-jogral .jg-chip{font-weight:600}
+html[data-skin="aurora"] body.iu .panel.profile-guest{background:var(--ab-glass)!important;border-color:var(--ab-bd)!important}
+html[data-skin="aurora"] body.iu .panel.profile-guest :is(button,.btn){background:var(--ab-grad)!important;color:#1a0f05!important}

@@ -395,3 +395,9 @@ html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body{align-items:flex-start}
   html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-j,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-acc{display:none}
   html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools .pg-search{flex:1 1 100%;order:-1}
 }
+
+/* ---------- retoques finais (sem azul chapado) ---------- */
+html[data-skin="aurora"] body.iu .pg-licao :is(.sabbath-error button,.sabbath-back){border:0!important;background:var(--au-grad)!important;color:#1a0f05!important;border-radius:20px!important;font-weight:700!important;padding:10px 18px!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav .favs i{background:linear-gradient(135deg,#ffc15e,#ff8a4c);color:#1a0f05;font-family:"JetBrains Mono",monospace;font-size:11px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav .favs i:empty{display:none}
+html[data-skin="aurora"] body.iu .pg-biblia .bible-error button{border-radius:20px;background:var(--au-grad);color:#1a0f05;border:0;font-weight:700}
