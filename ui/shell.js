@@ -46,7 +46,7 @@ const P={close:'M6 6l12 12M18 6L6 18',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
-const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Datas especiais','star','Datas Especiais'],['Palavra em Cena','film','Palavra em Cena']];
+const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Palavra em Cena','film','Palavra em Cena']];
 const isAurora=()=>document.documentElement.getAttribute('data-skin')==='aurora';
 function mainPages(){const l=MAIN.filter(x=>x[0]!=='Projeção'||S.sound());if(isAurora())l.push(['Hinário','music','Hinário']);return l}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
@@ -163,7 +163,6 @@ const CARDS=[
  ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','home_icon_lesson','#1c3b6e','#4a7bd0'],
  ['Jogo','game','Jogos','Atividades e interação','home_icon_games','#a86a12','#f4c24a'],
  ['Escalas','users','Escalas','Consulte as escalas mensais','home_icon_scales','#1d2f6b','#6d4be0'],
- ['Datas especiais','star','Datas Especiais','Eventos e comemorações','home_icon_dates','#a0304a','#f08a5d'],
  ['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','home_icon_pec','#33307a','#8f6fe8']
 ];
 const QUICK=[
@@ -535,7 +534,7 @@ const AUI={
 'Hinário':'<path d="M9 17.500V6.200l10-2v11.300" fill="currentColor" fill-opacity=".14"/><path d="M9 9.800l10-2"/><ellipse cx="6.500" cy="17.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/><ellipse cx="16.500" cy="15.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/>'
 };
 function auIc(id,size=20){const b=AUI[id==='Sonoplastia'?'Projeção':id];return b?`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`:''}
-const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Projeção','monitor','IASD Projetor','Studio de Projeção','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Datas especiais','star','Datas Especiais','Eventos e comemorações','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
+const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Projeção','monitor','IASD Projetor','Studio de Projeção','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
 function auDock(){
   const t=AU_DOCK.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${auIc(go,26)||ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
   S.tabs().forEach(x=>t.push(`<button class="au-tile" data-go="${E('custom:'+x.id)}"><span class="au-ic" style="background:rgba(var(--au-a1-rgb),.16);color:var(--au-a1)">${E(x.icon||'✦')}</span><span><b>${E(x.title||'Aba')}</b><small>Aba da igreja</small></span></button>`));
