@@ -504,3 +504,8 @@ html[data-skin="aurora"] select option:checked{background:var(--au-a1);color:var
   html[data-skin="aurora"] body.iu.iu-projector-menu-collapsed .iu-side-collapse{width:46px;justify-content:center;padding:0;gap:0}
   html[data-skin="aurora"] body.iu.iu-projector-menu-collapsed .iu-side-collapse span{display:none}
 }
+/* item ativo do menu: destaque suave (sem brilho forte) */
+@media (min-width:901px){
+  html[data-skin="aurora"] body.iu .iu-side .iu-nav.on{background:rgba(var(--au-a1-rgb),.16);color:var(--au-tx);box-shadow:inset 0 0 0 1px rgba(var(--au-a1-rgb),.32)}
+  html[data-skin="aurora"] body.iu .iu-side .iu-nav.on svg{color:var(--au-a1)}
+}
