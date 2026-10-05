@@ -1,0 +1,10 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Constelações · harness</title>
+<style>body{margin:0;background:#111;color:#fff;font-family:sans-serif}</style></head><body><button id="go" onclick="IASDConstellations.open({code:new URLSearchParams(location.search).get('seq')||''})">abrir</button>
+<script>
+const API=location.origin.replace(/:\d+$/,':'+(new URLSearchParams(location.search).get('api')||'4890'));window.__SEQ_API=API;
+window.iasdCloud={channels:0,channel(name){const cid=Math.random().toString(36).slice(2);let cbs=[],es=null,self=this;self.channels++;
+ const c={on(t,f,cb){cbs.push(cb);return c},subscribe(cb){es=new EventSource(API+'/rt?ch='+name+'&cid='+cid);es.onopen=()=>cb&&cb('SUBSCRIBED');es.onmessage=e=>cbs.forEach(f=>f({payload:JSON.parse(e.data)}));return c},
+  send(m){fetch(API+'/rt?ch='+name+'&cid='+cid,{method:'POST',body:JSON.stringify(m.payload)}).catch(()=>{})},_close(){es&&es.close();self.channels--}};return c},
+ removeChannel(c){c._close()}};
+</script>
+<script src="/games/constellations/loader.js?v=h"></script></body></html>
