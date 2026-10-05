@@ -407,9 +407,9 @@ html[data-skin="aurora"] body.st2 .pj-actions button:hover{filter:brightness(1.1
 html[data-skin="aurora"] body.st2 .pj-actions .pj-note{grid-column:1/-1;margin:2px 0 0;padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.35;color:var(--au-tx);background:rgba(var(--au-a1-rgb),.14);border:1px solid rgba(var(--au-a1-rgb),.35)}
 
 /* botões dentro do preview (cartão do vídeo/música): mais visíveis */
-html[data-skin="aurora"] .yl-b{gap:10px;margin-top:10px}
-html[data-skin="aurora"] .yl-b button{min-height:42px;padding:0 18px;border-radius:14px;font-size:14px;font-weight:800;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.55);box-shadow:0 8px 22px -10px rgba(0,0,0,.8);backdrop-filter:blur(6px)}
-html[data-skin="aurora"] .yl-b button:hover{background:rgba(255,255,255,.3);transform:translateY(-1px)}
-html[data-skin="aurora"] .yl-b button[data-yl="cl"],html[data-skin="aurora"] .yl-b button[data-yl="acl"]{background:linear-gradient(180deg,#ef3b50,#b3162a);border-color:#ff8a98;box-shadow:0 8px 22px -8px rgba(239,59,80,.75)}
-html[data-skin="aurora"] .yl-b button.main{background:var(--au-grad);color:var(--au-on);border:0}
+html[data-skin="aurora"] body.st2 .yt-live-card .yl-b{gap:10px;margin-top:10px}
+html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button{min-height:42px;padding:0 18px;border-radius:14px;font-size:14px;font-weight:800;color:#fff!important;background:rgba(255,255,255,.2)!important;border:1px solid rgba(255,255,255,.55)!important;box-shadow:0 8px 22px -10px rgba(0,0,0,.8);backdrop-filter:blur(6px)}
+html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button:hover{background:rgba(255,255,255,.3);transform:translateY(-1px)}
+html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button[data-yl="cl"],html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button[data-yl="acl"]{background:linear-gradient(180deg,#ef3b50,#b3162a)!important;border-color:#ff8a98!important;box-shadow:0 8px 22px -8px rgba(239,59,80,.75)}
+html[data-skin="aurora"] body.st2 .yt-live-card .yl-b button.main{background:var(--au-grad);color:var(--au-on);border:0}
 html[data-skin="aurora"] .yt-live-card .yl-note{display:block;margin:8px auto 0;max-width:420px;padding:7px 12px;border-radius:12px;font-size:12px;line-height:1.35;opacity:1;color:#fff;background:rgba(var(--au-a1-rgb),.28);border:1px solid rgba(var(--au-a1-rgb),.55)}
