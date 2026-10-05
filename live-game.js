@@ -931,11 +931,20 @@ button.gj-ph{cursor:pointer}.gj-ph.off{border-style:dashed;border-color:rgba(255
 .ev{width:100%;max-width:1100px;margin:0 auto;padding:clamp(64px,10vh,96px) 16px clamp(8px,2vh,20px);justify-content:center;min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.6vh,16px);text-align:center;overflow:hidden;max-height:100%;box-sizing:border-box}
 .ev-hd h1{margin:4px 0 0;font-size:clamp(20px,4.6vh,42px);line-height:1.1}.ev-hd h1 b{color:#fbbf24}.ev-hd p{margin:4px 0 0;opacity:.85;font-size:clamp(12px,2.2vh,18px)}
 .ev-lanes{width:100%;display:flex;flex-direction:column;gap:clamp(8px,2vh,18px)}
-.ev-lane{position:relative;height:clamp(54px,11vh,100px);border-radius:16px;background:linear-gradient(90deg,#0c4a8a,#1d6fb8 45%,#0c4a8a);overflow:hidden;border:2px solid rgba(255,255,255,.25)}
-.ev-lane .path{position:absolute;left:0;right:0;top:50%;height:34%;transform:translateY(-50%);background:linear-gradient(90deg,#d6b27a,#f1d9a6);opacity:.9;clip-path:inset(0 calc(100% - var(--p)*100%) 0 0);transition:clip-path .3s linear}
-.ev-lane .lbl{position:absolute;left:10px;top:4px;font-weight:800;font-size:clamp(10px,1.8vh,15px);z-index:2;text-shadow:0 1px 3px #000}
-.ev-lane .ppl{position:absolute;top:50%;left:calc(var(--p)*(100% - 120px) + 6px);transform:translateY(-50%);font-size:clamp(20px,4vh,34px);white-space:nowrap;transition:left .3s linear;filter:drop-shadow(0 2px 2px #0008)}
-.ev-lane .far{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:clamp(22px,4.4vh,38px)}
+.ev-lane{position:relative;height:clamp(96px,20vh,190px);border-radius:18px;overflow:hidden;border:2px solid rgba(255,255,255,.3);box-shadow:0 8px 24px #0006;background:#0b3d73}
+.ev-lane i{position:absolute;left:0;right:0}
+.ev-lane .sky{top:0;height:30%;background:linear-gradient(#f59e0b,#fcd34d 70%,#fde68a)}
+.ev-lane .sea{top:22%;bottom:0;background:repeating-linear-gradient(100deg,#0e5aa7 0 22px,#1473c4 22px 44px);background-size:88px 100%;animation:evSea 3s linear infinite}
+@keyframes evSea{to{background-position:88px 0}}
+.ev-lane .wall{left:0;right:0;height:calc(32% - var(--p)*10%);background:linear-gradient(#0a3a6e,#0e5aa7);box-shadow:inset 0 -8px 10px #0005;z-index:1}
+.ev-lane .wall.t{top:22%;border-radius:0 0 40% 40%/0 0 60% 60%}
+.ev-lane .wall.b{bottom:0;top:auto;height:calc(34% - var(--p)*10%);background:linear-gradient(#0e5aa7,#0a3a6e);border-radius:40% 40% 0 0/60% 60% 0 0}
+.ev-lane .path{top:50%;height:28%;transform:translateY(-50%);z-index:2;background:linear-gradient(#e7c88f,#c9a15e);clip-path:inset(0 calc(100% - var(--p)*100%) 0 0);transition:clip-path .3s linear}
+.ev-lane .lbl{position:absolute;left:10px;top:4px;font-weight:800;font-size:clamp(10px,1.8vh,15px);z-index:5;text-shadow:0 1px 3px #000}
+.ev-lane .ppl{position:absolute;top:50%;left:calc(var(--p)*(100% - 230px) + 8px);transform:translateY(-58%);font-size:clamp(20px,4.2vh,36px);white-space:nowrap;transition:left .3s linear;filter:drop-shadow(0 2px 2px #0008);z-index:4;animation:evWalk .5s ease-in-out infinite alternate}
+.ev-lane .chs{position:absolute;top:50%;left:calc(var(--p)*(100% - 230px) - 66px);transform:translateY(-55%);font-size:clamp(18px,3.6vh,30px);white-space:nowrap;transition:left .3s linear;z-index:3;opacity:.9;animation:evWalk .3s ease-in-out infinite alternate}
+@keyframes evWalk{to{margin-top:-4px}}
+.ev-lane .far{position:absolute;right:8px;top:50%;transform:translateY(-62%);font-size:clamp(22px,4.6vh,40px);z-index:4}
 .ev-cd{font-size:clamp(46px,14vh,120px);font-weight:900;line-height:1;color:#fbbf24;animation:evPop .9s ease-out}.ev-cd.go{color:#34d399}
 @keyframes evPop{0%{transform:scale(.4);opacity:0}30%{transform:scale(1.2);opacity:1}100%{transform:scale(1)}}
 .ev-meta{font-size:clamp(13px,2.4vh,20px);opacity:.95}.ev-meta b{color:#fbbf24}
@@ -1507,7 +1516,7 @@ async function evMar(E){
  E.taps={};E.onMsg=(m,p)=>{if(m.k!=='mar')return;const t=Date.now();if(t<at-400||t>at+dur+2000)return;const v=Math.max(0,Math.min(cap,Math.floor(+m.v||0)));if(v>(E.taps[p.id]||0))E.taps[p.id]=v};
  const tots=()=>{const o={A:0,B:0,all:0};ps.forEach(p=>{const v=E.taps[p.id]||0;o.all+=v;if(teams)o[teamOf(p)]+=v});return o};
  const prog=()=>{const o=tots(),r={};keys.forEach(k=>{r[k]=teams?Math.min(1,o[k]/Math.max(1,cnt[k])/perGoal):Math.min(1,o.all/goal)});return r};
- const lane=k=>'<div class="ev-lane" id="ev-l-'+k+'" style="--p:0">'+(teams?'<span class="lbl" style="color:'+TEAMS[k].c+'">'+TEAMS[k].e+' TIME '+TEAMS[k].n.toUpperCase()+'</span>':'')+'<i class="path"></i><span class="ppl" id="ev-pp-'+k+'">🚶‍♂️🚶‍♀️🚶</span><span class="far">🏁</span></div>';
+ const lane=k=>'<div class="ev-lane" id="ev-l-'+k+'" style="--p:0"><i class="sky"></i><i class="sea"></i><i class="wall t"></i><i class="wall b"></i><i class="path"></i>'+(teams?'<span class="lbl" style="color:'+TEAMS[k].c+'">'+TEAMS[k].e+' TIME '+TEAMS[k].n.toUpperCase()+'</span>':'')+'<span class="chs" id="ev-ch-'+k+'">🐎🐎</span><span class="ppl" id="ev-pp-'+k+'">🚶‍♂️🚶‍♀️🧎</span><span class="far">⛰️🌴</span></div>';
  evScreen(evHead('mar','Toquem no celular o mais rápido que puderem para abrir o mar!')+'<div class="ev-lanes">'+keys.map(lane).join('')+'</div><div class="ev-cd" id="ev-cd">3</div><div class="ev-meta" id="ev-meta">Preparem o dedo…</div>','ev-mar');
  A().sfx('whoosh');
  evCast({a:'start',k:'mar',id:E.id,at,dur,iv:Math.max(400,np*28),team:teams?1:0});
