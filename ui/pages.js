@@ -731,7 +731,7 @@ function profile(){
 }
 function pfSkinSec(){
  const cur=document.documentElement.getAttribute('data-palette')||'aurora';
- const L=[['aurora','Aurora','linear-gradient(135deg,#ffc15e,#ff8a4c 55%,#7b5cff)'],['oceano','Oceano','linear-gradient(135deg,#5ef0d0,#2ea8ff 55%,#5c6bff)'],['porsol','Pôr do sol','linear-gradient(135deg,#ff9a8a,#ff4f8b 55%,#b24bff)'],['floresta','Floresta','linear-gradient(135deg,#9dff8a,#19c79a 55%,#2f7d5b)'],['violeta','Violeta','linear-gradient(135deg,#d6b0ff,#9b6bff 55%,#ff5fd0)'],['ouro','Ouro','linear-gradient(135deg,#ffe08a,#f5a524 55%,#c2410c)']];
+ const L=[['aurora','Aurora','linear-gradient(135deg,#ffc15e,#ff8a4c 55%,#7b5cff)'],['oceano','Oceano','linear-gradient(135deg,#5ef0d0,#2ea8ff 55%,#5c6bff)'],['porsol','Pôr do sol','linear-gradient(135deg,#ff9a8a,#ff4f8b 55%,#b24bff)'],['floresta','Floresta','linear-gradient(135deg,#9dff8a,#19c79a 55%,#2f7d5b)'],['violeta','Violeta','linear-gradient(135deg,#d6b0ff,#9b6bff 55%,#ff5fd0)'],['ouro','Ouro','linear-gradient(135deg,#ffe08a,#f5a524 55%,#c2410c)'],['celeste','Celeste','linear-gradient(135deg,#ffffff,#7dd3fc 50%,#0ea5e9)'],['azulbranco','Azul e branco','linear-gradient(135deg,#ffffff,#93b4ff 50%,#1d4ed8)']];
  return '<section class="pg-card pf-skin"><div class="pf-ah"><span>✦</span><div><h3>Cores do site</h3><small>Escolha o esquema de cores e degradês. Vale neste aparelho.</small></div></div><div class="pf-pal">'+L.map(x=>'<button type="button" class="'+(cur===x[0]?'on':'')+'" onclick="setPalette(\''+x[0]+'\')"><i style="background:'+x[2]+'"></i>'+x[1]+'</button>').join('')+'</div></section>'}
 function pfStudySec(c){
  const M=window.IASDStudyMe;if(!M)return '';const cs=M.view();
