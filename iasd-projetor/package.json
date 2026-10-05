@@ -1,6 +1,6 @@
 {
   "name": "iasd-projetor",
-  "version": "0.5.28",
+  "version": "0.5.29",
   "private": true,
   "description": "Companheiro Windows para projeção IASD APP",
   "main": "main.js",
