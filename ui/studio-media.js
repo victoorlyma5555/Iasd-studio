@@ -266,11 +266,24 @@ const BASE_KINDS=['Dízimos e ofertas','Informativo','Vídeo especial'];
 let vlCats=(()=>{try{const a=JSON.parse(localStorage.getItem('iasd-vl-cats')||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string'):[]}catch(e){return[]}})();
 function vlSaveCats(){try{localStorage.setItem('iasd-vl-cats',JSON.stringify(vlCats))}catch(e){}}
 /* categorias = as 3 fixas + as que já existem nos vídeos (compartilhadas) + as recém-criadas neste aparelho */
-function kinds(){const out=[...BASE_KINDS];[...vlItems.map(x=>(x.kind||'').trim()),...vlCats].forEach(k=>{if(k&&!out.some(o=>o.toLowerCase()===k.toLowerCase()))out.push(k)});return out}
+const NOCAT='Sem categoria';
+let vlHidden=(()=>{try{const a=JSON.parse(localStorage.getItem('iasd-vl-hidden')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}})();
+function vlSaveHidden(){try{localStorage.setItem('iasd-vl-hidden',JSON.stringify(vlHidden))}catch(e){}}
+function kinds(){const used=vlItems.map(x=>vlKind(x));const out=BASE_KINDS.filter(k=>!vlHidden.includes(k)||used.includes(k));[...used,...vlCats].forEach(k=>{if(k&&!out.some(o=>o.toLowerCase()===k.toLowerCase()))out.push(k)});return out}
+async function vlDelCat(k){
+ const its=vlItems.filter(x=>vlKind(x)===k);
+ if(its.length){
+  if(!(await IASDDialog.confirm('Apagar a categoria “'+k+'”? Os '+its.length+' vídeo(s) não serão excluídos: passam para “'+NOCAT+'”.')))return;
+  try{const c=offeringCloud();const {error}=await c.from('iasd_offering_videos').update({kind:NOCAT}).in('id',its.map(x=>x.id));if(error)throw error;
+   its.forEach(x=>{x.kind=NOCAT})}catch(e){toast('Não foi possível mover os vídeos: '+e.message);return}
+ }else if(!(await IASDDialog.confirm('Apagar a categoria vazia “'+k+'”?')))return;
+ vlCats=vlCats.filter(c=>c!==k);vlSaveCats();if(BASE_KINDS.includes(k)&&!vlHidden.includes(k)){vlHidden.push(k);vlSaveHidden()}
+ if(vlFilter===k)vlFilter='';renderVl();toast('Categoria “'+k+'” apagada.');
+}
 async function vlNewCat(){
  const n=((await IASDDialog.prompt('Nome da nova categoria:',''))||'').trim().replace(/\s+/g,' ').slice(0,30);if(!n)return;
- const ex=kinds().find(k=>k.toLowerCase()===n.toLowerCase());if(ex){vlFilter=ex;renderVl();toast('Essa categoria já existe.');return}
- vlCats.push(n);vlSaveCats();vlFilter=n;renderVl();toast('Categoria “'+n+'” criada. Escolha-a ao enviar ou editar um vídeo.');
+ const ex=kinds().find(k=>k.toLowerCase()===n.toLowerCase());if(ex&&true){vlFilter=ex;renderVl();toast('Essa categoria já existe.');return}
+ vlHidden=vlHidden.filter(h2=>h2.toLowerCase()!==n.toLowerCase());vlSaveHidden();vlCats.push(n);vlSaveCats();vlFilter=n;renderVl();toast('Categoria “'+n+'” criada. Escolha-a ao enviar ou editar um vídeo.');
 }
 let vlItems=[],vlFilter='',vlFile=null,vlSel=null,vlBusy=false;
 const OFFER_BUCKET_='iasd-offering-videos';
@@ -290,7 +303,7 @@ function renderVlChips(){
  const box=$('vlChips');if(!box)return;box.replaceChildren();
  const ks=kinds();if(vlFilter&&!ks.includes(vlFilter))vlFilter='';
  ['',...ks].forEach(k=>{const n=k?vlItems.filter(x=>vlKind(x)===k).length:vlItems.length;const b=h('button',k===vlFilter?'on':'',(k||'Todos')+' · '+n);b.type='button';b.onclick=()=>{vlFilter=k;renderVl()};box.append(b);
-  if(k&&!n&&vlCats.includes(k)&&!BASE_KINDS.includes(k)){const x=h('button','vl-catx','×');x.type='button';x.title='Remover categoria vazia';x.setAttribute('aria-label','Remover categoria '+k);x.onclick=()=>{vlCats=vlCats.filter(c=>c!==k);vlSaveCats();if(vlFilter===k)vlFilter='';renderVl()};box.append(x)}});
+  if(k&&k!==NOCAT){const x=h('button','vl-catx','×');x.type='button';x.title='Apagar categoria';x.setAttribute('aria-label','Apagar categoria '+k);x.onclick=()=>vlDelCat(k);box.append(x)}});
  const add=h('button','vl-catadd','+ Nova categoria');add.type='button';add.onclick=vlNewCat;box.append(add);
  const sel=$('vlKind');if(sel){const cur=sel.value||vlFilter;sel.replaceChildren(...ks.map(k=>{const o=document.createElement('option');o.textContent=k;return o}));if(cur&&ks.includes(cur))sel.value=cur}
 }
