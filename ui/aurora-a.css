@@ -668,3 +668,25 @@ html[data-skin="aurora"] body.iu .pg-biblia .bible-error button{border-radius:20
  html[data-skin="aurora"] body.iu .pg.pg-licao .sabbath-reading{padding:0 2px!important}
 
 }
+
+/* ===== Jogos: paleta unificada (v13) ===== */
+html[data-skin="aurora"] body.iu .pg.pg-jogos {--gm-s1:rgba(var(--au-w),.06);--gm-s2:rgba(var(--au-w),.02)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(n){background:linear-gradient(160deg,var(--gm-s1),var(--gm-s2)),var(--au-card2);border:1px solid rgba(var(--au-w),.1);box-shadow:0 14px 34px -22px rgba(0,0,0,.7);transition:transform .18s,border-color .18s,box-shadow .18s}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:hover,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:hover{transform:translateY(-3px);border-color:rgba(var(--au-a1-rgb),.45);box-shadow:0 18px 40px -20px rgba(var(--au-a2-rgb),.45)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:before{content:'';position:absolute;inset:0 auto 0 0;width:4px;border-radius:22px 0 0 22px;background:var(--gc)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card{overflow:hidden}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-ic{background:rgba(var(--gc-rgb,var(--au-w)),.14);background:color-mix(in srgb,var(--gc) 22%,transparent)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card small{color:var(--au-mu)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card.done small{color:var(--au-c1)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card button:not(:disabled),html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body .pg-outline{background:rgba(var(--au-w),.08);color:var(--au-tx);border:1px solid rgba(var(--au-w),.16);box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card button:not(:disabled):hover,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body .pg-outline:hover{background:var(--au-grad);color:var(--au-on);border-color:transparent}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card.gm-feat{background:linear-gradient(135deg,rgba(var(--au-b-rgb),.55),rgba(var(--au-a2-rgb),.28)),var(--au-card1);border:1px solid rgba(var(--au-w),.16)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-badge{background:rgba(var(--au-w),.1);backdrop-filter:blur(6px)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-art>.pgi{color:rgba(var(--au-w),.16)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body p{color:var(--au-mu)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat .gm-body p{color:rgba(var(--au-w),.82)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta b{color:var(--au-a1)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tag.rk{background:rgba(var(--au-a1-rgb),.1)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:nth-child(n){background:linear-gradient(160deg,var(--gm-s1),var(--gm-s2)),var(--au-card2)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta span+b:before{content:'·';margin-right:10px;color:var(--au-mu);font-weight:400}
