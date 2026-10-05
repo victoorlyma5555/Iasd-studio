@@ -79,7 +79,7 @@ function setup(){
   '<div class="sg-opt"><h4>Rodadas</h4><div class="sg-chips">'+chips([{v:3,l:'3'},{v:5,l:'5'},{v:8,l:'8'},{v:12,l:'12'}],c.n,'n')+'</div></div>';
  if(S.mode==='memory')body='<div class="sg-opt"><h4>Tema</h4><div class="sg-chips">'+chips([{v:'',l:'Surpresa'}].concat(en.decks().map(x=>({v:x.t,l:x.emoji+' '+x.t}))),c.deck,'deck')+'</div></div>'+
   '<div class="sg-opt"><h4>Pares</h4><div class="sg-chips">'+chips([{v:6,l:'6 (fácil)'},{v:8,l:'8'},{v:10,l:'10'},{v:12,l:'12 (difícil)'}],c.pairs,'pairs')+'</div></div>';
- view(top(g.t,'Jogo livre: treine à vontade',g.c)+'<div class="sg-hero" style="--gc:'+g.c+'"><span class="sg-big">'+g.ic+'</span><div><h2>'+esc(g.t)+'</h2><p>'+esc(g.d)+'</p></div></div>'+daily+'<div class="sg-free"><h3>Jogo livre <small>não conta pontos no ranking</small></h3>'+body+'<button class="sg-go" onclick="IASDSolo.start()">▶ Começar</button></div>','sg-setup');
+ view(top(g.t,'Jogo livre: treine à vontade',g.c)+'<div class="sg-hero" style="--gc:'+g.c+'"><span class="sg-big">'+g.ic+'</span><div><h2>'+esc(g.t)+'</h2><p>'+esc(g.d)+'</p></div></div>'+daily+'<div class="sg-free"><h3>Jogo livre <small>não conta pontos no ranking</small></h3>'+body+'<button class="sg-go" onclick="IASDSolo.start()">▶ Começar</button></div>','sg-setup sg-'+S.mode);
 }
 
 /* ---------- Memória Bíblica: tela de escolha (tema + dificuldade) ---------- */
@@ -305,7 +305,7 @@ function finish(){
   '<div class="sg-big-score"><small>PONTOS</small><b>'+fmt(S.score)+'</b></div>'+
   '<div class="sg-stats"><div><b>'+acc+'%</b><small>Precisão</small></div><div><b>'+(S.mode==='memory'?S.memExtra.moves:correct+'/'+total)+'</b><small>'+(S.mode==='memory'?'Jogadas':'Acertos')+'</small></div><div><b>'+(S.mode==='memory'?Math.floor(S.memExtra.secs/60)+':'+String(S.memExtra.secs%60).padStart(2,'0'):'×'+S.best)+'</b><small>'+(S.mode==='memory'?'Tempo':'Melhor sequência')+'</small></div></div>'+dayBlock+
   (miss.length?'<details class="sg-rev"><summary>Revisar o que errou ('+miss.length+')</summary>'+miss.map(x=>'<div><b>'+esc(x.q)+'</b><span>Resposta: <em>'+esc(x.a)+'</em>'+(x.ref?' · '+esc(x.ref):'')+'</span></div>').join('')+'</details>':'')+
-  '<div class="sg-end">'+(S.daily?'':'<button class="sg-go gold" onclick="IASDSolo.again()">↻ Jogar de novo</button>')+'<button class="sg-go" onclick="IASDSolo.back()">Voltar aos jogos</button></div></div>','sg-result');
+  '<div class="sg-end">'+(S.daily?'':'<button class="sg-go gold" onclick="IASDSolo.again()">↻ Jogar de novo</button>')+'<button class="sg-go" onclick="IASDSolo.back()">Voltar aos jogos</button></div></div>','sg-result sg-'+S.mode);
  if(stars>=2)setTimeout(()=>burst(document.querySelector('.sg-stars'),['🎉','⭐','✨','🎊']),300);
  if(S.daily)submitDaily({game:S.mode,score:Math.round(S.score),correct:S.mode==='memory'?S.mem.pairs:correct,total:S.mode==='memory'?S.mem.pairs:total,streak:S.best});
 }
