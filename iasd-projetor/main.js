@@ -359,12 +359,13 @@ async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs,visualInMs
  win.webContents.setAudioMuted(true);
  if(!await youtubeAudio(win,'play',inMs,true))throw Error('O player ainda está carregando. Tente novamente.');
  if(command!==audioCommand||win!==youtubeRef||win.isDestroyed())return display;
- if(windowRef&&!windowRef.isDestroyed()){
-   const old=windowRef;await Promise.all([fadeAudioIn(old,outMs),old.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>false)]);if(command!==audioCommand||old!==windowRef)return display;old.setAlwaysOnTop(false);old.hide();try{old.setOpacity(1)}catch{}lastProjectionContent='';
- }
+ /* a projeção anterior continua visível por baixo: o vídeo entra em fade por cima (sem passar pelo preto) e só depois ela é escondida */
+ const old=windowRef&&!windowRef.isDestroyed()?windowRef:null,oldAudio=old?fadeAudioIn(old,outMs):Promise.resolve();
+ if(old)old.setAlwaysOnTop(false);
  const current=chooseDisplay();if(!current)throw Error('Saída de vídeo desconectada durante a preparação');
  win.setFullScreen(false);win.setBounds(current.bounds);suspendedWindows.delete(win);void fadeWin(win,visualInMs?0:1,0);
- win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);if(visualInMs)void fadeWin(win,1,visualInMs);
+ win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);const showFade=visualInMs?fadeWin(win,1,visualInMs):Promise.resolve();
+ if(old)void Promise.all([showFade,oldAudio]).then(()=>{if(command!==audioCommand||old!==windowRef||old.isDestroyed())return;old.hide();try{old.setOpacity(1)}catch{}lastProjectionContent='';old.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>{})}).catch(()=>{});
  const previous=win._previousVisual;win._previousVisual=null;if(previous&&!previous.isDestroyed())void Promise.all([fadeWin(previous,0,visualInMs),previous._visualAudioDone]).finally(()=>{if(!previous.isDestroyed())previous.destroy()});
  return display;
 }
