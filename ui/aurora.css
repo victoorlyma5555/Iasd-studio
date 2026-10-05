@@ -375,3 +375,27 @@ html[data-theme="light"][data-palette="violeta"]{--au-a1:#8d74a8;--au-a1-rgb:141
 html[data-theme="light"][data-palette="ouro"]{--au-a1:#a8935b;--au-a1-rgb:168,147,91;--au-a2:#c4841c;--au-a2-rgb:196,132,28}
 html[data-theme="dark"][data-palette="celeste"]{color-scheme:dark;--au-bg:#041a2e;--au-bgrgb:4,26,46;--au-w:255,255,255;--au-k:0,0,0;--au-tx:#eaf6ff;--au-mu:#9fb8d4;--au-glass:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));--au-a1:#38bdf8;--au-a1-rgb:56,189,248;--au-a2:#0ea5e9;--au-a2-rgb:14,165,233;--au-on:#04243f;--au-card1:#0b2c4a;--au-card2:#082340;--au-pop:#0a2842;--au-bgimg:radial-gradient(1200px 700px at 0% -10%,rgba(56,189,248,.18),transparent 60%),radial-gradient(900px 700px at 100% 50%,rgba(34,211,238,.10),transparent 60%)}
 html[data-theme="dark"][data-palette="azulbranco"]{color-scheme:dark;--au-bg:#060f26;--au-bgrgb:6,15,38;--au-w:255,255,255;--au-k:0,0,0;--au-tx:#eaf6ff;--au-mu:#9fb8d4;--au-glass:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));--au-a1:#60a5fa;--au-a1-rgb:96,165,250;--au-a2:#3b82f6;--au-a2-rgb:59,130,246;--au-on:#04122e;--au-card1:#102148;--au-card2:#0b1838;--au-pop:#0d1b3f;--au-bgimg:radial-gradient(1100px 600px at 0% -10%,rgba(59,130,246,.2),transparent 60%),radial-gradient(900px 600px at 100% 30%,rgba(96,165,250,.12),transparent 60%)}
+/* leitor da Bíblia segue o tema (claro/escuro) */
+html[data-skin="aurora"] :is(.reader,.reader-light){--reading:var(--au-tx);--sub:var(--au-mu);--paper:transparent;color:var(--au-tx)}
+html[data-skin="aurora"] body.iu .pg-biblia :is(#reader-text,.bb-paper,.reader-verse,.reader-verse span){color:var(--au-tx)!important}
+html[data-skin="aurora"] body.iu .pg-biblia :is(h1,h2,h3,.reader-title,#reader-ref){color:var(--au-tx)!important}
+html[data-skin="aurora"] body.iu .pg-biblia :is(.pg-sel,.bb-find2 label,.bb-find2 .pg-in) :is(input,select){border:0!important;background:transparent!important;box-shadow:none!important;outline:0}
+/* Escalas: calendário maior + clique no dia */
+html[data-skin="aurora"] body.iu .pg-escalas .es-day{cursor:pointer;transition:transform .12s,background .12s}
+html[data-skin="aurora"] body.iu .pg-escalas .es-day:active{transform:scale(.96)}
+html[data-skin="aurora"] body.iu .pg-escalas .es-day.has{background:rgba(var(--au-a1-rgb),.12);border-color:rgba(var(--au-a1-rgb),.35)}
+@media (max-width:900px){
+html[data-skin="aurora"] body.iu .pg-escalas .es-cal{gap:5px!important}
+html[data-skin="aurora"] body.iu .pg-escalas .es-day{min-height:62px!important;padding:6px 2px!important;border-radius:14px!important}
+html[data-skin="aurora"] body.iu .pg-escalas .es-day>span{font-size:16px!important;font-weight:700}
+html[data-skin="aurora"] body.iu .pg-escalas .es-dow{font-size:11px!important;padding:6px 0!important}
+html[data-skin="aurora"] body.iu .pg-escalas .es-main{padding:12px 10px!important}
+html[data-skin="aurora"] body.iu .pg-escalas .es-day .es-chip{height:6px!important}
+}
+@media (min-width:901px){html[data-skin="aurora"] body.iu .pg-escalas .es-day{min-height:118px!important}}
+.ed-ov{position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:16px;background:rgba(5,5,15,.55);backdrop-filter:blur(6px)}
+.ed-box{width:min(440px,100%);max-height:85dvh;overflow:auto;border-radius:22px;padding:18px;background:linear-gradient(160deg,var(--au-card1,#fff),var(--au-card2,#f3f3f8));color:var(--au-tx,#111);border:1px solid rgba(var(--au-w,0,0,0),.18);box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.ed-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.ed-hd small{display:block;color:var(--au-mu);font-size:12px}.ed-hd b{font-size:19px}
+.ed-list{display:grid;gap:8px}.ed-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(var(--au-w,0,0,0),.06);border-left:4px solid var(--ac,var(--au-a1))}
+.ed-r>div{flex:1;min-width:0}.ed-r b{display:block}.ed-r small{color:var(--au-mu)}.ed-i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;color:var(--ac,var(--au-a1));background:rgba(var(--au-w,0,0,0),.07)}
+.ed-e{text-align:center;color:var(--au-mu);padding:18px 0}.ed-add{width:100%;margin-top:14px;padding:13px;border-radius:14px;border:0;cursor:pointer;font-weight:700;background:var(--au-grad,var(--au-a1));color:#fff}

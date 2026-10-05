@@ -613,7 +613,17 @@ function esEdit(i){if(!escCan('edit'))return;ES.editing=i;esRender();const f=doc
 function esCancel(){ES.editing=null;esRender()}
 async function esDel(i){if(!escCan('delete'))return;if(!(await IASDDialog.confirm('Remover este escalado?')))return;if(ESC_CLOUD){const r=await cloud.from('iasd_escalas').delete().eq('id',ESC_IDS[i]).select('id');if(r.error||!(r.data||[]).length){alert('Não foi possível remover: '+(r.error?r.error.message:'sem permissão no servidor'));return}await escSync();esRender();return}data.escalas.splice(i,1);localStorage.setItem('iasd-studio',JSON.stringify(data));esRender()}
 function esExport(){const rows=escFiltered(escList()).filter(e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y).sort((a,b)=>a.date-b.date);const csv='Data;Horário;Nome;Área\n'+rows.map(e=>[isoOf(e.date),e.time,e.name,e.area].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='escalas-'+ES.y+'-'+pad(ES.m+1)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
-function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del&&escCan('delete')?'<button class="es-x" onclick="IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
+function esDay(iso){
+ const all=escList().filter(e=>isoOf(e.date)===iso).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+ const [y,m,dd]=iso.split('-').map(Number),dt=new Date(y,m-1,dd),dn=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][dt.getDay()];
+ const old=document.getElementById('ed-ov');if(old)old.remove();
+ const rows=all.length?all.map(e=>{const [n,ic,col]=areaInfo(e.area);return '<div class="ed-r" style="--ac:'+col+'"><span class="ed-i">'+I(ic)+'</span><div><b>'+esc(e.name)+'</b><small>'+esc(e.area)+(e.time?' · '+esc(e.time):'')+'</small></div>'+(escCan('edit')?'<button class="pg-ico" onclick="IASDPages.esDayClose();IASDPages.esEdit('+e.i+')" aria-label="Editar">'+I('pen')+'</button>':'')+(escCan('delete')?'<button class="pg-ico" onclick="IASDPages.esDayClose();IASDPages.esDel('+e.i+')" aria-label="Remover">'+I('trash')+'</button>':'')+'</div>'}).join(''):'<p class="ed-e">Ninguém escalado neste dia.</p>';
+ const o=document.createElement('div');o.className='ed-ov';o.id='ed-ov';o.onmousedown=ev=>{if(ev.target===o)esDayClose()};
+ o.innerHTML='<div class="ed-box" role="dialog" aria-modal="true"><div class="ed-hd"><div><small>'+dn+'</small><b>'+dd+' de '+MESES[m-1]+' de '+y+'</b></div><button class="pg-ghost sq" onclick="IASDPages.esDayClose()" aria-label="Fechar">✕</button></div><div class="ed-list">'+rows+'</div>'+(escCan('add')?'<button class="pg-blue ed-add" onclick="IASDPages.esDayAdd(\''+iso+'\')">+ Escalar alguém neste dia</button>':'')+'</div>';
+ document.body.appendChild(o)}
+function esDayClose(){const o=document.getElementById('ed-ov');if(o)o.remove()}
+function esDayAdd(iso){esDayClose();const f=document.getElementById('es-d');if(f){f.value=iso;try{f.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}const n=document.getElementById('es-n');if(n)setTimeout(()=>n.focus(),300)}}
+function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del&&escCan('delete')?'<button class="es-x" onclick="event.stopPropagation();IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
 function esBody(){
  const all=escList(),list=escFiltered(all),today=todayD();
  const inMonth=e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y;
@@ -629,7 +639,7 @@ function esBody(){
  if(ES.view==='month'){
   const first=new Date(ES.y,ES.m,1),start=new Date(ES.y,ES.m,1-first.getDay()),weeks=Math.ceil((first.getDay()+new Date(ES.y,ES.m+1,0).getDate())/7);
   body='<div class="es-cal">'+DOW.map(d=>'<div class="es-dow">'+d+'</div>').join('');
-  for(let k=0;k<weeks*7;k++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+k),out=d.getMonth()!==ES.m,es=list.filter(e=>isoOf(e.date)===isoOf(d));body+='<div class="es-day '+(out?'out':'')+' '+(isoOf(d)===isoOf(today)?'today':'')+'"><span>'+d.getDate()+'</span>'+(isoOf(d)===isoOf(today)?'<em class="es-hoje">Hoje</em>':'')+es.map(e=>chip(e,true)).join('')+'</div>'}
+  for(let k=0;k<weeks*7;k++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+k),out=d.getMonth()!==ES.m,es=list.filter(e=>isoOf(e.date)===isoOf(d));body+='<div class="es-day '+(out?'out':'')+(es.length?' has':'')+(isoOf(d)===isoOf(today)?' today':'')+'" role="button" tabindex="0" data-d="'+isoOf(d)+'" onclick="IASDPages.esDay(\''+isoOf(d)+'\')" onkeydown="if(event.key===\'Enter\')IASDPages.esDay(\''+isoOf(d)+'\')"'+(isoOf(d)===isoOf(today)?' data-today="1"':'')+'><span>'+d.getDate()+'</span>'+(isoOf(d)===isoOf(today)?'<em class="es-hoje">Hoje</em>':'')+es.map(e=>chip(e,true)).join('')+'</div>'}
   body+='</div>';
  }else if(ES.view==='week'){
   const a=ES.anchor,s0=new Date(a.getFullYear(),a.getMonth(),a.getDate()-a.getDay()),e0=new Date(s0.getFullYear(),s0.getMonth(),s0.getDate()+6);
@@ -751,5 +761,5 @@ function pfLoad(){
 }
 
 try{window.addEventListener('iasd-study-me',()=>pfRepaint())}catch(e){}
-window.IASDPages={hlApply,rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esEdit,esCancel,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
+window.IASDPages={esDay,esDayClose,esDayAdd,hlApply,rdPassage,favToggle,favRefresh,copyQuick,profile,pfLoad,pfScope,pfAll,rdGoRef,lcOpen,alDel,alDelAll,dailyScope,dailyReload,dailyLoad,rdSet,rdPaint,rdRange,rdAll,rdCopy,rdShare,rdProject,rdClear,resetRank,schedForm,schPrev,schTpl,schFromOld,schTeamAdd,schTeamDel,schPull,schTeamGet,normSched,isTeam,plain,teamOf,TEAM_TAG,escalas,esSet,esNav,esToday,esAdd,esEdit,esCancel,esDel,esExport,esRender,licao,catalog,setLC,acervo,acApply,acFold,acView,useAs,alerts,alertRows,games,gameCards,rankRows,bible,share,listen,sched,copySched,cover,founder,newUser,hero};
 })();
