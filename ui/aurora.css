@@ -487,3 +487,20 @@ html[data-skin="aurora"] select option,html[data-skin="aurora"] select optgroup{
 html[data-skin="aurora"] select option:checked{background:var(--au-a1);color:var(--au-on,#111)}
 .stt-gear{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(var(--au-w),.07);border:1px solid rgba(var(--au-w),.1);color:var(--au-tx);cursor:pointer}
 .stt-gear:hover{background:rgba(var(--au-a1-rgb),.2)}
+
+/* menu lateral com nomes das abas; recolhível (botão só aparece na sonoplastia) */
+@media (min-width:901px){
+  html[data-skin="aurora"] body.iu{--iu-side:236px}
+  html[data-skin="aurora"] body.iu.iu-projector-menu-collapsed{--iu-side:76px}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-side{padding:16px 12px;align-items:stretch;gap:3px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-logo{padding:0 4px 12px;justify-content:flex-start;gap:10px}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-logo>div{display:block}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-logo>div small{display:none}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-sec{display:block;margin:10px 8px 2px}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-nav{width:100%;height:42px;justify-content:flex-start;gap:12px;padding:0 12px}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-nav>span:not(.iu-glyph){display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-skin="aurora"] body.iu:not(.iu-projector-menu-collapsed) .iu-nav:hover::after{display:none}
+  html[data-skin="aurora"] body.iu .iu-side-collapse{display:flex;width:100%;min-height:34px;margin:0 0 6px;font-size:12px;border-radius:12px;background:rgba(var(--au-w),.06);border:1px solid rgba(var(--au-w),.1);color:var(--au-mu);justify-content:flex-start}
+  html[data-skin="aurora"] body.iu.iu-projector-menu-collapsed .iu-side-collapse{width:46px;justify-content:center;padding:0;gap:0}
+  html[data-skin="aurora"] body.iu.iu-projector-menu-collapsed .iu-side-collapse span{display:none}
+}
