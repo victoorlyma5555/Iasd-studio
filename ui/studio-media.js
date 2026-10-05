@@ -125,6 +125,7 @@ function renderNow(kind){
  ensureTitle(id);
  const row=h('div','mm-sel');row.append(thumb(id));const inf=h('div','amb-info');inf.append(h('small','','SELECIONADO'),h('b','',titleOf(id)));
  const acts=h('div','mm-sel-acts');
+ if(kind==='testimony'){acts.append(btn('','amb-x',()=>{sel[kind]=null;selectedYouTube[kind]=null;embedOpen[kind]=false;renderNow(kind);renderQueue();renderAll()},'x','Limpar seleção'));row.append(inf,acts);box.append(row,actionsBar(kind));syncGrow();return}
  acts.append(btn(embedOpen[kind]?'Ocultar':'Ver','mp-btn',()=>{embedOpen[kind]=!embedOpen[kind];if(embedOpen[kind])youtubeEmbed(id,kind+'Embed');else $(kind+'Embed')?.replaceChildren();renderNow(kind)},'eye','Mostra o player aqui no painel (só para o sonoplasta)'));
  if(!queueHas(kind,id))acts.append(btn('Fila','mp-btn',()=>qadd(kind,id),'plus','Adicionar à fila'));
  if(!inLib(kind,id))acts.append(btn('Salvar','mp-btn',()=>libAdd(kind,{id,title:titleOf(id,'')}),'star','Salvar na biblioteca'));
@@ -217,7 +218,7 @@ function renderTsDraw(){
  $('tsLeft').textContent=(ids.length-seen.length)+' de '+ids.length;
  const box=$('tsSeen');box.replaceChildren();
  if(!seen.length){box.append(h('p','amb-empty muted','Nenhum sorteado ainda nesta rodada.'));return}
- seen.slice(-4).reverse().forEach(id=>box.append(vrow('testimony',{id,title:titleOf(id)},{noQueue:false})));
+ seen.slice(-6).reverse().forEach(id=>box.append(vrow('testimony',{id,title:titleOf(id)},{noQueue:false,save:true})));
 }
 let tsQ='';
 let tsRecent=false;
