@@ -1,4 +1,4 @@
-/* Constelações · jogo de cartas e tabuleiro ONLINE (1×1, 2×2, 3×3) — cada jogador no seu celular.
+/* Constelações · jogo de cartas e tabuleiro ONLINE (1×1 até 6×6) — cada jogador no seu celular.
    Mesma ideia do Jogo Coletivo: sala por código de 6 dígitos + QR, RPC no Supabase (servidor é o dono do estado),
    canal Realtime só como "atalho" (um aviso de versão) e consulta periódica como garantia. Mãos e baralho
    nunca saem do servidor para quem não é o dono. */

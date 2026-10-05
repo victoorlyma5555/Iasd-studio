@@ -12,7 +12,7 @@ revoke all on schema seqg from public, anon, authenticated;
 create table if not exists seqg.rooms(
   id uuid primary key default gen_random_uuid(),
   code text not null,
-  mode text not null default '1v1' check (mode in ('1v1','2v2','3v3')),
+  mode text not null default '1v1' check (mode in ('1v1','2v2','3v3','4v4','5v5','6v6')),
   status text not null default 'lobby' check (status in ('lobby','playing','finished')),
   version int not null default 1,
   b_card int[], b_own int[],
@@ -55,7 +55,7 @@ create or replace function seqg.shuffle(a int[]) returns int[] language sql vola
 $$ select coalesce(array_agg(x order by random()),'{}') from unnest(a) x $$;
 
 create or replace function seqg.cap(m text) returns int language sql immutable set search_path='' as
-$$ select case m when '1v1' then 2 when '2v2' then 4 when '3v3' then 6 else 2 end $$;
+$$ select case m when '1v1' then 2 when '2v2' then 4 when '3v3' then 6 when '4v4' then 8 when '5v5' then 10 when '6v6' then 12 else 2 end $$;
 
 create or replace function seqg.is_locked(p_lines jsonb, p_cell int) returns boolean language sql immutable set search_path='' as
 $$ select exists(select 1 from jsonb_array_elements(p_lines) l, jsonb_array_elements_text(l->'c') e where e::int = p_cell) $$;
@@ -140,7 +140,7 @@ create or replace function public.seq_create_room(p_mode text, p_name text, p_to
 language plpgsql security definer set search_path='' as $$
 declare r seqg.rooms; me seqg.players; c text; n int := 0; nm text;
 begin
-  if p_mode not in ('1v1','2v2','3v3') then raise exception 'invalid_mode'; end if;
+  if p_mode not in ('1v1','2v2','3v3','4v4','5v5','6v6') then raise exception 'invalid_mode'; end if;
   nm := left(trim(coalesce(p_name,'')),24);
   if length(nm) < 1 then raise exception 'invalid_player_name'; end if;
   delete from seqg.rooms where expires_at < now();
@@ -216,7 +216,7 @@ begin
   if not found then raise exception 'room_not_found'; end if;
   if r.host_player<>me.id then raise exception 'host_only'; end if;
   if r.status='playing' then raise exception 'already_started'; end if;
-  if p_mode not in ('1v1','2v2','3v3') then raise exception 'invalid_mode'; end if;
+  if p_mode not in ('1v1','2v2','3v3','4v4','5v5','6v6') then raise exception 'invalid_mode'; end if;
   select count(*) into cnt from seqg.players where room_id=p_room;
   if cnt > seqg.cap(p_mode) then raise exception 'too_many_players'; end if;
   update seqg.rooms set mode=p_mode, version=version+1 where id=p_room returning * into r;
@@ -308,7 +308,7 @@ begin
   n := seqg.cap(r.mode); half := n/2;
   if cnt < n then raise exception 'need_players'; end if;
   if t0<>half or t1<>half then raise exception 'teams_unbalanced'; end if;
-  hs := case r.mode when '1v1' then 6 else 5 end;
+  hs := case r.mode when '1v1' then 6 when '2v2' then 5 when '3v3' then 5 when '4v4' then 4 else 3 end;
   -- tabuleiro: 32 cartas, cada uma em duas casas
   select array_agg(x) into vals from (select (g%32) x from generate_series(0,63) g) s;
   bc := seqg.shuffle(vals);

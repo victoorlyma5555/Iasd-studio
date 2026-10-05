@@ -7,7 +7,7 @@ const SIZE=8,LENGTH=5,TARGET=2,WILD=32,REMOVE=33;
 const SUITS=[{id:0,name:'Estrela',color:'#d99a14'},{id:1,name:'Gota',color:'#2563eb'},{id:2,name:'Folha',color:'#0f9f6e'},{id:3,name:'Coroa',color:'#c0364d'}];
 const RANKS=['A','2','3','4','5','6','7','8'];
 const TEAMS=[{id:0,name:'Azul',color:'#3b82f6'},{id:1,name:'Ouro',color:'#f5b73a'}];
-const MODES={'1v1':{size:2,label:'1 × 1'},'2v2':{size:4,label:'2 × 2'},'3v3':{size:6,label:'3 × 3'}};
+const MODES={'1v1':{size:2,label:'1 × 1'},'2v2':{size:4,label:'2 × 2'},'3v3':{size:6,label:'3 × 3'},'4v4':{size:8,label:'4 × 4'},'5v5':{size:10,label:'5 × 5'},'6v6':{size:12,label:'6 × 6'}};
 function info(c){
   if(c===WILD)return {kind:'wild',label:'Coringa'};
   if(c===REMOVE)return {kind:'remove',label:'Remover'};

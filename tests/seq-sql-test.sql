@@ -168,6 +168,14 @@ begin
   assert (select count(*) from jsonb_array_elements_text(s->'pub'->'order') o join seqg.players p on p.id=o::uuid where p.team=0)=2,'2 por equipe';
   assert (select array_agg(p.team order by ord) from jsonb_array_elements_text(s->'pub'->'order') with ordinality t(o,ord) join seqg.players p on p.id=t.o::uuid) in ('{0,1,0,1}','{0,1,0,1}'::int[]),'ordem alterna equipes';
 
+
+  -- ---------- 6v6 (12 jogadores) ----------
+  a := public.seq_create_room('6v6','H0',null); room := (a->>'room')::uuid; code := a->'pub'->>'code'; pa := (a->>'player')::uuid; ta := (a->>'token')::uuid;
+  for i in 1..11 loop perform public.seq_join_room(code,'H'||i,null); end loop;
+  s := public.seq_start(room,pa,ta);
+  assert jsonb_array_length(s->'pub'->'order')=12,'12 jogadores no 6v6';
+  assert jsonb_array_length(s->'me'->'hand')=3,'mão de 3 no 6v6';
+
   -- ---------- 3v3 ----------
   a := public.seq_create_room('3v3','A',null); room := (a->>'room')::uuid; code := a->'pub'->>'code'; pa := (a->>'player')::uuid; ta := (a->>'token')::uuid;
   for i in 2..6 loop perform public.seq_join_room(code,'J'||i,null); end loop;
