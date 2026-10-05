@@ -68,3 +68,11 @@ html[data-theme="light"] .cf-link{color:#1d4ed8!important;font-weight:600}
 html[data-theme="light"] .cf-card,html[data-theme="light"] .cf-sec{color:var(--tx)}
 html[data-theme="light"] .cf-card p,html[data-theme="light"] .cf-body p,html[data-theme="light"] .cf-card span{color:#3a4a6b}
 html[data-theme="light"] .cf-card{background:#f3f7fd}
+/* correções de contraste (Aurora + claro) */
+html[data-theme="light"] body.st2 :is(.muted,.amb-empty,p.muted,span.muted){color:#51617f!important}
+html[data-theme="light"] body.st2 :is(em.bad,.bad){color:#b91c1c!important}
+html[data-theme="light"] body.st2 :is(input,textarea,select):not(#zz1):not(#zz2){background:#fff!important;color:#0f1c3a!important;border-color:#b4c3dc!important}
+html[data-theme="light"] body.st2 :is(input,textarea)::placeholder{color:#6b7a99!important}
+html[data-theme="light"] body.st2 .mp-btn.on,html[data-theme="light"] body.st2 .st-themefx.on{color:#0f1c3a!important}
+html[data-theme="light"] body.st2 :is(.amb-in,.amb-search label){background:#fff!important;border:1px solid #b4c3dc!important;border-radius:14px!important}
+html[data-theme="light"] body.st2 .amb-in input:not(#zz1):not(#zz2){background:transparent!important;border:0!important}
