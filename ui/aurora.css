@@ -297,3 +297,15 @@ html[data-skin="aurora"] body.iu .iu-side .iu-tag{background:linear-gradient(135
 }
 html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!important;stroke-width:1.5}
 @media (max-width:700px){html[data-skin="aurora"] body.iu .au-ic{width:54px;height:54px}}
+
+/* Banner de avisos e eventos (sem saudação) */
+.au-banner{padding:0;min-height:300px;isolation:isolate;background:var(--au-glass)}
+.au-banner .dashboard-hero-carousel{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit}
+.au-banner .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--hero-x,50%) var(--hero-y,50%);transform:scale(var(--hero-z,1));opacity:0;transition:opacity 1s ease}
+.au-banner .hero-slide.active{opacity:1}
+.au-banner .iu-edit{z-index:3}
+.au-banner.empty{display:grid;place-items:center;border-style:dashed;background:linear-gradient(135deg,rgba(var(--au-a2-rgb),.16),rgba(var(--au-b-rgb),.1))}
+.au-empty{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;padding:24px;max-width:360px}
+.au-empty b{font:800 24px "Bricolage Grotesque",sans-serif;color:var(--au-tx)}
+.au-empty p{margin:0;color:var(--au-mu);font-size:13.5px}
+@media (max-width:700px){.au-banner{min-height:0;aspect-ratio:16/10}.au-banner.empty{aspect-ratio:auto;padding:6px}.au-grid>.au-banner{order:1}}
