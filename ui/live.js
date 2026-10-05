@@ -14,7 +14,7 @@
 let lastTouch=Date.now();['touchstart','touchmove','pointerdown','keydown','wheel','scroll'].forEach(e=>window.addEventListener(e,()=>{lastTouch=Date.now()},{passive:true,capture:true}));
  const idle=()=>Date.now()-lastTouch>5000;
  const typing=()=>{const a=document.activeElement;return !!a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable)};
- const busy=()=>typing()||!!document.querySelector('.vs-back,.ex-back,.vbar,#sg-tm-bar')||(typeof current!=='undefined'&&(current==='Jogo'||current==='Bíblia'));
+ const busy=()=>window.IASDEdit?.active||window.IASDEdit?.child||typing()||!!document.querySelector('.vs-back,.ex-back,.vbar,#sg-tm-bar')||(typeof current!=='undefined'&&(current==='Jogo'||current==='Bíblia'));
  function flush(){
   timer=null;
   if(document.hidden||busy()){timer=setTimeout(flush,2500);return}
@@ -46,12 +46,12 @@ let lastTouch=Date.now();['touchstart','touchmove','pointerdown','keydown','whee
  function newVersion(){
   if(reloadAsked)return;reloadAsked=true;
   const go=()=>{try{const t=+sessionStorage.getItem('iasd-live-rl')||0;if(Date.now()-t<120000)return;sessionStorage.setItem('iasd-live-rl',String(Date.now()))}catch(e){}try{location.reload()}catch(e){}};
-  const modal=()=>!!document.querySelector('.vs-back,.ex-back,.vbar,#sg-tm-bar');
+  const modal=()=>window.IASDEdit?.active||window.IASDEdit?.child||!!document.querySelector('.vs-back,.ex-back,.vbar,#sg-tm-bar');
   const tryReload=()=>{
    // volta do segundo plano (app da tela inicial): recarrega na hora; em uso: espera 5 s sem toque; nunca com teclado/popup aberto
-   if(document.hidden){go();return}
+   if(document.hidden){if(!modal())go();return}
    if(!typing()&&!modal()&&idle()&&!(typeof current!=='undefined'&&current==='Jogo')){toast();setTimeout(go,1500)}else setTimeout(tryReload,3000)};
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)go()});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&!modal())go()});
   tryReload();
  }
  function toast(){

@@ -277,7 +277,7 @@ window.toggleAccountMenu=function(){
  if(typeof cloudUser!=='undefined'&&cloudUser){
   const p=(typeof myProfile!=='undefined'&&myProfile)||{},name=p.full_name||cloudUser.user_metadata?.full_name||cloudUser.email,initial=String(name||'U').trim()[0].toUpperCase();
   let av='',cover='';try{if(p.avatar_path)av='<span class="ph"><img alt="" src="'+esc(profileMediaUrl(p.avatar_path))+'" style="'+profileImageStyle('avatar')+'"></span>';if(p.cover_path)cover=' c" style="background-image:url('+esc(profileMediaUrl(p.cover_path))+')'}catch(e){}
-  const manage=typeof canManageSite==='function'&&canManageSite(),role=typeof roleLabel==='function'?roleLabel():'',ed=window.IASDEdit&&manage;
+  const manage=typeof canManageSite==='function'&&canManageSite(),role=typeof roleLabel==='function'?roleLabel():'',ed=window.IASDEdit&&IASDEdit.allowed();
   h+='<div class="acp-top'+cover+'"><div class="acp-av">'+(av||esc(initial))+'<i></i></div><div class="acp-nm"><b>'+esc(name)+'</b><small>'+esc(cloudUser.email||'')+'</small><div class="acp-tags"><span>'+roleIcon(cloudRole)+' '+esc(role)+'</span>'+(p.church_position?'<span>⛪ '+esc(p.church_position)+'</span>':'')+'</div></div></div>'+
   '<div class="acp-lst"><button class="bl" onclick="closeAccountMenu();go(\'Perfil\')"><span class="ic">👤</span><span><b>Meu perfil</b><small>Foto, capa e dados do cadastro</small></span><span class="ch">›</span></button>'+
   '<button class="gd" onclick="closeAccountMenu();go(\'Jogo\')"><span class="ic">🏆</span><span><b>Jogos e ranking</b><small>Desafio do dia e pontuação</small></span><span class="ch">›</span></button>'+
@@ -302,8 +302,8 @@ function placeAcp(){
 addEventListener('resize',()=>{if(document.querySelector('#account-popover-root .acp'))placeAcp()});
 
 /* ---------- entrega ---------- */
-window.editCover=editCover;window.closeCover=closeCover;window.saveCover=save;window.removeCover=remove;
-window.editHomeCarousel=openCarousel;
+window.editCover=slot=>window.IASDEdit?IASDEdit.open(slot==='home_banner'||slot.startsWith('home_banner_')?'banner':slot==='home_passage'?'passage':'card:'+slot):editCover(slot);window.closeCover=closeCover;window.saveCover=save;window.removeCover=remove;
+window.editHomeCarousel=()=>window.IASDEdit?IASDEdit.open('banner'):openCarousel();
 window.IASDMedia={img,view,set,focus,reset,choose,upload,save,remove,closeCarousel,ceSet,ceMove,ceToggle,ceFrame,ceSave,ceRemove,ceUpload,ceLib,hcGo,hcTo,frameStyle:fstyle,frameOf};
 css();
 })();
