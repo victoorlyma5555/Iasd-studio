@@ -268,3 +268,20 @@ html[data-skin="aurora"] .studio-action.close-action{background:linear-gradient(
 html[data-skin="aurora"]{height:100%;overflow:hidden!important}
 html[data-skin="aurora"] body.st2{height:100%;overflow-y:auto!important;overflow-x:hidden}
 html[data-skin="aurora"] .m-recent[hidden]{display:none!important}
+/* fila do hinário: faixa horizontal */
+.sth-q2 ol{display:flex!important;flex-direction:row;gap:8px;overflow-x:auto;overflow-y:hidden;max-height:none!important;padding-bottom:6px;scroll-snap-type:x proximity}
+.sth-q2 li{flex:0 0 190px;scroll-snap-align:start;flex-wrap:wrap;padding:8px!important;gap:6px!important}
+.sth-q2 .qt{flex:1 1 100px}
+/* Configurações: rolagem */
+html[data-skin="aurora"] main>#setup.work.active{overflow-y:auto!important;display:block}
+/* Bíblia: seletor cap./vers. */
+.bb-ref{display:flex!important;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.bb-ref .bb-book{flex:1 1 200px}
+.bb-st{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.bb-st>span{font-size:11px;color:var(--au-mu);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.bb-st button{width:38px;height:38px;border-radius:12px;font-size:18px;font-weight:700;padding:0!important;display:grid;place-items:center}
+.bb-st input{width:64px!important;text-align:center;font-weight:700;height:38px}
+.bb-ref .bb-book{flex:1 1 100%!important}
+.bb-st{flex:1 1 0;justify-content:space-between}
+.bb-st input{flex:1;min-width:0}
+html[data-skin="aurora"] body.st2 .studio-action.close-action,html[data-skin="aurora"] body.st2 .studio-action-bar .close-action{background:linear-gradient(135deg,#ef4444,#b91c1c)!important;color:#fff!important;border-color:#ef4444!important;box-shadow:0 8px 22px -8px rgba(239,68,68,.6)!important}

@@ -466,3 +466,5 @@ html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2{width:100%}
 html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar>*{grid-row:auto!important;justify-self:stretch!important;position:static!important}
 html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{height:auto!important;min-height:0!important;grid-auto-rows:auto!important}
 html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel select,html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel input{border:0!important;background:transparent!important;box-shadow:none!important}
+/* cabeçalho (pesquisa/perfil) fixo e opaco */
+html[data-skin="aurora"] body.iu .iu-top{position:sticky!important;top:0;z-index:60;background:var(--au-bg)!important;background-image:none;border-bottom:1px solid rgba(var(--au-w),.08);box-shadow:0 8px 24px -12px rgba(0,0,0,.35)}
