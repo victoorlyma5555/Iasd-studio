@@ -50,7 +50,6 @@
 @keyframes btNevoa{0%{background-position:0% 0%,100% 0%,50% 100%,0 0}100%{background-position:100% 100%,0% 80%,50% 0%,0 0}}
 @keyframes btLuz{0%{background-position:130% 0,0 0,0 0}100%{background-position:-30% 0,0 0,0 0}}
 :is(#out.btx,.btp)[class*="bt-"]{background-size:var(--bgs,auto);animation:var(--anim,none)}
-@media (prefers-reduced-motion:reduce){:is(#out.btx,.btp)[class*="bt-"]{animation:none}}
 
 /* ---------- disposição (layout) ---------- */
 #out.bl-esq .bible-slide,.btp.bl-esq .bible-slide{align-items:flex-start;text-align:left}

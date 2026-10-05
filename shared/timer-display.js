@@ -250,7 +250,6 @@ const CSS_L=`
 .iasd-tm .fx.placar .time2{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:min(26cqh,16cqw);letter-spacing:.06em;color:#ff9a1f;text-shadow:0 0 .25em #ff7a00,0 0 .7em rgba(255,122,0,.5)}
 .iasd-tm.warn .fx.placar .time2{color:#ffe14d}.iasd-tm.alert .fx.placar .time2,.iasd-tm.done .fx.placar .time2{color:#ff4a3a}
 .iasd-tm .fx.placar .cl{animation:lyBlink 1s steps(1) infinite}
-@media (prefers-reduced-motion:reduce){.iasd-tm .fx *,.iasd-tm .fx *:before,.iasd-tm .fx *:after{animation:none!important}}
 `;
 const CSS=`
 .iasd-tm{--tx:#fff;--trk:rgba(255,255,255,.09);--tk:rgba(255,255,255,.22);position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);transition:background .8s}

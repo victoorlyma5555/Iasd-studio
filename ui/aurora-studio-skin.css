@@ -325,7 +325,6 @@ html[data-skin="aurora"] body.st2 .studio-action.close-action,html[data-skin="au
 @keyframes thmFlip{0%{transform:rotateY(90deg)}40%,80%{transform:none}100%{transform:rotateY(-90deg)}}
 @keyframes thmCorner{0%{clip-path:circle(0 at 0 0)}40%,80%{clip-path:circle(150% at 0 0)}100%{clip-path:circle(0 at 0 0)}}
 @keyframes thmNone{0%,100%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.thm *,.thm i{animation:none!important}}
 .thm-grid>button.has-thm.on .thm{background:rgba(10,10,20,.55);border-color:rgba(0,0,0,.2)}
 .thm-grid>button.has-thm.on .thm-df-suspense .n{color:#fff}
 /* Cronômetro › Aparência: prévia + formatos em miniatura */
