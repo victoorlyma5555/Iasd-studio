@@ -140,3 +140,9 @@ html.cs-open,html.cs-open body{overflow:hidden}
 }
 @media(min-width:900px){.cs-hc{flex-basis:92px}.cs-grid,.cs-table[data-zoom=fit] .cs-grid{--cw:min(7.4vw,calc((100dvh - 385px)/10.6),96px)}}
 @media(prefers-reduced-motion:reduce){.cs-root *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+.cs-lobby>*,.cs-two>*,.cs-teams>*{min-width:0}
+.cs-lobby{grid-template-columns:minmax(0,340px) minmax(0,1fr)}
+@media(max-width:700px){.cs-lobby,.cs-lobby.tv{grid-template-columns:minmax(0,1fr)}}
+.cs-modeline .cs-lab{flex:1 0 100%}
+#cs-code::placeholder{letter-spacing:0;font-size:14px;font-weight:500}
+.cs-codebox small{overflow-wrap:anywhere}
