@@ -262,11 +262,20 @@ $('tsLibQ').addEventListener('input',renderTsLib);
 $('tsYtQ').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tsYtSearch()}});
 
 /* ===================== DÍZIMOS E INFORMATIVOS ===================== */
-const KINDS=['Dízimos e ofertas','Informativo','Vídeo especial'];
+const BASE_KINDS=['Dízimos e ofertas','Informativo','Vídeo especial'];
+let vlCats=(()=>{try{const a=JSON.parse(localStorage.getItem('iasd-vl-cats')||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string'):[]}catch(e){return[]}})();
+function vlSaveCats(){try{localStorage.setItem('iasd-vl-cats',JSON.stringify(vlCats))}catch(e){}}
+/* categorias = as 3 fixas + as que já existem nos vídeos (compartilhadas) + as recém-criadas neste aparelho */
+function kinds(){const out=[...BASE_KINDS];[...vlItems.map(x=>(x.kind||'').trim()),...vlCats].forEach(k=>{if(k&&!out.some(o=>o.toLowerCase()===k.toLowerCase()))out.push(k)});return out}
+async function vlNewCat(){
+ const n=((await IASDDialog.prompt('Nome da nova categoria:',''))||'').trim().replace(/\s+/g,' ').slice(0,30);if(!n)return;
+ const ex=kinds().find(k=>k.toLowerCase()===n.toLowerCase());if(ex){vlFilter=ex;renderVl();toast('Essa categoria já existe.');return}
+ vlCats.push(n);vlSaveCats();vlFilter=n;renderVl();toast('Categoria “'+n+'” criada. Escolha-a ao enviar ou editar um vídeo.');
+}
 let vlItems=[],vlFilter='',vlFile=null,vlSel=null,vlBusy=false;
 const OFFER_BUCKET_='iasd-offering-videos';
 function vlUrl(item){const c=offeringCloud();const {data}=c.storage.from(OFFER_BUCKET_).getPublicUrl(item.storage_path);return data&&data.publicUrl}
-function vlKind(it){return KINDS.includes(it.kind)?it.kind:(/inform/i.test(it.title||'')?'Informativo':'Dízimos e ofertas')}
+function vlKind(it){const k=(it.kind||'').trim();return k?k:(/inform/i.test(it.title||'')?'Informativo':'Dízimos e ofertas')}
 function vlDate(s){try{return new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}catch(e){return''}}
 window.__offNew=true;
 window.renderOfferings=async function(){
@@ -279,7 +288,11 @@ window.renderOfferings=async function(){
 };
 function renderVlChips(){
  const box=$('vlChips');if(!box)return;box.replaceChildren();
- ['',...KINDS].forEach(k=>{const n=k?vlItems.filter(x=>vlKind(x)===k).length:vlItems.length;const b=h('button',k===vlFilter?'on':'',(k||'Todos')+' · '+n);b.type='button';b.onclick=()=>{vlFilter=k;renderVl()};box.append(b)});
+ const ks=kinds();if(vlFilter&&!ks.includes(vlFilter))vlFilter='';
+ ['',...ks].forEach(k=>{const n=k?vlItems.filter(x=>vlKind(x)===k).length:vlItems.length;const b=h('button',k===vlFilter?'on':'',(k||'Todos')+' · '+n);b.type='button';b.onclick=()=>{vlFilter=k;renderVl()};box.append(b);
+  if(k&&!n&&vlCats.includes(k)&&!BASE_KINDS.includes(k)){const x=h('button','vl-catx','×');x.type='button';x.title='Remover categoria vazia';x.setAttribute('aria-label','Remover categoria '+k);x.onclick=()=>{vlCats=vlCats.filter(c=>c!==k);vlSaveCats();if(vlFilter===k)vlFilter='';renderVl()};box.append(x)}});
+ const add=h('button','vl-catadd','+ Nova categoria');add.type='button';add.onclick=vlNewCat;box.append(add);
+ const sel=$('vlKind');if(sel){const cur=sel.value||vlFilter;sel.replaceChildren(...ks.map(k=>{const o=document.createElement('option');o.textContent=k;return o}));if(cur&&ks.includes(cur))sel.value=cur}
 }
 function renderVl(){
  renderVlChips();const box=$('offeringLibrary');box.replaceChildren();
@@ -313,8 +326,10 @@ function renderNowVideo(){
 }
 async function vlRename(it){
  const name=((await IASDDialog.prompt('Nome do vídeo:',it.title||''))||'').trim().slice(0,80);if(!name)return;
- const kindIn=((await IASDDialog.prompt('Categoria (1 = Dízimos e ofertas, 2 = Informativo, 3 = Vídeo especial):',String(KINDS.indexOf(vlKind(it))+1)))||'').trim();
- const kind=KINDS[(+kindIn||KINDS.indexOf(vlKind(it))+1)-1]||vlKind(it);
+ const ks=kinds();
+ const kindIn=((await IASDDialog.prompt('Categoria ('+ks.map((k,i)=>(i+1)+' = '+k).join(', ')+', 0 = nova categoria):',String(ks.indexOf(vlKind(it))+1)))||'').trim();
+ let kind=ks[(+kindIn||ks.indexOf(vlKind(it))+1)-1]||vlKind(it);
+ if(kindIn==='0'){const n=((await IASDDialog.prompt('Nome da nova categoria:',''))||'').trim().replace(/\s+/g,' ').slice(0,30);if(n)kind=n}
  try{const c=offeringCloud();let r=await c.from('iasd_offering_videos').update({title:name,kind}).eq('id',it.id);
   if(r.error){r=await c.from('iasd_offering_videos').update({title:name}).eq('id',it.id);if(r.error)throw r.error}
   toast('Vídeo atualizado.');await renderOfferings()}catch(e){toast('Não foi possível atualizar: '+e.message)}
