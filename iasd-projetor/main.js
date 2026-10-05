@@ -615,8 +615,8 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
   try{
     const command=++audioCommand,content=data.content;lastVisualFadeMs=Math.min(5000,Math.max(0,+data.visualMs||lastVisualFadeMs));
    // A entrada do hino encerra o áudio antes de a letra estar pronta; conserve sua imagem até a montagem.
-   if(content.replace(/^IASD_TR:[a-z]+:\d{1,4}\|/,'').startsWith('IASD_LYRIC:')&&youtubeRef?._holdForLyric&&!youtubeRef.isDestroyed()){
-    const previous=youtubeRef,display=showProjector(true),next=windowRef;
+   if(content!==''&&youtubeRef&&!youtubeRef.isDestroyed()&&(youtubeRef._holdForLyric||youtubeShown)){
+    const previous=youtubeRef,display=showProjector(true),next=windowRef,aFade=previous._holdForLyric?Promise.resolve():fadeAudioIn(previous,Math.min(5000,Math.max(0,+data.audioMs||0)));
     if(next.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{next.webContents.once('did-finish-load',resolve);next.webContents.once('did-fail-load',(_,code,desc)=>reject(new Error(desc)))});
     if(command!==audioCommand||previous!==youtubeRef){reply(res,200,{ok:true,superseded:true});return}
     const fade=data.fade&&{on:data.fade.on!==false,i:data.fade.i!==false,f:Math.max(.1,Math.min(5,Number(data.fade.f)||1))};
@@ -625,7 +625,7 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
     if(previous._lyricHandoff!==next){previous._lyricHandoff=next;next.setOpacity(lastVisualFadeMs?0:1)}activateProjector(next,display);
     await next.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
     if(command!==audioCommand||previous!==youtubeRef){reply(res,200,{ok:true,superseded:true});return}
-    await Promise.all([fadeWin(previous,0,lastVisualFadeMs),fadeWin(next,1,lastVisualFadeMs)]);
+    await Promise.all([fadeWin(previous,0,lastVisualFadeMs),fadeWin(next,1,lastVisualFadeMs),aFade]);
     if(command===audioCommand&&previous===youtubeRef){closeYoutube();lastProjectionContent=content}
     reply(res,200,{ok:true});return;
    }

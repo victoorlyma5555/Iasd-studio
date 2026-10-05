@@ -102,7 +102,7 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
  c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
 window.stTakeover=function(keep,preserveVisual=false){
- let wait=null;const P=window.parent,preserveHymnVisual=keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony')));
+ let wait=null;const P=window.parent,preserveHymnVisual=(keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony'))))||((keep==='timer'||keep==='ppt')&&!!window.__ytLive);/* cronômetro/slides: o vídeo fica no telão até o novo conteúdo entrar (sem tela preta no meio) */
  window.__ytHymnVisual=!!preserveHymnVisual;
  if(keep!=='hymn'){stHymnFadeStop(keep?180:0)}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
@@ -115,7 +115,7 @@ window.stTakeover=function(keep,preserveVisual=false){
  try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'&&a.id!==keep){try{stFadePause(a,180)}catch(e){}}})}catch(e){}
  return wait
 };
-async function closeScreenNow(){try{if(selectedTool==='timer')tmReset()}catch(e){}++youtubeSelection;const closing=call('stopProjection');stHymnFadeStop(180);try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'){try{stFadePause(a,180)}catch(e){}}})}catch(e){}closeYoutubeEmbeds($('testimonyEmbed'));try{localStorage.setItem('iasd-black','0')}catch(e){}stRenderNow();await Promise.resolve(closing);feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
+async function closeScreenNow(){try{if(selectedTool==='timer')tmReset(true)}catch(e){}++youtubeSelection;const closing=call('stopProjection');stHymnFadeStop(180);try{document.querySelectorAll('audio,video').forEach(a=>{if(a.id!=='sthAudio'){try{stFadePause(a,180)}catch(e){}}})}catch(e){}closeYoutubeEmbeds($('testimonyEmbed'));try{localStorage.setItem('iasd-black','0')}catch(e){}stRenderNow();await Promise.resolve(closing);feedback('Telão fechado: janela de projeção e vídeos encerrados.')}
 function blackScreen(){let on=false;try{on=localStorage.getItem('iasd-black')==='1'}catch(e){}if(on){return closeScreenNow()}project('');feedback('Tela preta: a projeção continua aberta; vídeo do telão pausado e sem áudio.')}
 const specialKey='iasd-special-videos';let specialPos=-1;
 function specialList(){try{const x=JSON.parse(localStorage.getItem(specialKey)||'[]');return Array.isArray(x)?x.filter(id=>/^[\w-]{11}$/.test(id)):[]}catch{return []}}
@@ -165,7 +165,7 @@ function tmFromInputs(){tmSetTotal((+$('tmMin').value||0)*60+(+$('tmSec').value|
 function tmToggle(){if(TM.state==='running'){TM.remaining=tmLeft();TM.state='paused';tmSync();tmRender();return}if(TM.remaining<=0)TM.remaining=TM.total;TM.endsAt=Date.now()+TM.remaining*1000;TM.state='running';stTakeover('timer');tmSend();tmRender()}
 /* fecha o telão e já reinicia o cronômetro (fecha primeiro, assim o reinício não reaparece no telão) */
 async function tmClose(){await closeScreen();tmReset()}
-function tmReset(){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;tmSync();tmRender()}
+function tmReset(silent){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;if(!silent)tmSync();tmRender()}
 function tmAdjust(delta){const left=tmLeft(),next=Math.max(1,Math.min(36000,left+delta));if(TM.state==='running')TM.endsAt=Date.now()+next*1000;else{TM.remaining=next;if(TM.state==='idle')TM.total=next}TM.total=Math.max(TM.total,Math.ceil(next));tmSync();tmRender()}
 let tmPrev=null;
 function tmRender(){
