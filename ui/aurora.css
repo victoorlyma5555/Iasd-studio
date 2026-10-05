@@ -144,3 +144,40 @@ html[data-skin="aurora"] .iu-pas .iu-btn:last-child,html[data-skin="aurora"] .iu
 .au-c8{grid-column:span 8}
 .au-dock{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:1100px){.au-c8{grid-column:span 12}.au-dock{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- Celular: organização própria (mockup Mobile) ---------- */
+@media (max-width:700px){
+  html[data-skin="aurora"] body.iu .iu-top{flex-wrap:nowrap;gap:8px;padding:10px 14px 4px}
+  html[data-skin="aurora"] body.iu.iu-is-home .iu-search,html[data-skin="aurora"] body.iu .iu-search{order:0;flex:1 1 auto;flex-basis:auto;min-width:0;max-width:none;height:42px}
+  html[data-skin="aurora"] body.iu:not(.iu-is-home) .iu-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-skin="aurora"] body.iu:not(.iu-is-home) .iu-sp{display:none}
+  html[data-skin="aurora"] .iu-menu{width:42px;height:42px}
+  html[data-skin="aurora"] .iu-me{flex:none}
+  html[data-skin="aurora"] body.iu main{padding:0 14px 92px!important}
+  /* home */
+  .au-grid{gap:12px}
+  .au-hello{min-height:0;padding:20px;gap:12px}
+  .au-hello h1{font-size:36px}
+  .au-hello p{font-size:13.5px;margin-top:8px}
+  .au-hello .au-orbit.s,.au-hello .au-dot{display:none}
+  .au-act .iu-btn{flex:1}
+  .au-dock{display:flex;grid-column:span 12;overflow-x:auto;gap:8px;margin:0 -14px;padding:2px 14px 4px;scroll-snap-type:x proximity;scrollbar-width:none;order:2}
+  .au-dock::-webkit-scrollbar{display:none}
+  .au-tile{flex:0 0 auto;flex-direction:column;gap:7px;width:84px;padding:12px 6px;text-align:center;scroll-snap-align:start}
+  .au-tile>span:last-child{min-width:0}
+  .au-tile b{font-size:12px;line-height:1.15}
+  .au-ic{width:44px;height:44px}
+  .au-hello{order:1}.au-c5{order:3}.au-arena{order:5}.au-grid>.au-c4,.au-grid>.au-c8{order:4}
+  .au-arena{min-height:0;padding:18px}
+  .au-arena h2{font-size:30px}
+  .au-arena p,.au-chips{display:none}
+  .au-c5 .iu-pas{min-height:0}
+  .au-c5 .iu-pas .iu-two .iu-btn:nth-child(2){display:none}
+  .au-c5 .iu-pas .iu-two{grid-template-columns:1fr}
+  html[data-skin="aurora"] .iu-bn{margin:0 10px 10px;border:1px solid rgba(255,255,255,.1);border-radius:26px;left:0;right:0;padding:6px}
+  html[data-skin="aurora"] .iu-bn button{border-radius:20px}
+}
+@media (max-width:700px){
+  .au-dock{margin:0;padding:2px 0 4px}
+  .au-act .iu-btn{white-space:nowrap;padding:0 12px;font-size:13px}
+}
