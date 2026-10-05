@@ -1,0 +1,23 @@
+/* Tema claro: textos que ficavam claros demais (ou escuros demais) sobre o fundo errado */
+html[data-theme="light"] body.iu :is(.game-login,.profile-guest,.sound-gate) :is(h1,h2,h3,strong){color:var(--au-tx)!important}
+html[data-theme="light"] body.iu :is(.game-login,.profile-guest,.sound-gate) :is(p,small,span:not(.sound-gate-icon)){color:var(--au-mu)!important}
+html[data-theme="light"]:not([data-palette="celeste"]):not([data-palette="azulbranco"]){--au-c1:#0f766e;--au-c1-rgb:15,118,110}
+html[data-theme="light"] body.iu .pg.pg-cronogramas .sc-st.live{color:#047857!important}
+/* Menu (celular): cartões escuros herdados do tema antigo */
+html[data-theme="light"] body.iu .mobile-menu-head{background:#fff!important;border-color:rgba(var(--au-w),.14)!important;box-shadow:0 6px 20px rgba(var(--au-w),.08)!important}
+html[data-theme="light"] body.iu .mobile-menu-head h2{color:var(--au-tx)!important}
+html[data-theme="light"] body.iu .mobile-menu-head p{color:var(--au-mu)!important}
+html[data-theme="light"] body.iu .mobile-menu-head>span{color:#b45309!important}
+html[data-theme="light"] body.iu :is(.mobile-menu-list,.mobile-menu-group)>button{background:#fff!important;border:1px solid rgba(var(--au-w),.14)!important;color:var(--au-tx)!important}
+html[data-theme="light"] body.iu :is(.mobile-menu-list,.mobile-menu-group) button strong{color:var(--au-tx)!important}
+html[data-theme="light"] body.iu :is(.mobile-menu-list,.mobile-menu-group) button span{color:#b45309!important;background:rgba(180,83,9,.1)!important}
+html[data-theme="light"] body.iu :is(.mobile-menu-list,.mobile-menu-group) button em{color:var(--au-mu)!important}
+html[data-theme="light"] body.iu .mobile-menu-group small{color:var(--au-mu)!important}
+/* Bíblia (celular) no tema claro: ícones dos cartões e campo de busca */
+@media (max-width:760px){
+ html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel .pgi{color:var(--au-a2,#b45309)!important;background:rgba(var(--au-a1-rgb),.2)!important;opacity:1!important}
+ html[data-theme="light"] body.iu .pg.pg-biblia .bb-find .pg-sel input{background:transparent!important;border:0!important;box-shadow:none!important}
+}
+@media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel .pgi,html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel .pgi *{stroke:currentColor!important}}
+@media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel select:not(#zz1):not(#zz2){background:transparent!important;box-shadow:none!important}}
+@media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-find .pg-sel input:not(#zz1):not(#zz2){background:transparent!important;border:0!important;box-shadow:none!important}}

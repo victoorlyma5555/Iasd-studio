@@ -309,7 +309,7 @@ function css(){
 html.lg2-open{overflow:hidden}
 .lg2.telao .lg2-btn,.lg2.telao .lg2-autobar,.lg2.telao .lb-mode{display:none!important}.lg2.telao .lg2-qv .qv-show{display:inline-flex!important}.lg2.telao .lg2-chrome{opacity:0;transition:opacity .4s}.lg2.telao:hover .lg2-chrome{opacity:1}.lg2.telao .lg2-body{pointer-events:none}
 .lg2{position:fixed;inset:0;z-index:9999;color:#f4f7ff;font-family:Inter,system-ui,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% -10%,#3b2c8f 0%,transparent 60%),radial-gradient(1000px 700px at 100% 110%,#8a5a12 0%,transparent 60%),linear-gradient(160deg,#0a1130,#0f1c4d 55%,#080d24);overflow:hidden}
-.lg2 *{box-sizing:border-box}.lg2 button{font:inherit;color:inherit;cursor:pointer}
+.lg2{--au-tx:#f4f7ff;--au-mu:#b5c3e6;--au-w:255,255,255;--au-k:0,0,0;--au-on:#1a0f05;color-scheme:dark}.lg2 .lg2-btn.gold,.lg2 .gx-go,.lg2 .gold{--au-tx:#2a1700}.lg2 .gx-ch.on{--au-tx:#2a1700}html[data-theme] body .lg2 :is(input,textarea,select):not(#zz1):not(#zz2){background:rgba(255,255,255,.08)!important;color:#f4f7ff!important;border:0!important}html .lg2 input::placeholder{color:#8fa0c8!important}.lg2 *{box-sizing:border-box}.lg2 button{font:inherit;color:inherit;cursor:pointer}
 .lg2-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .lg2-bg i{position:absolute;width:26vmin;height:26vmin;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.09),transparent 65%);animation:lgdrift 18s ease-in-out infinite}
 .lg2-bg i:nth-child(1){left:-6%;top:10%}.lg2-bg i:nth-child(2){left:70%;top:-8%;animation-delay:-4s}.lg2-bg i:nth-child(3){left:30%;top:60%;animation-delay:-8s}.lg2-bg i:nth-child(4){left:85%;top:55%;animation-delay:-2s}
