@@ -420,3 +420,5 @@ html[data-skin="aurora"] .yt-live-card .yl-note{display:block;margin:8px auto 0;
 #ambChips .amb-ord{flex:none;display:inline-flex;align-items:center;gap:2px;padding:3px 4px;border-radius:99px;border:1px dashed rgba(var(--au-w,255,255,255),.4);background:rgba(var(--au-w,255,255,255),.06)}
 #ambChips .amb-ord b{font-size:12.5px;font-weight:700;padding:0 4px}
 #ambChips .amb-ord button{min-width:26px;height:26px;padding:0!important;border-radius:50%!important;font-size:11px}
+
+#ambPlList .amb-newpl{width:100%;height:42px;border-radius:14px!important;font-weight:800;margin:0 0 10px}
