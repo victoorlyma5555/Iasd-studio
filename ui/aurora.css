@@ -208,3 +208,19 @@ html[data-palette="celeste"] body.iu :is(.iu-btn.p,.btn.pri,.pg-gold,.pg-blue,bu
 html[data-palette="celeste"] body.iu .au-hello h1 span,html[data-palette="azulbranco"] body.iu .au-hello h1 span{color:transparent}
 html[data-skin="aurora"] .iu-stab{background:var(--au-grad)!important;color:var(--au-on)!important;border-color:transparent!important}
 html[data-palette="celeste"] .iu-stab,html[data-palette="azulbranco"] .iu-stab{color:#fff!important}
+
+/* janelas e popups: fundo sólido na cor do tema (nunca transparente) */
+html[data-skin="aurora"] .acp,html[data-skin="aurora"] .iu-sd,html[data-skin="aurora"] .vs-card,html[data-skin="aurora"] .iasd-edit-dialog,html[data-skin="aurora"] .profile-crop-dialog,html[data-skin="aurora"] .required-profile-dialog,html[data-skin="aurora"] .account-popover,html[data-skin="aurora"] .iu-sr{
+  background:linear-gradient(160deg,var(--au-card1),var(--au-card2))!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.14)!important;box-shadow:0 24px 70px rgba(var(--au-k),.45)!important}
+html[data-skin="aurora"] .acp-top{background:linear-gradient(135deg,rgba(var(--au-a2-rgb),.9),rgba(var(--au-b-rgb),.85))!important;color:#fff}
+html[data-skin="aurora"] .acp-top.c{background-size:cover!important}
+html[data-skin="aurora"] .acp-lst button:hover{background:rgba(var(--au-w),.08)}
+html[data-skin="aurora"] .acp-lst .ic{background:rgba(var(--au-a1-rgb),.16)}
+html[data-skin="aurora"] .acp-lst .ok .ic{background:rgba(var(--au-c1-rgb),.2)}
+html[data-skin="aurora"] .acp-lst .bl .ic{background:rgba(var(--au-c3-rgb),.2)}
+html[data-skin="aurora"] .acp-lst .pu .ic{background:rgba(var(--au-b-rgb),.25)}
+html[data-skin="aurora"] .acp-lst .out{color:var(--au-c2)}.acp-lst .out .ic{background:rgba(var(--au-c2-rgb),.18)}
+html[data-skin="aurora"] .acp-tg.on{background:var(--au-c1)}
+html[data-skin="aurora"] .acp-sep{background:rgba(var(--au-w),.14)}
+html[data-skin="aurora"] .acp-guest .p{background:var(--au-grad);color:var(--au-on)}
+html[data-skin="aurora"] .acp-dismiss{background:rgba(var(--au-k),.35)}
