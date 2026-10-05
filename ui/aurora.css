@@ -202,9 +202,9 @@ html[data-palette="celeste"] .iu-nav.on,html[data-palette="azulbranco"] .iu-nav.
 html[data-palette="celeste"] .au-hello h1 span,html[data-palette="azulbranco"] .au-hello h1 span{background:linear-gradient(90deg,#0284c7,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* paletas claras: textos escuros em todo o site */
-html[data-palette="celeste"] body.iu :is(h1,h2,h3,h4,p,label,strong,b,small,li,td,th,summary,.iu-pas,.iu-pas q,.iu-pas small,.au-chips span,.iu-ph h2,.au-card,.pg-card,.panel,.card),html[data-palette="azulbranco"] body.iu :is(h1,h2,h3,h4,p,label,strong,b,small,li,td,th,summary,.iu-pas,.iu-pas q,.iu-pas small,.au-chips span,.iu-ph h2,.au-card,.pg-card,.panel,.card){color:var(--au-tx)}
-html[data-palette="celeste"] body.iu :is(.muted,small,.iu-ph small,.au-tile small,.au-lab),html[data-palette="azulbranco"] body.iu :is(.muted,small,.iu-ph small,.au-tile small,.au-lab){color:var(--au-mu)}
-html[data-palette="celeste"] body.iu :is(.iu-btn.p,.btn.pri,.pg-gold,.pg-blue,button.primary,.primary,.iu-now,.iu-cnt,.iu-nav.on,.iu-bn .on,.ri.on),html[data-palette="azulbranco"] body.iu :is(.iu-btn.p,.btn.pri,.pg-gold,.pg-blue,button.primary,.primary,.iu-now,.iu-cnt,.iu-nav.on,.iu-bn .on,.ri.on){color:#fff!important}
+html[data-palette="celeste"] body.iu :is(h1,h2,h3,h4,p,label,strong,b,small,li,td,th,summary,.iu-pas,.iu-pas q,.iu-pas small,.au-chips span,.iu-ph h2,.au-card,.pg-card,.panel,.card):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(h1,h2,h3,h4,p,label,strong,b,small,li,td,th,summary,.iu-pas,.iu-pas q,.iu-pas small,.au-chips span,.iu-ph h2,.au-card,.pg-card,.panel,.card):not(#auth-modal-root *):not(#welcome-popup-root *){color:var(--au-tx)}
+html[data-palette="celeste"] body.iu :is(.muted,small,.iu-ph small,.au-tile small,.au-lab):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(.muted,small,.iu-ph small,.au-tile small,.au-lab):not(#auth-modal-root *):not(#welcome-popup-root *){color:var(--au-mu)}
+html[data-palette="celeste"] body.iu :is(.iu-btn.p,.btn.pri,.pg-gold,.pg-blue,button.primary,.primary,.iu-now,.iu-cnt,.iu-nav.on,.iu-bn .on,.ri.on):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(.iu-btn.p,.btn.pri,.pg-gold,.pg-blue,button.primary,.primary,.iu-now,.iu-cnt,.iu-nav.on,.iu-bn .on,.ri.on):not(#auth-modal-root *):not(#welcome-popup-root *){color:#fff!important}
 html[data-palette="celeste"] body.iu .au-hello h1 span,html[data-palette="azulbranco"] body.iu .au-hello h1 span{color:transparent}
 html[data-skin="aurora"] .iu-stab{background:var(--au-grad)!important;color:var(--au-on)!important;border-color:transparent!important}
 html[data-palette="celeste"] .iu-stab,html[data-palette="azulbranco"] .iu-stab{color:#fff!important}
@@ -236,12 +236,12 @@ html body.iu .au-has-ban p em{color:#e8e2f5!important}
 
 /* ===== paletas claras: campos, botões e textos legíveis ===== */
 html[data-palette="celeste"]{--au-a1:#0ea5e9;--au-a1-rgb:14,165,233;--au-a2:#0369a1;--au-a2-rgb:3,105,161}
-html[data-palette="celeste"] body.iu :is(input,select,textarea),html[data-palette="azulbranco"] body.iu :is(input,select,textarea){background:rgba(255,255,255,.92)!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.2)!important}
+html[data-palette="celeste"] body.iu :is(input,select,textarea):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(input,select,textarea):not(#auth-modal-root *):not(#welcome-popup-root *){background:rgba(255,255,255,.92)!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.2)!important}
 html[data-palette="celeste"] body.iu :is(input,textarea)::placeholder,html[data-palette="azulbranco"] body.iu :is(input,textarea)::placeholder{color:var(--au-mu)!important;opacity:1}
-html[data-palette="celeste"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq),html[data-palette="azulbranco"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq){color:var(--au-tx)}
+html[data-palette="celeste"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq):not(#auth-modal-root *):not(#welcome-popup-root *){color:var(--au-tx)}
 html[data-palette="celeste"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,svg,.iu-btn:not(.p)),html[data-palette="azulbranco"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,svg,.iu-btn:not(.p)){color:#fff!important}
 html[data-skin="aurora"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,.iu-ph svg){color:#fff!important}
-html[data-palette="celeste"] body.iu :is(.pg-sel,.pg-sel select),html[data-palette="azulbranco"] body.iu :is(.pg-sel,.pg-sel select){color:var(--au-tx)!important}
+html[data-palette="celeste"] body.iu :is(.pg-sel,.pg-sel select):not(#auth-modal-root *):not(#welcome-popup-root *),html[data-palette="azulbranco"] body.iu :is(.pg-sel,.pg-sel select):not(#auth-modal-root *):not(#welcome-popup-root *){color:var(--au-tx)!important}
 
 /* ===== Bíblia: busca compacta e direta ===== */
 html[data-skin="aurora"] body.iu .pg-biblia .bb-find{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px}
@@ -347,3 +347,16 @@ html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!imp
 .bn-st{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border-radius:12px;border:1px solid rgba(128,128,160,.4);background:#17142a;cursor:pointer;color:#cfc9dc}
 .bn-st small{font-size:10px;line-height:1.1;text-align:center}
 .bn-st.on{border-color:#ffc15e;box-shadow:0 0 0 2px rgba(255,193,94,.4)}
+
+/* ===== janelas e ferramentas: fundo sólido do tema + botão com o degradê do tema ===== */
+html[data-skin="aurora"] :is(.cv-ov,.bp-ov,.cg-ov,.es-pop-ov,.fdx-ov,.iad-ov,.vs-ov,.iasd-edit-dialog,.cover-dialog,.layout-dialog,.device-preview-dialog,.profile-crop-dialog,.auth-dialog,.welcome-dialog,.acp,.iu-sd,.es-hdr,.es-chat,#btPop,.amb-menu,.rd-bar,.vbar,.bn-dlg){
+  --iu-sf:var(--au-card1);--iu-sf2:var(--au-card2);--iu-bd:rgba(var(--au-w),.2);--iu-tx:var(--au-tx);--iu-mu:var(--au-mu);--iu-pr:var(--au-a1)}
+html[data-skin="aurora"] :is(.cv-md,.bp-sheet,.cg-box,.fdx-box,.iad-box,.auth-dialog,.welcome-dialog,.cover-dialog,.layout-dialog,.device-preview-dialog){background:linear-gradient(160deg,var(--au-card1),var(--au-card2))!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.16)!important}
+html[data-skin="aurora"] :is(.cv-b.p,.bp-pri,.cv-ft .primary,.iasd-edit-actions .primary,.iasd-edit-dialog .primary,.auth-dialog .primary,.welcome-dialog .primary,.cover-dialog .primary){background:var(--au-grad)!important;color:var(--au-on)!important;border:0!important;box-shadow:0 10px 28px -10px rgba(var(--au-a2-rgb),.8)}
+html[data-palette="celeste"] :is(.cv-b.p,.bp-pri,.iasd-edit-actions .primary,.iasd-edit-dialog .primary),html[data-palette="azulbranco"] :is(.cv-b.p,.bp-pri,.iasd-edit-actions .primary,.iasd-edit-dialog .primary){color:#fff!important}
+html[data-skin="aurora"] .cv-b,html[data-skin="aurora"] .iasd-edit-dialog button:not(.primary){color:var(--au-tx)}
+html[data-skin="aurora"] :is(.iasd-edit-dialog,.cv-md) :is(input,select,textarea){background:rgba(var(--au-w),.08);color:var(--au-tx);border:1px solid rgba(var(--au-w),.2)}
+
+html[data-palette="celeste"] .bp-ov :is(input,textarea),html[data-palette="azulbranco"] .bp-ov :is(input,textarea){background:#fff!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.25)!important}
+html[data-skin="aurora"] .vs-b:is(.wa,.wa2,.ig,.img,.dl,.cp) :is(b,small),html[data-skin="aurora"] .vs-b:is(.wa,.wa2,.ig,.img,.dl,.cp){color:#fff!important}
+html[data-skin="aurora"] .vs-b:is(.wa,.wa2,.ig,.img,.dl,.cp) small{opacity:.85}
