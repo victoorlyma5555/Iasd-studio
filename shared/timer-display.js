@@ -176,8 +176,82 @@ const CSS_FX=`
 .iasd-tm.an-nenhuma *,.iasd-tm.an-nenhuma:after{animation:none!important;transition:none!important}
 `;
 function deco(themeId){const off=/~0$/.test(String(themeId||''));themeId=String(themeId||'').split('~')[0];const t=THEMES[themeId];if(!t||!t.pat)return null;if(!document.getElementById('iasd-deco-css')){const st=document.createElement('style');st.id='iasd-deco-css';st.textContent=DECO_CSS;document.head.appendChild(st)}const d=document.createElement('div');d.className='iasd-deco';d.dataset.pat=t.pat;if(off)d.dataset.off='1';d.setAttribute('aria-hidden','true');return d}
-const LAYOUTS={ring:'Anel',digital:'Digital',cards:'Cartões',bar:'Barra',minimal:'Minimalista'};
+const LAYOUTS={ring:'Anel',digital:'Digital',cards:'Cartões',bar:'Barra',minimal:'Minimalista',neonsign:'Néon',radar:'Radar',liquido:'Líquido',pulsar:'Pulsar',orbita:'Órbita',codigo:'Terminal',listras:'Listras',blocos:'Blocos',ondas:'Ondas',placar:'Placar'};
+const FXL=['neonsign','radar','liquido','pulsar','orbita','codigo','listras','blocos','ondas','placar'];
 const ANIMS={suave:'Suave',pulso:'Pulso',neon:'Neon',tremor:'Tremor',nenhuma:'Sem animação'};
+
+const CSS_L=`
+.iasd-tm .tmx.fx{gap:2.6cqh}
+.iasd-tm .fx .stg{position:relative;display:grid;place-items:center}
+.iasd-tm .fx .time2{position:relative;z-index:2}
+/* Néon: letreiro piscando */
+.iasd-tm .fx.neonsign .time2{font-size:min(34cqh,21cqw);color:var(--c2);text-shadow:0 0 .06em #fff,0 0 .2em var(--c2),0 0 .5em var(--c1),0 0 1em var(--glow);animation:lyFlick 5s linear infinite}
+.iasd-tm .fx.neonsign .ln{width:min(70cqw,140cqh);height:.8cqh;border-radius:9px;background:var(--c2);box-shadow:0 0 1.2cqh var(--c2),0 0 3.4cqh var(--c1);transform-origin:left;transform:scaleX(var(--f,1));transition:transform .25s linear}
+@keyframes lyFlick{0%,19%,21%,62%,64%,100%{opacity:1}20%,63%{opacity:.35}22%{opacity:.8}}
+/* Radar: varredura girando */
+.iasd-tm .fx.radar .stg{width:min(64cqh,64cqw);aspect-ratio:1}
+.iasd-tm .fx.radar .rd{position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 11%,var(--trk) 11.4% 12%),var(--cdb,rgba(0,0,0,.25));overflow:hidden}
+.iasd-tm .fx.radar .rd:before{content:'';position:absolute;inset:0;background:conic-gradient(from 0deg,transparent 0 75%,var(--c1) 100%);opacity:.55;animation:lySpin 3.2s linear infinite}
+.iasd-tm .fx.radar .pg{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--c2) calc(var(--f,1)*360deg),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1.8cqh),#000 calc(100% - 1.8cqh));mask:radial-gradient(farthest-side,transparent calc(100% - 1.8cqh),#000 calc(100% - 1.8cqh))}
+.iasd-tm .fx.radar .time2{font-size:min(15cqh,11cqw)}
+@keyframes lySpin{to{transform:rotate(360deg)}}
+/* Líquido: círculo que esvazia com ondas */
+.iasd-tm .fx.liquido .stg{width:min(60cqh,60cqw);aspect-ratio:1;border-radius:50%;overflow:hidden;border:.7cqh solid var(--c2);background:var(--trk)}
+.iasd-tm .fx.liquido .lq{position:absolute;left:0;right:0;bottom:0;height:calc(var(--f,1)*100%);background:linear-gradient(180deg,var(--c2),var(--c1));transition:height .4s linear}
+.iasd-tm .fx.liquido .lq:before,.iasd-tm .fx.liquido .lq:after{content:'';position:absolute;left:-50%;width:200%;height:14cqh;top:-7cqh;border-radius:42%;background:var(--c2);opacity:.6;animation:lySpin 6s linear infinite}
+.iasd-tm .fx.liquido .lq:after{opacity:.35;animation-duration:9s;animation-direction:reverse}
+.iasd-tm .fx.liquido .time2{font-size:min(14cqh,10.5cqw);text-shadow:0 .4cqh 1.6cqh rgba(0,0,0,.6);color:#fff}
+/* Pulsar: anéis expandindo */
+.iasd-tm .fx.pulsar .stg{width:min(64cqh,64cqw);aspect-ratio:1}
+.iasd-tm .fx.pulsar .pr{position:absolute;inset:14%;border-radius:50%;border:.5cqh solid var(--c2);opacity:0;animation:lyRing 3.6s ease-out infinite}
+.iasd-tm .fx.pulsar .pr:nth-child(2){animation-delay:1.2s}.iasd-tm .fx.pulsar .pr:nth-child(3){animation-delay:2.4s}
+.iasd-tm .fx.pulsar .cr{position:absolute;inset:26%;border-radius:50%;background:radial-gradient(circle,var(--c1),transparent 70%);opacity:.5;animation:lyBeat 1.8s ease-in-out infinite}
+.iasd-tm .fx.pulsar .time2{font-size:min(17cqh,12.5cqw)}
+@keyframes lyRing{0%{transform:scale(.5);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+@keyframes lyBeat{50%{transform:scale(1.12);opacity:.8}}
+/* Órbita: pontos girando ao redor */
+.iasd-tm .fx.orbita .stg{width:min(64cqh,64cqw);aspect-ratio:1}
+.iasd-tm .fx.orbita .o1,.iasd-tm .fx.orbita .o2{position:absolute;border-radius:50%;border:.35cqh dashed var(--trk)}
+.iasd-tm .fx.orbita .o1{inset:2%;animation:lySpin 14s linear infinite}.iasd-tm .fx.orbita .o2{inset:16%;animation:lySpin 9s linear infinite reverse}
+.iasd-tm .fx.orbita .o1:before,.iasd-tm .fx.orbita .o2:before{content:'';position:absolute;top:-1.5cqh;left:50%;width:3cqh;height:3cqh;margin-left:-1.5cqh;border-radius:50%;background:var(--c2);box-shadow:0 0 2cqh var(--c1)}
+.iasd-tm .fx.orbita .pg{position:absolute;inset:8%;border-radius:50%;background:conic-gradient(var(--c1) calc(var(--f,1)*360deg),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1cqh),#000 calc(100% - 1cqh));mask:radial-gradient(farthest-side,transparent calc(100% - 1cqh),#000 calc(100% - 1cqh));opacity:.9}
+.iasd-tm .fx.orbita .time2{font-size:min(15cqh,11cqw)}
+/* Terminal: texto de código com cursor */
+.iasd-tm .fx.codigo .stg{padding:4cqh 6cqw;border:.4cqh solid var(--c2);border-radius:1.6cqh;background:rgba(0,0,0,.45);overflow:hidden;box-shadow:0 0 3cqh var(--glow)}
+.iasd-tm .fx.codigo .stg:before{content:'';position:absolute;left:0;right:0;height:30%;top:-30%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.08),transparent);animation:lyScan 4s linear infinite}
+.iasd-tm .fx.codigo .time2{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:min(26cqh,16cqw);color:var(--c2);font-weight:700;letter-spacing:.04em}
+.iasd-tm .fx.codigo .time2:before{content:'> ';opacity:.6}
+.iasd-tm .fx.codigo .time2:after{content:'_';animation:lyBlink 1s steps(1) infinite}
+@keyframes lyScan{to{top:130%}}@keyframes lyBlink{50%{opacity:0}}
+/* Listras: barra de listras deslizantes */
+.iasd-tm .fx.listras .time2{font-size:min(26cqh,16cqw)}
+.iasd-tm .fx.listras .tk3{width:min(88cqw,176cqh);height:6cqh;border-radius:99px;background:var(--trk);overflow:hidden}
+.iasd-tm .fx.listras .tk3 i{display:block;height:100%;width:100%;transform-origin:left;transform:scaleX(var(--f,1));transition:transform .25s linear;border-radius:99px;background:repeating-linear-gradient(45deg,var(--c1) 0 2.4cqh,var(--c2) 2.4cqh 4.8cqh);background-size:6.8cqh 6.8cqh;animation:lyStripe 1s linear infinite}
+@keyframes lyStripe{to{background-position:6.8cqh 0}}
+/* Blocos: grade de 20 blocos que apagam */
+.iasd-tm .fx.blocos .time2{font-size:min(26cqh,16cqw)}
+.iasd-tm .fx.blocos .gr{display:grid;grid-template-columns:repeat(10,1fr);gap:.8cqh;width:min(80cqw,150cqh)}
+.iasd-tm .fx.blocos .gr i{height:6cqh;border-radius:1cqh;background:var(--trk);transition:background .4s,transform .4s}
+.iasd-tm .fx.blocos .gr i.on{background:linear-gradient(160deg,var(--c2),var(--c1));box-shadow:0 0 1.4cqh var(--glow);animation:lyGlow 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*.12s)}
+@keyframes lyGlow{50%{transform:scale(.86);filter:brightness(1.35)}}
+/* Ondas: mar subindo/descendo ao fundo */
+.iasd-tm .fx.ondas{position:relative}
+.iasd-tm .fx.ondas .time2{font-size:min(30cqh,19cqw)}
+.iasd-tm .fx.ondas .wv{position:absolute;left:0;right:0;bottom:0;height:36cqh;overflow:hidden;z-index:0;pointer-events:none}
+.iasd-tm .fx.ondas .wv div{position:absolute;left:0;right:0;bottom:0;height:100%;transform:translateY(calc((1 - var(--f,1))*80%));transition:transform .4s linear}
+.iasd-tm .fx.ondas .wv i{position:absolute;left:0;right:0;bottom:0;height:70%;background-repeat:repeat-x;background-size:50cqh 100%;opacity:.55;animation:lyWave 9s linear infinite}
+.iasd-tm .fx.ondas .wv i:nth-child(2){opacity:.35;height:84%;animation-duration:14s;animation-direction:reverse}
+.iasd-tm .fx.ondas .wv i{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'%3E%3Cpath d='M0 20 Q25 0 50 20 T100 20 V40 H0Z' fill='%2338bdf8'/%3E%3C/svg%3E")}
+@keyframes lyWave{to{background-position:50cqh 0}}
+.iasd-tm .tmx.fx.ondas>*:not(.wv){position:relative;z-index:1}
+/* Placar: painel de LED âmbar */
+.iasd-tm .fx.placar .stg{padding:3cqh 5cqw;border-radius:2cqh;background:#0a0a0c;border:.6cqh solid #2a2a30;box-shadow:inset 0 0 4cqh rgba(0,0,0,.9),0 0 3cqh var(--glow)}
+.iasd-tm .fx.placar .ghost{position:absolute;opacity:.09;font:800 min(26cqh,16cqw) "JetBrains Mono",ui-monospace,Consolas,monospace;color:#ff9a1f;letter-spacing:.06em}
+.iasd-tm .fx.placar .time2{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:min(26cqh,16cqw);letter-spacing:.06em;color:#ff9a1f;text-shadow:0 0 .25em #ff7a00,0 0 .7em rgba(255,122,0,.5)}
+.iasd-tm.warn .fx.placar .time2{color:#ffe14d}.iasd-tm.alert .fx.placar .time2,.iasd-tm.done .fx.placar .time2{color:#ff4a3a}
+.iasd-tm .fx.placar .cl{animation:lyBlink 1s steps(1) infinite}
+@media (prefers-reduced-motion:reduce){.iasd-tm .fx *,.iasd-tm .fx *:before,.iasd-tm .fx *:after{animation:none!important}}
+`;
 const CSS=`
 .iasd-tm{--tx:#fff;--trk:rgba(255,255,255,.09);--tk:rgba(255,255,255,.22);position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);transition:background .8s}
 ${Object.keys(THEMES).map(k=>{const t=THEMES[k];return`.iasd-tm[data-theme="${k}"]{--bg:${t.bg};--c1:${t.c1};--c2:${t.c2};--glow:${t.glow};${t.font?`--tf:${FONTS[t.font]};`:''}${t.tx?`--tx:${t.tx};--trk:${t.trk};--tk:${t.tk};--cd1:rgba(255,255,255,.92);--cd2:rgba(255,255,255,.62);--cdb:rgba(255,255,255,.9);`:''}${t.sh1?`--sh1:${t.sh1};--sh2:${t.sh2};`:''}}`}).join('\n')}
@@ -258,11 +332,11 @@ function fmt(s){
 }
 function mount(root,raw){
  const d=clean(raw);
- if(!document.getElementById('iasd-tm-css')){const st=document.createElement('style');st.id='iasd-tm-css';st.textContent=CSS+CSS_FX;document.head.appendChild(st)}
+ if(!document.getElementById('iasd-tm-css')){const st=document.createElement('style');st.id='iasd-tm-css';st.textContent=CSS+CSS_FX+CSS_L;document.head.appendChild(st)}
  const th=THEMES[d.theme]||THEMES[DEFAULT_THEME];
  const box=document.createElement('div');box.className='iasd-tm idle an-'+d.anim+(th.font==='thin'?' is-thin':'');box.dataset.theme=d.theme;
  const dc=deco(d.theme+(d.fxoff?'~0':''));if(dc)box.appendChild(dc);
- const ui=d.layout==='ring'?buildRing(box,d):buildFlat(box,d);
+ const ui=d.layout==='ring'?buildRing(box,d):FXL.includes(d.layout)?buildFx(box,d):buildFlat(box,d);
  if(d.qr){const q=document.createElement('div');q.className='qr';
   q.innerHTML='<svg viewBox="-2 -2 '+(QR_N+4)+' '+(QR_N+4)+'" shape-rendering="crispEdges" role="img" aria-label="QR Code da Lição da Escola Sabatina"><rect x="-2" y="-2" width="'+(QR_N+4)+'" height="'+(QR_N+4)+'" fill="#fff"/><path d="'+QR_PATH+'" fill="#0b1029"/></svg><b>Lição da<br>Escola Sabatina</b><small>Aponte a câmera do celular</small>';
   box.appendChild(q)}
@@ -312,6 +386,32 @@ function buildRing(box,d){
  return{
   time(txt,change){time.textContent=txt;time.setAttribute('font-size',txt.length>5?'150':'205');if(change&&d.anim==='pulso'){time.style.animation='none';void time.getBoundingClientRect();time.style.animation=''}},
   frac(frac){arc.setAttribute('stroke-dashoffset',String(C*(1-frac)));const ang=frac*2*Math.PI-Math.PI/2;dot.setAttribute('cx',500+Math.cos(ang)*R);dot.setAttribute('cy',500+Math.sin(ang)*R);dot.style.display=frac<=0?'none':'';const on=Math.ceil(frac*60);if(on!==lastTick){ticks.forEach((t,i)=>t.classList.toggle('on',i<on));lastTick=on}},
+  status(t){st.textContent=t}
+ };
+}
+
+/* formatos animados (cada um com sua própria animação) */
+function buildFx(box,d){
+ const L=d.layout,wrap=document.createElement('div');wrap.className='tmx fx '+L;box.appendChild(wrap);
+ const mk=(c,t)=>{const n=document.createElement(t||'div');if(c)n.className=c;return n};
+ const ttl=mk('ttl2');ttl.textContent=d.title;const sub=mk('sub2');sub.textContent=d.subtitle;const st=mk('st2');
+ const stg=mk('stg'),timeEl=mk('time2');let blocks=null;
+ if(L==='radar'){stg.append(mk('rd'),mk('pg'))}
+ else if(L==='liquido'){stg.append(mk('lq'))}
+ else if(L==='pulsar'){stg.append(mk('pr'),mk('pr'),mk('pr'),mk('cr'))}
+ else if(L==='orbita'){stg.append(mk('o1'),mk('o2'),mk('pg'))}
+ else if(L==='placar'){const g=mk('ghost');g.textContent='88:88';stg.append(g)}
+ stg.append(timeEl);
+ const head=[...(d.title?[ttl]:[]),...(d.subtitle?[sub]:[])];
+ if(L==='neonsign'){wrap.append(...head,stg,mk('ln'),st)}
+ else if(L==='listras'){const t=mk('tk3');t.append(mk('','i'));wrap.append(...head,stg,t,st)}
+ else if(L==='blocos'){const g=mk('gr');blocks=[];for(let i=0;i<20;i++){const b=mk('','i');b.style.setProperty('--i',i);g.append(b);blocks.push(b)}wrap.append(...head,stg,g,st)}
+ else if(L==='ondas'){const w=mk('wv'),inn=mk('');inn.append(mk('','i'),mk('','i'));w.append(inn);wrap.append(w,...head,stg,st)}
+ else wrap.append(...head,stg,st);
+ let lastOn=-1;
+ return{
+  time(txt){if(L==='placar')timeEl.innerHTML=txt.replace(/:/g,'<span class="cl">:</span>');else timeEl.textContent=txt},
+  frac(f){wrap.style.setProperty('--f',f.toFixed(4));if(blocks){const on=Math.ceil(f*20);if(on!==lastOn){blocks.forEach((b,i)=>b.classList.toggle('on',i<on));lastOn=on}}},
   status(t){st.textContent=t}
  };
 }

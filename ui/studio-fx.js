@@ -23,8 +23,30 @@ window.thMount=function(){
  if(typeof thView!=='undefined'&&thView)thView.stop();
  thView=TD.mount(box,{title:'Escola Sabatina',subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmThemeFx(),layout:tmLayout,anim:tmAnim});
 };
-function refreshTimer(){try{tmSync()}catch(e){}try{thMount()}catch(e){}}
-chips('tmLayouts',Object.entries(TD.layouts),()=>tmLayout,k=>{tmLayout=k;lsSet('iasd-timer-layout',k);refreshTimer()});
+let refreshTimer;refreshTimer=function(){try{tmSync()}catch(e){}try{thMount()}catch(e){}};
+/* prévia ao vivo dentro do Cronômetro + formatos como miniaturas reais (cada uma já animada) */
+let tmPrevView=null,thumbs=[];
+function tmPrevMount(){
+ const box=$('tmPrev');if(!box)return;
+ if(tmPrevView)tmPrevView.stop();
+ const t=($('tmTitle')&&$('tmTitle').value.trim())||'Escola Sabatina';
+ tmPrevView=TD.mount(box,{title:t,subtitle:'Caldas do Jorro',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmThemeFx(),layout:tmLayout,anim:tmAnim});
+}
+function paintLayouts(){
+ const box=$('tmLayouts');if(!box)return;
+ thumbs.forEach(v=>{try{v.stop()}catch(e){}});thumbs=[];box.replaceChildren();box.classList.add('lay-grid');
+ Object.entries(TD.layouts).forEach(([k,label])=>{
+  const b=document.createElement('button');b.type='button';b.dataset.k=k;b.className='lay-card'+(k===tmLayout?' on':'');b.setAttribute('aria-pressed',String(k===tmLayout));
+  const th=document.createElement('span');th.className='lay-th';const sp=document.createElement('span');sp.textContent=label;b.append(th,sp);
+  b.onclick=()=>{tmLayout=k;lsSet('iasd-timer-layout',k);refreshTimer();paintLayouts()};
+  box.append(b);
+  try{thumbs.push(TD.mount(th,{title:'',subtitle:'',total:3600,state:'running',remaining:2100,endsAt:Date.now()+2100000,beep:false,theme:tmThemeFx(),layout:k,anim:'nenhuma'}))}catch(e){}
+ });
+}
+const _refresh=refreshTimer;refreshTimer=function(){_refresh();tmPrevMount()};
+const _th2=window.thMount;window.thMount=function(){_th2.apply(this,arguments);try{tmPrevMount();if(thumbs.length)paintLayouts()}catch(e){}};
+const tt=$('tmTitle');if(tt)tt.addEventListener('input',()=>{try{tmPrevMount()}catch(e){}});
+paintLayouts();tmPrevMount();
 chips('tmAnims',Object.entries(TD.anims),()=>tmAnim,k=>{tmAnim=k;lsSet('iasd-timer-anim',k);refreshTimer()});
 
 /* ---------- Sorteador: modelo, animação e comemoração ---------- */
