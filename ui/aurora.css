@@ -343,3 +343,7 @@ html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!imp
 .bn-c.on{border-color:#ffc15e;box-shadow:0 0 0 2px rgba(255,193,94,.45)}
 .bn-sw input[type=color]{width:34px;height:30px;padding:0;border:0;background:none}
 @media (max-width:760px){.bn-body{grid-template-columns:1fr}}
+.bn-sts{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;max-height:190px;overflow:auto;padding:2px}
+.bn-st{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border-radius:12px;border:1px solid rgba(128,128,160,.4);background:#17142a;cursor:pointer;color:#cfc9dc}
+.bn-st small{font-size:10px;line-height:1.1;text-align:center}
+.bn-st.on{border-color:#ffc15e;box-shadow:0 0 0 2px rgba(255,193,94,.4)}

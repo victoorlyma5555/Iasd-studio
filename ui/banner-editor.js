@@ -11,7 +11,31 @@ const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const g=fn=>{try{return fn()}catch(e){return undefined}};
 const uid=()=>'l'+Math.random().toString(36).slice(2,8);
 
-function base(o){return Object.assign({id:uid(),t:'Novo texto',x:50,y:50,s:6,c:'#ffffff',f:'Bricolage Grotesque',w:700,i:0,u:0,a:'center',sh:1,bg:'',ls:0},o||{})}
+
+/* ---------- estilos de letra (como os "estilos" do Photoshop) ---------- */
+const grad=(g,sh)=>`background:${g};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:${sh||'drop-shadow(0 2px 6px rgba(0,0,0,.55))'};`;
+const PRESETS={
+ neonazul:['Neon azul',()=>`color:#eaffff;text-shadow:0 0 .08em #fff,0 0 .22em #29d3ff,0 0 .5em #1b8cff,0 0 1em #1b8cff;`],
+ neonrosa:['Neon rosa',()=>`color:#fff0fb;text-shadow:0 0 .08em #fff,0 0 .22em #ff4fd8,0 0 .5em #ff2bb8,0 0 1em #d91fa0;`],
+ neonverde:['Neon verde',()=>`color:#f0fff6;text-shadow:0 0 .08em #fff,0 0 .22em #3dff9a,0 0 .5em #00e07a,0 0 1em #00b862;`],
+ ouro:['Ouro',()=>grad('linear-gradient(180deg,#fff3b0 0%,#f5c542 38%,#b8860b 52%,#ffe27a 70%,#a8740a 100%)','drop-shadow(0 .04em .03em rgba(60,30,0,.8))')],
+ prata:['Prata cromada',()=>grad('linear-gradient(180deg,#ffffff 0%,#c9d3e0 40%,#7d8aa0 52%,#e9eef7 70%,#8b97ab 100%)','drop-shadow(0 .04em .03em rgba(0,0,20,.7))')],
+ aurora:['Degradê aurora',()=>grad('linear-gradient(90deg,#ffc15e,#ff6a88 55%,#a99bff)')],
+ porsol:['Pôr do sol',()=>grad('linear-gradient(180deg,#ffe27a,#ff8a4c 50%,#ff3d7f)')],
+ oceano:['Oceano',()=>grad('linear-gradient(90deg,#7df0ff,#2ea8ff 55%,#7b6bff)')],
+ fogo:['Fogo',()=>grad('linear-gradient(180deg,#fff2a8 0%,#ffb02e 35%,#ff4d1a 70%,#b3120a 100%)','drop-shadow(0 0 .12em rgba(255,90,20,.8))')],
+ gelo:['Gelo',()=>grad('linear-gradient(180deg,#ffffff,#bfeaff 50%,#6fb8ff)','drop-shadow(0 0 .12em rgba(120,200,255,.8))')],
+ contorno:['Contorno branco',()=>`color:transparent;-webkit-text-stroke:.035em #fff;text-shadow:none;`],
+ contornosolid:['Contorno + preenchimento',()=>`color:#ffc15e;-webkit-text-stroke:.05em #1a0f05;paint-order:stroke fill;text-shadow:.05em .06em 0 #1a0f05;`],
+ hq:['Quadrinho',()=>`color:#fff23d;-webkit-text-stroke:.06em #111;paint-order:stroke fill;text-shadow:.07em .08em 0 #e5173f;`],
+ extrusao:['3D',()=>`color:#fff;text-shadow:.02em .02em 0 #c9c3d8,.04em .04em 0 #aaa3be,.06em .06em 0 #8d86a2,.08em .08em 0 #706a85,.1em .1em .12em rgba(0,0,0,.6);`],
+ longa:['Sombra longa',()=>`color:#fff;text-shadow:.02em .02em 0 #ff8a4c,.04em .04em 0 #ff8a4c,.06em .06em 0 #ff7a3d,.08em .08em 0 #ff7a3d,.1em .1em 0 #e8602a,.12em .12em 0 #e8602a,.14em .14em 0 #c9491a;`],
+ retro:['Retrô',()=>`color:#fff1d6;text-shadow:.05em .05em 0 #ff4f8b,.1em .1em 0 #7b5cff;`],
+ glitch:['Glitch',()=>`color:#fff;text-shadow:-.04em 0 #ff2bd6,.04em 0 #19e6ff;`],
+ vidro:['Vidro',()=>`color:rgba(255,255,255,.22);-webkit-text-stroke:.02em rgba(255,255,255,.9);text-shadow:0 .05em .2em rgba(0,0,0,.35);`],
+ brilho:['Brilho suave',()=>`color:#fff;text-shadow:0 0 .15em rgba(255,255,255,.9),0 0 .6em rgba(255,214,140,.8);`]
+};
+function base(o){return Object.assign({id:uid(),t:'Novo texto',x:50,y:50,s:6,c:'#ffffff',f:'Bricolage Grotesque',w:700,i:0,u:0,a:'center',sh:1,bg:'',ls:0,st:''},o||{})}
 function read(){
   try{const v=JSON.parse(g(()=>siteTextOverrides[KEY])||'[]');return Array.isArray(v)?v.map(base):[]}catch(e){return []}
 }
@@ -20,6 +44,8 @@ function css(l){
   const bg=l.bg==='dark'?'background:rgba(8,6,16,.62);':l.bg==='light'?'background:rgba(255,255,255,.88);':l.bg==='accent'?'background:linear-gradient(135deg,var(--au-a1,#ffc15e),var(--au-a2,#ff8a4c));':'';
   const pad=l.bg?'padding:.35em .8em;border-radius:.6em;':'';
   const color=(l.bg==='light'||l.bg==='accent')&&(l.c==='#ffffff'||l.c==='#fff')?'#1a0f05':l.c;
+  const P=l.st&&PRESETS[l.st];
+  if(P)return `left:${l.x}%;top:${l.y}%;font-size:calc(${Number(l.s)} * 1cqw);font-family:'${E(l.f)}',sans-serif;font-weight:${l.w};font-style:${l.i?'italic':'normal'};text-transform:${l.u?'uppercase':'none'};text-align:${E(l.a)};letter-spacing:${Number(l.ls)}em;${P[1]()}`;
   return `left:${l.x}%;top:${l.y}%;font-size:calc(${Number(l.s)} * 1cqw);color:${E(color)};font-family:'${E(l.f)}',sans-serif;font-weight:${l.w};font-style:${l.i?'italic':'normal'};text-transform:${l.u?'uppercase':'none'};text-align:${E(l.a)};letter-spacing:${Number(l.ls)}em;text-shadow:${shadow};${bg}${pad}`;
 }
 function layerEl(l,extra){return `<div class="bn-l${extra||''}" data-id="${E(l.id)}" style="${css(l)}">${E(l.t).replace(/\n/g,'<br>')}</div>`}
@@ -67,7 +93,9 @@ function open(){
 function ctl(l){
   if(!l)return '<p class="bn-hint">Toque em um texto no banner para editar, ou adicione um novo.</p>';
   const opt=(arr,v)=>arr.map(([k,n])=>`<option value="${E(k)}"${String(v)===String(k)?' selected':''}>${E(n)}</option>`).join('');
+  const stl=`<div class="bn-f"><span>Estilos de letra</span><div class="bn-sts"><button type="button" class="bn-st${l.st?'':' on'}" data-st="" title="Sem estilo"><span style="color:#fff;font-size:20px">Aa</span><small>Nenhum</small></button>${Object.entries(PRESETS).map(([k,v])=>`<button type="button" class="bn-st${l.st===k?' on':''}" data-st="${k}" title="${E(v[0])}"><span style="font-size:22px;font-weight:800;font-family:'Bricolage Grotesque';${v[1]()}">Aa</span><small>${E(v[0])}</small></button>`).join('')}</div></div>`;
   return `<label class="bn-f"><span>Texto</span><textarea id="bn-t" rows="2">${E(l.t)}</textarea></label>
+${stl}
 <div class="bn-row"><label class="bn-f"><span>Fonte</span><select id="bn-f">${FONTS.map(([k,n])=>`<option value="${E(k)}"${l.f===k?' selected':''} style="font-family:'${E(k)}'">${E(n)}</option>`).join('')}</select></label>
 <label class="bn-f"><span>Peso</span><select id="bn-w">${opt([[400,'Normal'],[600,'Médio'],[700,'Negrito'],[800,'Extra']],l.w)}</select></label></div>
 <label class="bn-f"><span>Tamanho</span><input id="bn-s" type="range" min="2" max="20" step=".2" value="${l.s}"></label>
@@ -111,6 +139,7 @@ function bindCtl(){
   $('bn-bg')&&($('bn-bg').onchange=e=>upd('bg',e.target.value));
   $('bn-c')&&($('bn-c').oninput=e=>{upd('c',e.target.value);document.querySelectorAll('.bn-c').forEach(b=>b.classList.remove('on'))});
   document.querySelectorAll('.bn-c').forEach(b=>b.onclick=()=>upd('c',b.dataset.c,true));
+  document.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>upd('st',b.dataset.st,true));
   document.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const l=cur();upd(b.dataset.tg,l[b.dataset.tg]?0:1,true)});
   document.querySelectorAll('[data-al]').forEach(b=>b.onclick=()=>upd('a',b.dataset.al,true));
   $('bn-dup')&&($('bn-dup').onclick=()=>{const l=cur();if(!l)return;const n=base(Object.assign({},l,{id:uid(),x:Math.min(95,l.x+4),y:Math.min(95,l.y+6)}));S.layers.push(n);S.sel=n.id;paint()});
