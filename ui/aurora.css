@@ -468,3 +468,15 @@ html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{height:auto!important;min
 html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel select,html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel input{border:0!important;background:transparent!important;box-shadow:none!important}
 /* cabeçalho (pesquisa/perfil) fixo e opaco */
 html[data-skin="aurora"] body.iu .iu-top{position:sticky!important;top:0;z-index:60;background:var(--au-bg)!important;background-image:none;border-bottom:1px solid rgba(var(--au-w),.08);box-shadow:0 8px 24px -12px rgba(0,0,0,.35)}
+/* ===== cabeçalho na aba Projeção: nome do Studio + conexões no lugar da pesquisa ===== */
+html.st-top .iu-top .iu-search{display:none!important}
+.stt-wrap{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.stt-wrap[hidden]{display:none}
+.stt-name{font:800 17px "Bricolage Grotesque",Inter,sans-serif;color:var(--au-tx);white-space:nowrap}
+.stt-pills{display:flex;gap:6px;flex-wrap:wrap}
+.stt-pill{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:15px;font:600 12px "Instrument Sans",Inter,sans-serif;background:rgba(var(--au-w),.07);border:1px solid rgba(var(--au-w),.1);color:var(--au-tx);white-space:nowrap;cursor:default}
+button.stt-pill{cursor:pointer}
+.stt-pill i{width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.2)}
+.stt-pill.ok i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+.stt-pill em{font-style:normal;opacity:.75}
+@media (max-width:700px){.stt-name{display:none}.stt-pill{height:26px;padding:0 9px;font-size:11px}}

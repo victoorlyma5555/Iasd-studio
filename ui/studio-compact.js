@@ -18,3 +18,5 @@ var tabs=document.createElement('div');tabs.className='seg m-tabs';tabs.setAttri
 var a=document.createElement('div');a.className='m-pane';a.setAttribute('data-p','a');var b=document.createElement('div');b.className='m-pane';b.setAttribute('data-p','b');b.hidden=true;
 hd.insertAdjacentElement('afterend',tabs);tabs.insertAdjacentElement('afterend',a);a.insertAdjacentElement('afterend',b);a.append(prev,fx,list);b.append(tr)}
 setInterval(build,800)})();
+
+try{if(window.parent&&window.parent!==window)document.documentElement.classList.add('emb')}catch(e){}

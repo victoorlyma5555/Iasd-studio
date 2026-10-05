@@ -336,3 +336,6 @@ html[data-skin="aurora"] body.st2 .tm-prev{aspect-ratio:16/9;max-height:none;hei
 .lay-card.on{outline:2px solid var(--au-a1);outline-offset:-2px}
 html[data-skin="aurora"] body.st2 .tm-prev{aspect-ratio:auto!important;height:170px!important;max-height:170px!important}
 html[data-skin="aurora"] body.st2 .tm-prev{position:sticky!important;top:0;z-index:6;box-shadow:0 10px 24px -10px rgba(0,0,0,.6)}
+/* dentro do site: o cabeçalho do site já mostra nome e conexões */
+html.emb .st-banner{display:none!important}
+html.emb[data-skin="aurora"] body.st2 .tools{top:0}
