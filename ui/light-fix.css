@@ -21,3 +21,20 @@ html[data-theme="light"] body.iu .mobile-menu-group small{color:var(--au-mu)!imp
 @media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel .pgi,html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel .pgi *{stroke:currentColor!important}}
 @media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-bar>label .pg-sel select:not(#zz1):not(#zz2){background:transparent!important;box-shadow:none!important}}
 @media (max-width:760px){html[data-theme="light"] body.iu .pg.pg-biblia .bb-find .pg-sel input:not(#zz1):not(#zz2){background:transparent!important;border:0!important;box-shadow:none!important}}
+/* Heróis escuros (banner com imagem): o texto continua claro no tema claro */
+html[data-theme="light"] body.iu .pg-hero:not(.ap-head):not(.pg-hero-jogral){--au-tx:#f4f7ff;--au-mu:#c3d0ea;--au-w:255,255,255}
+html[data-theme="light"] body.iu .pg-hero:not(.ap-head):not(.pg-hero-jogral) :is(h1,h2,h3,p,small,span,b,strong,em,label){color:inherit}
+/* Lição Sabática: lista de lições (cartões escuros do tema antigo) */
+html[data-theme="light"] body.iu .sabbath-lessons>button{background:#fff!important;border:1px solid rgba(var(--au-w),.14)!important;color:var(--au-tx)!important;box-shadow:0 3px 10px rgba(var(--au-w),.06)}
+html[data-theme="light"] body.iu .sabbath-lessons>button strong{color:var(--au-tx)!important}
+html[data-theme="light"] body.iu .sabbath-lessons>button small{color:var(--au-mu)!important}
+html[data-theme="light"] body.iu .sabbath-lessons>button b{background:rgba(180,83,9,.12)!important;color:#b45309!important}
+html[data-theme="light"] body.iu .sabbath-lessons>button em{color:var(--au-mu)!important}
+/* Alertas: campos com moldura dupla */
+html[data-theme="light"] body.iu .pg-alertas :is(input,select,textarea):not(#zz1):not(#zz2){background:transparent!important;border:0!important;box-shadow:none!important;color:var(--au-tx)!important}
+/* Cartões "Acesso restrito" e afins */
+html[data-theme="light"] body.iu .panel:not(.sound-hub-head) :is(h1,h2,h3,h4){color:var(--au-tx)!important}
+html[data-theme="light"] body.iu .panel:not(.sound-hub-head)>p{color:var(--au-mu)!important}
+html[data-theme="light"] body.iu .pg-alertas textarea:not(#zz1):not(#zz2){background:#fff!important;border:1px solid rgba(var(--au-w),.18)!important;border-radius:14px!important}
+html[data-theme="light"] body.iu :is(.iu-search,.iu-top) input:not(#zz1):not(#zz2){background:transparent!important;border:0!important;box-shadow:none!important}
+html[data-theme="light"] body.iu .iu-side :is(button,a).on,html[data-theme="light"] body.iu .iu-side :is(button,a).on *{color:#7a4a12!important}
