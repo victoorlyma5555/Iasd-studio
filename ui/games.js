@@ -238,14 +238,14 @@ function playOrder(){
  const q=S.qs[S.i],g=GAMES.order;S.locked=false;S.cur=q.shuffled.slice();S.sel=-1;
  view(top(S.daily?'Desafio do dia · Linha do Tempo':'Linha do Tempo','',g.c)+hud()+
   '<div class="sg-card"><span class="sg-cat">Do mais antigo ao mais recente</span><h3 class="sg-q">'+esc(q.title)+'</h3><small class="sg-hint">Arraste, ou toque em dois itens para trocá-los. As setas também movem.</small></div>'+
-  '<div class="sg-tl" id="sg-tl"></div><div class="sg-tl-axis"><span>Mais antigo</span><i></i><span>Mais recente</span></div>'+
+  '<div class="sg-tl-wrap"><span class="sg-era a">⏪ Mais antigo</span><div class="sg-tl" id="sg-tl"></div><span class="sg-era b">Mais recente ⏩</span></div>'+
   '<button class="sg-go gold wide" id="sg-check" onclick="IASDSolo.check()">✓ Confirmar ordem</button><div id="sg-fb"></div>','sg-play sg-order');
  paintOrder();A().sfx('whoosh');
 }
 function paintOrder(res){
  const box=$('sg-tl');if(!box)return;const q=S.qs[S.i];
  box.innerHTML=S.cur.map((x,i)=>{const r=res?(q.items[i]===x?'ok':'bad'):'';
-  return '<div class="sg-it '+r+(S.sel===i?' sel':'')+'" draggable="'+(res?'false':'true')+'" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="t">'+esc(x)+(res&&r==='bad'?'<small>correto: nº '+(q.items.indexOf(x)+1)+'</small>':'')+'</span>'+(res?'<span class="m">'+(r==='ok'?'✓':'✗')+'</span>':'<span class="mv"><button aria-label="Subir" onclick="event.stopPropagation();IASDSolo.mv('+i+',-1)">▲</button><button aria-label="Descer" onclick="event.stopPropagation();IASDSolo.mv('+i+',1)">▼</button></span>')+'</div>'}).join('');
+  return '<div class="sg-it '+r+(S.sel===i?' sel':'')+'" draggable="'+(res?'false':'true')+'" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="gr">⠿</span><span class="t">'+esc(x)+(res&&r==='bad'?'<small>correto: nº '+(q.items.indexOf(x)+1)+'</small>':'')+'</span>'+(res?'<span class="m">'+(r==='ok'?'✓':'✗')+'</span>':'<span class="mv"><button aria-label="Subir" onclick="event.stopPropagation();IASDSolo.mv('+i+',-1)">▲</button><button aria-label="Descer" onclick="event.stopPropagation();IASDSolo.mv('+i+',1)">▼</button></span>')+'</div>'}).join('');
  if(!res){box.querySelectorAll('.sg-it').forEach(el=>{
   el.onclick=()=>{const i=+el.dataset.i;if(S.sel<0){S.sel=i;A().sfx('tap')}else if(S.sel===i)S.sel=-1;else{[S.cur[S.sel],S.cur[i]]=[S.cur[i],S.cur[S.sel]];S.sel=-1;A().sfx('flip')}paintOrder()};
   el.ondragstart=e=>{S.drag=+el.dataset.i;el.classList.add('drag');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',String(S.drag))}catch(_){}};
