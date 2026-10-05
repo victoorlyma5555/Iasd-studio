@@ -729,10 +729,10 @@ function profile(){
  '<section class="pg-card pf-nx"><span class="pf-tg">🎯</span><div><h3>Seu próximo passo</h3><small>'+esc(nx[1])+'</small></div><button class="pg-gold" onclick="go(\''+nx[3]+'\')">'+esc(nx[2])+' '+I('right')+'</button></section>'+
  pfSkinSec()+'<div class="pf-out"><button class="pg-ghost" onclick="cloudLogout()">Sair da conta</button></div></div>';
 }
-function pfSkinSec(){return '';
- if(!(typeof cloudRole!=='undefined'&&cloudRole==='founder'))return '';
- const au=document.documentElement.getAttribute('data-skin')==='aurora';
- return '<section class="pg-card pf-skin"><div class="pf-ah"><span>✦</span><div><h3>Interface do site</h3><small>Somente fundador · vale neste aparelho. A nova interface é a padrão; aqui você pode voltar ao template clássico.</small></div></div><div class="pf-skin-opts"><button class="'+(au?'':'on')+'" onclick="setSkin(\'classic\')"><b>Clássica</b><small>Template anterior</small></button><button class="'+(au?'on':'')+'" onclick="setSkin(\'aurora\')"><b>Nova · Aurora</b><small>Padrão do site</small></button></div></section>'}
+function pfSkinSec(){
+ const cur=document.documentElement.getAttribute('data-palette')||'aurora';
+ const L=[['aurora','Aurora','linear-gradient(135deg,#ffc15e,#ff8a4c 55%,#7b5cff)'],['oceano','Oceano','linear-gradient(135deg,#5ef0d0,#2ea8ff 55%,#5c6bff)'],['porsol','Pôr do sol','linear-gradient(135deg,#ff9a8a,#ff4f8b 55%,#b24bff)'],['floresta','Floresta','linear-gradient(135deg,#9dff8a,#19c79a 55%,#2f7d5b)'],['violeta','Violeta','linear-gradient(135deg,#d6b0ff,#9b6bff 55%,#ff5fd0)'],['ouro','Ouro','linear-gradient(135deg,#ffe08a,#f5a524 55%,#c2410c)']];
+ return '<section class="pg-card pf-skin"><div class="pf-ah"><span>✦</span><div><h3>Cores do site</h3><small>Escolha o esquema de cores e degradês. Vale neste aparelho.</small></div></div><div class="pf-pal">'+L.map(x=>'<button type="button" class="'+(cur===x[0]?'on':'')+'" onclick="setPalette(\''+x[0]+'\')"><i style="background:'+x[2]+'"></i>'+x[1]+'</button>').join('')+'</div></section>'}
 function pfStudySec(c){
  const M=window.IASDStudyMe;if(!M)return '';const cs=M.view();
  const tro=c.tro?'<div class="pf-bds" style="margin-top:10px">'+pfBadge(M.SEALS[M.SEALS.length-1],true)+'</div>':'';
