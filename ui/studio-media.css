@@ -99,3 +99,33 @@ body[data-tool=testimony] .st-queue{display:block}
 .vl-cover-box video{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;object-fit:contain;pointer-events:none}
 .vl-cover-box input[type=range]{width:100%;height:32px}
 .vl-cover-t{opacity:.8}.vl-cover-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* cards da biblioteca: um botão só, sempre alinhado */
+.vl-card{align-content:start}
+.vl-info{min-height:38px}
+.vl-info b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25}
+.vl-acts{display:block}.vl-acts .mp-blue{width:100%;height:38px;display:flex;align-items:center;justify-content:center;gap:6px;overflow:visible;text-overflow:clip}
+/* popup de gerenciamento */
+.vl-mgr{position:fixed;inset:0;z-index:99980;background:rgba(3,8,18,.72);display:grid;place-items:center;padding:14px}
+.vl-mgr-box{width:min(900px,100%);max-height:100%;overflow:auto;background:#0d1a36;border:1px solid var(--bd2,rgba(255,255,255,.15));border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px;color:#eef3ff}
+.vl-mgr-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-16px;background:#0d1a36;padding:4px 0 8px;z-index:2}.vl-mgr-head h3{margin:0;font-size:19px}
+.vl-mgr-x{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.08);color:inherit;border:0}
+.vl-mgr-sec h4{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.vl-mgr-cats{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.vl-mgr-cat{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:99px;background:rgba(255,255,255,.08);font-size:13px}
+.vl-mgr-cat small{opacity:.7}
+.vl-mini{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:inherit;display:grid;place-items:center;padding:0}.vl-mini-d:hover{background:#b3263f}
+.vl-mgr .vl-catadd{min-height:34px;padding:0 14px;border-radius:99px;background:transparent;border:1.5px dashed rgba(255,255,255,.35);color:#7dd3fc;font-weight:700}
+.vl-mgr-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;border-radius:14px;background:rgba(255,255,255,.05);margin-bottom:8px}
+.vl-mgr-th{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;border:0;padding:0;cursor:pointer}
+.vl-mgr-th video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.vl-mgr-cov{position:absolute;left:0;right:0;bottom:0;padding:4px;background:rgba(3,8,18,.78);font-size:11px;font-weight:700;color:#fff}
+.vl-mgr-f{display:grid;gap:6px;min-width:0}.vl-mgr-f input,.vl-mgr-f select{width:100%;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:inherit;padding:0 10px;font-size:14px}.vl-mgr-f select option{color:#111}
+.vl-mgr-f small{opacity:.65}
+.vl-mgr-ac{display:grid;gap:6px}.vl-mgr-ac .mp-btn{height:36px;justify-content:center}.vl-mgr-ac .vl-del{color:#fca5a5}
+.vl-mgr-head-btn{display:inline-flex;align-items:center;gap:6px}
+@media(max-width:640px){.vl-mgr-row{grid-template-columns:110px minmax(0,1fr)}.vl-mgr-ac{grid-column:1/-1;grid-template-columns:1fr 1fr}}
+.vl-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.vl-info{min-height:56px!important}
+.vl-mgr .vl-mini{width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;border-radius:50%!important;flex:none}
+.vl-mgr .vl-mini svg{width:14px;height:14px}

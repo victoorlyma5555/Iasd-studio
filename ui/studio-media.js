@@ -303,7 +303,7 @@ function renderVlChips(){
  const box=$('vlChips');if(!box)return;box.replaceChildren();
  const ks=kinds();if(vlFilter&&!ks.includes(vlFilter))vlFilter='';
  ['',...ks].forEach(k=>{const n=k?vlItems.filter(x=>vlKind(x)===k).length:vlItems.length;const b=h('button',k===vlFilter?'on':'',(k||'Todos')+' · '+n);b.type='button';b.onclick=()=>{vlFilter=k;renderVl()};box.append(b);
-  if(k&&k!==NOCAT){const x=h('button','vl-catx','×');x.type='button';x.title='Apagar categoria';x.setAttribute('aria-label','Apagar categoria '+k);x.onclick=()=>vlDelCat(k);box.append(x)}});
+});
  const add=h('button','vl-catadd','+ Nova categoria');add.type='button';add.onclick=vlNewCat;box.append(add);
  const sel=$('vlKind');if(sel){const cur=sel.value||vlFilter;sel.replaceChildren(...ks.map(k=>{const o=document.createElement('option');o.textContent=k;return o}));if(cur&&ks.includes(cur))sel.value=cur}
 }
@@ -318,10 +318,10 @@ function renderVl(){
   tv.onclick=()=>vlChoose(it);tv.setAttribute('role','button');tv.tabIndex=0;tv.onkeydown=e=>{if(e.key==='Enter')vlChoose(it)};
   const info=h('div','vl-info');info.append(h('b','',it.title||'Vídeo'),h('small','',vlDate(it.created_at)));
   const acts=h('div','vl-acts');
-  acts.append(btn('Selecionar','mp-blue',()=>vlChoose(it),'play'),btn('','amb-more',()=>vlCover(it),'img','Escolher a capa pelo vídeo'),btn('','amb-more',()=>vlRename(it),'gear','Renomear / mudar categoria'),btn('','amb-x',()=>vlDelete(it),'trash','Excluir da biblioteca'));
+  acts.append(btn('Selecionar','mp-blue',()=>vlChoose(it),'play'));
   card.append(tv,info,acts);box.append(card);
  });
- resize();
+ if(document.querySelector('.vl-mgr'))renderMgr();resize();
 }
 function vlChoose(it){
  vlSel=it;vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v){stMediaSource(v,vlUrl(it));v._iasdFile=null;v._iasdRemote=it}
@@ -359,15 +359,55 @@ function vlCover(it){
  row.append(btn('−1 s','mp-btn',()=>step(-1)),btn('+1 s','mp-btn',()=>step(1)),save,btn('Cancelar','mp-btn',close));
  box.append(h('h3','','Escolher a capa'),h('p','muted',it.title||'Vídeo'),v,rng,lab,row);ov.append(box);ov.onclick=e=>{if(e.target===ov)close()};document.body.append(ov);
 }
-async function vlRename(it){
- const name=((await IASDDialog.prompt('Nome do vídeo:',it.title||''))||'').trim().slice(0,80);if(!name)return;
- const ks=kinds();
- const kindIn=((await IASDDialog.prompt('Categoria ('+ks.map((k,i)=>(i+1)+' = '+k).join(', ')+', 0 = nova categoria):',String(ks.indexOf(vlKind(it))+1)))||'').trim();
- let kind=ks[(+kindIn||ks.indexOf(vlKind(it))+1)-1]||vlKind(it);
- if(kindIn==='0'){const n=((await IASDDialog.prompt('Nome da nova categoria:',''))||'').trim().replace(/\s+/g,' ').slice(0,30);if(n)kind=n}
- try{const c=offeringCloud();let r=await c.from('iasd_offering_videos').update({title:name,kind}).eq('id',it.id);
-  if(r.error){r=await c.from('iasd_offering_videos').update({title:name}).eq('id',it.id);if(r.error)throw r.error}
-  toast('Vídeo atualizado.');await renderOfferings()}catch(e){toast('Não foi possível atualizar: '+e.message)}
+/* ===================== GERENCIAR VÍDEOS (popup) ===================== */
+async function vlUpdate(it,patch){const c=offeringCloud();const {error}=await c.from('iasd_offering_videos').update(patch).eq('id',it.id);if(error)throw error;Object.assign(it,patch)}
+async function vlRenameCat(k){
+ const n=((await IASDDialog.prompt('Novo nome da categoria “'+k+'”:',k))||'').trim().replace(/\s+/g,' ').slice(0,30);if(!n||n===k)return;
+ if(kinds().some(x=>x!==k&&x.toLowerCase()===n.toLowerCase())){toast('Já existe uma categoria com esse nome.');return}
+ const its=vlItems.filter(x=>vlKind(x)===k);
+ try{if(its.length){const c=offeringCloud();const {error}=await c.from('iasd_offering_videos').update({kind:n}).in('id',its.map(x=>x.id));if(error)throw error;its.forEach(x=>{x.kind=n})}}
+ catch(e){toast('Não foi possível renomear: '+e.message);return}
+ vlCats=vlCats.filter(c=>c!==k);if(!its.length)vlCats.push(n);vlSaveCats();if(BASE_KINDS.includes(k)&&!vlHidden.includes(k)){vlHidden.push(k);vlSaveHidden()}
+ if(vlFilter===k)vlFilter=n;renderVl();toast('Categoria renomeada.');
+}
+window.vlManage=function(){
+ if(document.querySelector('.vl-mgr'))return;
+ const ov=h('div','vl-mgr');ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Gerenciar vídeos');
+ const box=h('div','vl-mgr-box');ov.append(box);
+ const close=()=>{document.removeEventListener('keydown',onKey);ov.remove()};
+ const onKey=e=>{if(e.key==='Escape'&&!document.querySelector('.vl-cover'))close()};
+ document.addEventListener('keydown',onKey);ov.onclick=e=>{if(e.target===ov)close()};ov._close=close;
+ document.body.append(ov);renderMgr();
+};
+function renderMgr(){
+ const ov=document.querySelector('.vl-mgr');if(!ov)return;const box=ov.firstElementChild;const top=box.scrollTop;box.replaceChildren();
+ const head=h('div','vl-mgr-head');head.append(h('h3','','Gerenciar vídeos'),btn('','vl-mgr-x',()=>ov._close(),'x','Fechar'));
+ const cs=h('section','vl-mgr-sec');cs.append(h('h4','','Categorias'));const chips=h('div','vl-mgr-cats');
+ kinds().forEach(k=>{const n=vlItems.filter(x=>vlKind(x)===k).length;const c=h('span','vl-mgr-cat');c.append(h('b','',k),h('small','',String(n)));
+  const rn=btn('','vl-mini',()=>vlRenameCat(k),'gear','Renomear categoria');c.append(rn);
+  if(k!==NOCAT)c.append(btn('','vl-mini vl-mini-d',()=>vlDelCat(k),'trash','Apagar categoria'));chips.append(c)});
+ chips.append(btn('+ Nova categoria','vl-catadd',vlNewCat));cs.append(chips);
+ const ls=h('section','vl-mgr-sec');ls.append(h('h4','','Vídeos · '+vlItems.length));
+ if(!vlItems.length)ls.append(h('p','muted','Nenhum vídeo na biblioteca ainda.'));
+ vlItems.forEach(it=>{
+  const row=h('div','vl-mgr-row');
+  const th=h('button','vl-mgr-th');th.type='button';th.title='Escolher a capa';th.setAttribute('aria-label','Escolher a capa de '+(it.title||'vídeo'));
+  const v=document.createElement('video');v.preload='metadata';v.muted=true;v.playsInline=true;v.addEventListener('loadedmetadata',()=>{const d=v.duration||0;const t=it.cover_at!=null?+it.cover_at:Math.min(Math.max(d*0.2,1),Math.max(d-.1,0));try{v.currentTime=Math.max(0,t)}catch(e){}});try{v.src=vlUrl(it)}catch(e){}
+  th.append(v,h('span','vl-mgr-cov','Mudar capa'));th.onclick=()=>vlCover(it);
+  const f=h('div','vl-mgr-f');
+  const nm=document.createElement('input');nm.type='text';nm.maxLength=80;nm.value=it.title||'';nm.setAttribute('aria-label','Nome do vídeo');
+  const save=async()=>{const t=nm.value.trim().slice(0,80);if(!t){nm.value=it.title||'';return}if(t===it.title)return;try{await vlUpdate(it,{title:t});toast('Nome salvo.');renderVl()}catch(e){nm.value=it.title||'';toast('Não foi possível salvar: '+e.message)}};
+  nm.onchange=save;nm.onkeydown=e=>{if(e.key==='Enter')nm.blur()};
+  const sel=document.createElement('select');sel.setAttribute('aria-label','Categoria');const ks=kinds();ks.forEach(k=>{const o=document.createElement('option');o.textContent=k;sel.append(o)});sel.value=vlKind(it);
+  const on=document.createElement('option');on.textContent='+ Nova categoria…';on.value='__new';sel.append(on);
+  sel.onchange=async()=>{let k=sel.value;
+   if(k==='__new'){const n=((await IASDDialog.prompt('Nome da nova categoria:',''))||'').trim().replace(/\s+/g,' ').slice(0,30);if(!n){sel.value=vlKind(it);return}k=kinds().find(x=>x.toLowerCase()===n.toLowerCase())||n;if(!kinds().includes(k)){vlCats.push(k);vlSaveCats()}}
+   try{await vlUpdate(it,{kind:k});toast('Movido para “'+k+'”.');renderVl()}catch(e){sel.value=vlKind(it);toast('Não foi possível mover: '+e.message)}};
+  const meta=h('small','',vlDate(it.created_at));
+  f.append(nm,sel,meta);
+  const ac=h('div','vl-mgr-ac');ac.append(btn('Selecionar','mp-btn',()=>{vlChoose(it);ov._close()},'play'),btn('Excluir','mp-btn vl-del',()=>vlDelete(it),'trash'));
+  row.append(th,f,ac);ls.append(row)});
+ box.append(head,cs,ls);box.scrollTop=top;
 }
 async function vlDelete(it){
  if(!(await IASDDialog.confirm('Excluir “'+it.title+'” da biblioteca compartilhada?')))return;
