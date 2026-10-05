@@ -17,8 +17,22 @@ const LIST=[
  ['floresta','Floresta','Verde profundo, letras creme'],
  ['oceano','Oceano','Azul marinho com brilho'],
  ['contraste','Alto contraste','Amarelo no preto, leitura à distância'],
- ['editorial','Editorial','Alinhado à esquerda, com aspas']
+ ['editorial','Editorial','Alinhado à esquerda, com aspas'],
+ ['marfim','Marfim','Papel claro com moldura fina'],
+ ['vinho','Vinho nobre','Bordô profundo e ouro'],
+ ['grafite','Grafite','Cinza escuro sóbrio'],
+ ['ceu','Céu claro','Azul bem suave, letras escuras'],
+ ['aurora-viva','Aurora viva','Animado: luzes verdes e roxas em movimento'],
+ ['estrelas-vivas','Céu em movimento','Animado: estrelas em deriva suave'],
+ ['ondas','Ondas','Animado: mar calmo ondulando'],
+ ['brasas','Brasas','Animado: faíscas douradas subindo'],
+ ['nevoa','Névoa de luz','Animado: orbes de luz flutuando'],
+ ['luz-dourada','Brilho dourado','Animado: reflexo de luz passando']
 ];
+const LAY=[['','Centralizado'],['esq','À esquerda'],['topo','Referência no topo'],['quote','Com aspas'],['moldura','Moldura']];
+let bl='';try{bl=localStorage.getItem('iasd-bible-lay')||''}catch(e){}
+if(!LAY.some(x=>x[0]===bl))bl='';
+window.btLay=()=>bl;
 let cur='';try{cur=localStorage.getItem(KEY)||''}catch(e){}
 if(!LIST.some(x=>x[0]===cur))cur='';
 const name=id=>(LIST.find(x=>x[0]===id)||LIST[0])[1];
@@ -38,7 +52,7 @@ function close(){const o=DOC.getElementById('btPop');if(o){o.classList.remove('o
 function onKey(e){if(e.key==='Escape')close()}
 function btnCss(){if(document.getElementById('btBtnCss'))return;const s=document.createElement('style');s.id='btBtnCss';s.textContent='.bt-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}'
 +'.bt-open{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--bd2,#2a4385);background:var(--sf2,#0f1f3d);color:var(--tx,#e8eefc);font:700 12.5px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.bt-open:hover{border-color:#3b82f6}.bt-open.on{border-color:#f59e0b}';document.head.appendChild(s)}
-function css(){if(!DOC.getElementById('btTplLink')){const l=DOC.createElement('link');l.id='btTplLink';l.rel='stylesheet';l.href='/shared/bible-templates.css?v=2';DOC.head.appendChild(l)}if(DOC.getElementById('btPopCss'))return;const s=DOC.createElement('style');s.id='btPopCss';s.textContent=
+function css(){if(!DOC.getElementById('btTplLink')){const l=DOC.createElement('link');l.id='btTplLink';l.rel='stylesheet';l.href='/shared/bible-templates.css?v=3';DOC.head.appendChild(l)}if(DOC.getElementById('btPopCss'))return;const s=DOC.createElement('style');s.id='btPopCss';s.textContent=
 ''
 +'#btPop{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:16px;background:rgba(2,8,23,.7);backdrop-filter:blur(3px);opacity:0;transition:opacity .15s}#btPop.on{opacity:1}'
 +'#btPop .bt-box{width:min(980px,100%);max-height:92vh;display:flex;flex-direction:column;border-radius:18px;background:#0b1730;color:#f4f7ff;border:1px solid rgba(245,183,58,.45);box-shadow:0 24px 70px rgba(0,0,0,.6);font-family:Inter,system-ui,sans-serif}'
@@ -47,10 +61,10 @@ function css(){if(!DOC.getElementById('btTplLink')){const l=DOC.createElement('l
 +'#btPop .bt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;padding:8px 18px 18px;overflow:auto}'
 +'#btPop .bt-card{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:8px;border-radius:13px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);cursor:pointer;transition:.15s}'
 +'#btPop .bt-card:hover{border-color:#5b8cff;transform:translateY(-2px)}#btPop .bt-card:focus-visible{outline:2px solid #5b8cff}#btPop .bt-card.sel{border-color:#f59e0b;background:rgba(245,158,11,.1)}'
-+'#btPop .bt-card b{font-size:13.5px;display:flex;align-items:center;gap:6px}#btPop .bt-card b i{font-style:normal;font-size:11px;font-weight:800;color:#f59e0b;margin-left:auto}#btPop .bt-card small{font-size:11.5px;color:#9db0d6;line-height:1.3}'
++'#btPop .bt-card b{font-size:13.5px;display:flex;align-items:center;gap:6px}#btPop .bt-card b i{font-style:normal;font-size:11px;font-weight:800;color:#f59e0b;margin-left:auto}#btPop .bt-lay{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 4px 10px}#btPop .bt-lay b{font-size:12px;color:#9db0d6;margin-right:4px}#btPop .bt-lay button{padding:6px 12px;border-radius:999px;border:1px solid #2a4385;background:#0f1f3d;color:#e8eefc;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}#btPop .bt-lay button.on{background:#f59e0b!important;color:#111!important;border-color:#f59e0b!important}#btPop .bt-lay{padding-left:14px!important}#btPop .bt-card small{font-size:11.5px;color:#9db0d6;line-height:1.3}'
 ;DOC.head.appendChild(s)}
 function preview(id){
- const d=DOC.createElement('div');d.className='btp bt-'+(id||'default');
+ const d=DOC.createElement('div');d.className='btp bt-'+(id||'default')+(bl?' bl-'+bl:'');
  const a=DOC.createElement('article');a.className='bible-slide';
  const t=DOC.createElement('p');t.className='bible-text';t.textContent='Lâmpada para os meus pés é a tua palavra e luz para o meu caminho.';
  const r=DOC.createElement('div');r.className='bible-reference';r.textContent='Salmos 119:105';
@@ -70,7 +84,8 @@ window.btOpen=function(){
   const b=DOC.createElement('b');b.textContent=nm;if(id===cur){const i=DOC.createElement('i');i.textContent='EM USO';b.append(i)}
   const sm=DOC.createElement('small');sm.textContent=ds;
   c.append(preview(id),b,sm);c.onclick=()=>pick(id);grid.append(c)});
- box.append(hd,grid);o.append(box);o.addEventListener('click',e=>{if(e.target===o)close()});
+ const lay=DOC.createElement('div');lay.className='bt-lay';lay.innerHTML='<b>Disposição</b>';LAY.forEach(([k,nm])=>{const c=DOC.createElement('button');c.type='button';c.textContent=nm;if(k===bl)c.className='on';c.onclick=()=>{bl=k;try{localStorage.setItem('iasd-bible-lay',k)}catch(e){}lay.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===c));grid.querySelectorAll('.btp').forEach(pv=>{[...pv.classList].filter(x=>x.startsWith('bl-')).forEach(x=>pv.classList.remove(x));if(k)pv.classList.add('bl-'+k)});try{window.stRethemeLive&&stRethemeLive()}catch(e){}};lay.append(c)});
+ box.append(hd,lay,grid);o.append(box);o.addEventListener('click',e=>{if(e.target===o)close()});
  DOC.body.append(o);requestAnimationFrame(()=>o.classList.add('on'));DOC.addEventListener('keydown',onKey);
  const sel=grid.querySelector('.sel');if(sel)sel.focus()};
 btnCss();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',label);else label();

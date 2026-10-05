@@ -168,7 +168,8 @@ html[data-skin="aurora"] .sthb.big{width:38px!important;height:38px!important;fo
 html[data-skin="aurora"] .sth-seek{font-size:11px;gap:6px}html[data-skin="aurora"] .sth-vol input{width:64px}
 html[data-skin="aurora"] .sth-stz.big button{height:38px!important}
 /* ===== janela do módulo alinhada ao preview, com rolagem interna ===== */
-html[data-skin="aurora"] body.st2 main>.work.active{height:var(--st-h,auto)!important;max-height:var(--st-h,none)!important;overflow:hidden!important;display:flex!important;flex-direction:column;gap:10px}
+html[data-skin="aurora"] body.st2 main>.work.active{height:var(--st-h,auto)!important;max-height:var(--st-h,none)!important;overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:thin;display:flex!important;flex-direction:column;gap:10px}
+html[data-skin="aurora"] body.st2 main>.work.active>*{flex-shrink:0}
 html[data-skin="aurora"] body.st2 main>.work.active>:is(.mm-pane:not([hidden]),#sth,.m-body){flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;padding-right:4px}
 html[data-skin="aurora"] body.st2 main>.work.active>.mp-head,html[data-skin="aurora"] body.st2 main>.work.active>.seg{flex:none}
 html[data-skin="aurora"] body.st2 .mm-now{position:static!important;flex:none;margin:0!important;padding:8px 10px!important;width:auto!important;border-radius:16px!important;border:1px solid rgba(var(--au-w),.14)!important}
