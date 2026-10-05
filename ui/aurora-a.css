@@ -1,0 +1,397 @@
+/* Aurora — páginas (a): Cronogramas, Escalas, Bíblia, Lição Sabática, Jogos.
+   Tudo escopado em html[data-skin="aurora"]; sem o atributo o visual clássico fica idêntico. */
+
+/* ---------- tokens e base das páginas .pg ---------- */
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos){--c:var(--au-glass);--c2:rgba(255,255,255,.06);--b:rgba(255,255,255,.09);--t:#f4efe8;--m:#a39db3;--gd:#ffc15e;--bl:#ffb347;--gn:#35f0b9;--rd:#ff6a88;gap:14px;max-width:1600px;font-family:"Instrument Sans",Inter,system-ui,sans-serif}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-card{border-radius:24px;padding:18px 20px;box-shadow:none}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-h{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:800;letter-spacing:-.02em;font-size:20px}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pgi.blue{color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sub{color:#a39db3;font-size:13px}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-empty{color:#a39db3}
+/* botões */
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) :is(.pg-gold,.pg-blue,.pg-ghost,.pg-danger,.pg-outline,.pg-ico){height:40px;padding:0 17px;border-radius:20px;font:600 13.5px "Instrument Sans",Inter,sans-serif;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#f4efe8;box-shadow:none}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) :is(.pg-ghost,.pg-outline):hover{background:rgba(255,255,255,.13);border-color:rgba(255,193,94,.45)}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) :is(.pg-gold,.pg-blue){background:var(--au-grad);border:0;color:#1a0f05;font-weight:700;box-shadow:0 10px 28px -8px rgba(255,150,70,.7)}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) :is(.pg-gold,.pg-blue):hover{filter:brightness(1.06)}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-ghost.sq{width:40px;padding:0;border-radius:50%}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-danger{background:rgba(255,106,136,.08);border-color:rgba(255,106,136,.4);color:#ff9fb3}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-ico{width:36px;height:36px;padding:0;border-radius:50%}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-ico.red{background:rgba(255,106,136,.08);border-color:rgba(255,106,136,.4);color:#ff9fb3}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-link{background:none;border:0;height:auto;padding:0;color:#ffc15e;font-weight:600;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel,html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-search{height:40px;border-radius:15px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12)}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel .pgi{color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel select option{background:#15121f;color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-search input{color:#f4efe8}
+
+/* ---------- cabeçalho compacto (substitui o banner) ---------- */
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-hero.ap-head{min-height:0;border:0;border-radius:0;background:none;overflow:visible;display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px 16px;padding:2px 0 0}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-hero.ap-head::before{display:none}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-ht{flex:1 1 280px;min-width:0}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-head .pg-kick{margin:0 0 6px;font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-head h1{margin:0;font:800 40px/1 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em;color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-hact{display:flex;gap:10px;flex-wrap:wrap}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-lab,html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-lab .pg-sub{font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-lab .pg-sub{margin-left:2px}
+
+/* ---------- Cronogramas ---------- */
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-dates{display:flex;align-items:center;gap:10px;min-width:0}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-arrow{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#cfc9dc}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-arrow:hover{border-color:rgba(255,193,94,.45);color:#fff}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-strip{gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tab{flex:0 0 auto;min-width:112px;max-width:240px;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tab b{font:800 18px/1.15 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tab small{font-size:11.5px;color:#a8a2b8}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tab.on{background:linear-gradient(135deg,rgba(255,193,94,.25),rgba(255,138,76,.1));border-color:rgba(255,193,94,.5);box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-detail{display:flex;flex-direction:column;gap:14px;padding:20px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dt{flex:1;min-width:200px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dt h2{margin:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font:800 28px/1.1 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dt small{display:block;margin-top:4px;color:#a39db3;font-size:13px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-st{height:32px;padding:0 13px;border-radius:16px;font-size:12.5px;font-weight:600;background:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-st.live{color:#35f0b9;border-color:rgba(53,240,185,.4);background:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-st.ok{color:#ffc15e;border-color:rgba(255,193,94,.4);background:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-st.done{color:#a39db3;border-color:rgba(255,255,255,.14)}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dact{display:flex;gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dact .pg-ghost,html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dact .pg-danger{height:36px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dact .sq{width:36px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-stats{display:flex;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-stat{flex:1;min-width:0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);gap:0}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-stat b{display:block;font:800 22px/1.1 "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-stat small{font-size:11.5px;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-ph{margin:4px 0 0;display:flex;align-items:center;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-ph .pg-sub{margin-right:auto}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-ph .pg-ghost{height:34px;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tl{padding-left:0;gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tl::before{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-it{gap:14px;min-height:0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-it .sc-drag{order:0;color:#6d6880}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-time{min-width:54px;width:54px;padding:0;background:none;border:0;text-align:left;font:700 14px "JetBrains Mono",monospace;color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-it .dot{position:static;margin:0;flex:none;width:10px;height:10px;background:rgba(255,255,255,.25);box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-it .dot.first{background:#ffc15e;box-shadow:0 0 12px rgba(255,193,94,.6)}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tx{display:block;flex:1;min-width:0}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tx b{display:block;min-width:0;font:700 15px/1.25 "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tx small{display:block;margin-top:1px;color:#9d97ad;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-proj{width:auto;height:32px;padding:0 13px;border-radius:16px;gap:6px;font-size:12px;border-radius:16px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-proj .pgi{width:14px;height:14px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-cover{position:relative;min-height:0;height:190px;border-radius:24px;border:1px solid rgba(255,255,255,.09);background-color:#1a1330;background-image:linear-gradient(135deg,rgba(255,138,76,.4),rgba(123,92,255,.35));background-size:cover;background-position:center;justify-content:flex-end;align-items:flex-end;padding:12px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-cover b{position:absolute;left:18px;bottom:16px;right:150px;margin:0;text-align:left;font:800 20px/1.1 "Bricolage Grotesque",Inter,sans-serif;text-transform:none;letter-spacing:-.01em}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-cover button{height:34px;border-radius:17px;padding:0 13px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-desc{display:flex;flex-direction:column;gap:8px;padding:18px 20px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-desc p{margin:0 0 6px;font-size:13.5px;line-height:1.5;color:#b9b3c8}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-desc .ap-loc{font:700 17px "Bricolage Grotesque",Inter,sans-serif;color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-team{display:flex;flex-direction:column;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-team .sf-chips{display:flex;gap:6px;flex-wrap:wrap}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-team .sf-chip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:16px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#ddd7e8}
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-team .sf-chip i{display:none}
+/* formulário de cronograma */
+html[data-skin="aurora"] body.iu .pg.pg-cronogramas .pg-card :is(input,textarea,select){background:rgba(0,0,0,.3);border-color:rgba(255,255,255,.12);color:#f4efe8}
+
+/* ---------- Escalas ---------- */
+html[data-skin="aurora"] body.iu .pg.pg-escalas{gap:14px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-areas{display:flex;flex-wrap:wrap;gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area{--ac:#ffc15e;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#ddd7e8;box-shadow:none;text-align:left}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area .es-ai{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area>span:last-child{display:inline-flex;align-items:baseline;gap:6px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area b{display:inline;font-size:12.5px;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area small{font-size:11.5px;color:#a39db3}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area small::before{content:"· "}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area.on{background:#ffc15e;border-color:#ffc15e;color:#1a0f05;box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area.on small{color:#4a3510}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-grid{grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-main{padding:16px 18px;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-bar2{margin-bottom:2px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sl{display:inline-flex}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sl select{height:40px;font:800 15px "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-bar2 .sq{width:40px;height:40px;border-radius:50%}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-hj,html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ex{height:36px;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ex{width:36px;padding:0;border-radius:50%}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-seg{display:inline-flex;padding:3px;gap:2px;border-radius:16px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);overflow:visible}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-seg button{height:30px;padding:0 14px;border-radius:13px;background:none;color:#b9b3c8;font-size:12.5px;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-seg button.on{background:#ffc15e;color:#1a0f05}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-hint{margin:0 2px 2px;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-cal{gap:6px;border:0;border-radius:0;overflow:visible}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-dow{background:none;border:0;padding:4px 0;font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:#7f7a90}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day{min-height:96px;padding:8px;gap:4px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.035)}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day:nth-child(7n){border-right:1px solid rgba(255,255,255,.06)}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day.out{opacity:1;background:transparent;border-color:transparent}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day.out>span:first-child{color:#5d586d}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day.today{border-color:rgba(255,193,94,.6);background:rgba(255,193,94,.1)}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day>span:first-child{width:auto;height:auto;display:block;font:700 12.5px "Bricolage Grotesque",Inter,sans-serif;color:#b9b3c8}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day.today>span:first-child{background:none;color:#ffc15e;width:auto;height:auto;border-radius:0}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-hoje{color:#ffc15e;top:8px;right:8px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-chip{padding:3px 7px;border-radius:8px;border:0;font-size:11px;background:rgba(255,255,255,.1);color:#ddd7e8}
+@supports (color:color-mix(in srgb,red 10%,blue)){html[data-skin="aurora"] body.iu .pg.pg-escalas .es-chip{background:color-mix(in srgb,var(--ac) 20%,transparent);color:var(--ac)}}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-chip .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-chip b{font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-chip small{color:inherit;opacity:.75}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-wd,html[data-skin="aurora"] body.iu .pg.pg-escalas .es-lr,html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ur{border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-wd.today{border-color:rgba(255,193,94,.6)}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-lr .es-ai,html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ur .es-ai{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-dt{width:44px;height:44px;min-width:44px;border-radius:14px;background:rgba(255,193,94,.16);color:#ffc15e}
+@supports (color:color-mix(in srgb,red 10%,blue)){html[data-skin="aurora"] body.iu .pg.pg-escalas .es-dt{background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac)}}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-dt b{font:800 15px/1 "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-dt small{font-size:9px;color:inherit;opacity:.8}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-side{gap:16px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-side h3{margin:0 0 8px;font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-side h3 .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ur{padding:6px 0;border:0;border-top:1px solid rgba(255,255,255,.06);border-radius:0;background:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ur:first-of-type{border-top:0}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-ur b{font-size:14px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sr{padding:9px 0;border-top:1px solid rgba(255,255,255,.06);font-size:13px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sr .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sr b{font:800 20px "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sr.sub{padding-left:0;color:#cfc9dc}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-sr.sub b{font-size:14px}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-add h3{margin:0 0 12px;font-size:16px;font-family:"Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-escalas .es-af input{height:40px;border-radius:15px;background:rgba(0,0,0,.3);border-color:rgba(255,255,255,.12)}
+
+/* ---------- Bíblia ---------- */
+html[data-skin="aurora"] body.iu .pg.pg-biblia .pg-hero{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find{padding:0;background:none;border:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find label{flex:1 1 280px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find .pg-sel{height:46px;border-radius:15px;padding:0 16px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find .pg-sel input{font-size:15px;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find .pg-ghost{min-height:0;height:46px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find>.pg-ghost.strong{background:var(--au-grad);border:0;color:#1a0f05;box-shadow:0 10px 28px -8px rgba(255,150,70,.7)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2{display:contents}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar,html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses,html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav{padding:0;background:none;border:0;border-radius:0}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar label{display:block;flex:0 1 auto;gap:0}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .pg-sel{height:36px;min-width:0;padding:0 12px;border-radius:18px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .pg-sel select{font-size:13px;font-weight:600;color:#ddd7e8}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .f-tr .pg-sel{max-width:220px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .pg-sel .pgi{width:15px;height:15px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-tools{margin-left:auto}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-tools .pg-ghost{height:36px;min-width:0;padding:0 14px;border-radius:18px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .bv-l{flex:0 0 auto}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .bv-l b{font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .bv-l b svg{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses label{display:flex;align-items:center;gap:6px;font-size:12px;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .pg-sel{height:36px;border-radius:18px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .pg-sel select{font-size:13px;font-weight:600;min-width:58px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses .pg-ghost{height:36px;border-radius:18px;padding:0 14px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav{display:flex;align-items:center;gap:8px;justify-content:flex-start}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav #reader-ref{flex:1;text-align:center;font:800 22px "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav .pg-ghost{height:36px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav .pg-ghost.sq{width:36px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav .pg-ghost.fav.on{color:#ffc15e;border-color:rgba(255,193,94,.5)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-main{grid-template-columns:minmax(0,1fr) 270px;gap:16px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper{padding:22px 26px!important;border-radius:24px!important;font-family:Fraunces,Georgia,serif;font-style:italic;background:var(--au-glass)!important;color:#efe9df!important;line-height:1.6}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper h3{font:800 24px "Bricolage Grotesque",Inter,sans-serif;font-style:normal;letter-spacing:-.02em;text-align:left;margin:0 0 12px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper h3 span{color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper .reader-verse{margin:0 0 4px;padding:8px 14px;border-radius:16px;border:1px solid transparent}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper sup{font:700 12px "JetBrains Mono",monospace;font-style:normal;color:#ffc15e;margin-right:12px;vertical-align:baseline}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .reader-verse.sel{outline:0;background:linear-gradient(90deg,rgba(255,193,94,.2),rgba(255,193,94,.05));border-color:rgba(255,193,94,.4)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-side{gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-quick.bb-mini{display:flex;flex-direction:column;gap:10px;padding:0;background:none;border:0}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-mini>button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#e8e3f0;font:600 13.5px "Instrument Sans",Inter,sans-serif;text-align:left}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-mini>button:hover{border-color:rgba(255,193,94,.45)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-mini>button[hidden]{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-mini>button .pgi{width:19px;height:19px;color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .reader-source{color:#7f7a90}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper .reader-verse sup{color:#ffc15e!important;font-weight:700!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia.reader-light .bb-paper{background:#fbf7ec!important;color:#2b2418!important}
+html[data-skin="aurora"] body.iu .vbar{background:#15121f;border:1px solid rgba(255,193,94,.35);border-radius:20px}
+html[data-skin="aurora"] body.iu .vbar .vb-go{background:var(--au-grad);color:#1a0f05;border:0}
+@media (min-width:901px){
+  html[data-skin="aurora"] body.iu .pg.pg-biblia{grid-template-columns:minmax(0,1fr) auto;align-content:start}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find{grid-column:1/-1;grid-row:1}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{grid-column:1;grid-row:2}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses{grid-column:2;grid-row:2;justify-self:end}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav{grid-column:1/-1;grid-row:3}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-main{grid-column:1/-1;grid-row:4}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .reader-source{grid-column:1/-1;grid-row:5}
+}
+
+/* ---------- Lição Sabática ---------- */
+html[data-skin="aurora"] body.iu .pg.pg-licao #sabbath-content{gap:14px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-filter{padding:0!important;border-radius:24px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-sum{padding:12px 18px;font:500 10.5px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-sum .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-sum small{font:600 12.5px "Instrument Sans",Inter,sans-serif;letter-spacing:0;text-transform:none;color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-filter .ls-fg{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:0 18px 16px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-f{flex:1 1 150px;gap:4px;font-size:11.5px;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-go{min-width:0;height:40px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf{gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf .pg-head{gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf .pg-h{font-size:20px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf .pg-h .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf .pg-sub.lead{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-shelf .pg-head>.pg-h{margin-right:auto}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(132px,calc((100% - 72px)/7));gap:12px;padding:2px 0 6px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row.wrap{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));grid-auto-columns:auto}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-card{position:relative;flex:none;aspect-ratio:3/4;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(160deg,#7b5cff,#18d6b0);overflow:hidden;padding:0}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row .ls-card:nth-child(4n+2){background:linear-gradient(160deg,#ff8a4c,#ff6a88)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row .ls-card:nth-child(4n+3){background:linear-gradient(160deg,#1c1030,#7b5cff)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row .ls-card:nth-child(4n){background:linear-gradient(160deg,#d9b779,#8a6a3a)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-card:hover{border-color:rgba(255,193,94,.55)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-cov{position:absolute;inset:0;aspect-ratio:auto;background:none}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-cov .pgi{color:rgba(255,255,255,.35)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-cp{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 12px;background:linear-gradient(0deg,rgba(7,6,13,.88),rgba(7,6,13,.4) 60%,transparent)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-cp b{font:800 14px/1.15 "Bricolage Grotesque",Inter,sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-cp small{color:rgba(255,255,255,.78)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-open{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-move{position:absolute;top:6px;left:6px;right:6px;z-index:2;padding:0;color:#fff}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-move select{background:rgba(0,0,0,.55);color:#fff;border-color:rgba(255,255,255,.2)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .gm-next{border-color:rgba(255,193,94,.5);background:rgba(10,8,18,.8);color:#ffc15e;right:-6px}
+html[data-skin="aurora"] body.iu .pg.pg-licao .pg-src{color:#7f7a90}
+/* telas internas (edição, lições, leitura) */
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-back{border-radius:20px;height:38px;padding:0 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#f4efe8;font-weight:600;width:fit-content}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-quarter-head{border-radius:24px;background:linear-gradient(135deg,rgba(255,193,94,.18),rgba(123,92,255,.14) 70%,rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.09)}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-quarter-head h3{font-family:"Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-quarter-head span,html[data-skin="aurora"] body.iu .pg-licao .sabbath-reader-head span{font-family:"JetBrains Mono",monospace;letter-spacing:.14em;color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-lessons button{border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-lessons button:hover{border-color:rgba(255,193,94,.45)}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-lessons button b{font-family:"Bricolage Grotesque",Inter,sans-serif;color:#ffc15e;background:rgba(255,193,94,.12);border-radius:12px}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-day-tabs button{border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#b9b3c8}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-day-tabs button.active{background:linear-gradient(135deg,rgba(255,193,94,.28),rgba(255,138,76,.1));border-color:rgba(255,193,94,.5);color:#fff}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-reader{border-radius:24px;background:var(--au-glass);border:1px solid rgba(255,255,255,.09)}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-reader-head h3{font-family:"Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-reader-nav button{border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg-licao :is(.sabbath-loading,.sabbath-error){border-radius:24px;background:var(--au-glass);border:1px solid rgba(255,255,255,.09);color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg-licao .sabbath-error button{border-radius:20px;background:var(--au-grad);color:#1a0f05;border:0;font-weight:700}
+
+/* ---------- Jogos ---------- */
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats{display:flex;gap:10px;width:min(640px,100%);flex:0 1 640px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tile{flex:1;min-height:0;padding:12px 16px;gap:0;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tile:hover{border-color:rgba(255,193,94,.45)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-ti,html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .chev{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tx b{font:800 26px/1.1 "Bricolage Grotesque",Inter,sans-serif}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tx small{font-size:12px;color:#9d97ad}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-sec{gap:12px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily{background:var(--au-glass);border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:18px 20px;gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-sec .pg-head{gap:8px 12px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-sec .pg-h{font-size:22px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-sec .pg-h .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tag{height:30px;font-size:12px;font-weight:600;letter-spacing:0;background:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tag.rk{color:#ffc15e;border-color:rgba(255,193,94,.4)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tag.fr{color:#ddd7e8;border-color:rgba(255,255,255,.14)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .pg-head .pg-sub{margin-left:auto;font-size:13px;color:#b9b3c8}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-note{margin:0;font-size:12.5px;color:#9d97ad;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-more{display:inline}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-more summary{color:#ffc15e;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-grid{gap:12px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card{position:relative;flex-direction:column;align-items:stretch;justify-content:space-between;gap:10px;min-height:128px;padding:16px;border-radius:22px;border:1px solid rgba(255,255,255,.1);color:#f4efe8;background:linear-gradient(135deg,rgba(123,92,255,.4),rgba(24,214,176,.2))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:nth-child(4n+2){background:linear-gradient(135deg,rgba(255,138,76,.4),rgba(255,106,136,.2))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:nth-child(4n+3){background:linear-gradient(135deg,rgba(24,214,176,.35),rgba(10,58,74,.4))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card:nth-child(4n){background:linear-gradient(135deg,rgba(255,193,94,.35),rgba(138,106,58,.3))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-ic{position:absolute;right:12px;top:10px;width:34px;height:34px;font-size:18px;background:rgba(0,0,0,.25)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card div{flex:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card b{font:800 19px/1.15 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.01em;padding-right:40px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card small{font-size:12px;color:rgba(255,255,255,.78);opacity:1;margin-top:2px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card button{flex:none;width:100%;min-height:36px;height:36px;border-radius:18px;font-size:12.5px;font-weight:700;background:var(--au-grad);border:0;color:#1a0f05;box-shadow:0 10px 28px -8px rgba(255,150,70,.7)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card button:disabled{background:rgba(255,255,255,.12);color:#ddd7e8;box-shadow:none;opacity:1}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card button .pgi{width:14px;height:14px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-free{border-top:0;padding-top:0}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools{gap:8px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools .pg-search{min-width:200px;height:34px;border-radius:17px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools .pg-sel.sm{height:34px;border-radius:17px;min-width:130px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools .pg-blue{height:34px;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-wrap .gm-next{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;overflow:visible;padding:0}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card{grid-column:span 6;flex:none;display:flex;flex-direction:column;justify-content:space-between;min-height:150px;border-radius:22px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(135deg,rgba(123,92,255,.4),rgba(24,214,176,.2));overflow:hidden;position:relative}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(2),html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(3){grid-column:span 3}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(3){background:linear-gradient(135deg,rgba(255,106,136,.35),rgba(74,16,48,.4))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(4){background:linear-gradient(135deg,rgba(24,214,176,.3),rgba(10,58,74,.4))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(5){background:linear-gradient(135deg,rgba(255,193,94,.3),rgba(138,106,58,.3))}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(n+6){grid-column:span 4}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card.gm-feat{flex:none!important;border:1px solid rgba(255,255,255,.14);box-shadow:none;background:linear-gradient(135deg,#ff8a4c,#7b5cff)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-art{position:absolute;inset:0;height:auto!important;background:none!important;border-radius:0;pointer-events:none;display:block}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-art>.pgi{position:absolute;right:16px;top:44px;width:54px!important;height:54px!important;color:rgba(255,255,255,.22)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat .gm-art>.pgi{width:90px!important;height:90px!important;right:26px;top:60px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-badge{left:16px;right:auto;top:14px;padding:3px 11px;border:0;background:rgba(0,0,0,.35);color:#f4efe8;font-size:11.5px;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body{position:relative;display:flex;flex-direction:column;justify-content:flex-end;flex:1;padding:44px 16px 16px;gap:6px;border-radius:0!important}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body h3{font:800 19px/1.1 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.01em}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat h3{font-size:30px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body p{min-height:0;font-size:12.5px;color:rgba(255,255,255,.8);max-width:520px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta{font-size:12px;color:rgba(255,255,255,.75)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta b{color:#ffe0a0}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-meta .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-chips span{border:0;background:rgba(0,0,0,.3);color:#f4efe8;font-weight:600}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body .pg-outline{width:auto;align-self:flex-start;height:36px;margin-top:4px;padding:0 17px;font-size:12.5px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body .pg-gold{align-self:flex-start;min-height:0;height:38px;font-size:13px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-rank{background:var(--au-glass);border:1px solid rgba(255,255,255,.09);border-radius:24px;padding:18px 20px;gap:6px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-rank .pg-head{gap:10px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-tabs{display:inline-flex;padding:3px;gap:2px;border-radius:16px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);margin:0;width:fit-content}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-tabs button{padding:0 14px;height:30px;border-radius:13px;font-size:12.5px;font-weight:600;color:#b9b3c8;opacity:1}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .dy-tabs button.on{background:#ffc15e;color:#1a0f05}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-rank{background:none;border:0;border-radius:0;overflow:visible}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-r{grid-template-columns:44px 34px minmax(0,1fr) 110px 90px 110px;gap:12px;padding:10px 0;font-size:13.5px;border-top:1px solid rgba(255,255,255,.06)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-r.mine{background:rgba(255,193,94,.07)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-pos{font:800 15px "Bricolage Grotesque",Inter,sans-serif;color:#ffc15e}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-pos .pgi{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-pos.p1{color:#a8a2b8}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-pos.p2{color:#d9774f}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-av{width:34px;height:34px;background:linear-gradient(135deg,#ffc15e,#ff6a88);color:#1a0f05}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-r:nth-child(2) .gm-av{background:linear-gradient(135deg,#35f0b9,#7b5cff)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-r:nth-child(3) .gm-av{background:linear-gradient(135deg,#ffb347,#ff8a4c)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-pts{color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-me{border-color:rgba(255,193,94,.5);color:#ffc15e;background:rgba(255,193,94,.12)}
+html[data-skin="aurora"] body.iu .game-login{border-radius:24px;background:var(--au-glass);border:1px solid rgba(255,255,255,.09)}
+html[data-skin="aurora"] body.iu .game-login h2{font-family:"Bricolage Grotesque",Inter,sans-serif;font-weight:800;letter-spacing:-.02em}
+
+/* ---------- ajustes ---------- */
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel select{background-color:transparent!important;border:0;box-shadow:none!important;color:inherit}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel input,html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-search input{background:transparent!important;box-shadow:none!important;border:0!important;color:#f4efe8}
+html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-sel input::placeholder,html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-search input::placeholder{color:#8f89a0;font-weight:500}
+html[data-skin="aurora"] body.iu .game-page{max-width:1600px!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2 .pg-ghost{width:auto;flex:none}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find>.pg-ghost.strong{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#f4efe8;box-shadow:none}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2 .pg-ghost:first-child{background:var(--au-grad);border:0;color:#1a0f05;font-weight:700;box-shadow:0 10px 28px -8px rgba(255,150,70,.7)}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find small{flex:1 0 100%}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-move{font-size:0}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ls-move select{font-size:11px;height:26px;margin:0}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-feat{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;align-items:center;background:linear-gradient(135deg,rgba(255,193,94,.18),rgba(123,92,255,.14) 70%,rgba(255,255,255,.03))}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-fcv{aspect-ratio:3/4;border-radius:20px;overflow:hidden;display:grid;place-items:center;background:linear-gradient(160deg,#7b5cff,#18d6b0);border:1px solid rgba(255,255,255,.1)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-fcv img{width:100%;height:100%;object-fit:cover}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-fcv .pgi{width:40px;height:40px;color:rgba(255,255,255,.4)}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-ftx{display:flex;flex-direction:column;gap:10px;min-width:0}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-ftx h2{margin:0;font:800 32px/1.1 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.02em}
+html[data-skin="aurora"] body.iu .pg.pg-licao .ap-ftx p{margin:0;color:#c9c3d6;font-size:14px}
+html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily>p:empty{display:none}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat .gm-body p{max-width:58%}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat .gm-body .pg-ghost{align-self:flex-start;height:34px;font-size:12.5px;background:rgba(0,0,0,.3)}
+html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-body{align-items:flex-start}
+/* ---------- celular ---------- */
+@media (max-width:900px){
+  html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .pg-hero.ap-head h1,html[data-skin="aurora"] body.iu .pg:is(.pg-cronogramas,.pg-escalas,.pg-biblia,.pg-licao,.pg-jogos) .ap-head h1{font-size:30px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-cols{grid-template-columns:minmax(0,1fr)}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .ap-arrow{width:38px;height:38px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-detail{padding:16px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-dt h2{font-size:23px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-it{flex-wrap:wrap;gap:8px 12px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-tx{flex:1 1 140px}
+  html[data-skin="aurora"] body.iu .pg.pg-cronogramas .sc-stat b{font-size:19px}
+  html[data-skin="aurora"] body.iu .pg.pg-escalas .es-grid{grid-template-columns:minmax(0,1fr)}
+  html[data-skin="aurora"] body.iu .pg.pg-escalas .es-main{padding:12px}
+  html[data-skin="aurora"] body.iu .pg.pg-escalas .es-day{min-height:58px;padding:4px}
+  html[data-skin="aurora"] body.iu .pg.pg-escalas .es-area{flex:0 0 auto}
+  html[data-skin="aurora"] body.iu .pg.pg-escalas .es-areas{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-main{grid-template-columns:minmax(0,1fr)}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-paper{padding:16px 14px!important}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-tools{margin-left:0}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{display:grid}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .f-tr .pg-sel{max-width:none}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-verses{flex-wrap:wrap}
+  html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-nav #reader-ref{font-size:18px}
+  html[data-skin="aurora"] body.iu .pg.pg-licao .ls-row{grid-auto-columns:minmax(132px,38%)}
+  html[data-skin="aurora"] body.iu .pg.pg-licao .ap-feat{grid-template-columns:96px minmax(0,1fr);gap:14px}
+  html[data-skin="aurora"] body.iu .pg.pg-licao .ap-ftx h2{font-size:22px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-feat .gm-body p{max-width:none}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats{flex:1 1 100%;width:100%}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tile{padding:10px 12px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .ap-stats .gm-tx b{font-size:21px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card{min-height:112px;padding:12px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos #pg-daily .dy-card b{font-size:16px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(n){grid-column:span 12}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(2),html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(3){grid-column:span 6}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-card:nth-child(n+6){grid-column:span 12}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-r{grid-template-columns:30px 30px minmax(0,1fr) 78px;gap:8px}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-j,html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-acc{display:none}
+  html[data-skin="aurora"] body.iu .pg.pg-jogos .gm-tools .pg-search{flex:1 1 100%;order:-1}
+}

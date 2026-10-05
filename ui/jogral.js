@@ -80,7 +80,7 @@ function formHTML(){
  const nm=names().length;
  return '<section class="pg-card jg-form"><div class="pg-head"><h2 class="pg-h">'+I('pen',22)+(isPeca()?'Monte sua peça':'Monte seu jogral')+'</h2>'+aiBadge()+'</div>'+aiNotice()+
  '<div class="jg-kindsw" role="tablist"><button type="button" role="tab" class="'+(isPeca()?'':'on')+'" onclick="IASDJogral.tipo(\'jogral\')">Jogral</button><button type="button" role="tab" class="'+(isPeca()?'on':'')+'" onclick="IASDJogral.tipo(\'peca\')">Peça teatral</button></div>'+
- '<div class="jg-f"><label for="jg-tema">Tema</label><input id="jg-tema" maxlength="120" value="'+esc(J.tema)+'" oninput="IASDJogral.set(\'tema\',this.value)" placeholder="Ex.: A volta de Jesus"><div class="jg-chips sm">'+TEMAS.slice(0,4).map((t,i)=>'<button type="button" class="jg-chip" onclick="IASDJogral.tema('+i+')">'+esc(t)+'</button>').join('')+'</div></div>'+
+ '<div class="jg-f"><label for="jg-tema">Tema</label><input id="jg-tema" maxlength="120" value="'+esc(J.tema)+'" oninput="IASDJogral.set(\'tema\',this.value)" placeholder="Ex.: A volta de Jesus"><div class="jg-chips sm">'+TEMAS.slice(0,au()?8:4).map((t,i)=>'<button type="button" class="jg-chip" onclick="IASDJogral.tema('+i+')">'+esc(t)+'</button>').join('')+'</div></div>'+
  '<div class="jg-f"><label>Ocasião</label>'+chips(OCASIOES,J.ocasiao,'ocasiao')+'</div>'+
  '<div class="jg-row"><div class="jg-f"><label>'+(isPeca()?'Atores':'Participantes')+'</label><div class="jg-step"><button type="button" onclick="IASDJogral.n(-1)" aria-label="Menos um">−</button><output id="jg-n">'+J.n+'</output><button type="button" onclick="IASDJogral.n(1)" aria-label="Mais um">+</button></div></div>'+
  '<div class="jg-f"><label>Duração</label><div class="jg-seg">'+DURACOES.map((d,i)=>'<button type="button" class="'+(i===J.dur?'on':'')+'" onclick="IASDJogral.dur('+i+')">'+esc(d.replace(' minutos',' min'))+'</button>').join('')+'</div></div></div>'+
@@ -101,10 +101,11 @@ function outHTML(){
 function savedHTML(){
  if(!saved.length)return '';
  return '<section class="pg-card jg-saved"><div class="pg-head"><h2 class="pg-h">'+I('save',22)+'Seus jograis salvos</h2><span class="pg-sub">neste aparelho · '+saved.length+'</span></div><div class="jg-list">'+saved.map((s,i)=>'<article class="jg-item"><div><b>'+esc(s.title)+'</b><small>'+esc(new Date(s.at).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}))+' · '+esc(stats(s.text)||'sem falas')+'</small></div><div class="jg-ia"><button type="button" class="pg-ghost" onclick="IASDJogral.abrir('+i+')">Abrir</button><button type="button" class="pg-ghost danger" onclick="IASDJogral.apagar('+i+')" aria-label="Apagar">'+I('trash',16)+'</button></div></article>').join('')+'</div></section>'}
-function body(){return '<div class="jg-grid">'+formHTML()+outHTML()+'</div>'+savedHTML()}
+const au=()=>document.documentElement.getAttribute('data-skin')==='aurora';
+function body(){if(au())return '<div class="jg-grid">'+formHTML()+'<div class="jg-right">'+outHTML()+savedHTML()+'</div></div>';return '<div class="jg-grid">'+formHTML()+outHTML()+'</div>'+savedHTML()}
 function page(){
  if(J.ai===null)checkAI();
- return '<div class="pg pg-jogral"><section class="pg-hero pg-hero-jogral"><div class="pg-art"><i class="jg-orb"></i><i class="jg-orb b"></i></div><div class="pg-hero-txt"><span class="pg-kick">PALAVRA EM CENA</span><h1>Crie seu <em>jogral</em></h1><p>Escolha o tema, distribua as falas entre os participantes e ensaie com o roteiro na tela.</p></div></section><div id="jg-root">'+body()+'</div></div>'}
+ return '<div class="pg pg-jogral"><section class="pg-hero pg-hero-jogral"><div class="pg-art"><i class="jg-orb"></i><i class="jg-orb b"></i></div><div class="pg-hero-txt">'+(au()?'<span class="pg-kick">CRIE SEU JOGRAL</span><h1>Palavra em Cena</h1>':'<span class="pg-kick">PALAVRA EM CENA</span><h1>Crie seu <em>jogral</em></h1>')+'<p>Escolha o tema, distribua as falas entre os participantes e ensaie com o roteiro na tela.</p></div></section><div id="jg-root">'+body()+'</div></div>'}
 function redraw(){const r=root();if(!r)return;const a=document.activeElement,id=a&&a.id,s=a&&a.selectionStart,e=a&&a.selectionEnd;r.innerHTML=body();if(id){const n=document.getElementById(id);if(n){n.focus();try{n.setSelectionRange(s,e)}catch(x){}}}}
 let checking=false;
 async function checkAI(){if(checking)return;checking=true;try{const r=await fetch('/api/gerar-jogral',{cache:'no-store'});const j=await r.json();J.ai=!!(j&&j.ready)}catch(e){J.ai=null;checking=false;return}checking=false;redraw()}
