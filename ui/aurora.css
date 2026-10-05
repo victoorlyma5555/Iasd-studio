@@ -224,3 +224,47 @@ html[data-skin="aurora"] .acp-tg.on{background:var(--au-c1)}
 html[data-skin="aurora"] .acp-sep{background:rgba(var(--au-w),.14)}
 html[data-skin="aurora"] .acp-guest .p{background:var(--au-grad);color:var(--au-on)}
 html[data-skin="aurora"] .acp-dismiss{background:rgba(var(--au-k),.35)}
+
+/* banner em carrossel dentro do cartão de saudação */
+.au-hello.au-has-ban{isolation:isolate}
+.au-hello .dashboard-hero-carousel{position:absolute;inset:0;z-index:-2;overflow:hidden;border-radius:inherit}
+.au-hello .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s ease}
+.au-hello .hero-slide.active{opacity:1}
+.au-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(7,6,13,.78),rgba(7,6,13,.25) 70%,rgba(7,6,13,.1))}
+html body.iu .au-has-ban :is(h1,p,.au-lab,em,.iu-btn:not(.p)){color:#fff!important}
+html body.iu .au-has-ban p em{color:#e8e2f5!important}
+
+/* ===== paletas claras: campos, botões e textos legíveis ===== */
+html[data-palette="celeste"]{--au-a1:#0ea5e9;--au-a1-rgb:14,165,233;--au-a2:#0369a1;--au-a2-rgb:3,105,161}
+html[data-palette="celeste"] body.iu :is(input,select,textarea),html[data-palette="azulbranco"] body.iu :is(input,select,textarea){background:rgba(255,255,255,.92)!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.2)!important}
+html[data-palette="celeste"] body.iu :is(input,textarea)::placeholder,html[data-palette="azulbranco"] body.iu :is(input,textarea)::placeholder{color:var(--au-mu)!important;opacity:1}
+html[data-palette="celeste"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq),html[data-palette="azulbranco"] body.iu :is(button,.pg-ghost,.pg-sel,.chip,.sq){color:var(--au-tx)}
+html[data-palette="celeste"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,svg,.iu-btn:not(.p)),html[data-palette="azulbranco"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,svg,.iu-btn:not(.p)){color:#fff!important}
+html[data-skin="aurora"] body.iu .iu-pas[style*="url("] :is(h2,q,small,.iu-ph small,.iu-ph svg){color:#fff!important}
+html[data-palette="celeste"] body.iu :is(.pg-sel,.pg-sel select),html[data-palette="azulbranco"] body.iu :is(.pg-sel,.pg-sel select){color:var(--au-tx)!important}
+
+/* ===== Bíblia: busca compacta e direta ===== */
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find>label{flex:1 1 200px;min-width:0}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find>small{flex-basis:100%;margin:0}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-moretoggle{display:inline-grid}
+html[data-skin="aurora"] body.iu .pg-biblia:not(.bb-open) :is(.bb-find2,.bb-tools,.f-tr,.bb-verses){display:none!important}
+html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-find2{display:flex!important;flex-basis:100%;gap:8px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar{display:grid;grid-template-columns:2fr 1fr;gap:8px;padding:10px}
+html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-bar{grid-template-columns:1fr 1fr}
+html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-bar .f-tr,html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-bar .bb-tools{grid-column:1/-1}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar label>span{display:none}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav .strong em{display:none}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav{padding:8px 10px}
+html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-verses{display:flex!important}
+
+/* campos com ícone (.pg-sel): uma única caixa, na cor do tema */
+html[data-skin="aurora"] body.iu .pg-sel{background:rgba(var(--au-w),.07)!important;border:1px solid rgba(var(--au-w),.16)!important}
+html[data-palette="celeste"] body.iu .pg-sel,html[data-palette="azulbranco"] body.iu .pg-sel{background:rgba(255,255,255,.92)!important}
+html[data-skin="aurora"] body.iu .pg-sel :is(input,select){background:transparent!important;border:0!important;box-shadow:none!important;color:var(--au-tx)!important}
+html[data-skin="aurora"] body.iu .pg-sel input::placeholder{color:var(--au-mu)!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find>label{flex:1 1 0}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-quick button{color:var(--au-tx)!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-quick button.bb-sharebtn{color:var(--au-on)!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;align-items:center}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find>small,html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-find2{grid-column:1/-1}
