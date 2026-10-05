@@ -92,6 +92,8 @@ function sideHTML(){
   const cur=S.cur(),projector=isProjectorPage(cur),collapsed=projector&&projectorMenuCollapsed();
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
   if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
+  {let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
+  h+=`<button class="iu-side-me" data-go="Perfil" aria-label="Abrir meu perfil"><i>${ic('user',20)}</i><span><b>${E(nm)}</b><small>Conta, ranking e conquistas</small></span></button><div class="iu-sec iu-sec-first">NAVEGAÇÃO</div>`}
   h+=mainPages().map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
   if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
