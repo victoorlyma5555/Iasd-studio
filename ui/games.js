@@ -205,7 +205,7 @@ function playWho(){
  view(top(S.daily?'Desafio do dia · Quem Sou Eu?':'Quem Sou Eu?','',g.c)+hud()+
   '<div class="sg-card who"><span class="sg-cat">'+esc(q.cat)+'</span><div class="sg-mask">🎭</div><div id="sg-clues" class="sg-clues"></div><div class="sg-pts" id="sg-pts"></div></div>'+
   '<form class="sg-input" onsubmit="event.preventDefault();IASDSolo.guess()"><input id="sg-guess" autocomplete="off" autocapitalize="words" placeholder="Quem sou eu?"><button class="sg-go gold" type="submit">Responder</button></form>'+
-  '<div class="sg-life"><button onclick="IASDSolo.clue()" id="sg-clue-b">💡 Nova pista <em>−100</em></button>'+(S.daily?'':'<button onclick="IASDSolo.giveup()">🏳 Desistir</button>')+'</div><div id="sg-fb"></div>','sg-play sg-who');
+  '<div class="sg-life"><button onclick="IASDSolo.clue()" id="sg-clue-b">💡 Nova pista <em>−100</em></button>'+'<button onclick="IASDSolo.skipWho()">⏭ Pular pergunta</button>'+(S.daily?'':'<button onclick="IASDSolo.giveup()">🏳 Desistir</button>')+'</div><div id="sg-fb"></div>','sg-play sg-who');
  paintClues();setTimeout(()=>$('sg-guess')?.focus(),50);A().sfx('whoosh');
 }
 function paintClues(){
@@ -224,6 +224,7 @@ Object.assign(API,{
    if(S.tries>=3){S.locked=true;streakUp(false);S.log.push({q:'Quem sou eu? ('+q.cat+')',a:q.a,ok:false,cat:q.cat,ref:q.ref,pick:v});endWho(false,0)}
    else if(S.clues<q.clues.length){S.clues++;paintClues()}}
  },
+ skipWho(){if(S.locked)return;const q=S.qs[S.i];S.locked=true;clearTimeout(S.adv);A().sfx('whoosh');S.log.push({q:'Quem sou eu? ('+q.cat+')',a:q.a,ok:false,cat:q.cat,ref:q.ref,pick:'(pulou)',skipped:true});S.i++;next()},
  giveup(){if(S.locked)return;const q=S.qs[S.i];S.locked=true;streakUp(false);S.log.push({q:'Quem sou eu? ('+q.cat+')',a:q.a,ok:false,cat:q.cat,ref:q.ref,pick:'(desistiu)'});endWho(false,0)}
 });
 function endWho(ok,add){
