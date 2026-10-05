@@ -94,7 +94,7 @@ function sideHTML(){
   if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
   {let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
   h+=`<button class="iu-side-me" data-go="Perfil" aria-label="Abrir meu perfil"><i>${ic('user',20)}</i><span><b>${E(nm)}</b><small>Conta, ranking e conquistas</small></span></button><div class="iu-sec iu-sec-first">NAVEGAÇÃO</div>`}
-  h+=mainPages().map(([id,i,l])=>navBtn(id,ic(i,19),l,cur)).join('');
+  h+=mainPages().map(([id,i,l])=>navBtn(id,(isAurora()&&auIc(id,20))||ic(i,19),l,cur)).join('');
   h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
   if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
   if(S.give())h+='<div class="iu-sec">ACESSOS</div>'+navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
@@ -521,9 +521,23 @@ function auName(){
   return String(n).trim().split(/\s+/)[0]||'';
 }
 function auGreeting(){const h=new Date().getHours();return h<5?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+
+/* ícones próprios da Aurora (duotom: preenchimento suave + traço) */
+const AUI={
+'Cronograma':'<rect x="3.5" y="5" width="17" height="15.5" rx="3.5" fill="currentColor" fill-opacity=".2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15.2" r="3.3" fill="currentColor" fill-opacity=".25"/><path d="M12 13.4v1.9l1.3.8"/>',
+'Escalas':'<circle cx="12" cy="8" r="3.2" fill="currentColor" fill-opacity=".25"/><circle cx="5.6" cy="10" r="2.3" fill="currentColor" fill-opacity=".18"/><circle cx="18.4" cy="10" r="2.3" fill="currentColor" fill-opacity=".18"/><path d="M6.4 19c.4-3.2 2.6-5 5.6-5s5.2 1.8 5.6 5z" fill="currentColor" fill-opacity=".2"/><path d="M2.5 17.5c.2-2 1.4-3.3 3.1-3.6M21.5 17.5c-.2-2-1.4-3.3-3.1-3.6"/>',
+'Projeção':'<rect x="2.8" y="4" width="18.4" height="12.2" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M10 7.6v5.2l4.4-2.6z" fill="currentColor" fill-opacity=".55"/><path d="M8 20h8M12 16.2V20"/><path d="M19.5 1.8l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.200-.5z" fill="currentColor" stroke-width="0"/>',
+'Bíblia':'<path d="M12 6.2C10.2 5 7.300 4.600 4 5.200v12.800c3.300-.6 6.200-.2 8 1.200 1.800-1.400 4.700-1.800 8-1.200V5.200c-3.300-.6-6.200-.2-8 1z" fill="currentColor" fill-opacity=".2"/><path d="M12 6.200v12.800"/><path d="M16 8.300v4.400M14.300 9.900h3.400"/><path d="M6.700 8.500h2.400M6.700 11h2.400"/>',
+'Lição da Escola Sabatina':'<path d="M6 3.500h10.500a2 2 0 012 2V19a1.500 1.500 0 01-1.500 1.500H7.500A2.500 2.500 0 015 18V4.500a1 1 0 011-1z" fill="currentColor" fill-opacity=".2"/><path d="M5 17.800a2.500 2.500 0 012.500-2.500h11"/><path d="M12.500 3.500v6.200l1.800-1.300 1.800 1.300V3.500" fill="currentColor" fill-opacity=".5"/><path d="M9 12h6"/>',
+'Jogo':'<path d="M12 2.800l8 4.300v9.800l-8 4.300-8-4.300V7.100z" fill="currentColor" fill-opacity=".2"/><path d="M4 7.100l8 4.400 8-4.400M12 11.500v9.700"/><circle cx="12" cy="7" r=".9" fill="currentColor" stroke-width="0"/><circle cx="8" cy="14.600" r=".9" fill="currentColor" stroke-width="0"/><circle cx="16" cy="14.600" r=".9" fill="currentColor" stroke-width="0"/>',
+'Datas especiais':'<rect x="3.500" y="5" width="17" height="15.500" rx="3.500" fill="currentColor" fill-opacity=".2"/><path d="M3.500 10h17M8 3v4M16 3v4"/><path d="M12 11.800l1.200 2.500 2.700.4-2 1.900.5 2.700-2.400-1.300-2.400 1.300.5-2.700-2-1.900 2.700-.4z" fill="currentColor" fill-opacity=".55"/>',
+'Palavra em Cena':'<path d="M3.500 6c2.500-1 5-1 7.500 0v6.200a3.800 3.800 0 01-7.500 0z" fill="currentColor" fill-opacity=".2"/><path d="M13 9.200c2.500-1 5-1 7.500 0v6.200a3.800 3.800 0 01-7.500 0z" fill="currentColor" fill-opacity=".32"/><path d="M5.700 9.500h.1M9.200 9.500h.1M5.600 12.600c1 .9 2.600.9 3.600 0"/><path d="M15.300 12.600h.1M18.800 12.600h.1M15.200 16.200c1-.9 2.600-.9 3.600 0"/>',
+'Hinário':'<path d="M9 17.500V6.200l10-2v11.300" fill="currentColor" fill-opacity=".14"/><path d="M9 9.800l10-2"/><ellipse cx="6.500" cy="17.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/><ellipse cx="16.500" cy="15.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/>'
+};
+function auIc(id,size=20){const b=AUI[id==='Sonoplastia'?'Projeção':id];return b?`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`:''}
 const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Projeção','monitor','IASD Projetor','Studio de Projeção','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Datas especiais','star','Datas Especiais','Eventos e comemorações','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
 function auDock(){
-  const t=AU_DOCK.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
+  const t=AU_DOCK.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${auIc(go,26)||ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
   S.tabs().forEach(x=>t.push(`<button class="au-tile" data-go="${E('custom:'+x.id)}"><span class="au-ic" style="background:rgba(var(--au-a1-rgb),.16);color:var(--au-a1)">${E(x.icon||'✦')}</span><span><b>${E(x.title||'Aba')}</b><small>Aba da igreja</small></span></button>`));
   return `<nav class="au-dock au-c12" aria-label="Atalhos">${t.join('')}</nav>`;
 }

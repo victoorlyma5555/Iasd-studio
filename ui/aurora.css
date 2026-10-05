@@ -295,3 +295,5 @@ html[data-skin="aurora"] body.iu .iu-side .iu-tag{background:linear-gradient(135
   html[data-skin="aurora"] body.iu .au-ic svg{width:23px;height:23px}
   html[data-skin="aurora"] body.iu .au-tile b{font:600 11.5px/1.2 "Instrument Sans",sans-serif;text-align:center;letter-spacing:0;white-space:normal;overflow-wrap:anywhere}
 }
+html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!important;stroke-width:1.5}
+@media (max-width:700px){html[data-skin="aurora"] body.iu .au-ic{width:54px;height:54px}}
