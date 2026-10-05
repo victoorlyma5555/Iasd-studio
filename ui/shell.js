@@ -541,16 +541,17 @@ function auDock(){
   return `<nav class="au-dock au-c12" aria-label="Atalhos">${t.join('')}</nav>`;
 }
 function auBanner(){
-  const car=g(()=>homeCarouselMarkup())||'',mgr=S.manage();
-  if(!car&&!mgr)return '';
-  return `<article class="au-card au-banner au-c7${car?'':' empty'}" aria-label="Avisos e eventos">${car}${mgr?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}${car?'':'<div class="au-empty"><span class="au-lab"><i></i>Avisos e eventos</span><b>Espaço do banner</b><p>Toque em “Editar banner” para colocar imagens de eventos e anúncios importantes.</p></div>'}</article>`;
+  const car=g(()=>homeCarouselMarkup())||'',lay=g(()=>bannerLayersHTML())||'',mgr=S.manage();
+  if(!car&&!lay&&!mgr)return '';
+  const empty=!car&&!lay;
+  return `<article class="au-card au-banner au-c7${empty?' empty':''}${!car&&lay?' texts-only':''}" aria-label="Avisos e eventos">${car}${lay}${mgr?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}${empty?'<div class="au-empty"><span class="au-lab"><i></i>Avisos e eventos</span><b>Espaço do banner</b><p>Toque em “Editar banner” para colocar imagens e textos de eventos e anúncios importantes.</p></div>':''}</article>`;
 }
 function auArena(){
   return `<article class="au-card au-arena au-c4"><div class="au-orbit s"></div><div><div class="au-lab"><i></i>Jogo coletivo</div><h2>Arena<br>da turma</h2><p>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</p></div><div><div class="au-chips"><span>Quiz</span><span>Verdadeiro ou falso</span><span>Travessia</span><span>Aposta</span><span>Votação</span></div><button class="iu-btn p" data-go="Jogo">${ic('game',16)}Abrir jogos</button></div></article>`;
 }
 function homeAurora(){
   const proj=S.sound()?`<div class="au-c4 au-wrap"><section class="iu-pan" id="iu-proj">${projInner()}</section></div>`:'';
-  return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="${S.sound()?'au-c4':'au-c8'} au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
+  return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||g(()=>bannerLayersHTML())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="${S.sound()?'au-c4':'au-c8'} au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
 }
 api.home=function(){
   try{
