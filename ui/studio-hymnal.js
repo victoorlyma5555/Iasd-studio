@@ -461,7 +461,7 @@ const api={
  rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){++audioCommand;IASDAudio.toggle(a)}else play(ed,n)},
  queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});saveState(true);say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
  unqueue(i){S.queue.splice(i,1);paintPlayer();saveState(true)},
- clearQueue(){S.queue=[];gapCancel();paintPlayer();saveState(true)},
+ clearQueue(){S.queue=[];gapCancel();paintPlayer();saveState(true)},shuffleQ(){const q=S.queue;for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]]}saveState(true);paintPlayer()},
  gap(v){GAP=Math.max(0,Math.min(120,+v||0));try{localStorage.setItem('iasd-sth-gap',String(GAP))}catch(e){}if(!GAP)gapCancel();paintPlayer();paintHdr();refreshPop()},
  gapSkip(){gapCancel();if(S.queue.length)next(1);else paintPlayer()},
  toggle(){const a=audioEl();if(!a||!a.src)return;++audioCommand;IASDAudio.toggle(a)},
@@ -606,11 +606,12 @@ function paintBody(){
 }
 /* 4) tocando agora */
 function paintQueue(){
- let box=$('sthQbar');
- if(!box){const L=document.querySelector('.st-left');if(!L)return;box=document.createElement('section');box.id='sthQbar';box.className='sth-qbar';box.hidden=true;L.append(box)}
+ let box=$('sthQueue');
+ if(!box){const M=document.querySelector('main');if(!M)return;box=document.createElement('section');box.id='sthQueue';box.className='st-queue';box.setAttribute('aria-label','Fila de reprodução do hinário');box.hidden=true;const ref=$('ambQueue');if(ref&&ref.parentNode)ref.insertAdjacentElement('afterend',box);else M.append(box)}
  if(!S.queue.length){box.hidden=true;box.innerHTML='';return}
  box.hidden=false;
- box.innerHTML='<div class="sth-q2h"><b>Fila de reprodução</b><i class="cnt">'+S.queue.length+'</i><button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div><div class="sth-qrow">'+S.queue.map((x,i)=>'<div class="qc"><span class="qn">'+(i+1)+'</span><div class="qt"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><div class="qa"><button type="button" class="sthb qp" onclick="STHymn.playQ('+i+')" title="Tocar agora">▶</button>'+(i>0?'<button type="button" class="sthb qm" onclick="STHymn.moveQ('+i+')" title="Subir na fila">◀</button>':'')+'<button type="button" class="sthb qx" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></div></div>').join('')+'</div>';
+ const hd='<div class="q-head"><h3>Fila de reprodução · Hinário</h3><span class="q-count">'+S.queue.length+(S.queue.length===1?' item':' itens')+'</span><span class="st-sp"></span><button type="button" class="mp-blue" onclick="STHymn.playQ(0)" title="Toca o primeiro da fila">▶ Tocar próximo</button><button type="button" class="mp-btn" onclick="STHymn.shuffleQ()">⤮ Embaralhar</button><button type="button" class="mp-btn" onclick="STHymn.clearQueue()">🗑 Limpar</button></div>';
+ box.innerHTML=hd+S.queue.map((x,i)=>'<div class="q-row"><span class="q-n">'+(i+1)+'</span><div class="amb-info"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><button type="button" class="amb-play" title="Tocar agora" aria-label="Tocar agora" onclick="STHymn.playQ('+i+')">▶</button><button type="button" class="amb-more"'+(i?'':' disabled')+' title="Subir na fila" onclick="STHymn.moveQ('+i+')">▲</button><button type="button" class="amb-more"'+(i<S.queue.length-1?'':' disabled')+' title="Descer na fila" onclick="STHymn.moveQ('+(i+1)+')">▼</button><button type="button" class="amb-x" title="Remover da fila" aria-label="Remover da fila" onclick="STHymn.unqueue('+i+')">✕</button></div>').join('');
 }
 function paintPlayer(){
  const el=$('sthp');if(!el)return;

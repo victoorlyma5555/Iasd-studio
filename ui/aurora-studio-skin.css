@@ -352,3 +352,22 @@ body[data-tool="hymnal"] .sth-qbar:not([hidden]){display:block}
 .sth-qrow .sthb.qp{background:var(--au-grad,var(--au-a1))!important;color:var(--au-on,#111)!important;border-color:transparent!important}
 .bb-st select{flex:1;min-width:0;height:38px;text-align:center;text-align-last:center;font-weight:700}
 html[data-skin="aurora"] body.st2 .st-left{height:auto!important;max-height:none!important;align-self:start}
+/* sem faixa escura embaixo: o espaço vira altura útil das janelas (e a rolagem corta menos) */
+html[data-skin="aurora"] body.st2 main{padding-bottom:0!important;row-gap:0!important}
+html[data-skin="aurora"] body.st2 main{grid-template-rows:auto auto auto auto!important}
+@media (min-width:1001px){html[data-skin="aurora"] body.st2 .st-left{min-height:var(--st-h,0)}}
+html[data-skin="aurora"] body.st2 .st-left{align-content:start}
+
+/* fila do hinário = mesmo visual da fila do Provai e Vede (seção larga abaixo) */
+body[data-tool="hymnal"] #sthQueue:not([hidden]){display:block}
+#sthQueue{margin-top:14px}
+#sthQueue[hidden]{display:none!important}
+#sthQueue .q-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid rgba(var(--au-w),.07)}
+#sthQueue .q-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+#sthQueue .q-head h3{margin:0;font-size:15px}
+#sthQueue .q-count{font-size:12px;color:var(--au-mu)}
+#sthQueue .st-sp{flex:1}
+#sthQueue .q-n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:rgba(var(--au-a1-rgb),.2);color:var(--au-a1);flex:none}
+#sthQueue .amb-info{flex:1;min-width:0;display:grid}#sthQueue .amb-info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sthQueue .amb-more[disabled]{opacity:.3;pointer-events:none}
+#sthQueue .amb-more,#sthQueue .amb-x,#sthQueue .amb-play{width:34px;height:34px;font-size:12px;padding:0;display:grid;place-items:center}
