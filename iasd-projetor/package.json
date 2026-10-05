@@ -5,6 +5,7 @@
   "description": "Companheiro Windows para projeção IASD APP",
   "main": "main.js",
   "scripts": {
+    "build:display-helper": "node scripts/build-display-helper.cjs",
     "start": "electron .",
     "dist": "electron-builder --win nsis --publish never"
   },
@@ -17,7 +18,9 @@
     "electron": "^35.0.0"
   },
   "build": {
-    "asarUnpack": ["windows-topology.ps1"],
+    "beforePack": "./scripts/build-display-helper.cjs",
+    "asarUnpack": ["native/iasd-display-helper.exe"],
+    "files": ["**/*", "!native/*.cs", "!scripts/build-display-helper.cjs"],
     "appId": "br.iasd.projetor",
     "productName": "IASD Projetor",
     "directories": {

@@ -46,7 +46,7 @@ O servidor local só aceita requisições da origem oficial `https://iasd-studio
 # Detecção de saídas de vídeo
 
 A seleção fica centralizada em `display-manager.js`. No Windows, o helper
-`windows-topology.ps1` consulta `QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` e
+`native/iasd-display-helper.exe` consulta `QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` e
 `DisplayConfigGetDeviceInfo`: targets que compartilham adaptador/source formam
 um grupo clonado. Coordenadas são utilizadas somente para associar o source
 nativo ao display lógico do Electron, após conversão de pixels físicos para DIP.
@@ -63,18 +63,34 @@ Uma reconexão restaura a mesma janela. O grupo que inclui o principal também
 pode ser projetado: todas as telas desse grupo necessariamente exibem o mesmo conteúdo.
 
 Eventos de display são agrupados por 500 ms; não há polling de topologia.
-O helper executa sem janela, com timeout e até três tentativas para mudança de
-topologia durante a consulta. O build extrai esse arquivo de app.asar para que
-o PowerShell possa lê-lo. Se políticas corporativas bloquearem PowerShell ou as
-APIs nativas, o diagnóstico informa a falha e utiliza as saídas lógicas do Electron;
-nessa condição a identificação de targets clonados fica indisponível.
+O helper C# executa sem janela, sem privilégios de administrador, com timeout e
+até três tentativas para mudança de topologia durante a consulta. Retorna um array
+JSON UTF-8 com o mesmo contrato de targets usado pelo DisplayManager e encerra.
+O mesmo adaptador/source identifica clones; sources independentes identificam
+extensão. Não seleciona telas, não cria janelas e não altera o Windows.
+O build compila automaticamente o helper e o extrai em
+`app.asar.unpacked/native/iasd-display-helper.exe`; em desenvolvimento usa `native/`.
+A consulta de topologia não depende de PowerShell ou módulos nativos Node/Electron.
+O recurso existente de aplicar papel de parede mantém sua implementação independente.
+Se o helper estiver ausente, bloqueado, retornar erro, JSON/schema inválido ou
+exceder o timeout, o diagnóstico registra a falha e utiliza as saídas lógicas do
+Electron; nessa condição a identificação de targets clonados fica indisponível.
+
+O helper usa .NET Framework 4.x, incluído no Windows 10/11 suportado pelo Electron
+35 (https://learn.microsoft.com/dotnet/framework/install/versions-and-dependencies).
+Não usa .NET moderno, .NET 3.5 opcional, NuGet ou instalação adicional de runtime.
+O executável tem cerca de 13 KiB. O ambiente de build deve ser Windows com o
+compilador `csc.exe` do .NET Framework; `npm run build:display-helper` recompila para
+desenvolvimento. `npm run dist` executa a compilação por `beforePack` automaticamente.
+Não é necessário configurar PATH. O instalador inclui o binário pronto; o PC do
+operador não compila nada nem executa scripts.
 
 Diagnóstico: `projection-diagnostics.log` no userData, com rotação em 1 MiB.
 Registra saídas, targets, bounds, DPI, seleção, carregamento e falhas do renderer.
 Os IDs e caminhos de dispositivo são dados locais: revise antes de compartilhar.
 
 Validação: `node --test tests/display-manager.test.cjs tests/audio-fade.test.mjs
-tests/validate.test.mjs` na pasta `iasd-studio`, `node scripts/validate.mjs`, e
+tests/validate.test.mjs tests/display-helper.test.cjs` na pasta `iasd-studio`, `node scripts/validate.mjs`, e
 `npm run dist` na pasta do Projetor. Este pacote JavaScript não possui configuração
 de TypeScript nem tarefa de lint; a verificação de sintaxe usa `node --check`.
 Clones, DPI e hotplug têm cenários simulados; a consulta nativa e o seletor são

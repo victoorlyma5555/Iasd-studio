@@ -1,8 +1,8 @@
-$ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
-Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Web.Script.Serialization;
 using System.Runtime.InteropServices;
 public class DisplayTopology {
  [DllImport("user32.dll")] static extern int GetDisplayConfigBufferSizes(uint flags, out uint paths, out uint modes);
@@ -29,7 +29,7 @@ public class DisplayTopology {
      IntPtr p=IntPtr.Add(paths,i*72);uint idx=(uint)I(p,12);if(idx>=mc)continue;
      IntPtr m=IntPtr.Add(modes,(int)idx*64);if(I(m,0)!=1)continue;
      result.Add(new {sourceKey=Adapter(p,0)+":"+((uint)I(p,8)),adapterId=Adapter(p,20),targetId=(uint)I(p,28),
-      sourceName=Name(p,0,1,84,20,32),name=Name(p,20,2,420,36,64),devicePath=Name(p,20,2,420,164,128),
+      sourceId=(uint)I(p,8),sourceAdapterId=Adapter(p,0),sourceName=Name(p,0,1,84,20,32),name=Name(p,20,2,420,36,64),devicePath=Name(p,20,2,420,164,128),
       technology=I(p,36),rotation=I(p,40),connected=I(p,60)!=0,
       bounds=new {x=I(m,28),y=I(m,32),width=I(m,16),height=I(m,20)},
       refresh=I(p,52)==0?0:(double)(uint)I(p,48)/(uint)I(p,52)});
@@ -40,5 +40,13 @@ public class DisplayTopology {
   throw new Exception("Topologia mudou durante a consulta");
  }
 }
-'@
-ConvertTo-Json -InputObject @([DisplayTopology]::Read()) -Depth 6 -Compress
+// A windowless, read-only process: one query, one UTF-8 JSON response, then exit.
+public class Program {
+ public static int Main(){
+  var json=new JavaScriptSerializer();
+  using(var output=new StreamWriter(Console.OpenStandardOutput(),new UTF8Encoding(false))){
+   try{output.Write(json.Serialize(DisplayTopology.Read()));return 0;}
+   catch(Exception e){output.Write(json.Serialize(new {success=false,error=e.Message}));return 1;}
+  }
+ }
+}

@@ -9,12 +9,20 @@ function projectionLog(level,...args){
  if(!logFile)return;
  try{if(fs.existsSync(logFile)&&fs.statSync(logFile).size>1024*1024)fs.renameSync(logFile,logFile+'.previous');fs.appendFileSync(logFile,new Date().toISOString()+' '+args.join(' ')+'\n');}catch(e){console.warn('Diagnóstico de projeção:',e.message);}
 }
-function nativeTopology(){
+function helperPath(directory=__dirname){
+ // The OS cannot execute a file inside Electron's archive.
+ return path.join(directory.replace(/app\.asar([\\/]|$)/,'app.asar.unpacked$1'),'native','iasd-display-helper.exe');
+}
+function parseTopology(out){
+ const paths=JSON.parse(out.replace(/^\uFEFF/,''));
+ if(!Array.isArray(paths))throw Error(paths?.error||'Resposta inválida do helper nativo');
+ if(!paths.every(p=>p&&typeof p.sourceKey==='string'&&p.sourceKey&&typeof p.adapterId==='string'&&Number.isInteger(p.sourceId)&&Number.isInteger(p.targetId)&&typeof p.devicePath==='string'&&typeof p.name==='string'&&typeof p.connected==='boolean'&&validBounds(p.bounds)))throw Error('Dados inválidos do helper nativo');
+ return paths;
+}
+function nativeTopology(run=execFile){
  if(process.platform!=='win32')return Promise.resolve([]);
- // PowerShell is outside Electron and cannot read files inside app.asar.
- const nativeDir=__dirname.replace(/app\.asar([\\/]|$)/,'app.asar.unpacked$1');
- return new Promise((resolve,reject)=>execFile(path.join(process.env.SystemRoot||'C:\\Windows','System32','WindowsPowerShell','v1.0','powershell.exe'),['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.join(nativeDir,'windows-topology.ps1')],{windowsHide:true,timeout:10000,maxBuffer:1024*1024},(e,out)=>{
-  if(e)return reject(e);try{resolve(JSON.parse(out.replace(/^\uFEFF/,'')))}catch(error){reject(error)}
+ return new Promise((resolve,reject)=>run(helperPath(),[],{windowsHide:true,timeout:10000,maxBuffer:1024*1024,encoding:'utf8'},(e,out)=>{
+  if(e)return reject(e);try{resolve(parseTopology(out))}catch(error){reject(error)}
  }));
 }
 function validBounds(b){return !!b&&['x','y','width','height'].every(k=>Number.isFinite(b[k]))&&b.width>0&&b.height>0;}
@@ -58,4 +66,4 @@ class DisplayManager{
  watch(){this.listener=()=>{if(this.current&&!this.choose())this.onChange?.();clearTimeout(this.timer);this.timer=setTimeout(()=>{void this.scan()},500)};for(const event of ['display-added','display-removed','display-metrics-changed'])this.screen.on(event,this.listener);}
  stop(){clearTimeout(this.timer);this.generation++;for(const event of ['display-added','display-removed','display-metrics-changed'])this.screen.removeListener(event,this.listener);}
 }
-module.exports={DisplayManager,logicalOutputs,selectOutput,validBounds,nativeTopology,projectionLog,setLogFile};
+module.exports={DisplayManager,logicalOutputs,selectOutput,validBounds,nativeTopology,projectionLog,setLogFile,helperPath,parseTopology};
