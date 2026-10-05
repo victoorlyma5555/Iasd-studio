@@ -480,3 +480,8 @@ button.stt-pill{cursor:pointer}
 .stt-pill.ok i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
 .stt-pill em{font-style:normal;opacity:.75}
 @media (max-width:700px){.stt-name{display:none}.stt-pill{height:26px;padding:0 9px;font-size:11px}}
+/* gavetas (select) do site: fundo e texto do tema */
+html[data-skin="aurora"][data-theme="dark"] select{color-scheme:dark}
+html[data-skin="aurora"][data-theme="light"] select{color-scheme:light}
+html[data-skin="aurora"] select option,html[data-skin="aurora"] select optgroup{background-color:var(--au-pop,#151a2e);color:var(--au-tx)}
+html[data-skin="aurora"] select option:checked{background:var(--au-a1);color:var(--au-on,#111)}

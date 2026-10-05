@@ -371,3 +371,7 @@ body[data-tool="hymnal"] #sthQueue:not([hidden]){display:block}
 #sthQueue .amb-info{flex:1;min-width:0;display:grid}#sthQueue .amb-info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #sthQueue .amb-more[disabled]{opacity:.3;pointer-events:none}
 #sthQueue .amb-more,#sthQueue .amb-x,#sthQueue .amb-play{width:34px;height:34px;font-size:12px;padding:0;display:grid;place-items:center}
+/* gavetas (listas suspensas): fundo escuro do tema e texto legível */
+html[data-skin="aurora"] body.st2 select{color-scheme:dark}
+html[data-skin="aurora"] body.st2 select option,html[data-skin="aurora"] body.st2 select optgroup{background-color:var(--au-pop,#151a2e);color:var(--au-tx,#f1f3fa)}
+html[data-skin="aurora"] body.st2 select option:checked,html[data-skin="aurora"] body.st2 select option:hover{background:var(--au-a1,#f5b73a) linear-gradient(0deg,var(--au-a1,#f5b73a),var(--au-a1,#f5b73a));color:var(--au-on,#111)}
