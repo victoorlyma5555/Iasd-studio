@@ -323,19 +323,41 @@ function renderVl(){
  });
  if(document.querySelector('.vl-mgr'))renderMgr();resize();
 }
+/* ===== pré-carregamento do vídeo selecionado: o arquivo já vai sendo preparado antes de projetar ===== */
+let vlWarmEl=null,vlPrep={id:null,st:'idle'},vlPrepCh=null;
+function vlWarmStop(){if(vlWarmEl){try{vlWarmEl.onprogress=vlWarmEl.oncanplaythrough=vlWarmEl.onerror=vlWarmEl.onloadedmetadata=null;vlWarmEl.removeAttribute('src');vlWarmEl.load()}catch(e){}vlWarmEl=null}vlPrep={id:null,st:'idle'}}
+function vlPaintPrep(){
+ const go=document.querySelector('#videoNowAct .pj-go');if(!go)return;
+ let t='Projetar no telão',cls='';
+ if(vlSel&&vlPrep.id===vlSel.id){if(vlPrep.st==='prep'){t='Preparando…';cls='is-prep'}else if(vlPrep.st==='ready'){t='Pronto para projetar';cls='is-ready'}}
+ go.classList.remove('is-prep','is-ready');if(cls)go.classList.add(cls);
+ const n=[...go.childNodes].reverse().find(x=>x.nodeType===3);if(n)n.textContent=t;else go.append(document.createTextNode(t));
+ go.title=cls==='is-prep'?'O vídeo está sendo baixado em segundo plano. Você já pode projetar, mas pode demorar um pouco mais para abrir.':cls==='is-ready'?'Vídeo carregado: deve abrir quase na hora no telão.':'Envia a seleção ao telão pelo IASD Projetor';
+}
+function vlWarm(it){
+ vlWarmStop();let url='';try{url=vlUrl(it)}catch(e){}if(!url)return;
+ vlPrep={id:it.id,st:'prep'};const v=document.createElement('video');vlWarmEl=v;v.preload='auto';v.muted=true;v.playsInline=true;
+ const done=()=>{if(vlWarmEl!==v||vlPrep.st==='ready')return;vlPrep.st='ready';vlPaintPrep()};
+ const check=()=>{if(vlWarmEl!==v)return;try{const d=v.duration||0;const b=v.buffered;if(b.length&&d&&(b.end(b.length-1)>=Math.min(d-.25,20)))done()}catch(e){}};
+ v.oncanplaythrough=done;v.onprogress=check;v.onloadedmetadata=check;
+ v.onerror=()=>{if(vlWarmEl!==v)return;vlPrep.st='error';vlPaintPrep()};
+ v.src=url;
+ try{vlPrepCh??=new BroadcastChannel('iasd-preload');vlPrepCh.postMessage({type:'preload',url})}catch(e){}
+ vlPaintPrep();
+}
 function vlChoose(it){
  vlSel=it;vlFile=null;$('vlUpBox').hidden=true;const v=$('serviceVideo');if(v){stMediaSource(v,vlUrl(it));v._iasdFile=null;v._iasdRemote=it}
- renderNowVideo();renderVl();toast('Selecionado: '+it.title+'.');
+ renderNowVideo();renderVl();vlWarm(it);toast('Selecionado: '+it.title+'.');
 }
 window.chooseOffering=vlChoose;
 function renderNowVideo(){
  const box=$('videoNow'),head=$('videoNowHead'),act=$('videoNowAct'),v=$('serviceVideo');if(!box)return;
  head.replaceChildren();act.replaceChildren();box.classList.toggle('has',!!vlSel||!!vlFile);
- if(!vlSel&&!vlFile){v.hidden=true;head.append(h('p','mm-none','Nenhum vídeo selecionado. Escolha um da biblioteca ou envie um novo.'));act.append(actionsBar('video'));syncGrow();return}
+ if(!vlSel&&!vlFile){vlWarmStop();v.hidden=true;head.append(h('p','mm-none','Nenhum vídeo selecionado. Escolha um da biblioteca ou envie um novo.'));act.append(actionsBar('video'));syncGrow();return}
  const row=h('div','mm-sel');const inf=h('div','amb-info');
  inf.append(h('small','',vlSel?'SELECIONADO · '+vlKind(vlSel).toUpperCase():'ARQUIVO DO COMPUTADOR · AINDA NÃO SALVO'),h('b','',vlSel?vlSel.title:vlFile.name));
  row.append(inf,btn('','amb-x',()=>{vlSel=null;vlFile=null;$('vlUpBox').hidden=true;stMediaSource(v,'');v._iasdRemote=null;v._iasdFile=null;renderNowVideo();renderVl()},'x','Limpar seleção'));
- head.append(row);v.hidden=false;act.append(actionsBar('video'));syncGrow();resize();
+ head.append(row);v.hidden=false;act.append(actionsBar('video'));vlPaintPrep();syncGrow();resize();
 }
 /* escolher a capa (quadro do próprio vídeo) */
 function vlCover(it){

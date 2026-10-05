@@ -403,6 +403,14 @@ function showRaw(value){
 const channel=typeof BroadcastChannel==='function'?new BroadcastChannel('iasd-stage'):null;
 if(channel){channel.onmessage=e=>show(e.data);channel.postMessage({type:'projection-ready'})}
 window.addEventListener('storage',e=>{if(e.key==='iasd-stage')show(e.newValue)});
+/* pré-carregamento: o Studio avisa qual vídeo da biblioteca foi selecionado e o telão já baixa o arquivo em segundo plano */
+(function(){
+ if(isPreview||typeof BroadcastChannel!=='function')return;
+ let warm=null;const ok=/^https:\/\/gtsaaixuampeaivugxdm\.supabase\.co\/storage\/v1\/object\/public\/iasd-offering-videos\/[a-zA-Z0-9_./%-]+$/;
+ const ch=new BroadcastChannel('iasd-preload');
+ ch.onmessage=e=>{const d=e.data||{};if(d.type!=='preload'||typeof d.url!=='string'||!ok.test(d.url))return;
+  try{if(warm){warm.removeAttribute('src');warm.load()}warm=document.createElement('video');warm.preload='auto';warm.muted=true;warm.setAttribute('playsinline','');warm.src=d.url}catch(err){}};
+})();
 async function setProjectionFullscreen(enable){
  if(isPreview)return;
  try{

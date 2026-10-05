@@ -129,3 +129,8 @@ body[data-tool=testimony] .st-queue{display:block}
 .vl-info{min-height:56px!important}
 .vl-mgr .vl-mini{width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;border-radius:50%!important;flex:none}
 .vl-mgr .vl-mini svg{width:14px;height:14px}
+
+.pj-go.is-prep{opacity:.9;animation:vlprep 1.2s ease-in-out infinite}
+.pj-go.is-ready{box-shadow:0 0 0 2px #22c55e,0 0 14px rgba(34,197,94,.45)}
+@keyframes vlprep{50%{filter:brightness(.8)}}
+@media(prefers-reduced-motion:reduce){.pj-go.is-prep{animation:none}}
