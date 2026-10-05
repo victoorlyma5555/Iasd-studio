@@ -19,6 +19,7 @@ const catalog=Object.freeze([
   {key:'escala.add',label:'Adicionar pessoas nas escalas',ready:true},
   {key:'escala.edit',label:'Editar escalas',ready:true},
   {key:'escala.delete',label:'Excluir escalas',ready:true}]},
+ {group:'Escalas por setor (só aquele setor, já predefinido)',items:['Sonoplastia','Regência','Pregação','Escola Sabatina','Recepção','Projeção'].map(n=>({key:'escala.area:'+n,label:'Escalar no setor '+n,ready:true}))},
  {group:'Sonoplastia',items:[
   {key:'sound.use',label:'Usar a sonoplastia e o IASD Projetor',hint:'Studio, telão, sorteadores, receber e responder alertas',ready:true},
   {key:'sound.library',label:'Gerenciar a biblioteca de mídias',hint:'Enviar e apagar vídeos e mídias, sem abrir o Projetor',ready:true}]},
@@ -50,7 +51,7 @@ window.IASDAccess=Object.freeze({
  canEditSite:role=>has('siteEditors',role)||can('site.edit'),
  canEditTexts:role=>has('management',role)||can('site.texts'),
  canManageTabs:role=>has('management',role)||can('site.tabs'),
- canEscala:(k,role)=>can('escala.'+k)||has('management',role)||has('scheduleEditors',role)||has('assigned',role),
+ canEscala:(k,role)=>can('escala.'+k)||((k==='add'||k==='edit')&&[...perms].some(x=>x.startsWith('escala.area:')))||has('management',role)||has('scheduleEditors',role)||has('assigned',role),
  canStudy:role=>role==='founder'||can('study.use'),
  canModeratePrayer:role=>role==='founder'||can('prayer.moderate'),
  canResetRanking:role=>role==='founder'||can('admin.ranking_reset'),
