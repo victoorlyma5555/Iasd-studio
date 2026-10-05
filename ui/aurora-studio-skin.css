@@ -397,3 +397,11 @@ html.emb[data-skin="aurora"] body.st2::before,html.emb[data-skin="aurora"] body.
 /* brilho dos botões dos módulos não pode ser cortado */
 html[data-skin="aurora"] body.st2 main>.tools{padding:10px 4px 34px!important;margin:-10px -4px -28px!important;scrollbar-width:none}
 html[data-skin="aurora"] body.st2 main>.tools::-webkit-scrollbar{display:none}
+
+/* botões do telão (preview): mais visíveis */
+html[data-skin="aurora"] body.st2 .pj-actions button{font-weight:800!important;letter-spacing:.01em;border-width:1px!important;box-shadow:0 6px 18px -8px rgba(0,0,0,.6)}
+html[data-skin="aurora"] body.st2 .pj-actions .pj-go{background:var(--au-grad)!important;color:var(--au-on)!important;border-color:transparent!important;box-shadow:0 8px 22px -8px rgba(var(--au-a1-rgb),.7)}
+html[data-skin="aurora"] body.st2 .pj-actions .pj-close{background:linear-gradient(180deg,#ef3b50,#b3162a)!important;color:#fff!important;border-color:#ff7a8a!important;box-shadow:0 8px 22px -8px rgba(239,59,80,.7)}
+html[data-skin="aurora"] body.st2 .pj-actions .pj-black{background:rgba(var(--au-w),.12)!important;color:var(--au-tx)!important;border-color:rgba(var(--au-w),.35)!important}
+html[data-skin="aurora"] body.st2 .pj-actions button:hover{filter:brightness(1.12);transform:translateY(-1px)}
+html[data-skin="aurora"] body.st2 .pj-actions .pj-note{grid-column:1/-1;margin:2px 0 0;padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.35;color:var(--au-tx);background:rgba(var(--au-a1-rgb),.14);border:1px solid rgba(var(--au-a1-rgb),.35)}

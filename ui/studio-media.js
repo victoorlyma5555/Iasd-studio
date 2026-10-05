@@ -107,7 +107,9 @@ function actionsBar(kind){
  const go=btn('Projetar no telão','pj-go',()=>kind==='video'?projectOfferingVideo():projectSelectedYouTube(kind),'tv','Envia a seleção ao telão pelo IASD Projetor');
  const cl=btn('Fechar vídeo','pj-close',()=>closeVideo(kind),'x','Fecha o vídeo no telão e no preview (a janela de projeção continua)');
  const bk=btn('Tela preta','pj-black',()=>blackScreen(),'sq','Cobre o telão de preto sem fechar a janela');
- bar.append(go,cl,bk);return bar;
+ bar.append(go,cl,bk);
+ if(kind==='ambient'){const n=h('p','pj-note','ⓘ “Fechar telão” não para a música ambiente. Para parar a música, use o botão “Fechar vídeo” aqui no preview.');bar.append(n)}
+ return bar;
 }
 window.stActionsBar=actionsBar;
 function closeVideo(kind){
