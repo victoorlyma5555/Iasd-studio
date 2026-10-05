@@ -166,6 +166,8 @@ function tmToggle(){if(TM.state==='running'){TM.remaining=tmLeft();TM.state='pau
 /* fecha o telão e já reinicia o cronômetro (fecha primeiro, assim o reinício não reaparece no telão) */
 async function tmClose(){await closeScreen();tmReset()}
 function tmReset(silent){TM.state='idle';TM.remaining=TM.total;TM.endsAt=0;if(!silent)tmSync();tmRender()}
+/* outro conteúdo projetado por cima do cronômetro: ele para e reinicia (sem reaparecer no telão) */
+window.addEventListener('storage',e=>{try{if(e.key!=='iasd-stage'||!(e.oldValue||'').startsWith('IASD_TIMER:'))return;const v=e.newValue||'';if(v.startsWith('IASD_TIMER:')||v.startsWith('IASD_DRAW_STYLE:')||v.startsWith('IASD_TR:'))return;if(TM.state!=='idle'){tmReset(true)}}catch(x){}});
 function tmAdjust(delta){const left=tmLeft(),next=Math.max(1,Math.min(36000,left+delta));if(TM.state==='running')TM.endsAt=Date.now()+next*1000;else{TM.remaining=next;if(TM.state==='idle')TM.total=next}TM.total=Math.max(TM.total,Math.ceil(next));tmSync();tmRender()}
 let tmPrev=null;
 function tmRender(){
