@@ -9,7 +9,7 @@ const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(
 const ED={novo:{nome:'Hinário Adventista',sub:'Novo · 2022',url:'/data/hinario-nha.json',hy:true},antigo:{nome:'Hinário 1996',sub:'Antigo',url:'/data/hinario-hasd.json',hy:true},jamin:{nome:'JA/Min. Música',sub:'CDs oficiais',coll:true},misc:{nome:'Coletâneas Diversas',sub:'',coll:true},kids:{nome:'Músicas Infantis',sub:'',coll:true}};
 const HY=['novo','antigo'];
 const KEYS=Object.keys(ED);
-const S={ed:'novo',mode:'cantado',album:null,data:{},status:{},q:'',limit:80,queue:[],cur:null,busy:'',msg:''};
+const S={ed:'novo',mode:'cantado',album:null,data:{},status:{},q:'',limit:30,queue:[],cur:null,busy:'',msg:''};
 try{S.ed=localStorage.getItem('iasd-sth-ed')||'novo';if(!ED[S.ed])S.ed='novo';S.mode=localStorage.getItem('iasd-sth-mode')||'cantado';if(!['cantado','pb','sem'].includes(S.mode))S.mode='cantado'}catch(e){}
 const ANIMS=[['fade','Suave','Dissolve delicado entre as estrofes'],['rise','Subir','A letra sobe suavemente'],['mist','Névoa','Dissolve com desfoque, bem sereno'],['glow','Luz','Um brilho que se acende'],['curtain','Cortina','Abre do centro para os lados'],['none','Corte','Troca direta, sem animação']];
 const SPEEDS=[[550,'Rápida'],[900,'Normal'],[1500,'Lenta']];
@@ -361,7 +361,7 @@ function tick(){
  const sy=S.sync,a=audioEl();if(!sy||sy.manual||!a||!S.cur||S.cur.n!==sy.n||S.cur.ed!==sy.ed)return;
  const k=curStanza(sy,a.currentTime||0);if(k!==sy.last)sendStanza(sy,k)
 }
-function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n){el.innerHTML='';return}
+function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n||!sy.manual){el.innerHTML='';return}
  el.innerHTML='<small>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</small> <button onclick="STHymn.stz(-1)">◀ Estrofe</button><button onclick="STHymn.stz(1)">Estrofe ▶</button>'}
 function stanzaJump(d){
  const sy=S.sync,a=audioEl();if(!sy)return;
@@ -392,7 +392,7 @@ function gapStart(){
  gapCancel();gapLeft=GAP;try{endHymn()}catch(e){}
  paintPlayer();
  gapTimer=setInterval(()=>{if(!S.queue.length){gapCancel();paintPlayer();return}gapLeft--;if(gapLeft<=0){gapCancel();if(S.queue.length)next(1);else paintPlayer()}else paintGap()},1000)}
-function paintGap(){const el=$('sth-gap');if(el)el.textContent=gapLeft>0?'Próximo hino em '+gapLeft+'s':''}
+function paintGap(){const el=$('sth-gap');if(el)el.textContent=gapLeft>0?gapLeft+'s':''}
 const ST_KEY='iasd-sth-state';let stSaveAt=0;
 function saveState(force){
  const now=Date.now();if(!force&&now-stSaveAt<1500)return;stSaveAt=now;
@@ -452,17 +452,17 @@ const api={
  anim(a){S.anim.a=a;saveAnim();paintMode()},animMs(ms){S.anim.ms=+ms;saveAnim();paintMode()},
  testAnim(){const sy=S.sync;if(sy)sendStanza(sy,sy.last)},
  mode(m){S.mode=m;try{localStorage.setItem('iasd-sth-mode',m)}catch(e){}paintMode();paintBody()},
- album(i){S.album=i;S.limit=80;S.scopeCol=false;S.q='';setQ('');paintBody();scrollTop()},albumBack(){S.album=null;S.limit=80;paintBody()},
- ed(id){S.ed=id;S.album=null;S.scopeCol=false;S.q='';setQ('');S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
- input(v){S.q=v;S.limit=80;if(!v.trim())S.scopeCol=false;if(glob())Promise.all(KEYS.map(loadLyrics)).then(()=>{if(glob())paintBody()});paintCols();paintBody()},
- edQ(id){S.ed=id;S.album=null;S.scopeCol=true;S.limit=80;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
- more(){S.limit+=120;paintBody()},
+ album(i){S.album=i;S.limit=30;S.scopeCol=false;S.q='';setQ('');paintBody();scrollTop()},albumBack(){S.album=null;S.limit=30;paintBody()},
+ ed(id){S.ed=id;S.album=null;S.scopeCol=false;S.q='';setQ('');S.limit=30;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
+ input(v){S.q=v;S.limit=30;if(!v.trim())S.scopeCol=false;if(glob())Promise.all(KEYS.map(loadLyrics)).then(()=>{if(glob())paintBody()});paintCols();paintBody()},
+ edQ(id){S.ed=id;S.album=null;S.scopeCol=true;S.limit=30;try{localStorage.setItem('iasd-sth-ed',id)}catch(e){}loadLyrics(id);paintCols();paintBody()},
+ more(){S.limit+=30;paintBody()},
  play(ed,n){play(ed,n)},
  rowPlay(ed,n){const a=audioEl(),c=S.cur;if(c&&c.ed===ed&&c.n===n&&S.mode!=='sem'&&a&&a.src){++audioCommand;IASDAudio.toggle(a)}else play(ed,n)},
  queue(ed,n){const h=find(ed,n);S.queue.push({ed,n,t:h?h.t:''});saveState(true);say('Na fila: '+(h?h.t:n));if(!S.cur||audioEl().paused&&!audioEl().currentTime)next(1);else paintPlayer()},
  unqueue(i){S.queue.splice(i,1);paintPlayer();saveState(true)},
  clearQueue(){S.queue=[];gapCancel();paintPlayer();saveState(true)},
- gap(v){GAP=Math.max(0,Math.min(120,+v||0));try{localStorage.setItem('iasd-sth-gap',String(GAP))}catch(e){}if(!GAP)gapCancel();paintPlayer()},
+ gap(v){GAP=Math.max(0,Math.min(120,+v||0));try{localStorage.setItem('iasd-sth-gap',String(GAP))}catch(e){}if(!GAP)gapCancel();paintPlayer();paintHdr();refreshPop()},
  gapSkip(){gapCancel();if(S.queue.length)next(1);else paintPlayer()},
  toggle(){const a=audioEl();if(!a||!a.src)return;++audioCommand;IASDAudio.toggle(a)},
  next(){next(1)},prev(){next(-1)},
@@ -471,7 +471,7 @@ const api={
  stop(ms=180){return api.fadeStop(ms)},
  seek(v){const a=audioEl();if(a&&a.duration)a.currentTime=a.duration*(+v/1000)},
  vol(v){const a=audioEl();if(a)IASDAudio.volume(a,+v/100)},
- stz(d){stanzaJump(d)},sync(){syncAll('manual')},tg(k,o){S.stOpen[k]=o},db(){connectDb()},
+ stz(d){stanzaJump(d)},sync(){syncAll('manual')},tg(k,o){S.stOpen[k]=o},pop(k){if(k)openPop(k);else closePop()},playQ(i){const q=S.queue.splice(i,1)[0];if(!q)return;gapCancel();saveState(true);play(q.ed,q.n)},moveQ(i){if(i<1)return;const q=S.queue;[q[i-1],q[i]]=[q[i],q[i-1]];paintPlayer();saveState(true)},db(){connectDb()},
  folder(){connectFolder()},reconnect(){reconnectFolder()},indexFiles(ed,files){return indexFiles(ed,files)},numOf
 };
 window.STHymn=api;
@@ -532,7 +532,13 @@ function paintConn(){
    +'<details class="sth-more-d"'+(S.stOpen.all?' open':'')+' ontoggle="STHymn.tg(\'all\',this.open)"><summary>Detalhes por coleção</summary><div class="sth-cards">'+KEYS.map(card).join('')+'</div><div class="sth-acts"><button type="button" class="mp-btn" onclick="STHymn.folder()">Trocar pasta</button><button type="button" class="mp-btn" onclick="STHymn.db()">Trocar banco</button>'+(perm?'':'<button type="button" class="mp-btn" onclick="STHymn.reconnect()">Reconectar</button>')+'</div></details></div>'
  }
  if(html!==_cnHtml){_cnHtml=html;el.innerHTML=html}
+ paintState();
 }
+function paintState(){const st=$('sth-state');if(!st)return;const ok=hasFolder()&&hasDb()&&S.cnt,perm=S.lstat&&(S.lstat.novo==='perm'||S.lstat.db==='perm');let h='';
+ if(S.busy)h='<div class="sth-st"><i class="sth-spin"></i><span>'+esc(S.busy)+'</span></div>';
+ else if(!ok)h='<div class="sth-st warn"><span>Conecte o Louvor JA nas Configurações para tocar os hinos.</span><button type="button" class="mp-blue" onclick="showTool(\'setup\')">Abrir Configurações</button></div>';
+ else if(perm||S.dbStale)h='<div class="sth-st warn"><span>'+(perm?'O Chrome pediu permissão de novo para ler a pasta.':'O banco do Louvor JA mudou. Atualize a lista.')+'</span><button type="button" class="mp-btn" onclick="showTool(\'setup\')">Configurações</button></div>';
+ if(h!==st._h){st._h=h;st.innerHTML=h}}
 function paintBar(){paintConn()}
 /* 2) coleções, busca e tipo de slide */
 function colCount(k){const x=S.cnt&&S.cnt[k];if(x)return x.found;const m=S.ljaMeta&&S.ljaMeta.counts;return m?m[k]:0}
@@ -540,18 +546,26 @@ function paintCols(){
  const el=$('sth-cols');if(!el)return;
  const g=glob();el.innerHTML=KEYS.map(k=>'<button type="button" role="tab" class="'+(S.ed===k&&!g?'on':'')+'" onclick="STHymn.ed(\''+k+'\')"><span>'+esc(ED[k].nome)+'</span><i class="cnt">'+colCount(k)+'</i></button>').join('')
 }
-const MODES=[['cantado','Slide Cantado','Toca a música cantada e mostra cada estrofe na hora certa.'],['pb','Slide Playback','Toca só o instrumental e mostra a letra na hora certa.'],['sem','Slide sem Áudio','Não toca nada: você passa as estrofes com os botões ◀ ▶.']];
-function paintMode(){
- const el=$('sth-mode');if(!el)return;
- el.innerHTML='<div class="seg s3" role="radiogroup" aria-label="Tipo de slide">'+MODES.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.mode===k)+'" class="'+(S.mode===k?'on':'')+'" onclick="STHymn.mode(\''+k+'\')">'+l+'</button>').join('')+'</div><p class="sth-hint">'+MODES.find(m=>m[0]===S.mode)[2]+'</p>'
-  +'<details class="sth-tr"'+(S.stOpen.tr?' open':'')+' ontoggle="STHymn.tg(\'tr\',this.open)"><summary><span>Transição e fundo da letra</span><b>'+ANIMS.find(x=>x[0]===S.anim.a)[1]+(S.anim.a==='none'?'':' · '+SPEEDS.find(x=>x[0]===S.anim.ms)[1])+'</b></summary>'
-  +'<div class="sth-trb"><div class="amb-chips">'+ANIMS.map(([k,l,d])=>'<button type="button" class="'+(S.anim.a===k?'on':'')+'" title="'+esc(d)+'" onclick="STHymn.anim(\''+k+'\')">'+l+'</button>').join('')+'</div>'
+function transHTML(){return '<div class="sth-trb"><div class="amb-chips">'+ANIMS.map(([k,l,d])=>'<button type="button" class="'+(S.anim.a===k?'on':'')+'" title="'+esc(d)+'" onclick="STHymn.anim(\''+k+'\')">'+l+'</button>').join('')+'</div>'
   +'<p class="sth-hint">'+ANIMS.find(x=>x[0]===S.anim.a)[2]+'. Vale só para as estrofes do hinário; as outras telas seguem a transição geral.</p>'
   +(S.anim.a==='none'?'':'<div class="seg s3 sth-sp" role="radiogroup" aria-label="Velocidade">'+SPEEDS.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.anim.ms===k)+'" class="'+(S.anim.ms===k?'on':'')+'" onclick="STHymn.animMs('+k+')">'+l+'</button>').join('')+'</div>')
   +'<div class="sth-io">'+[['i','Ao iniciar o hino'],['o','Ao encerrar o hino']].map(([w,l])=>'<label><span>'+l+'</span><select onchange="STHymn.animIO(\''+w+'\',this.value)">'+ANIMS.map(([k,n])=>'<option value="'+k+'"'+(S.anim[w]===k?' selected':'')+'>'+n+'</option>').join('')+'</select></label>').join('')+'</div>'
   +'<label class="sth-ck"><input type="checkbox" '+(S.endClose?'checked ':'')+'onchange="STHymn.endClose(this.checked)"><span>Fechar a projeção quando o hino terminar</span></label>'
   +'<label class="sth-op"><span>Opacidade do fundo da letra</span><input type="range" min="0" max="100" step="5" value="'+Math.round(S.op*100)+'" oninput="STHymn.opInput(this.value)" onchange="STHymn.opSave()" aria-label="Opacidade do fundo da letra"><b id="sthOpV">'+Math.round(S.op*100)+'%</b></label>'
-  +'<button type="button" class="mp-btn" '+(S.sync?'':'disabled ')+'onclick="STHymn.testAnim()">Ver no telão</button></div></details>'
+  +'<button type="button" class="mp-btn" '+(S.sync?'':'disabled ')+'onclick="STHymn.testAnim()">Ver no telão</button></div>'}
+function gapHTML(){return '<div class="sth-gap"><label>Intervalo entre hinos <select onchange="STHymn.gap(this.value)">'+GAPS.map(o=>'<option value="'+o[0]+'"'+(GAP===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label><p class="sth-hint">Pausa entre um hino e o próximo da fila.</p></div>'}
+const GAPS=[[0,'Sem intervalo'],[3,'3 s'],[5,'5 s'],[10,'10 s'],[15,'15 s'],[30,'30 s'],[60,'1 min'],[120,'2 min']];
+let POP=null;
+function paintHdr(){const a=$('sthTrV'),g=$('sthGapV');if(a)a.textContent=ANIMS.find(x=>x[0]===S.anim.a)[1];if(g)g.textContent=GAP?(GAP>=60?GAP/60+' min':GAP+' s'):'sem'}
+function refreshPop(){const o=$('sth-pop');if(!o||!POP)return;const b=o.querySelector('.sth-pop-b');if(b)b.innerHTML=POP==='tr'?transHTML():gapHTML()}
+function closePop(){const o=$('sth-pop');if(o)o.remove();POP=null}
+function openPop(kind){const old=$('sth-pop');if(old&&POP===kind){closePop();return}if(old)old.remove();POP=kind;const o=document.createElement('div');o.id='sth-pop';o.className='sth-pop-ov';o.onmousedown=e=>{if(e.target===o)closePop()};o.innerHTML='<div class="sth-pop-box" role="dialog" aria-modal="true"><div class="sth-pop-h"><b>'+(kind==='tr'?'Transição e fundo da letra':'Intervalo entre hinos')+'</b><button type="button" class="mp-btn" onclick="STHymn.pop()" aria-label="Fechar">✕</button></div><div class="sth-pop-b">'+(kind==='tr'?transHTML():gapHTML())+'</div></div>';document.body.appendChild(o)}
+const MODES=[['cantado','Slide Cantado','Toca a música cantada e mostra cada estrofe na hora certa.'],['pb','Slide Playback','Toca só o instrumental e mostra a letra na hora certa.'],['sem','Slide sem Áudio','Não toca nada: você passa as estrofes com os botões ◀ ▶.']];
+function paintMode(){
+ const el=$('sth-mode');if(!el)return;paintHdr();refreshPop();
+ el.innerHTML='<div class="seg s3" role="radiogroup" aria-label="Tipo de slide">'+MODES.map(([k,l])=>'<button type="button" role="radio" aria-checked="'+(S.mode===k)+'" class="'+(S.mode===k?'on':'')+'" onclick="STHymn.mode(\''+k+'\')">'+l+'</button>').join('')+'</div><p class="sth-hint">'+MODES.find(m=>m[0]===S.mode)[2]+'</p>'
+
+  +''
 }
 /* 3) lista */
 function row(h,ed){
@@ -573,7 +587,7 @@ function albumGrid(al){
 const empty=(t,b)=>'<div class="amb-empty"><span>'+t+'</span>'+(b||'')+'</div>';
 function paintBody(){
  const b=$('sth-body');if(!b)return;
- if(!connected()){b.innerHTML=empty('Conecte o Louvor JA acima para ver e tocar as músicas.');return}
+ if(!connected()){b.innerHTML=empty('Conecte o Louvor JA nas Configurações para ver e tocar as músicas.');return}
  if(glob()){
   const G=globalResults(),loading=KEYS.some(k=>S.status[k]==='loading');let h='';
   if(!G.length){b.innerHTML=empty(loading?'Carregando as coleções…':'Nenhuma música encontrada em nenhuma coleção.');return}
@@ -587,7 +601,7 @@ function paintBody(){
  if(coll&&albs.length>1&&S.album===null&&!q0){b.innerHTML=albumGrid(albs);fillCovers();return}
  if(coll&&S.album!==null&&!q0&&albs[S.album])html+='<div class="sth-albhd"><button type="button" class="mp-btn" onclick="STHymn.albumBack()">← Álbuns</button><b>'+esc(albs[S.album].name)+'</b></div>';
  const L=filtered(),shown=L.slice(0,S.limit);
- html+='<div class="amb-list">'+shown.map(h=>row(h)).join('')+'</div>'+(L.length>shown.length?'<button type="button" class="amb-more" onclick="STHymn.more()">Mostrar mais ('+(L.length-shown.length)+')</button>':'')+(!L.length?empty('Nenhuma música encontrada.'):'');
+ html+='<div class="amb-list">'+shown.map(h=>row(h)).join('')+'</div>'+(L.length>shown.length?'<button type="button" class="amb-more" onclick="STHymn.more()">＋ Mostrar mais '+Math.min(30,L.length-shown.length)+' <small>· restam '+(L.length-shown.length)+'</small></button>':'')+(!L.length?empty('Nenhuma música encontrada.'):'');
  b.innerHTML=html;
 }
 /* 4) tocando agora */
@@ -596,26 +610,31 @@ function paintPlayer(){
  const c=S.cur,h=c&&find(c.ed,c.n),a=audioEl(),playing=a&&!a.paused,sem=S.mode==='sem';
  if(!c&&!S.queue.length){el.hidden=true;el.innerHTML='';return}
  el.hidden=false;
- const q=S.queue.length?'<div class="sth-q"><small>Fila · '+S.queue.length+'</small>'+S.queue.map((x,i)=>'<span>'+esc(x.t)+'<button type="button" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">'+ico('x')+'</button></span>').join('')+'<button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar</button></div>':'';
- const gp='<div class="sth-gap"><label>⏱ Intervalo entre hinos <select onchange="STHymn.gap(this.value)">'+[[0,'Sem intervalo'],[3,'3 s'],[5,'5 s'],[10,'10 s'],[15,'15 s'],[30,'30 s'],[60,'1 min'],[120,'2 min']].map(o=>'<option value="'+o[0]+'"'+(GAP===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label><span id="sth-gap">'+(gapLeft>0?'Próximo hino em '+gapLeft+'s':'')+'</span>'+(gapLeft>0?'<button type="button" class="sth-cl" onclick="STHymn.gapSkip()">Pular espera</button>':'')+'</div>';
- el.innerHTML=(c?'<div class="sth-now"><div class="amb-info"><small>TOCANDO AGORA · '+esc(MODES.find(m=>m[0]===S.mode)[1].toUpperCase())+'</small><b>'+(ED[c.ed].coll?'':c.n+' · ')+esc(h?h.t:'')+'</b></div>'
-   +'<div class="sth-ctl"><button type="button" class="sthb" onclick="STHymn.prev()" title="Anterior">⏮</button>'+(sem?'':'<button type="button" class="sthb big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'Ⅱ':'▶')+'</button>')+'<button type="button" class="sthb" onclick="STHymn.next()" title="Próximo">⏭</button><button type="button" class="sthb" onclick="STHymn.stop()" title="Parar">■</button></div></div>'
-   +(sem?'':'<div class="sth-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)" aria-label="Posição"><span id="sthpD">0:00</span><label class="sth-vol" title="Volume">🔊<input type="range" min="0" max="100" value="'+Math.round((a?a.volume:1)*100)+'" oninput="STHymn.vol(this.value)" aria-label="Volume"></label></div>')
-   +'<div id="sth-sync" class="sth-stz"></div>':'')+gp+q;
+ const gapNote=gapLeft>0?'<div class="sth-gapn">Próximo hino em <b id="sth-gap">'+gapLeft+'s</b><button type="button" class="sth-cl" onclick="STHymn.gapSkip()">Pular espera</button></div>':'';
+ const q=S.queue.length?'<div class="sth-q2"><div class="sth-q2h"><b>Fila de reprodução</b><i class="cnt">'+S.queue.length+'</i><button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div><ol>'+S.queue.map((x,i)=>'<li><span class="qn">'+(i+1)+'</span><div class="qt"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><button type="button" class="sthb qp" onclick="STHymn.playQ('+i+')" title="Tocar agora">▶</button>'+(i>0?'<button type="button" class="sthb qm" onclick="STHymn.moveQ('+i+')" title="Subir na fila">▲</button>':'')+'<button type="button" class="sthb qx" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></li>').join('')+'</ol></div>':'';
+ el.innerHTML=(c?'<div class="sth-now"><div class="amb-info"><small>'+esc(ED[c.ed].nome)+'</small><b>'+(ED[c.ed].coll?'':c.n+' · ')+esc(h?h.t:'')+'</b></div>'
+   +'<div class="sth-ctl"><button type="button" class="sthb" onclick="STHymn.prev()" title="Anterior">⏮</button>'+(sem?'':'<button type="button" class="sthb big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'Ⅱ':'▶')+'</button>')+'<button type="button" class="sthb" onclick="STHymn.next()" title="Próximo">⏭</button></div></div>'
+   +(sem?'':'<div class="sth-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)" aria-label="Posição"><span id="sthpD">0:00</span></div>')
+   +'<div id="sth-sync" class="sth-stz"></div>':'')+gapNote+q;
  paintSync();
 }
-function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n){el.innerHTML='';return}
+function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n||!sy.manual){el.innerHTML='';el.className='sth-stz';return}
  el.className='sth-stz'+(sy.manual?' big':'');
  el.innerHTML='<button type="button" class="mp-btn" onclick="STHymn.stz(-1)">◀ Estrofe</button><span>'+(sy.last<0?'Título':'Estrofe '+(sy.last+1)+' de '+sy.e.L.length)+'</span><button type="button" class="mp-btn" onclick="STHymn.stz(1)">'+(sy.manual&&sy.last>=sy.e.L.length-1?'Encerrar ■':'Estrofe ▶')+'</button>'}
 function paint(){paintCols();paintMode();paintConn();paintBody();paintPlayer()}
 
+function mountExtras(sec){
+ const cf=document.getElementById('setup');
+ if(cf&&!$('sth-conn')){const w=document.createElement('section');w.className='cf-sth';w.innerHTML='<h4 class="mm-h">Hinário · Louvor JA</h4><p class="muted">Conecte a pasta e o banco do programa para o hinário tocar e mostrar as letras.</p><div id="sth-conn" class="open"></div>';const hd=cf.querySelector('.mp-head');if(hd)hd.insertAdjacentElement('afterend',w);else cf.prepend(w)}
+ const hd=sec.querySelector('.mp-head');if(hd&&!hd.querySelector('.sth-hb')){const r=document.createElement('div');r.className='sth-hb';r.innerHTML='<button type="button" class="mp-btn" onclick="STHymn.pop(\'tr\')" title="Transição e fundo da letra">🎞 Transição · <b id="sthTrV"></b></button><button type="button" class="mp-btn" onclick="STHymn.pop(\'gap\')" title="Intervalo entre hinos">⏱ Intervalo · <b id="sthGapV"></b></button>';hd.appendChild(r)}
+}
 function mount(){
  const sec=$('hymnal');if(!sec||$('sth'))return;
  const box=document.createElement('div');box.id='sth';
- box.innerHTML='<div id="sth-conn"></div><div class="seg sth-cols" id="sth-cols" role="tablist"></div>'
-  +'<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar em todas as músicas (nome ou número)…" oninput="STHymn.input(this.value)"></label></div>'
+ box.innerHTML='<div class="amb-search"><label class="amb-in">'+ico('search')+'<input id="sthq" type="search" inputmode="search" autocomplete="off" placeholder="Pesquisar em todas as músicas (nome ou número)…" oninput="STHymn.input(this.value)"></label></div><div id="sth-state"></div><div class="seg sth-cols" id="sth-cols" role="tablist"></div>'
   +'<div id="sth-mode"></div><div id="sthp" class="amb-sel has sth-player" hidden></div><div id="sth-body"></div><audio id="sthAudio" preload="auto"></audio>';
  sec.appendChild(box);
+ mountExtras(sec);
  const a=$('sthAudio');IASDAudio.install(a);
  a.addEventListener('timeupdate',()=>{saveState();const s=$('sthpS');if(s&&a.duration&&document.activeElement!==s)s.value=Math.round(a.currentTime/a.duration*1000);const t=$('sthpT'),d=$('sthpD');if(t)t.textContent=fmt(a.currentTime);if(d)d.textContent=fmt(a.duration)});
  a.addEventListener('play',()=>{if(gapTimer){gapCancel();S.endTok++}if(S.rest&&S.cur&&S.cur.n===S.rest.n){const r=S.rest;S.rest=null;if(S.mode!=='sem')startSync(r.ed,r.n,r.name,{pb:r.pb})}paintPlayer();paintBody();saveState(true)});a.addEventListener('pause',()=>{paintPlayer();paintBody();saveState(true)});window.addEventListener('pagehide',()=>saveState(true));
