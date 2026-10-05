@@ -93,18 +93,23 @@ function sideHTML(){
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
   if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
   {let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
-  h+=`<button class="iu-side-me" data-go="Perfil" aria-label="Abrir meu perfil"><i>${ic('user',20)}</i><span><b>${E(nm)}</b><small>Conta, ranking e conquistas</small></span></button><div class="iu-sec iu-sec-first">NAVEGAÇÃO</div>`}
-  h+=mainPages().map(([id,i,l])=>navBtn(id,(isAurora()&&auIc(id,20))||ic(i,19),l,cur)).join('');
-  h+=S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join('');
-  if(S.alerts())h+='<div class="iu-sec">EQUIPE</div>'+navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur);
-  if(S.give())h+='<div class="iu-sec">ACESSOS</div>'+navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
-  if(S.study())h+='<div class="iu-sec">ESTUDO</div>'+navBtn('Estudo',ic('book',19),'Sala de Estudo',cur);
-  if(S.manage()){
-    h+='<div class="iu-sec">ADMINISTRAÇÃO</div>';
-    if(S.founder())h+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
-    h+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
-    h+=`<button class="iu-nav" data-act="newtab" aria-label="Criar aba" data-label="Criar aba">${ic('plus',19)}<span>Criar aba</span></button>`;
-  }
+  h+=`<button class="iu-side-me" data-go="Perfil" aria-label="Abrir meu perfil"><i>${ic('user',20)}</i><span><b>${E(nm)}</b><small>Conta, ranking e conquistas</small></span></button>`}
+  const pages=mainPages(),pg=id=>pages.find(x=>x[0]===id);
+  const nb=id=>{const x=pg(id);return x?navBtn(x[0],(isAurora()&&auIc(x[0],20))||ic(x[1],19),x[2],cur):''};
+  const sec=(t,body)=>body?`<div class="iu-sec">${t}</div>`+body:'';
+  h+=nb('Painel');
+  h+=sec('IGREJA',nb('Cronograma')+nb('Escalas'));
+  h+=sec('SONOPLASTIA',nb('Projeção')+nb('Hinário')+(S.alerts()?navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur):''));
+  h+=sec('ESTUDO E JOGOS',nb('Bíblia')+nb('Lição da Escola Sabatina')+(S.study()?navBtn('Estudo',ic('book',19),'Sala de Estudo',cur):'')+nb('Palavra em Cena')+nb('Jogo'));
+  h+=sec('MINHAS ABAS',S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join(''));
+  {let adm='';
+   if(S.give())adm+=navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
+   if(S.manage()){
+    if(S.founder())adm+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
+    adm+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
+    adm+=`<button class="iu-nav" data-act="newtab" aria-label="Criar aba" data-label="Criar aba">${ic('plus',19)}<span>Criar aba</span></button>`;
+   }
+   h+=sec('ADMINISTRAÇÃO',adm);}
   h+='<div class="iu-tag"><b>IASD APP</b>Mais que tecnologia, uma ferramenta para o Reino de Deus.</div>';
   return h;
 }
