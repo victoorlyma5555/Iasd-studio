@@ -181,8 +181,8 @@ function coverStyle(slot,c1,c2){
 }
 function cardsHTML(){
   const edit=S.manage();
-  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-editor-slot="${E(slot)}" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
-  const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-editor-slot="${E(slot)}" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
+  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
   return base.concat(custom).join('');
 }
 function parseItems(items){
@@ -308,7 +308,7 @@ function passageInner(){
   return `<div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q${long?' class="long"':''}>${E(passage.text)}</q><small>${E(passage.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ver versículo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button><button class="iu-btn iu-sharev" data-act="vshare">${ic('share',16)}Compartilhar versículo</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
 }
 function passageStyle(){return bgImage('home_passage','linear-gradient(180deg,rgba(8,16,38,.25),rgba(8,16,38,.82))')}
-function updatePassage(){const el=$('iu-passage');if(el){el.innerHTML=passageInner();el.setAttribute('style',passageStyle());window.IASDEdit?.apply?.()}}
+function updatePassage(){const el=$('iu-passage');if(el){el.innerHTML=passageInner();el.setAttribute('style',passageStyle())}}
 function passageHTML(){
   loadPassage();
   return `<section class="iu-pan iu-pas" id="iu-passage" style="${passageStyle()}">${passageInner()}</section>`;
