@@ -248,7 +248,6 @@ html[data-skin="aurora"] body.iu .pg-biblia .bb-find{display:flex;flex-wrap:wrap
 html[data-skin="aurora"] body.iu .pg-biblia .bb-find>label{flex:1 1 200px;min-width:0}
 html[data-skin="aurora"] body.iu .pg-biblia .bb-find>small{flex-basis:100%;margin:0}
 html[data-skin="aurora"] body.iu .pg-biblia .bb-moretoggle{display:inline-grid}
-html[data-skin="aurora"] body.iu .pg-biblia:not(.bb-open) :is(.bb-find2,.bb-tools,.f-tr,.bb-verses){display:none!important}
 html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-find2{display:flex!important;flex-basis:100%;gap:8px}
 html[data-skin="aurora"] body.iu .pg-biblia .bb-bar{display:grid;grid-template-columns:2fr 1fr;gap:8px;padding:10px}
 html[data-skin="aurora"] body.iu .pg-biblia.bb-open .bb-bar{grid-template-columns:1fr 1fr}
@@ -435,3 +434,35 @@ html[data-skin="aurora"] body.iu .pg-escalas .es-main{grid-template-columns:minm
 html[data-skin="aurora"] body.iu .pg-escalas .es-areas{margin:0 0 6px!important;padding:4px 2px 10px!important}
 html[data-skin="aurora"] body.iu .pg-escalas :is(#esc-root,.es-upw,.es-areas){min-width:0;max-width:100%}
 html[data-skin="aurora"] body.iu .pg-escalas #esc-root{grid-template-columns:minmax(0,1fr)}
+/* ===== Bíblia reorganizada (sem anotações/marca-texto/favoritos, sem itálico) ===== */
+html[data-skin="aurora"] body.iu .pg-biblia :is(.bb-find2,.bb-tools,.f-tr,.bb-verses){display:flex!important}
+html[data-skin="aurora"] body.iu .pg-biblia .reader-verse,html[data-skin="aurora"] body.iu .pg-biblia .bb-paper,html[data-skin="aurora"] body.iu .pg-biblia #reader-text *{font-style:normal!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-paper{font-family:"Instrument Sans",Inter,system-ui,sans-serif!important}
+html[data-skin="aurora"] body.iu .pg-biblia .reader-verse{font-family:"Instrument Sans",Inter,system-ui,sans-serif!important;font-size:18px!important;line-height:1.7!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find{display:flex!important;flex-wrap:wrap;gap:8px;align-items:center}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find>label{flex:1 1 200px;min-width:0}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find2{flex:1 1 100%;gap:8px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-find2 .pg-ghost{flex:1;justify-content:center;height:42px;border-radius:14px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar{display:grid!important;grid-template-columns:minmax(0,1fr) 88px!important;gap:10px!important;align-items:end}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-tr{grid-column:1/-1}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-bk{grid-column:1}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-ch{grid-column:2}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar :is(.f-tr,.f-bk,.f-ch){display:grid!important;gap:4px;min-width:0}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-bar label>span:first-child{font-size:11px;color:var(--au-mu);letter-spacing:.06em;text-transform:uppercase}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-tools{grid-column:1/-1;display:grid!important;grid-template-columns:repeat(4,1fr);gap:8px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-tools .pg-ghost{width:auto!important;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:0 6px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-tools .pg-ghost svg{width:16px;height:16px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-verses{align-items:center;gap:8px;flex-wrap:wrap}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-quick button:not(.bb-sharebtn){display:none!important}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav{display:grid!important;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-nav #reader-ref{text-align:center;font-weight:800;font-size:17px}
+@media (min-width:901px){html[data-skin="aurora"] body.iu .pg-biblia .bb-bar{grid-template-columns:2fr 2fr 90px 1.4fr!important;align-items:end}html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-tr{grid-column:auto}html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-bk,html[data-skin="aurora"] body.iu .pg-biblia .bb-bar .f-ch{grid-column:auto}html[data-skin="aurora"] body.iu .pg-biblia .bb-tools{grid-column:auto}}
+html[data-skin="aurora"] body.iu .pg-biblia :is(.bb-bar,.bb-verses) .pg-sel select{border:0!important;background:transparent!important;box-shadow:none!important;width:100%}
+html[data-skin="aurora"] body.iu .pg-biblia .bb-verses{display:flex!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar .bb-tools{order:5!important;grid-column:1/-1!important;margin:0!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia :is(.bb-bar,.bb-verses) .pg-sel select{border:0!important;background:transparent!important;box-shadow:none!important;height:100%}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2 .pg-ghost{flex:1 1 100%!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-find2{width:100%}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar>*{grid-row:auto!important;justify-self:stretch!important;position:static!important}
+html[data-skin="aurora"] body.iu .pg.pg-biblia .bb-bar{height:auto!important;min-height:0!important;grid-auto-rows:auto!important}
+html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel select,html[data-skin="aurora"] body.iu #content :is(.pg-biblia,.pg-escalas) .pg-sel input{border:0!important;background:transparent!important;box-shadow:none!important}
