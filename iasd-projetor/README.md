@@ -43,3 +43,40 @@ O servidor local só aceita requisições da origem oficial `https://iasd-studio
 ## Créditos
 
 **Desenvolvido por Victor Lima · IASD APP**.
+# Detecção de saídas de vídeo
+
+A seleção fica centralizada em `display-manager.js`. No Windows, o helper
+`windows-topology.ps1` consulta `QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS)` e
+`DisplayConfigGetDeviceInfo`: targets que compartilham adaptador/source formam
+um grupo clonado. Coordenadas são utilizadas somente para associar o source
+nativo ao display lógico do Electron, após conversão de pixels físicos para DIP.
+Nenhuma configuração de monitor do Windows é alterada.
+
+O modo automático mantém a saída atual, prioriza grupos clonados e saídas
+externas, com desempate estável. Não existe identificação infalível de uma TV
+pela conexão HDMI; em instalações ambíguas use a seleção manual em Monitores
+ou no menu do ícone perto do relógio (também disponível com painel remoto).
+A escolha é salva em `projection-output.json`, dentro do userData, usando
+device paths quando disponíveis. Se a escolha sumir, é usada uma saída disponível;
+sem saída elegível a janela fica oculta, mantendo o renderer e conteúdo preparados.
+Uma reconexão restaura a mesma janela. O grupo que inclui o principal também
+pode ser projetado: todas as telas desse grupo necessariamente exibem o mesmo conteúdo.
+
+Eventos de display são agrupados por 500 ms; não há polling de topologia.
+O helper executa sem janela, com timeout e até três tentativas para mudança de
+topologia durante a consulta. O build extrai esse arquivo de app.asar para que
+o PowerShell possa lê-lo. Se políticas corporativas bloquearem PowerShell ou as
+APIs nativas, o diagnóstico informa a falha e utiliza as saídas lógicas do Electron;
+nessa condição a identificação de targets clonados fica indisponível.
+
+Diagnóstico: `projection-diagnostics.log` no userData, com rotação em 1 MiB.
+Registra saídas, targets, bounds, DPI, seleção, carregamento e falhas do renderer.
+Os IDs e caminhos de dispositivo são dados locais: revise antes de compartilhar.
+
+Validação: `node --test tests/display-manager.test.cjs tests/audio-fade.test.mjs
+tests/validate.test.mjs` na pasta `iasd-studio`, `node scripts/validate.mjs`, e
+`npm run dist` na pasta do Projetor. Este pacote JavaScript não possui configuração
+de TypeScript nem tarefa de lint; a verificação de sintaxe usa `node --check`.
+Clones, DPI e hotplug têm cenários simulados; a consulta nativa e o seletor são
+verificados também no Windows/Electron. Bíblia, YouTube, Sorteador/Cronômetro e
+clones físicos precisam de uma verificação final com as TVs da instalação.

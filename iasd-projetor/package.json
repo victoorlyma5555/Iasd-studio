@@ -17,6 +17,7 @@
     "electron": "^35.0.0"
   },
   "build": {
+    "asarUnpack": ["windows-topology.ps1"],
     "appId": "br.iasd.projetor",
     "productName": "IASD Projetor",
     "directories": {

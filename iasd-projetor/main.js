@@ -154,7 +154,7 @@ function confirmUpdatedVersion(){
 }
 
 function updateProgress(state,message,extra={}){updateStatus={state,message,...extra};if(dashboardRef&&!dashboardRef.isDestroyed())dashboardRef.webContents.send('iasd:update-status',updateStatus)}
-function projectionActive(){return !!(windowRef&&!windowRef.isDestroyed()&&windowRef.isVisible())||!!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible())}
+function projectionActive(){return [...suspendedWindows].some(w=>!w.isDestroyed())||!!(windowRef&&!windowRef.isDestroyed()&&windowRef.isVisible())||!!(youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible())}
 async function checkAutomaticUpdate({startup=false}={}){
  if(!app.isPackaged){updateProgress('development','A instalação automática funciona somente no aplicativo instalado.');return updateStatus}
  if(['downloading','downloaded','checking'].includes(updateStatus.state))return updateStatus;
@@ -196,17 +196,38 @@ function savePairing(){
  fs.renameSync(temp,tokenFile);
 }
 
-function monitorInfo(){const primary=screen.getPrimaryDisplay();return screen.getAllDisplays().map((d,i)=>({id:String(d.id),name:d.label||'Monitor '+(i+1),primary:d.id===primary.id,width:d.bounds.width,height:d.bounds.height,scale:d.scaleFactor,position:{x:d.bounds.x,y:d.bounds.y},refresh:d.displayFrequency||0}))}
-function chooseDisplay(){
- const displays=screen.getAllDisplays();
- return displays.find(d=>d.id!==screen.getPrimaryDisplay().id)||null;
+const {DisplayManager,validBounds,projectionLog,setLogFile}=require('./display-manager');
+let displayManager,projectionError=null,desktopBlackout=false;
+const suspendedWindows=new Set();
+function monitorInfo(){return (displayManager?.outputs||[]).map(d=>({id:String(d.id),key:d.key,name:d.label||'Saída de vídeo',primary:d.primary,selected:d.key===displayManager.current?.key,cloned:d.cloned,connected:true,width:d.bounds.width,height:d.bounds.height,bounds:d.bounds,workArea:d.workArea,scale:d.scaleFactor,rotation:d.rotation,targets:d.targets,position:{x:d.bounds.x,y:d.bounds.y},refresh:d.displayFrequency||0}))}
+function chooseDisplay(){return displayManager?.choose()||null;}
+function reconcileProjection(){
+ const display=chooseDisplay();
+ for(const win of [windowRef,youtubeRef,youtubeCover]){
+  if(!win||win.isDestroyed()){suspendedWindows.delete(win);continue;}
+  if(win===youtubeRef&&youtubeOnPrimary)continue;
+  if(!display){if(win.isVisible()){suspendedWindows.add(win);win.hide();}continue;}
+  if(win.isVisible()||suspendedWindows.has(win)){
+   if(win===windowRef&&!win._projectionReady)continue;
+   const b=win.getBounds();
+   if(suspendedWindows.has(win)||['x','y','width','height'].some(k=>b[k]!==display.bounds[k])){win.setFullScreen(false);win.setBounds(display.bounds);win.setFullScreen(true);}
+   if(suspendedWindows.has(win)){win.showInactive();suspendedWindows.delete(win);}
+  }
+ }
+ projectionError=display?(windowRef?._projectionError||null):'Aguardando saída de vídeo...';
 }
 // Exibe o telão no monitor secundário e solicita foco após a janela estar pronta.
 // O Windows pode limitar a ativação de aplicativos em segundo plano.
 function activateProjector(win,display){
  if(!win||win.isDestroyed())return;
- win.setBounds(display.bounds);
+ if(win===windowRef&&!win._projectionReady){win._wantProjection=true;return;}
+ const current=chooseDisplay();
+ if(!current||!validBounds(current.bounds)){suspendedWindows.add(win);projectionError='Saída de vídeo indisponível ou bounds inválidos';projectionLog('error','[Projection ERROR]',projectionError);return;}
+ suspendedWindows.delete(win);
+ win.setFullScreen(false);
+ win.setBounds(current.bounds);
  win.show();
+ projectionLog('info','[Projection] Window positioned',current.key,JSON.stringify(win.getBounds()));
  win.setFullScreen(true);
  win.setAlwaysOnTop(true,'screen-saver');
  win.moveTop();
@@ -222,7 +243,7 @@ function activateProjector(win,display){
 }
 function showProjector(prepareOnly=false){
  const display=chooseDisplay();
- if(!display)throw Error('Conecte um segundo monitor e use o modo Estender do Windows.');
+ if(!display)throw Error('Aguardando saída de vídeo. Conecte uma TV/projetor ou selecione uma saída em Monitores.');
  if(!windowRef||windowRef.isDestroyed()){
   const win=new BrowserWindow({
    x:display.bounds.x,y:display.bounds.y,
@@ -233,16 +254,22 @@ function showProjector(prepareOnly=false){
   });
   windowRef=win;
   let activated=false;
+  win._projectionReady=false;
+  win._wantProjection=!prepareOnly;
   const activateOnce=()=>{
-   if(activated||win.isDestroyed())return;
+   if(activated||win.isDestroyed()||!win._projectionReady)return;
    activated=true;
-   if(!prepareOnly)activateProjector(win,display);
+   if(win._wantProjection)activateProjector(win,display);
   };
   win.once('ready-to-show',activateOnce);
-  win.webContents.once('did-finish-load',activateOnce);
+  win.webContents.once('did-finish-load',()=>{win._projectionReady=true;win._projectionError=null;projectionError=null;projectionLog('info','[Projection] Renderer ready');if(desktopBlackout)void win.webContents.executeJavaScript(blackoutScript(true)).catch(e=>projectionLog('error','[Projection ERROR]',e.message));activateOnce()});
+  win.webContents.on('did-fail-load',(_,code,description,url,mainFrame)=>{if(mainFrame&&code!==-3){win._projectionReady=false;projectionError=win._projectionError='Renderer: '+description;projectionLog('error','[Projection ERROR]',projectionError,url);win.hide();}});
+  win.webContents.on('render-process-gone',(_,details)=>{win._projectionReady=false;projectionError=win._projectionError='Renderer interrompido: '+details.reason;projectionLog('error','[Projection ERROR]',projectionError);win.hide();});
   win.loadURL(SITE+'/projection.html').catch(e=>console.error('Falha ao carregar o telão:',e.message));
-  // Não deixe a projeção invisível caso o carregamento demore.
-  setTimeout(activateOnce,1200);
+  projectionLog('info','[Projection] Window created successfully');
+  const loadTimer=setTimeout(()=>{if(!win.isDestroyed()&&!win._projectionReady){projectionError=win._projectionError='Carregamento do telão demorou demais';projectionLog('error','[Projection ERROR]',projectionError)}},15000);
+  win.webContents.once('did-finish-load',()=>clearTimeout(loadTimer));
+  win.once('closed',()=>clearTimeout(loadTimer));
   win.on('closed',()=>{if(windowRef===win)windowRef=null});
  }else if(!prepareOnly){
   activateProjector(windowRef,display);
@@ -322,11 +349,11 @@ function closeYoutube(){if(youtubeRef&&!youtubeRef.isDestroyed()){try{youtubeRef
 const YT_VIDEO=(code)=>"(()=>{const v=document.querySelector('video');if(!v)return false;"+code+";return true})()";
 async function youtubeVideoDo(code){if(!youtubeRef||youtubeRef.isDestroyed())return false;try{return await youtubeRef.webContents.executeJavaScript(YT_VIDEO(code))}catch{return false}}
 // Tela preta com vídeo no telão: esconde a janela do vídeo, pausa e silencia (a projeção continua aberta).
-async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
+async function blackoutYoutube(){if(!youtubeRef||youtubeRef.isDestroyed()||!youtubeShown)return;await youtubeVideoDo('v.pause()');youtubeRef.webContents.setAudioMuted(true);youtubeRef.setFullScreen(false);youtubeRef.hide();suspendedWindows.delete(youtubeRef);youtubeShown=false;youtubeOnPrimary=false;dropYoutubeCover()}
 async function youtubeFrame(){if(!youtubeRef||youtubeRef.isDestroyed())throw Error('Prepare um vídeo primeiro');const frame=await youtubeRef.webContents.capturePage();return frame.resize({width:640}).toJPEG(65).toString('base64')}
 async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs,visualInMs=lastVisualFadeMs){
  const command=++audioCommand,win=youtubeRef,display=chooseDisplay();
- if(!display)throw Error('Conecte o segundo monitor e selecione Estender no Windows');
+ if(!display)throw Error('Aguardando saída de vídeo. Conecte uma TV/projetor ou selecione uma saída em Monitores.');
  if(!win||win.isDestroyed())throw Error('Prepare um vídeo primeiro');
  win._holdForLyric=false;
  win.webContents.setAudioMuted(true);
@@ -335,7 +362,8 @@ async function projectPreparedYoutube(ms=0,inMs=0,outMs=lastFadeOutMs,visualInMs
  if(windowRef&&!windowRef.isDestroyed()){
    const old=windowRef;await Promise.all([fadeAudioIn(old,outMs),old.webContents.executeJavaScript('window.iasdFadeProjectionOut?window.iasdFadeProjectionOut(false):Promise.resolve(true)').catch(()=>false)]);if(command!==audioCommand||old!==windowRef)return display;old.setAlwaysOnTop(false);old.hide();try{old.setOpacity(1)}catch{}lastProjectionContent='';
  }
- win.setBounds(display.bounds);void fadeWin(win,visualInMs?0:1,0);
+ const current=chooseDisplay();if(!current)throw Error('Saída de vídeo desconectada durante a preparação');
+ win.setFullScreen(false);win.setBounds(current.bounds);suspendedWindows.delete(win);void fadeWin(win,visualInMs?0:1,0);
  win.show();win.setFullScreen(true);win.focus();youtubeShown=true;win.webContents.setAudioMuted(false);if(visualInMs)void fadeWin(win,1,visualInMs);
  const previous=win._previousVisual;win._previousVisual=null;if(previous&&!previous.isDestroyed())void Promise.all([fadeWin(previous,0,visualInMs),previous._visualAudioDone]).finally(()=>{if(!previous.isDestroyed())previous.destroy()});
  return display;
@@ -447,8 +475,9 @@ ipcMain.handle('iasd:alerts-history',()=>({ok:true,items:loadAlertHistory()}));
 ipcMain.handle('iasd:alert-delete',(_,id)=>{saveAlertHistory(loadAlertHistory().filter(x=>x.id!==id));return{ok:true}});
 ipcMain.handle('iasd:alerts-clear',()=>{saveAlertHistory([]);return{ok:true}});
 ipcMain.handle('iasd:alerts-mute',(_,value)=>{alertsMuted=!!value;return{ok:true,muted:alertsMuted}});
-ipcMain.handle('iasd:identify-monitors',()=>{const wins=[];screen.getAllDisplays().forEach((display,index)=>{const b=display.bounds,w=new BrowserWindow({x:b.x,y:b.y,width:b.width,height:b.height,frame:false,alwaysOnTop:true,skipTaskbar:true,focusable:false,transparent:false,backgroundColor:'#081525',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});wins.push(w);const label=index===0?'COMPUTADOR':'TELÃO';w.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(`<html><body style="margin:0;background:#081525;color:white;height:100vh;display:grid;place-items:center;font-family:Segoe UI"><div style="text-align:center"><div style="font-size:22vw;font-weight:900">${index+1}</div><div style="font-size:4vw;color:#f3cf77;font-weight:800">${label}</div></div></body></html>`));w.once('ready-to-show',()=>w.showInactive())});setTimeout(()=>wins.forEach(w=>{if(!w.isDestroyed())w.close()}),3500);return{ok:true}});
-ipcMain.handle('iasd:status',()=>({alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:pairedTokens.size>0&&(Date.now()-lastSiteContact<900000||!!siteIdentity),siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible(),alertsMuted,projecting:projectionActive(),projectionType:youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()?'YouTube':lastProjectionContent?'Conteúdo do IASD APP':'Telão livre'}));
+ipcMain.handle('iasd:identify-monitors',()=>{const wins=[];screen.getAllDisplays().forEach((display,index)=>{const b=display.bounds,w=new BrowserWindow({x:b.x,y:b.y,width:b.width,height:b.height,frame:false,alwaysOnTop:true,skipTaskbar:true,focusable:false,transparent:false,backgroundColor:'#081525',webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});wins.push(w);const label=display.id===screen.getPrimaryDisplay().id?'PRINCIPAL':'SAÍDA DE VÍDEO';w.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(`<html><body style="margin:0;background:#081525;color:white;height:100vh;display:grid;place-items:center;font-family:Segoe UI"><div style="text-align:center"><div style="font-size:22vw;font-weight:900">${index+1}</div><div style="font-size:4vw;color:#f3cf77;font-weight:800">${label}</div></div></body></html>`));w.once('ready-to-show',()=>w.showInactive())});setTimeout(()=>wins.forEach(w=>{if(!w.isDestroyed())w.close()}),3500);return{ok:true}});
+ipcMain.handle('iasd:select-output',(_,key)=>{try{displayManager.save(key);return{ok:true}}catch(e){return{error:e.message}}});
+ipcMain.handle('iasd:status',()=>({physicalDisplays:displayManager?.physicalCount,outputSelection:displayManager?.saved?.key||'auto',projectionError,topologyError:displayManager?.error,alertStatus:alertStatus(),paired:pairedTokens.size>0,code:pairingCode,monitor:!!chooseDisplay(),version:app.getVersion(),monitors:monitorInfo(),siteConnected:pairedTokens.size>0&&(Date.now()-lastSiteContact<900000||!!siteIdentity),siteIdentity,lastProjectionContent,youtubeActive:!!youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible(),alertsMuted,projecting:projectionActive(),projectionType:youtubeRef&&!youtubeRef.isDestroyed()&&youtubeRef.isVisible()?'YouTube':lastProjectionContent?'Conteúdo do IASD APP':'Telão livre'}));
 ipcMain.handle('iasd:site',async()=>{await refreshRemoteConfig();return shell.openExternal(projectionUrl())});
 ipcMain.handle('iasd:new-code',()=>{pairingCode=String(crypto.randomInt(100000,999999));return{ok:true}});
 ipcMain.handle('iasd:updates',()=>checkAutomaticUpdate({startup:false}));
@@ -460,7 +489,8 @@ ipcMain.handle('iasd:open',()=>{try{showProjector();return{ok:true}}catch(e){ret
 ipcMain.handle('iasd:close',async()=>{await closeProjection();return{ok:true}});
 ipcMain.handle('iasd:window',(_,action)=>{if(!dashboardRef||dashboardRef.isDestroyed())return{error:'Janela indisponível'};if(action==='minimize')dashboardRef.minimize();else if(action==='maximize')return{ok:false};else if(action==='close')dashboardRef.close();else return{error:'Ação inválida'};return{ok:true,maximized:dashboardRef&&!dashboardRef.isDestroyed()&&dashboardRef.isMaximized()}});
 async function projectorScript(script){if(!windowRef||windowRef.isDestroyed())showProjector();if(windowRef.webContents.isLoadingMainFrame())await new Promise((resolve,reject)=>{windowRef.webContents.once('did-finish-load',resolve);windowRef.webContents.once('did-fail-load',(_,code,desc)=>reject(Error(desc)))});return windowRef.webContents.executeJavaScript(script)}
-ipcMain.handle('iasd:blackout',async(_,enabled)=>{try{await projectorScript(`(()=>{let x=document.getElementById('iasd-desktop-blackout');if(!x){x=document.createElement('div');x.id='iasd-desktop-blackout';Object.assign(x.style,{position:'fixed',inset:'0',background:'#000',zIndex:'2147483647',display:'none'});document.body.appendChild(x)}x.style.display=${enabled?'\'block\'':'\'none\''};return true})()`);return{ok:true,enabled:!!enabled}}catch(e){return{error:e.message}}});
+function blackoutScript(enabled){return `(()=>{let x=document.getElementById('iasd-desktop-blackout');if(!x){x=document.createElement('div');x.id='iasd-desktop-blackout';Object.assign(x.style,{position:'fixed',inset:'0',background:'#000',zIndex:'2147483647',display:'none'});document.body.appendChild(x)}x.style.display=${enabled?'\'block\'':'\'none\''};return true})()`}
+ipcMain.handle('iasd:blackout',async(_,enabled)=>{try{desktopBlackout=!!enabled;await projectorScript(blackoutScript(desktopBlackout));return{ok:true,enabled:desktopBlackout}}catch(e){return{error:e.message}}});
 ipcMain.handle('iasd:test-projection',async()=>{try{lastProjectionContent='IASD_TEXT:'+JSON.stringify({title:'Teste de projeção',text:'IASD Projetor conectado e funcionando.'});showProjector();await projectorScript(`window.postMessage({type:'iasd-project',content:'IASD_TEXT:'+JSON.stringify({title:'Teste de projeção',text:'IASD Projetor conectado e funcionando.'})},location.origin);true`);return{ok:true}}catch(e){return{error:e.message}}});
 const appearanceFile=path.join(app.getPath('userData'),'appearance.json');
 function loadAppearance(){try{return JSON.parse(fs.readFileSync(appearanceFile,'utf8'))}catch{return{images:[],background:'linear-gradient(135deg,#061a2d,#0b4b91)',fit:'cover'}}}
@@ -615,7 +645,10 @@ async function handler(req,res){res.__iasdOrigin=allowedOrigin(req)||SITE;
 
  reply(res,404,{error:'Rota desconhecida'});
 }
-if(primaryInstance)app.whenReady().then(()=>{
+if(primaryInstance)app.whenReady().then(async()=>{
+ setLogFile(path.join(app.getPath('userData'),'projection-diagnostics.log'));
+ displayManager=new DisplayManager(screen,path.join(app.getPath('userData'),'projection-output.json'),reconcileProjection);
+ displayManager.watch();await displayManager.scan();
  if(!process.argv.includes('--hidden'))showStartSplash();
  loadCachedRemoteConfig();
  loadPairing();
@@ -632,6 +665,8 @@ if(primaryInstance)app.whenReady().then(()=>{
    {label:(siteOnline?'● IASD APP conectado':'○ Aguardando IASD APP'),enabled:false},
    {label:(screenOpen?'● Telão em projeção':'○ Telão aguardando'),enabled:false},
    {type:'separator'},
+   {label:'Saída de vídeo',submenu:[{label:'Automático — recomendado',type:'radio',checked:!displayManager.saved,click:()=>displayManager.save('auto')},...displayManager.outputs.map(o=>({label:(o.label||'Saída de vídeo')+' · '+o.bounds.width+'×'+o.bounds.height,type:'radio',checked:displayManager.saved?.key===o.key,click:()=>displayManager.save(o.key)}))]},
+   {label:projectionError||'Saída de vídeo conectada',enabled:false},
    {label:'Abrir painel',click:showDashboard},
    {label:'Abrir IASD Projetor no site',click:()=>{void refreshRemoteConfig().finally(()=>shell.openExternal(projectionUrl()))}},
    {type:'separator'},
@@ -656,4 +691,4 @@ if(primaryInstance)app.whenReady().then(()=>{
  server.listen(PORT,'127.0.0.1',()=>{confirmUpdatedVersion();void refreshRemoteConfig();setInterval(()=>{void refreshRemoteConfig()},3600000);if(!process.argv.includes('--hidden'))showDashboard();if(!startupUpdateChecked){startupUpdateChecked=true;setTimeout(()=>{void checkAutomaticUpdate({startup:true})},4000)}});
 });
 app.on('window-all-closed',()=>{});
-app.on('before-quit',event=>{if(installUpdateOnQuit&&downloadedUpdate&&!installingUpdate&&!projectionActive()){event.preventDefault();installDownloadedUpdate();return}server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
+app.on('before-quit',event=>{if(installUpdateOnQuit&&downloadedUpdate&&!installingUpdate&&!projectionActive()){event.preventDefault();installDownloadedUpdate();return}displayManager?.stop();server?.close();clearMedia();if(alertRecoveryTimer)clearInterval(alertRecoveryTimer);if(alertChannel)void alertCloud.removeChannel(alertChannel)});
