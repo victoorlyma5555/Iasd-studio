@@ -101,8 +101,8 @@ function stYtCardRender(){const scr=document.querySelector('#preview-layout .scr
  c.style.setProperty('--yt-bg',id?'url(https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg)':'none');
  c.innerHTML='<div class="yl-in"><span class="yl-badge">'+badge+'</span><b class="yl-t">'+esc(title)+'</b><small>'+esc(sub)+'</small><div class="yl-b">'+btns+'</div></div>'}
 setInterval(()=>{if(stYtInfo&&!window.__ytLive&&!stYtInfo.preroll){stYtCardHide()}void stYtPollState();stYtCardRender()},500);
-window.stTakeover=function(keep,preserveVisual=false){
- let wait=null;const P=window.parent,preserveHymnVisual=(keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony'))))||((keep==='timer'||keep==='ppt')&&!!window.__ytLive);/* cronômetro/slides: o vídeo fica no telão até o novo conteúdo entrar (sem tela preta no meio) */
+window.stTakeover=function(keep,preserveVisual=false,hold=false){
+ let wait=null;const P=window.parent,preserveHymnVisual=(keep==='hymn'&&(window.__ytHymnVisual||(window.__ytLive&&(stYtInfo?.kind==='special'||stYtInfo?.kind==='testimony'))))||((keep==='timer'||keep==='ppt'||keep==='serviceVideo'||hold)&&!!window.__ytLive);/* cronômetro/slides: o vídeo fica no telão até o novo conteúdo entrar (sem tela preta no meio) */
  window.__ytHymnVisual=!!preserveHymnVisual;
  if(keep!=='hymn'){stHymnFadeStop(keep?180:0)}
  /* YouTube no telão: fecha sempre que outra mídia começa (não depende de flag, que se perde ao recarregar) */
@@ -515,7 +515,7 @@ function projectDrawReady(){
  if(rolling){feedback('Aguarde o sorteio atual terminar.');return}
  const min=Number($('min').value),max=Number($('max').value);
  if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||max<min||max-min>1000000){feedback('Informe um intervalo válido.');return}
- stTakeover('drawLocalAudio');project('IASD_DRAW_READY:'+JSON.stringify({min,max}));
+ stTakeover('drawLocalAudio',false,true);project('IASD_DRAW_READY:'+JSON.stringify({min,max}));
  drawShow('—');
  feedback('Sorteador projetado. Inicie o sorteio quando desejar.');
 }
@@ -527,7 +527,7 @@ function drawLeft(){const el=$('drawLeft');if(!el)return;const min=Number($('min
 function drawPick(min,max){const total=max-min+1;if(!$('noRepeat')?.checked)return min+Math.floor(Math.random()*total);const used=drawnList().filter(n=>n>=min&&n<=max).sort((a,b)=>a-b);if(used.length>=total)return null;let n=min+Math.floor(Math.random()*(total-used.length));for(const d of used){if(d<=n)n++;else break}return n}
 function draw(){if(rolling)return;const min=Number($('min').value),max=Number($('max').value),ms=Number($('duration').value);if(!Number.isSafeInteger(min)||!Number.isSafeInteger(max)||max<min||max-min>1000000){feedback('Informe um intervalo válido de até 1 milhão de números.');return}const target=drawPick(min,max);if(target===null){feedback('Todos os números já foram sorteados. Toque em “Resetar números” para recomeçar.');return}stTakeover('drawLocalAudio');rolling=true;$('drawBtn').disabled=true;lastDraw=null;const start=performance.now();const drawPayload=stThemed('IASD_DRAW_ANIM:'+JSON.stringify({min,max,duration:ms,target}));call('project',drawPayload);try{localStorage.setItem('iasd-black','0')}catch(e){}mirrorProjection(drawPayload);const L=String(target).length,rl=()=>{let r='';for(let i=0;i<L;i++)r+=String((i===0&&L>1)?1+Math.floor(Math.random()*9):Math.floor(Math.random()*10));return r};function tick(now){const elapsed=now-start;const delay=40+Math.pow(elapsed/ms,3)*350;drawShow(rl());if(elapsed<ms){setTimeout(()=>requestAnimationFrame(tick),delay)}else{drawShow(target,true);lastDraw=target;rolling=false;$('drawBtn').disabled=false;if($('noRepeat')?.checked){const l=drawnList();l.push(target);drawnSave(l)}drawLeft();prepare('IASD_DRAW:'+target,'Número sorteado: '+target);feedback('Sorteio concluído. O resultado já está no telão.')}}requestAnimationFrame(tick)}
 function drawReset(){if(rolling){feedback('Aguarde o sorteio atual terminar.');return}try{sessionStorage.removeItem('iasd-studio-drawn');sessionStorage.removeItem('iasd-studio-draws')}catch(e){}lastDraw=null;drawLogged=null;drawShow('—');drawHistRender();drawLeft();if(nextContent.startsWith('IASD_DRAW:'))clearPrepared();const st=localStorage.getItem('iasd-stage')||'';if(st.startsWith('IASD_DRAW')){const min=Number($('min').value),max=Number($('max').value);if(Number.isSafeInteger(min)&&Number.isSafeInteger(max)&&max>=min)project('IASD_DRAW_READY:'+JSON.stringify({min,max}))}feedback('Números resetados. O sorteio recomeça do zero.')}
-function projectDrawResult(){if(lastDraw===null){feedback('Faça o sorteio primeiro.');return}stTakeover('drawLocalAudio');project('IASD_DRAW:'+lastDraw)}
+function projectDrawResult(){if(lastDraw===null){feedback('Faça o sorteio primeiro.');return}stTakeover('drawLocalAudio',false,true);project('IASD_DRAW:'+lastDraw)}
 let bibleCache=new Map();const books=$('book');bibleBooks.forEach(([name,key])=>{const o=document.createElement('option');o.value=key;o.textContent=name;books.append(o)});books.value='genesis';
 async function fetchStudioBibleChapter(book,chapter){
  const names=book==='psalms'?['psalms','psalm','ps']: [book];const translation=$('studioTranslation')?.value||'almeida';
