@@ -339,3 +339,16 @@ html[data-skin="aurora"] body.st2 .tm-prev{position:sticky!important;top:0;z-ind
 /* dentro do site: o cabeçalho do site já mostra nome e conexões */
 html.emb .st-banner{display:none!important}
 html.emb[data-skin="aurora"] body.st2 .tools{top:0}
+/* fila do hinário: faixa horizontal abaixo do preview (só na aba Hinário) */
+.sth-qbar{display:none;margin-top:10px;padding:10px 12px;border-radius:18px;background:rgba(var(--au-w),.06);border:1px solid rgba(var(--au-w),.1)}
+body[data-tool="hymnal"] .sth-qbar:not([hidden]){display:block}
+.sth-qbar .sth-q2h{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sth-qbar .sth-q2h b{font-size:13px}.sth-qbar .sth-cl{margin-left:auto}
+.sth-qrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.sth-qrow .qc{flex:0 0 176px;scroll-snap-align:start;display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;padding:8px;border-radius:14px;background:rgba(var(--au-w),.07)}
+.sth-qrow .qn{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:rgba(var(--au-a1-rgb),.2);color:var(--au-a1)}
+.sth-qrow .qt{min-width:0;display:grid}.sth-qrow .qt b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sth-qrow .qt small{font-size:10.5px;color:var(--au-mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sth-qrow .qa{grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end}
+.sth-qrow .sthb{width:30px!important;height:28px!important;font-size:11px!important}
+.sth-qrow .sthb.qp{background:var(--au-grad,var(--au-a1))!important;color:var(--au-on,#111)!important;border-color:transparent!important}
+.bb-st select{flex:1;min-width:0;height:38px;text-align:center;text-align-last:center;font-weight:700}
+html[data-skin="aurora"] body.st2 .st-left{height:auto!important;max-height:none!important;align-self:start}

@@ -606,3 +606,29 @@ function bibleGoRef(){
 /* Bíblia: − / + no capítulo e no versículo, já busca o texto (capítulo novo volta ao versículo 1) */
 function bibStep(w,d){const el=$(w);if(!el)return;const base=parseInt(String(el.value).split('-')[0],10)||1;el.value=String(Math.max(1,base+d));if(w==='chapter')$('verse').value='1';searchBible()}
 ['chapter','verse'].forEach(id=>{const el=$(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchBible()}})});
+
+/* Bíblia: capítulo e versículo viram listas (gaveta) como o livro; as quantidades vêm do livro e do capítulo carregado */
+const BIB_CH=[50,40,27,36,34,24,21,4,31,24,22,25,29,36,10,13,10,42,150,31,12,8,66,52,5,48,12,14,3,9,1,4,7,3,3,3,2,14,4,28,16,24,21,28,16,16,13,6,6,4,4,5,3,6,4,3,1,13,5,5,3,5,1,1,1,22];
+(function(){
+ const ch=$('chapter'),vs=$('verse'),bk=$('book');if(!ch||!vs||!bk||ch.tagName!=='SELECT')return;
+ const desc=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+ function ensure(sel,v){v=String(v);if(![...sel.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=v;const n=parseInt(v,10);let before=null;for(const x of sel.options){if(parseInt(x.value,10)>n||(parseInt(x.value,10)===n&&x.value>v)){before=x;break}}sel.insertBefore(o,before)}}
+ [ch,vs].forEach(sel=>Object.defineProperty(sel,'value',{configurable:true,get(){return desc.get.call(this)},set(v){ensure(this,v);desc.set.call(this,String(v))}}));
+ function fill(sel,n,keep){sel.replaceChildren();for(let i=1;i<=n;i++){const o=document.createElement('option');o.value=o.textContent=String(i);sel.append(o)}const k=parseInt(keep,10);desc.set.call(sel,String(k>=1&&k<=n?k:1))}
+ function bookIdx(){return [...bk.options].findIndex(o=>o.value===bk.value)}
+ function fillChapters(keep){fill(ch,BIB_CH[bookIdx()]||150,keep)}
+ let reqId=0;
+ async function fillVerses(keep){
+  const id=++reqId,book=bk.value,chapter=Number(ch.value),translation=$('studioTranslation')?.value||'almeida',key=book+'|'+chapter+'|'+translation;
+  let verses=bibleCache.get(key);
+  if(!verses){fill(vs,40,keep);try{verses=window.parent!==window&&typeof window.parent.fetchBibleChapter==='function'?await window.parent.fetchBibleChapter(book,chapter,translation):await fetchStudioBibleChapter(book,chapter);bibleCache.set(key,verses)}catch(e){fill(vs,176,keep);return}}
+  if(id!==reqId||!verses)return;
+  const n=verses.length||40,cur=String(vs.value||'');
+  fill(vs,n,keep);if(/-/.test(cur)&&parseInt(cur,10)<=n){vs.value=cur}
+ }
+ bk.addEventListener('change',()=>{fillChapters(1);fillVerses(1)});
+ ch.addEventListener('change',()=>{vs.value='1';fillVerses(1)});
+ const sb=searchBible;searchBible=async function(){const r=await sb.apply(this,arguments);try{if(Number(vs.options.length)<=40||true)fillVerses(vs.value)}catch(e){}return r};
+ fillChapters(1);fillVerses(1);
+ window.bibStep=function(w,d){const el=$(w);if(!el)return;const base=parseInt(String(el.value).split('-')[0],10)||1;const max=w==='chapter'?(BIB_CH[bookIdx()]||150):(el.options.length||176);const nv=Math.min(max,Math.max(1,base+d));if(nv===base&&w==='verse'&&d>0){/* fim do capítulo: vai ao próximo */ if(Number(ch.value)<(BIB_CH[bookIdx()]||150)){ch.value=String(Number(ch.value)+1);vs.value='1';fillVerses(1).then(()=>searchBible());return}}if(nv===base)return;el.value=String(nv);if(w==='chapter'){vs.value='1';fillVerses(1).then(()=>searchBible());return}searchBible()};
+})();

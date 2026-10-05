@@ -605,17 +605,24 @@ function paintBody(){
  b.innerHTML=html;
 }
 /* 4) tocando agora */
+function paintQueue(){
+ let box=$('sthQbar');
+ if(!box){const L=document.querySelector('.st-left');if(!L)return;box=document.createElement('section');box.id='sthQbar';box.className='sth-qbar';box.hidden=true;L.append(box)}
+ if(!S.queue.length){box.hidden=true;box.innerHTML='';return}
+ box.hidden=false;
+ box.innerHTML='<div class="sth-q2h"><b>Fila de reprodução</b><i class="cnt">'+S.queue.length+'</i><button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div><div class="sth-qrow">'+S.queue.map((x,i)=>'<div class="qc"><span class="qn">'+(i+1)+'</span><div class="qt"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><div class="qa"><button type="button" class="sthb qp" onclick="STHymn.playQ('+i+')" title="Tocar agora">▶</button>'+(i>0?'<button type="button" class="sthb qm" onclick="STHymn.moveQ('+i+')" title="Subir na fila">◀</button>':'')+'<button type="button" class="sthb qx" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></div></div>').join('')+'</div>';
+}
 function paintPlayer(){
  const el=$('sthp');if(!el)return;
  const c=S.cur,h=c&&find(c.ed,c.n),a=audioEl(),playing=a&&!a.paused,sem=S.mode==='sem';
- if(!c&&!S.queue.length){el.hidden=true;el.innerHTML='';return}
+ paintQueue();if(!c){el.hidden=true;el.innerHTML='';return}
  el.hidden=false;
  const gapNote=gapLeft>0?'<div class="sth-gapn">Próximo hino em <b id="sth-gap">'+gapLeft+'s</b><button type="button" class="sth-cl" onclick="STHymn.gapSkip()">Pular espera</button></div>':'';
- const q=S.queue.length?'<div class="sth-q2"><div class="sth-q2h"><b>Fila de reprodução</b><i class="cnt">'+S.queue.length+'</i><button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div><ol>'+S.queue.map((x,i)=>'<li><span class="qn">'+(i+1)+'</span><div class="qt"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><button type="button" class="sthb qp" onclick="STHymn.playQ('+i+')" title="Tocar agora">▶</button>'+(i>0?'<button type="button" class="sthb qm" onclick="STHymn.moveQ('+i+')" title="Subir na fila">▲</button>':'')+'<button type="button" class="sthb qx" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></li>').join('')+'</ol></div>':'';
+ const q0=S.queue.length?'<div class="sth-q2"><div class="sth-q2h"><b>Fila de reprodução</b><i class="cnt">'+S.queue.length+'</i><button type="button" class="sth-cl" onclick="STHymn.clearQueue()">Limpar fila</button></div><ol>'+S.queue.map((x,i)=>'<li><span class="qn">'+(i+1)+'</span><div class="qt"><b>'+esc(x.t||('Hino '+x.n))+'</b><small>'+esc(ED[x.ed].nome)+(ED[x.ed].coll?'':' · nº '+x.n)+'</small></div><button type="button" class="sthb qp" onclick="STHymn.playQ('+i+')" title="Tocar agora">▶</button>'+(i>0?'<button type="button" class="sthb qm" onclick="STHymn.moveQ('+i+')" title="Subir na fila">▲</button>':'')+'<button type="button" class="sthb qx" onclick="STHymn.unqueue('+i+')" title="Tirar da fila">✕</button></li>').join('')+'</ol></div>':'';
  el.innerHTML=(c?'<div class="sth-now"><div class="amb-info"><small>'+esc(ED[c.ed].nome)+'</small><b>'+(ED[c.ed].coll?'':c.n+' · ')+esc(h?h.t:'')+'</b></div>'
    +'<div class="sth-ctl"><button type="button" class="sthb" onclick="STHymn.prev()" title="Anterior">⏮</button>'+(sem?'':'<button type="button" class="sthb big" onclick="STHymn.toggle()" title="Tocar / pausar">'+(playing?'Ⅱ':'▶')+'</button>')+'<button type="button" class="sthb" onclick="STHymn.next()" title="Próximo">⏭</button></div></div>'
    +(sem?'':'<div class="sth-seek"><span id="sthpT">0:00</span><input id="sthpS" type="range" min="0" max="1000" value="0" oninput="STHymn.seek(this.value)" aria-label="Posição"><span id="sthpD">0:00</span></div>')
-   +'<div id="sth-sync" class="sth-stz"></div>':'')+gapNote+q;
+   +'<div id="sth-sync" class="sth-stz"></div>':'')+gapNote;
  paintSync();
 }
 function paintSync(){const el=$('sth-sync');if(!el)return;const sy=S.sync;if(!sy||!S.cur||S.cur.n!==sy.n||!sy.manual){el.innerHTML='';el.className='sth-stz';return}
