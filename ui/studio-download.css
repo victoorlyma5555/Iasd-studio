@@ -1,0 +1,18 @@
+/* IASD Studio: apresentação do instalador na página inicial. */
+.studio-download{display:flex;align-items:center;gap:24px;margin:24px 0;padding:30px;border:1px solid rgba(var(--au-w),.14);border-radius:24px;background:radial-gradient(ellipse at top left,rgba(var(--au-b-rgb),.15),transparent 65%),linear-gradient(135deg,var(--au-card1),var(--au-card2));color:var(--au-tx);text-align:left}
+.studio-download-symbol{flex:0 0 68px;width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:rgba(var(--au-a1-rgb),.12);color:var(--au-a1)}
+.studio-download-symbol svg{width:46px;height:46px}
+.studio-download-copy{flex:1;min-width:0}
+.studio-download-kicker{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--au-a1)}
+.studio-download-copy h2{margin:8px 0;font:800 clamp(25px,3vw,34px)/1.15 "Bricolage Grotesque",Inter,sans-serif;color:var(--au-tx)}
+.studio-download-copy p{max-width:590px;margin:0;font-size:14px;line-height:1.65;color:var(--au-mu)}
+.studio-download-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.studio-download-meta>span{padding:6px 10px;border:1px solid rgba(var(--au-w),.14);border-radius:8px;font-size:12px;color:var(--au-tx)}
+.studio-download-action{flex:0 0 240px;max-width:100%}
+.studio-download-button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:12px 18px;border-radius:12px;background:linear-gradient(135deg,var(--au-a1),var(--au-a2));color:var(--au-on);text-decoration:none;font-size:14px;font-weight:800;transition:transform .15s}
+.studio-download-button:hover{transform:translateY(-2px);color:var(--au-on)}
+.studio-download-button:focus-visible{outline:3px solid var(--au-tx);outline-offset:4px}
+.studio-download-action small{display:block;margin-top:12px;font-size:11px;line-height:1.6;color:var(--au-mu)}
+@media(max-width:1100px){.studio-download{flex-wrap:wrap}.studio-download-action{flex-basis:100%;display:flex;align-items:center;gap:20px}.studio-download-action small{margin:0}.studio-download-button{flex-shrink:0}}
+@media(max-width:600px){.studio-download{gap:16px;padding:22px 18px;border-radius:20px}.studio-download-symbol{flex-basis:52px;width:52px;height:52px}.studio-download-symbol svg{width:36px;height:36px}.studio-download-copy{flex-basis:100%}.studio-download-action{display:block}.studio-download-action small{margin-top:12px}.studio-download-kicker{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.studio-download-button{transition:none}}
