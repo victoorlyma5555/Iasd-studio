@@ -250,6 +250,7 @@ const lessonX=L=>((L&&L.blocks)||[]).filter(x=>x.kind==='x'&&x.opts&&x.opts.leng
 function mkLessonMC(b,L,scope){
  const own=b&&b.kind==='x'&&(b.keys||[]).includes('X')&&scope!=='tema'?b:null;
  const x=own||(scope==='q'?null:shuffle(lessonX(L))[0]);if(!x)return null;
+ if(x.keys.filter(k=>k==='X').length>1){const i=Math.floor(Math.random()*x.opts.length);return {type:'mc',kind:'vf',ref:'',prompt:clip(x.text,140)+' — '+clip(x.opts[i],150),opts:['Correta','Incorreta'],answer:x.keys[i]==='X'?0:1,secs:18,head:'Confira esta alternativa'}}
  const right=x.opts[x.keys.indexOf('X')],opts=shuffle(x.opts.map(o=>clip(o,110)));
  return {type:'mc',kind:'quiz',ref:'',prompt:clip(x.text,150),opts,answer:opts.indexOf(clip(right,110)),secs:18,head:'Escolha a resposta certa'}}
 async function build(b,L,kind,scope){
@@ -469,7 +470,7 @@ function gradeEffect(p){
 }
 function stageTally(){
  const S2=F.stage;if(!S2)return;const b=S2.b,t=$('stg-tally');if(!t||b.kind!=='x'||!b.opts)return;
- const list=ansList(S2.bid).filter(a=>S2.shown.has(a.id)),counts=b.opts.map(o=>list.filter(a=>a.text===o).length),mx=Math.max(1,...counts);
+ const list=ansList(S2.bid).filter(a=>S2.shown.has(a.id)),counts=b.opts.map(o=>list.filter(a=>a.text===o||a.text.split('\n').includes(o)).length),mx=Math.max(1,...counts);
  t.innerHTML=b.opts.map((o,i)=>'<div class="stg-bar"><span>'+esc(o)+'</span><i style="--w:'+Math.round(counts[i]*100/mx)+'%"></i><em>'+counts[i]+'</em></div>').join('');
 }
 function stageNote(){

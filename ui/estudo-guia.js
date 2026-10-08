@@ -94,6 +94,7 @@ const same=(x,y)=>x===y||(x.length>=5&&y.length>=5&&lev(x,y)<=1);
 function grade(b,raw){
  raw=String(raw==null?'':raw);
  if(b.opts&&b.keys&&(b.kind==='vf'||b.kind==='x')){
+  if(b.kind==='x'&&(b.multiple||b.keys.filter(k=>k==='X').length>1)){const selected=new Set(raw.split(',').filter(x=>/^\d+$/.test(x)).map(Number));if(!selected.size)return null;const right=b.keys.map((k,i)=>k==='X'?i:null).filter(i=>i!=null),wrong=[...selected].some(i=>!right.includes(i)),complete=!wrong&&right.every(i=>selected.has(i));return complete?{r:'ok',msg:'✅ Certo! Você marcou todas as alternativas corretas.'}:wrong?{r:'no',msg:'↻ Revise as alternativas escolhidas.'}:{r:'part',msg:'🟡 Está no caminho. Há outras alternativas corretas.'}}
   if(b.kind==='x'){const i=+raw;if(raw===''||isNaN(i))return null;const ok=b.keys[i]==='X';return ok?{r:'ok',msg:'✅ Certo! Essa é a alternativa correta.'}:{r:'no',msg:'❌ Ainda não. Releia o texto bíblico e tente outra alternativa.'}}
   const a=raw.split(','),tot=b.opts.length;let hit=0,ans=0;b.opts.forEach((o,i)=>{const v=(a[i]||'').trim();if(v)ans++;if(v&&v===String(b.keys[i]).trim())hit++});
   if(!ans)return null;if(hit===tot)return {r:'ok',msg:'✅ Certo! Todas as afirmações estão corretas.'};

@@ -6,6 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const cloud=()=>window.iasdCloud||null;
 const user=()=>{try{return typeof window.iasdCurrentUser==='function'?window.iasdCurrentUser():null}catch(e){return null}};
+const canCameraPhone=()=>{try{return !!user()&&window.IASDAccess.canManage(cloudRole)}catch(e){return false}};
 const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canStudy(cloudRole)}catch(e){return false}};
 const rid=()=>Math.random().toString(36).slice(2,9);
 const $=id=>document.getElementById(id);
@@ -89,7 +90,7 @@ const I=n=>{try{return IASDUI.icon?IASDUI.icon(n):''}catch(e){return ''}};
 function page(){
  return '<div class="pg es" id="es-root"><div class="pg-card pg-empty">Carregando…</div></div>';
 }
-function after(){if(!isF()){paint();paintBar();paintDock();tryResume();return}if(S.courses===null)load().then(tryResume);else{paint();tryResume()}paintBar();paintDock()}
+function after(){if(new URLSearchParams(location.search).has('camera')){paint();window.IASDStudyDevices?.showPhone();return}if(!isF()){paint();paintBar();paintDock();tryResume();return}if(S.courses===null)load().then(tryResume);else{paint();tryResume()}paintBar();paintDock()}
 function paint(){
  const root=$('es-root');if(!root)return;
  {const cc=$('es-chat');if(cc&&cc.parentNode!==document.body){document.body.appendChild(cc);cc.classList.remove('inline')}}
@@ -167,11 +168,13 @@ function lessonHTML(){
 function nextBtn(li){const c=course();if(!c||li>=c.lessons.length-1)return '';return '<button class="pg-ghost" onclick="IASDEstudo.openLesson('+(li+1)+')">Próxima lição ›</button>'}
 function gl(b,i){return '<span class="es-bctl">'+(S.edit&&!S.room?'<button onclick="IASDEstudo.moveBlock('+i+',-1)">▲</button><button onclick="IASDEstudo.moveBlock('+i+',1)">▼</button><button onclick="IASDEstudo.editBlock('+i+')">✎</button><button onclick="IASDEstudo.delBlock('+i+')">🗑</button>':'')+'</span>'}
 function optVals(b,P){const v=((P.a||{})[b.id]||'');if(b.kind==='vf'){const a=v.split(',');while(a.length<b.opts.length)a.push('');return a}return v}
-function fmtAns(b,v){if(b.kind==='vf'){if(!/[VF]/.test(v))return ''}if(b.kind==='vf')return b.opts.map((o,i)=>(v.split(',')[i]||'—')+' · '+o).join('\n');if(b.kind==='x'){const i=+v;return isNaN(i)||v===''?'':b.opts[i]}return v}
+const multi=b=>b.kind==='x'&&(b.multiple||(b.keys||[]).filter(k=>k==='X').length>1);
+function fmtAns(b,v){if(multi(b))return v.split(',').filter(x=>/^\d+$/.test(x)&&b.opts[+x]!=null).map(x=>b.opts[+x]).join('\n');if(b.kind==='vf'){if(!/[VF]/.test(v))return ''}if(b.kind==='vf')return b.opts.map((o,i)=>(v.split(',')[i]||'—')+' · '+o).join('\n');if(b.kind==='x'){const i=+v;return isNaN(i)||v===''?'':b.opts[i]}return v}
 function optsHTML(b,P,editing){
  const v=optVals(b,P),dis=editing?' disabled':'';
  if(b.kind==='vf')return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<div class="es-opt"><span>'+esc(o)+'</span><span class="es-vf"><button'+dis+' class="'+(v[i]==='V'?'on v':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'V\')">V</button><button'+dis+' class="'+(v[i]==='F'?'on f':'')+'" onclick="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'F\')">F</button></span></div>').join('')+'</div>';
- return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+b.opts.map((o,i)=>'<label class="es-opt"><input type="radio"'+dis+' name="o-'+esc(b.id)+'" '+(String(v)===String(i)?'checked':'')+' onchange="IASDEstudo.setOpt(\''+b.id+'\','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
+ const many=multi(b),selected=String(v).split(',');
+ return '<div class="es-opts" data-oid="'+esc(b.id)+'">'+(many?'<small>Marque todas as alternativas corretas.</small>':'')+b.opts.map((o,i)=>'<label class="es-opt"><input type="'+(many?'checkbox':'radio')+'"'+dis+' name="o-'+esc(b.id)+'" '+((many?selected.includes(String(i)):String(v)===String(i))?'checked':'')+' onchange="IASDEstudo.setOpt('+jq(b.id)+','+i+',\'x\')"><span>'+esc(o)+'</span></label>').join('')+'</div>';
 }
 function gabText(b){
  if(!b.opts||!b.keys)return '';
@@ -344,7 +347,7 @@ async function toggleVerse(key,ref,remote){
 function markChips(){document.querySelectorAll('.es-chip').forEach(c=>{const m=(c.getAttribute('onclick')||'').match(/toggleVerse\('([^']+)'/);if(m)c.classList.toggle('on',!!S.openV[m[1]])})}
 function setOpt(bid,idx,val){
  const L=lessonSrc(),li=L.li!=null?L.li:S.li,b=L.blocks.find(x=>x.id===bid);if(!b)return;const P=lp(li);
- if(b.kind==='vf'){const a=optVals(b,P);a[idx]=a[idx]===val?'':val;P.a[bid]=a.join(',')}else P.a[bid]=String(idx);
+ if(b.kind==='vf'){const a=optVals(b,P);a[idx]=a[idx]===val?'':val;P.a[bid]=a.join(',')}else if(multi(b)){let a=String(P.a[bid]||'').split(',').filter(x=>x!=='');a=a.includes(String(idx))?a.filter(x=>x!==String(idx)):a.concat(String(idx));P.a[bid]=a.sort((a,b)=>+a-+b).join(',')}else P.a[bid]=String(idx);
  P.updated=Date.now();saveProg();
  document.querySelectorAll('.es-opts').forEach(old=>{if(old.getAttribute('data-oid')===bid)old.outerHTML=optsHTML(b,P,false)});
  paintSend(bid);
@@ -427,7 +430,7 @@ async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().
  const ok=await startRoom(v,false);if(ok&&S.room)toast('Aguardando o dirigente…')}
 function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();
  if(!l||S.view!=='lesson'){R.lesson=null;send('st',{lesson:null,bi:-1,rev:{}});saveRoom();return}
- R.lesson={id:l.id,li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev,revKeys:R.revKeys||{},course:courseInfo()});saveRoom()}
+ R.lesson={id:l.id,li:S.li,title:l.title,blocks:(l.blocks||[]).map(b=>{const o={...b};if(multi(b))o.multiple=true;delete o.guide;delete o.note;delete o.keys;return o})};send('st',{lesson:R.lesson,bi:R.bi,rev:R.rev,revKeys:R.revKeys||{},course:courseInfo()});saveRoom()}
 function setPos(i){const R=S.room;if(!R||!R.host)return;R.bi=i;send('pos',{bi:i});markCur(false)}
 function markCur(scroll){const R=S.room;if(!R)return;document.querySelectorAll('.es-b').forEach(el=>el.classList.toggle('es-cur',R.bi===+el.dataset.bi));
  if(scroll&&R.follow){const el=document.querySelector('.es-b.es-cur');if(el)el.scrollIntoView({block:'center',behavior:'smooth'})}}
@@ -511,7 +514,7 @@ function paintBar(){
   +'<button class="es-bt es-exit" onclick="IASDEstudo.leaveAsk()" aria-label="'+(R.host?'Encerrar a sala':'Sair da sala')+'" title="'+(R.host?'Encerrar a sala':'Sair da sala')+'">'+(R.host?'Encerrar':'Sair')+'</button></div>'
   +(R.rxOpen&&!rxOff?'<div class="es-rxp">'+['🙏','👍','❤️','😮','👏','😂'].map(e=>'<button type="button" onclick="IASDEstudo.react('+jq(e)+')">'+e+'</button>').join('')+'</div>':'')
   +'<div class="es-panel" id="es-panel" '+(R.listOpen?'':'hidden')+'>'+names.map(p=>'<div><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b>'+(p.host?'<i>dirigente</i>':'')+(p.hand?' ✋':'')+(p.mic?' 🎙':'')+(p.cam?' 📷':'')+(p.away?' <small class="es-aw">fora da lição</small>':'')
-   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom('+jq(p.id)+')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
+   +(!p.self&&v&&(R.peers[p.id]||{}).mic!==undefined?'<button class="es-mt" onclick="IASDEstudo.muteFrom('+jq(p.id)+')" title="Silenciar o som desta pessoa só no seu aparelho">'+(R.vmute[p.id]?'🔇 sem som':'🔈 som')+'</button>':'')+'</div>').join('')+'<button type="button" class="es-leave" onclick="IASDStudyDevices.open()">🎙 Microfone e câmera</button><button type="button" class="es-leave" onclick="IASDEstudo.leaveAsk()">'+(R.host?'⛔ Encerrar a sala':'🚪 Sair da sala')+'</button></div>';
  paintHost();paintChat();paintAway();
 }
 /* clicar fora de qualquer caixinha da sala (participantes, reações, chat) fecha a caixinha */
@@ -582,6 +585,7 @@ async function onSig(m){
 }
 function closePeer(id){const V=S.room&&S.room.voice;if(!V)return;const pc=V.pcs[id];if(pc){try{pc.close()}catch(e){}delete V.pcs[id]}delete V.tiles[id];dropAudio(id);paintDock()}
 function stopVoice(silent){
+ window.IASDStudyDevices?.stopPhone();
  const R=S.room;if(!R||!R.voice)return;const V=R.voice;
  Object.keys(V.pcs).forEach(id=>{try{V.pcs[id].close()}catch(e){}});
  Object.keys(V.aud).forEach(dropAudio);Object.keys(V.an).forEach(id=>dropLevel(id));
@@ -589,23 +593,36 @@ function stopVoice(silent){
  R.voice=null;if(silent!==true){track();paintBar();paintDock()}
 }
 async function toggleMic(){
+ if(window.IASDStudyDevices?.phoneMicActive()){window.IASDStudyDevices.disablePhoneMic();stopMic();return}
  const V=ensureVoice();if(!V)return;
   if(V.mic){stopMic();return}
  if(bcFull())return;
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Este navegador não permite microfone (use HTTPS).');return}
- let st;try{st=await navigator.mediaDevices.getUserMedia({audio:AUDIO_C})}catch(e){toast('Permita o microfone nas configurações do navegador para falar.');return}
+ let st;try{st=await navigator.mediaDevices.getUserMedia({audio:{...AUDIO_C,...(window.IASDStudyDevices?.micConstraints()||{})}})}catch(e){toast('Permita o microfone nas configurações do navegador para falar.');return}
  if(S.room?.voice!==V){st.getTracks().forEach(t=>t.stop());return;}const t=st.getAudioTracks()[0];if(!t){toast('Nenhum microfone disponível.');return;}V.aTrack=t;V.mic=true;t.onended=()=>{if(V.aTrack===t)stopMic()};
  Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(t).catch(()=>{}));syncVoicePeers();
  actx();watchLevel('me',new MediaStream([t]));
  applyAudio();toast('Microfone ligado. Para aparelhos próximos, use Mesmo ambiente.');track();paintBar();paintDock();refreshLobby();
 }
+/* Troca a fonte sem abrir outra participação na sala. Falhas restauram a fonte anterior. */
+async function replaceMediaTrack(kind,t,source){
+ const R=S.room,V=R&&ensureVoice();if(!V){t?.stop();throw Error('Entre na sala antes de escolher o dispositivo.')}
+ const field=kind==='audio'?'aTrack':'vTrack',flag=kind==='audio'?'mic':'cam',sender=kind==='audio'?'aT':'vT',old=V[field],oldSource=V[kind+'Source'];
+ const pcs=Object.values(V.pcs),results=await Promise.allSettled(pcs.map(pc=>pc[sender].sender.replaceTrack(t)));
+ if(results.some(r=>r.status==='rejected')||S.room!==R||R.voice!==V){await Promise.allSettled(pcs.map(pc=>pc[sender].sender.replaceTrack(S.room===R?old:null)));t?.stop();throw Error('Não foi possível trocar o dispositivo. Tente novamente.')}
+ V[field]=t;V[flag]=!!t;V[kind+'Source']=source||'local';if(old&&old!==t&&oldSource!=='phone')old.stop();
+ if(t)t.onended=()=>{if(S.room===R&&V[field]===t)(kind==='audio'?stopMic:stopCam)()};
+ if(kind==='audio'){dropLevel('me');if(t)watchLevel('me',new MediaStream([t]));applyAudio()}
+ syncVoicePeers();track();paintBar();paintDock();refreshLobby();
+}
 function stopMic(){
  const V=S.room&&S.room.voice;if(!V||!V.mic)return;V.mic=false;const t=V.aTrack;V.aTrack=null;
- Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(null).catch(()=>{}));if(t)t.stop();dropLevel('me');
+ Object.values(V.pcs).forEach(pc=>pc.aT.sender.replaceTrack(null).catch(()=>{}));if(t&&V.audioSource!=='phone')t.stop();dropLevel('me');
  applyAudio();track();syncVoicePeers();paintBar();paintDock();refreshLobby();
 }
-function muteMic(){const V=S.room&&S.room.voice;if(V&&V.mic){stopMic();toast('O dirigente pediu silêncio. Seu microfone foi desligado.')}}
+function muteMic(){const V=S.room&&S.room.voice;if(V&&V.mic){window.IASDStudyDevices?.disablePhoneMic();stopMic();toast('O dirigente pediu silêncio. Seu microfone foi desligado.')}}
 async function toggleCam(){
+ if(window.IASDStudyDevices?.phoneActive()){window.IASDStudyDevices.stopPhone();return}
  const V=ensureVoice();if(!V)return;
  if(V.cam){stopCam();return}
  if(bcFull())return;
@@ -862,6 +879,7 @@ function cleanBlock(b){
  const o={id:str(b.id||rid(),24).replace(/[^\w-]/g,'')||rid(),t:b.t};
  if(b.text!=null)o.text=str(b.text,9000);if(b.h!=null)o.h=str(b.h,120);if(b.ref!=null)o.ref=str(b.ref,80);
  if(b.refs)o.refs=arr(b.refs,12);if(b.guide!=null)o.guide=str(b.guide,6000);if(b.note!=null)o.note=str(b.note,9000);
+ if(b.multiple)o.multiple=true;
  if(b.opts){o.opts=arr(b.opts,12);o.keys=arr(b.keys,12);o.kind=b.kind==='x'?'x':'vf'}
  if(b.items)o.items=arr(b.items,30);
  return o;
@@ -876,5 +894,5 @@ async function importFile(inp){
  saveCourse(true);S.edit=false;paint();toast('Importado: '+out.length+' lições.')}
 
 window.IASDEstudo={setSoundGroup,onHowl,sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
-window.IASDEstudoCore={stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
+window.IASDEstudoCore={canCameraPhone,ensureVoice,stopMic,stopCam,replaceMediaTrack,mediaConstraints:()=>({audio:AUDIO_C,video:VIDEO_C}),ice:async()=>{await loadTurn();return ICE()},stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
 })();
