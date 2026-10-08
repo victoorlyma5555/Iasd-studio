@@ -611,7 +611,7 @@ async function replaceMediaTrack(kind,t,source){
  const pcs=Object.values(V.pcs),results=await Promise.allSettled(pcs.map(pc=>pc[sender].sender.replaceTrack(t)));
  if(results.some(r=>r.status==='rejected')||S.room!==R||R.voice!==V){await Promise.allSettled(pcs.map(pc=>pc[sender].sender.replaceTrack(S.room===R?old:null)));t?.stop();throw Error('Não foi possível trocar o dispositivo. Tente novamente.')}
  V[field]=t;V[flag]=!!t;V[kind+'Source']=source||'local';if(old&&old!==t&&oldSource!=='phone')old.stop();
- if(t)t.onended=()=>{if(S.room===R&&V[field]===t)(kind==='audio'?stopMic:stopCam)()};
+ if(t){t.onended=()=>{if(S.room===R&&V[field]===t)(kind==='audio'?stopMic:stopCam)()};if(kind==='video')t.onmute=t.onunmute=()=>{if(S.room===R&&V[field]===t){paintDock();refreshLobby()}}}
  if(kind==='audio'){dropLevel('me');if(t)watchLevel('me',new MediaStream([t]));applyAudio()}
  syncVoicePeers();track();paintBar();paintDock();refreshLobby();
 }
@@ -732,7 +732,7 @@ function hideFrom(id){const R=S.room;if(!R)return;R.vhide[id]=!R.vhide[id];paint
 /* ---------- bate-papo antes do estudo + painel do dirigente ---------- */
 function lobbyHTML(){
  const R=S.room,host=R.host,V=R.voice||{},n=Object.keys(R.peers).length+1;
- return '<div class="es-hero"><div><span class="es-kick">ANTES DO ESTUDO · '+n+' NA SALA</span><h1>Bate-papo da <em>turma</em></h1><p>Um momento para se cumprimentar. Quando o dirigente iniciar, todos vão juntos para a lição.</p></div></div>'
+ return (host?'<div class="es-lobby-nav"><button type="button" class="pg-gold" onclick="IASDEstudo.setMode(\'study\')">← Voltar à lição</button></div>':'')+'<div class="es-hero"><div><span class="es-kick">ANTES DO ESTUDO · '+n+' NA SALA</span><h1>Bate-papo da <em>turma</em></h1><p>Um momento para se cumprimentar. Quando o dirigente iniciar, todos vão juntos para a lição.</p></div></div>'
   +'<div class="pg-card"><div class="es-priv"><span aria-hidden="true">🔒</span><p><b>Você está no controle.</b> Seu microfone e sua câmera começam desligados e só ligam quando você tocar nos botões abaixo. Nada é gravado nem salvo. Dá para desligar quando quiser e ocultar o vídeo de qualquer pessoa.</p></div>'
   +'<div id="es-lgrid" class="es-lgrid"></div>'
   +'<div class="es-calls"><button type="button" class="es-call'+(V.mic?' on':'')+'" onclick="IASDEstudo.toggleMic()"><i>🎙</i><span>Microfone</span><small>'+(V.mic?'Ligado':'Desligado')+'</small></button>'

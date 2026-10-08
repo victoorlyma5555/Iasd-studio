@@ -460,3 +460,9 @@ html[data-theme="light"] .es-expc h4{color:#a8690a}
 @media(max-height:480px){.stg-spotc .stg-pic{width:60px;height:60px}.stg-feedback-symbol{font-size:48px}.stg-feedback strong,.stg-feedback span{font-size:16px}.stg-feedback b{font-size:24px}}
 
 #es-devices .es-expc{display:flex;flex-direction:column;gap:12px}#es-devices select,#es-devices input{box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid var(--iu-bd);border-radius:10px;background:var(--iu-sf2);color:var(--iu-tx);font-size:16px}#es-devices button:not(.es-expx){min-height:44px;border:1px solid var(--iu-bd);border-radius:10px;padding:10px;background:var(--iu-sf2);color:var(--iu-tx);font:600 14px Inter,system-ui;cursor:pointer}#es-devices button:disabled{opacity:.5;cursor:default}.study-camera-qr{width:min(220px,100%);margin:auto;background:#fff;border-radius:10px}.study-camera-qr svg{display:block;width:100%;height:auto}.study-camera-preview{display:block;width:100%;max-height:32dvh;object-fit:contain;background:#07101e;border-radius:12px}.study-camera-preview:not([src]){min-height:80px}#es-devices p{margin:0;overflow-wrap:anywhere}#es-devices [hidden]{display:none!important}#es-devices .es-expb{width:min(500px,100%)}
+
+/* Quadros compactos mesmo com apenas uma pessoa. */
+.es-lgrid{grid-template-columns:repeat(auto-fit,minmax(180px,280px));justify-content:center;max-height:52dvh;overflow:auto;padding:4px}
+.es-lgrid .es-pic{max-height:210px;aspect-ratio:4/3}
+.es-lobby-nav{position:sticky;top:0;z-index:5;background:var(--au-bg,#0b1730);padding:8px 0;margin-bottom:8px}
+@media(max-width:640px){.es-lgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.es-lgrid .es-pic{max-height:150px}}
