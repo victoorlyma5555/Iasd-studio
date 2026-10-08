@@ -1,0 +1,44 @@
+name: Publicar canal do IASD Studio
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'releases/studio/studio-channel.json'
+      - '.github/workflows/iasd-studio-channel.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iasd-studio-channel
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Baixar o instalador inicial publicado
+        run: curl --fail --location --retry 3 --output installer.exe https://github.com/victoorlyma5555/Iasd-studio/releases/download/iasd-studio-channel/IASD-Studio-Setup.exe
+      - name: Validar assinatura e integridade do instalador
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs'), crypto = require('node:crypto');
+          const doc = JSON.parse(fs.readFileSync('releases/studio/studio-channel.json', 'utf8'));
+          const key = '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAkYxa7gpOaFLvzSMonsFsz5+BhWSdBXwnqu6GgR4cnJg=\n-----END PUBLIC KEY-----\n';
+          if (!crypto.verify(null, Buffer.from(doc.payload), key, Buffer.from(doc.signature, 'base64'))) throw Error('Assinatura inválida');
+          const payload = JSON.parse(doc.payload), entry = payload.latest;
+          if (payload.appId !== 'br.iasd.studio' || payload.channel !== 'studio') throw Error('Canal inválido');
+          if (!/^IASD-Studio-Setup-\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\.exe$/.test(entry.url)) throw Error('Nome inválido');
+          const bytes = fs.readFileSync('installer.exe');
+          if (bytes.length !== entry.size || crypto.createHash('sha512').update(bytes).digest('base64') !== entry.sha512) throw Error('Instalador não corresponde ao manifesto');
+          fs.mkdirSync('channel-assets', {recursive: true});
+          fs.copyFileSync('installer.exe', 'channel-assets/' + entry.url);
+          fs.copyFileSync('releases/studio/studio-channel.json', 'channel-assets/studio-channel.json');
+          NODE
+      - name: Publicar arquivos no canal existente
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload iasd-studio-channel channel-assets/* --repo victoorlyma5555/Iasd-studio
