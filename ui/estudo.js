@@ -392,7 +392,7 @@ async function startRoom(code,host,opts){
  listen('st',({payload})=>{if(R.host)return;R.lesson=payload.lesson||null;R.bi=payload.bi;R.rev=payload.rev||{};if(payload.revKeys&&typeof payload.revKeys==='object')R.revKeys=payload.revKeys;if(payload.course)R.course=payload.course;if(R.mode==='lobby'){paintBar();return}if(!R.lesson){paint();paintBar();return}if(R.follow){S.view='lesson';paint()}else paintBar()});
  listen('pos',({payload})=>{if(R.host)return;R.bi=payload.bi;markCur(true)});
  listen('rev',({payload})=>{R.rev[payload.bid]=payload.on;if(Array.isArray(payload.keys)&&/^[\w-]{1,64}$/.test(String(payload.bid)))(R.revKeys=R.revKeys||{})[payload.bid]=payload.keys.slice(0,12).map(x=>String(x).slice(0,2));FX('stage',payload);paintReveals()});
- listen('gr',({payload})=>{if(payload.to!==me)return;S.verdict[payload.bid]={r:payload.r,msg:payload.msg};const L=lessonSrc();markMe(L&&L.li!=null?L.li:S.li,payload.bid,payload.r);paintSend(payload.bid)});
+ listen('gr',({payload})=>{FX('gr',payload);if(payload.to!==me||payload.text!=null&&payload.text!==myAnswer(payload.bid))return;S.verdict[payload.bid]={r:payload.r,msg:payload.msg};const L=lessonSrc();markMe(L&&L.li!=null?L.li:S.li,payload.bid,payload.r);paintSend(payload.bid)});
  listen('ans',({payload})=>{if(R.host)gradeIncoming(payload);(R.ans[payload.bid]=R.ans[payload.bid]||{})[payload.id]={name:payload.name,text:payload.text};FX('ans',payload);paintReveals()});
  listen('mf',({payload})=>{if(payload.to===me)handleMf(payload.stage,payload.from)});
  listen('exp',({payload})=>{if(!R.host)showExp(payload)});
@@ -733,8 +733,8 @@ function toggleHost(){const R=S.room;if(!R||!R.host)return;R.hostOpen=!R.hostOpe
 function curQ(){const R=S.room;if(!R||R.bi<0)return null;const L=lessonSrc();const b=L&&L.blocks[R.bi];return b&&b.t==='q'?b:null}
 function challenge(kind,bi){const R=S.room;if(!R||!R.host)return;
  if(bi!=null)setPos(bi);
- const sc=R.chScope||(curQ()?'q':'tema'),free=sc==='tema'||['quiz','who','ord','cloud','vf','auto'].includes(kind||'auto');
- if(!free&&(R.bi<0||!curQ())){toast('Toque em “▶ Levar a turma” na pergunta que a turma está estudando.');return}
+ const sc='q';
+ if(!curQ()){toast('Selecione a pergunta atual em “▶ Levar a turma”.');return}
  R.hostOpen=false;R.chOpen=false;paintHost();window.IASDEstudoFX&&IASDEstudoFX.launch(R.bi,kind||'auto',sc)}
 function revealCur(){const R=S.room;if(!R||!R.host)return;const b=curQ();if(!b){toast('Toque em “▶ Levar a turma” na pergunta que a turma está estudando.');return}R.hostOpen=false;paintHost();revealToggle(b.id)}
 function setScope(v){const R=S.room;if(!R)return;R.chScope=v==='tema'?'tema':'q';paintHost()}
@@ -768,7 +768,7 @@ function paintHost(){
   +'<section><h4>Momento da sala · '+(peers.length+1)+' pessoa'+(peers.length?'s':'')+'</h4><div class="es-ptg">'+tile('💬','Bate-papo com câmeras','IASDEstudo.setMode(\'lobby\')',lobby?'on':'')+tile('📖','Estudo da lição','IASDEstudo.setMode(\'study\')',lobby?'':'on')+'</div></section>'
   +'<section><h4>Atividades</h4><p class="es-pq">'+(q?'Pergunta atual: <b>'+esc(q.text.length>90?q.text.slice(0,90)+'…':q.text)+'</b>':'Toque em “▶ Levar a turma” numa pergunta da lição para ligar as atividades a ela.')+'</p>'
   +'<div class="es-ptg">'+tile('🎯','Soltar desafio','IASDEstudo.setChooser()',R.chOpen?'on':'')+tile('🎬','Revelar respostas','IASDEstudo.revealCur()')+tile('☕','Intervalo 5 min','IASDEstudo.breakGo(300)')+tile('☕','Intervalo 10 min','IASDEstudo.breakGo(600)')+'</div>'
-  +(R.chOpen?'<div class="es-scope"><span>Sobre</span><button type="button" class="'+(sc0==='tema'?'':'on')+'" onclick="IASDEstudo.setScope(\'q\')">Esta pergunta</button><button type="button" class="'+(sc0==='tema'?'on':'')+'" onclick="IASDEstudo.setScope(\'tema\')">Tema da lição</button></div><div class="es-pchips">'+[['auto','🎲','Surpresa'],['verso','✍️','Completar o versículo'],['ref','📍','Qual é a referência?'],['vf','✔✖','Verdadeiro ou falso'],['quiz','🧠','Múltipla escolha da lição'],['ord','🔢','Colocar na ordem'],['cloud','☁️','Nuvem de palavras']].map(a=>'<button type="button" onclick="IASDEstudo.challenge('+jq(a[0])+')"><i>'+a[1]+'</i>'+a[2]+'</button>').join('')+'</div>':'')+'</section>'
+  +(R.chOpen?'<div class="es-pchips">'+[['auto','🎲','Surpresa'],['verso','✍️','Completar o versículo'],['ref','📍','Qual é a referência?'],['vf','✔✖','Verdadeiro ou falso'],['quiz','🧠','Múltipla escolha desta pergunta'],['ord','🔢','Colocar na ordem'],['cloud','☁️','Nuvem de palavras']].map(a=>'<button type="button" onclick="IASDEstudo.challenge('+jq(a[0])+')"><i>'+a[1]+'</i>'+a[2]+'</button>').join('')+'</div>':'')+'</section>'
   +'<section><h4>Controle dos alunos</h4>'+sw('Travar versículos','Só veem os versículos que você abrir.',L.v,'v')+sw('Travar a lição','Ficam onde você estiver, sem leitura livre.',L.f,'f')+sw('Pausar o chat','Só você escreve no chat.',L.c,'c')+sw('Pausar as reações','Esconde o botão de reações.',L.r,'r')
   +'<div class="es-ptg">'+tile('🔇','Pedir silêncio a todos','IASDEstudo.muteAll()')+'</div></section>'
   +'<section><h4>Mãos levantadas</h4>'+(hands.length?hands.map(([id,p])=>'<div class="es-hand"><span class="es-av">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span><b>'+esc(p.name||'?')+'</b><button type="button" onclick="IASDEstudo.callPeer('+jq(id)+')">🙋 Chamar</button></div>').join(''):'<p class="es-note">Ninguém pediu a palavra.</p>')+'</section>'

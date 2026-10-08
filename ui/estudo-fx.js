@@ -249,25 +249,27 @@ function mkCloud(b,L){const t=L&&L.title?String(L.title).replace(/^\d+\s*[-–.:
 const lessonX=L=>((L&&L.blocks)||[]).filter(x=>x.kind==='x'&&x.opts&&x.opts.length>=2&&(x.keys||[]).includes('X'));
 function mkLessonMC(b,L,scope){
  const own=b&&b.kind==='x'&&(b.keys||[]).includes('X')&&scope!=='tema'?b:null;
- const x=own||shuffle(lessonX(L))[0];if(!x)return null;
+ const x=own||(scope==='q'?null:shuffle(lessonX(L))[0]);if(!x)return null;
  const right=x.opts[x.keys.indexOf('X')],opts=shuffle(x.opts.map(o=>clip(o,110)));
  return {type:'mc',kind:'quiz',ref:'',prompt:clip(x.text,150),opts,answer:opts.indexOf(clip(right,110)),secs:18,head:'Escolha a resposta certa'}}
 async function build(b,L,kind,scope){
- const vb=(b&&b.refs&&b.refs.length&&scope!=='tema')?b:{text:'',refs:lessonRefs(L)};
- const vfb=(b&&b.kind==='vf'&&scope!=='tema')?b:shuffle(lessonVF(L))[0]||null;
+ if(scope==='q'&&!b)return null;
+ const vb=scope==='q'?{text:b.text,refs:b.refs||[]}:((b&&b.refs&&b.refs.length)?b:{text:'',refs:lessonRefs(L)});
+ const vfb=(b&&b.kind==='vf'&&scope!=='tema')?b:(scope==='q'?null:shuffle(lessonVF(L))[0]||null);
  const maker={verso:()=>vb.refs.length&&mkVerso(vb),ref:()=>vb.refs.length&&mkRef(vb),vf:()=>mkVF(vfb),quiz:()=>mkLessonMC(b,L,scope)||mkVF(vfb),who:()=>mkLessonMC(b,L,scope)||mkVF(vfb),
   ord:()=>vb.refs.length&&mkOrdVerse(vb),cloud:()=>mkCloud(b,L)};
  const tries=kind&&kind!=='auto'?[kind]:shuffle(['verso','ref','vf','ord','quiz']);
  for(const t of tries){const s=await maker[t]();if(s)return s}
- return mkCloud(b,L);
+ return scope==='q'&&kind&&kind!=='auto'&&kind!=='cloud'?null:mkCloud(b,L);
 }
 async function launch(bi,kind,scope){
+ scope='q';
  const k=K(),R=k.S.room;if(!R||!R.host)return;
  if(F.hostCh&&F.hostCh.live){k.toast('Já há um desafio em andamento.');return}
  const L=k.lessonSrc(),blk=L&&bi>=0?L.blocks[bi]:null,b=scope!=='tema'&&blk&&blk.t==='q'?blk:null;
  k.toast('Preparando o desafio…');
  const s=await build(b,L,kind,scope);
- if(!s){k.toast('Não consegui montar este desafio. Tente outro tipo.');return}
+ if(!s){k.toast('A pergunta atual não tem conteúdo para este tipo de desafio. Escolha outro tipo ou use a lição inteira.');return}
  const cid=rid();
  F.hostCh={cid,type:s.type,key:s.type==='ord'?s.key:s.answer,answers:{},live:true,secs:s.secs,t0:Date.now()+1700,end:null};
  const pub={cid,type:s.type,kind:s.kind,head:s.head,title:b?clip(b.text,90):(L&&L.title?clip(L.title,70):''),ref:s.ref,prompt:s.prompt,opts:s.opts||[],hints:s.hints||null,secs:s.secs};
@@ -417,12 +419,8 @@ function stageRun(){
   st.shown.add(next.id);addCard(next);
  },720);
 }
-/* a janela de respostas fecha sozinha, para todos, um tempo depois da última resposta aparecer */
-function armClose(st){
- clearTimeout(st.cl);const k=K(),R=k.S.room;if(!R)return;
- const list=ansList(st.bid),chars=list.reduce((n,a)=>n+String(a.text||'').length,0),all=list.length>=Object.keys(R.peers).length+1;
- const dwell=(all?8000:12000)+Math.min(9000,chars*30);
- st.cl=setTimeout(()=>{if(F.stage!==st)return;if(R.host)stageEnd();else stageClose(true)},dwell)}
+/* O dirigente encerra a revelação para todos quando terminar de avaliar. */
+function armClose(st){clearTimeout(st.cl)}
 function fmtFor(b,text){return String(text||'')}
 /* V/F: mostra cada afirmação com ✔ (acertou) ou ✖ (errou), usando o gabarito revelado pelo dirigente */
 function keysFor(bid){const k=K(),R=k.S.room;if(!R)return null;const K1=(R.revKeys||{})[bid];if(Array.isArray(K1))return K1;
@@ -443,10 +441,31 @@ function addCard(a){
  const g=$('stg-grid');const k=K(),R=k.S.room;if(!g||!R)return;
  const d=document.createElement('div');d.className='stg-card';d.dataset.id=a.id;d.style.setProperty('--h',hue(a.name));
  const pc=picHTML(a,false);
- d.innerHTML=pc.html+'<b class="stg-nm">'+esc(a.id===R.me?a.name+' (você)':a.name)+'</b><p class="stg-tx"></p>';
+ d.innerHTML=pc.html+'<b class="stg-nm">'+esc(a.id===R.me?a.name+' (você)':a.name)+'</b><p class="stg-tx"></p>'+gradeControls(a.id);
  bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(R.host)k.send('hl',{bid:F.stage&&F.stage.bid,id:a.id}),spot(F.stage&&F.stage.bid,a.id)};
- g.appendChild(d);SFX.pop();{const vf=vfView(F.stage&&F.stage.bid,a.text);if(vf)setTimeout(()=>{const t=d.querySelector('.stg-tx');if(t)t.innerHTML=vf},380);else setTimeout(()=>typeText(d.querySelector('.stg-tx'),a.text),380)}d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
+ g.appendChild(d);bindGrades(d);SFX.pop();{const vf=vfView(F.stage&&F.stage.bid,a.text);if(vf)setTimeout(()=>{const t=d.querySelector('.stg-tx');if(t)t.innerHTML=vf},380);else setTimeout(()=>typeText(d.querySelector('.stg-tx'),a.text),380)}d.scrollIntoView({block:'nearest',behavior:'smooth'});stageTally();stageNote();
+}
+function gradeControls(id){
+ const R=K().S.room;if(!R||!R.host||!F.stage||F.stage.b.opts)return '';
+ return '<div class="stg-grade" data-peer="'+esc(id)+'"><button type="button" data-result="ok">✅ Certa</button><button type="button" data-result="no">↻ Errada</button></div>';
+}
+function bindGrades(root){root.querySelectorAll('.stg-grade button').forEach(btn=>btn.onclick=e=>{e.stopPropagation();grade(btn.parentElement.dataset.peer,btn.dataset.result)})}
+function grade(id,r){
+ const k=K(),R=k.S.room,st=F.stage;if(!R||!R.host||!st||st.b.opts||!['ok','no'].includes(r))return;
+ const a=ansList(st.bid).find(a=>a.id===id);if(!a)return;
+ const p={to:id,bid:st.bid,r,text:a.text,msg:r==='ok'?'✅ Certo! O dirigente confirmou sua resposta.':'↻ Vamos tentar de novo! Revise o texto bíblico.'};
+ k.send('gr',p);on('gr',p);
+}
+function gradeEffect(p){
+ const st=F.stage;if(!st||st.bid!==p.bid||!['ok','no'].includes(p.r))return;
+ const a=ansList(p.bid).find(a=>a.id===p.to);if(!a||p.text!==a.text)return;
+ const card=[...document.querySelectorAll('.stg-card')].find(d=>d.dataset.id===p.to);
+ if(card){card.dataset.result=p.r;let badge=card.querySelector('.stg-result');if(!badge){badge=document.createElement('strong');badge.className='stg-result';card.appendChild(badge)}badge.textContent=p.r==='ok'?'✅ Resposta certa!':'↻ Vamos tentar de novo';}
+ const root=$('es-stage');if(!root)return;root.querySelector('.stg-feedback')?.remove();
+ const d=document.createElement('div');d.className='stg-feedback '+p.r;d.setAttribute('role','status');
+ d.innerHTML='<div class="stg-feedback-symbol">'+(p.r==='ok'?'🌟':'💪')+'</div><strong>'+esc(a.name)+'</strong><b>'+(p.r==='ok'?'ACERTOU!':'VAMOS TENTAR DE NOVO!')+'</b>'+(p.r==='ok'?'<span>🎉 ✨ 🎊 ✨ 🎉</span>':'<span>Releia o texto bíblico. Você consegue!</span>');root.appendChild(d);
+ if(p.r==='ok')SFX.win();else SFX.chime();setTimeout(()=>d.remove(),2400);
 }
 function stageTally(){
  const S2=F.stage;if(!S2)return;const b=S2.b,t=$('stg-tally');if(!t||b.kind!=='x'||!b.opts)return;
@@ -465,9 +484,9 @@ function spot(bid,id){
  if(!id||S2.spot===id){S2.spot=null;return}
  const a=ansList(bid).find(x=>x.id===id);if(!a)return;S2.spot=id;
  const d=document.createElement('div');d.className='stg-spot';d.style.setProperty('--h',hue(a.name));
- const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><div class="stg-spt">'+(vfView(bid,a.text)||'<p>'+esc(a.text)+'</p>')+'</div><small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
+ const pc=picHTML(a,true);d.innerHTML='<div class="stg-spotc">'+pc.html+'<b>'+esc(a.name)+'</b><div class="stg-spt">'+(vfView(bid,a.text)||'<p>'+esc(a.text)+'</p>')+'</div>'+gradeControls(a.id)+'<small>'+(K().S.room.host?'Toque para fechar':'')+'</small></div>';bindPic(d,pc.ms,a.id);
  d.onclick=()=>{if(K().S.room.host){K().send('hl',{bid,id:null});spot(bid,null)}else{d.remove();S2.spot=null}};
- $('es-stage').appendChild(d);SFX.chime();if(S2.cl)armClose(S2);
+ $('es-stage').appendChild(d);bindGrades(d);SFX.chime();if(S2.cl)armClose(S2);
 }
 function stageEnd(){const k=K(),R=k.S.room;if(!R||!R.host||!F.stage)return;const bid=F.stage.bid;R.rev[bid]=false;k.send('rev',{bid,on:false});stageClose(true);k.repaintRv()}
 function stageClose(silent){const s=F.stage;if(s&&s.tm)clearInterval(s.tm);if(s)clearTimeout(s.cl);F.stage=null;const o=$('es-stage');if(o)o.remove();if(!$('es-fx'))document.body.classList.remove('es-fxon')}
@@ -493,7 +512,8 @@ function on(ev,p){
  else if(ev==='chr'&&!R.host)showResult(p);
  else if(ev==='chx'&&!R.host)closeFx();
  else if(ev==='stage'){if(p.on)stageOpen(p.bid);else stageClose(true)}
- else if(ev==='ans'){if(F.stage&&F.stage.bid===p.bid){stageRun();stageNote()}}
+ else if(ev==='ans'){if(F.stage&&F.stage.bid===p.bid){const st=F.stage;const card=[...document.querySelectorAll('.stg-card')].find(d=>d.dataset.id===p.id);if(card){card.remove();st.shown.delete(p.id)}stageRun();stageNote()}}
+ else if(ev==='gr')gradeEffect(p);
  else if(ev==='hl')spot(p.bid,p.id);
  else if(ev==='brk')breakStart(+p.secs||0);
  else if(ev==='call'&&p.to===R.me){SFX.chime();k.toast('🙋 O dirigente chamou você. Se quiser falar, ligue o microfone.');if(R.hand){R.hand=false;k.track();k.paintBar()}}
