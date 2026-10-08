@@ -9,7 +9,7 @@ html[data-palette="celeste"]{--au-bg:#d8efff;--au-bgrgb:216,239,255;--au-tx:#0b2
 html[data-palette="azulbranco"]{--au-bg:#f3f7ff;--au-bgrgb:243,247,255;--au-tx:#0f1c3a;--au-mu:#51617f;--au-w:20,40,90;--au-k:20,40,90;--au-a1:#3b82f6;--au-a1-rgb:59,130,246;--au-a2:#1d4ed8;--au-a2-rgb:29,78,216;--au-b:#60a5fa;--au-b-rgb:96,165,250;--au-c1:#2563eb;--au-c1-rgb:37,99,235;--au-c2:#0ea5e9;--au-c2-rgb:14,165,233;--au-c3:#4f46e5;--au-c3-rgb:79,70,229;--au-on:#ffffff;--au-glass:linear-gradient(160deg,rgba(255,255,255,.92),rgba(255,255,255,.7));--au-card1:#ffffff;--au-card2:#f5f8ff;--au-pop:#ffffff;--au-bgimg:radial-gradient(1100px 600px at 0% -10%,rgba(59,130,246,.18),transparent 60%),radial-gradient(900px 600px at 100% 30%,rgba(96,165,250,.16),transparent 60%),linear-gradient(180deg,#ffffff,#eef3ff)}
 html[data-skin="aurora"]{color-scheme:dark}
 html[data-skin="aurora"] body.iu{
-  --iu-bg:var(--au-bg);--iu-sf:rgba(var(--au-w),.055);--iu-sf2:rgba(var(--au-w),.08);--iu-bd:rgba(var(--au-w),.1);
+  --iu-bg:var(--au-bg);--iu-sf:var(--au-card1);--iu-sf2:var(--au-card2);--iu-bd:rgba(var(--au-w),.1);
   --iu-tx:var(--au-tx);--iu-mu:var(--au-mu);--iu-pr:var(--au-a1);--iu-gd:var(--au-a1);--iu-gr:var(--au-c1);--iu-sh:none;
   --iu-ban:linear-gradient(135deg,rgba(var(--au-a2-rgb),.28),rgba(var(--au-b-rgb),.22));
   --iu-side:76px;
@@ -348,7 +348,7 @@ html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!imp
 .bn-st.on{border-color:#ffc15e;box-shadow:0 0 0 2px rgba(255,193,94,.4)}
 
 /* ===== janelas e ferramentas: fundo sólido do tema + botão com o degradê do tema ===== */
-html[data-skin="aurora"] :is(.cv-ov,.bp-ov,.cg-ov,.es-pop-ov,.fdx-ov,.iad-ov,.vs-ov,.iasd-edit-dialog,.cover-dialog,.layout-dialog,.device-preview-dialog,.profile-crop-dialog,.auth-dialog,.welcome-dialog,.acp,.iu-sd,.es-hdr,.es-chat,#btPop,.amb-menu,.rd-bar,.vbar,.bn-dlg){
+html[data-skin="aurora"] :is(.es-expw,.sm-ask,.es-bar,.es-panel,.es-rxp,.es-dock,.cv-ov,.bp-ov,.cg-ov,.es-pop-ov,.fdx-ov,.iad-ov,.vs-ov,.iasd-edit-dialog,.cover-dialog,.layout-dialog,.device-preview-dialog,.profile-crop-dialog,.auth-dialog,.welcome-dialog,.acp,.iu-sd,.es-hdr,.es-chat,#btPop,.amb-menu,.rd-bar,.vbar,.bn-dlg){
   --iu-sf:var(--au-card1);--iu-sf2:var(--au-card2);--iu-bd:rgba(var(--au-w),.2);--iu-tx:var(--au-tx);--iu-mu:var(--au-mu);--iu-pr:var(--au-a1)}
 html[data-skin="aurora"] :is(.cv-md,.bp-sheet,.cg-box,.fdx-box,.iad-box,.auth-dialog,.welcome-dialog,.cover-dialog,.layout-dialog,.device-preview-dialog){background:linear-gradient(160deg,var(--au-card1),var(--au-card2))!important;color:var(--au-tx)!important;border:1px solid rgba(var(--au-w),.16)!important}
 html[data-skin="aurora"] :is(.cv-b.p,.bp-pri,.cv-ft .primary,.iasd-edit-actions .primary,.iasd-edit-dialog .primary,.auth-dialog .primary,.welcome-dialog .primary,.cover-dialog .primary){background:var(--au-grad)!important;color:var(--au-on)!important;border:0!important;box-shadow:0 10px 28px -10px rgba(var(--au-a2-rgb),.8)}
@@ -509,3 +509,6 @@ html[data-skin="aurora"] select option:checked{background:var(--au-a1);color:var
   html[data-skin="aurora"] body.iu .iu-side .iu-nav.on{background:rgba(var(--au-a1-rgb),.16);color:var(--au-tx);box-shadow:inset 0 0 0 1px rgba(var(--au-a1-rgb),.32)}
   html[data-skin="aurora"] body.iu .iu-side .iu-nav.on svg{color:var(--au-a1)}
 }
+
+/* Painéis de leitura e controles flutuantes precisam ocultar o conteúdo atrás. */
+html[data-skin="aurora"] :is(.es-expb,.sm-box,.es-pop,.es-chat,.es-panel,.es-rxp,.es-bar-in,.es-hdr){background:var(--au-card1);}

@@ -70,7 +70,7 @@ function explain(b,lt){
  const t=pick(b,lt),refs=[...new Set((b.refs||[]).concat(t?t[5].slice(0,3):[]))];
  const g=gabarito(b),dr=direta(b,t);let h='<div class="eg-q">'+esc(b.text)+'</div><div class="eg-d"><b>Resposta direta</b><p>'+esc(dr)+'</p></div>';
  if(g)h+='<h4>Resposta esperada</h4><ul class="eg-ul">'+g+'</ul>';
- if(b.guide)h+='<h4>Explicação</h4><p>'+nl(b.guide)+'</p>';
+ if(b.guide&&b.guide.trim()!==dr.trim())h+='<h4>Explicação</h4><p>'+nl(b.guide)+'</p>';
  if(t&&!b.guide)h+='<h4>Explicação</h4><p>'+esc(t[3])+'</p>';
  if(b.note)h+='<h4>Comentário</h4><p>'+nl(b.note)+'</p>';
  if(t&&b.guide)h+='<h4>Ensino adventista — '+esc(t[1])+'</h4><p>'+esc(t[3])+'</p><small class="eg-cr">'+esc(t[2])+'</small>';
@@ -78,7 +78,7 @@ function explain(b,lt){
  if(!t&&!b.guide&&!b.note)h+='<h4>Explicação</h4><p>Deixe a própria Bíblia responder: leia o texto indicado e peça que a turma diga com palavras simples o que ele ensina sobre Deus, sobre nós e sobre o caminho da salvação em Jesus.</p>';
  if(refs.length)h+='<h4>Base bíblica</h4><div class="eg-refs">'+refs.map(r=>'<span>📖 '+esc(r)+'</span>').join('')+'</div>';
  h+='<h4>Como conduzir</h4><ol class="eg-ul">'+base.map(x=>'<li>'+esc(x)+'</li>').join('')+(t?'<li>'+esc(t[4])+'</li>':'')+'</ol>';
- const share=(dr+'\n\n'+(b.guide||(t&&t[3])||'')).slice(0,900);
+ const share=(dr+(b.guide&&b.guide.trim()!==dr.trim()?'\n\n'+b.guide:(!b.guide&&t?'\n\n'+t[3]:''))).slice(0,900);
  return {html:h,share,refs,topic:t?t[1]:''};
 }
 

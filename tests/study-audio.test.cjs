@@ -1,0 +1,5 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{leader,muted}=require('../ui/study-audio.js');
+const p=[{id:'a',group:'sala',mic:true,host:true},{id:'b',group:'sala',mic:true},{id:'c',group:'',mic:true},{id:'d',group:'outro',mic:true},{id:'e',group:'outro',mic:true}];
+test('same physical group is never played back and remote hears one microphone',()=>{assert(muted(p,'a','b'));assert(muted(p,'b','a'));assert(!muted(p,'c','a'));assert(muted(p,'c','b'));});
+test('one device per group plays remote audio, unrelated devices remain independent',()=>{assert.equal(leader(p,'sala'),'a');assert(!muted(p,'a','c'));assert(muted(p,'b','c'));assert(!muted(p,'c','d'));assert(muted(p,'c','e'));assert(!muted([{id:'a',group:''},{id:'b',group:''}],'a','b'));});
+test('leader switches when microphone stops or participant leaves',()=>{const x=p.map(o=>({...o}));x[0].mic=false;assert.equal(leader(x,'sala'),'b');assert(!muted(x,'b','c'));assert(!muted(x,'c','b'));x[1].away=true;assert.equal(leader(x,'sala'),'a');});

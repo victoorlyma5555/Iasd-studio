@@ -15,7 +15,7 @@ function merge(a,b){ // une dois registros: vence o mais recente em cada item
   const c=src.courses[cid],t=o.courses[cid]=o.courses[cid]||{title:c.title,total:c.total,lessons:{},trophy:0};
   t.title=c.title||t.title;t.total=Math.max(t.total||0,c.total||0);t.trophy=Math.max(t.trophy||0,c.trophy||0);
   for(const li in c.lessons){const l=c.lessons[li],m=t.lessons[li]=t.lessons[li]||{t:l.t,d:0,a:{}};
-   m.t=l.t||m.t;m.d=Math.max(m.d||0,l.d||0);
+   m.t=l.t||m.t;if((l.dt||l.d||0)>=(m.dt||m.d||0)){m.d=l.d||0;m.dt=l.dt||l.d||0;}
    for(const bid in (l.a||{})){const x=l.a[bid];if(!m.a[bid]||(x.ts||0)>=(m.a[bid].ts||0))m.a[bid]=x}}}
  o.ts=Math.max(a.ts||0,b.ts||0);return o;
 }
@@ -27,8 +27,8 @@ function cur(){
  return D;
 }
 function push(){
- const u=user(),c=cloud();if(!u||!c||!tableOk)return;clearTimeout(saveT);
- saveT=setTimeout(async()=>{try{const r=await c.from('iasd_study_me').upsert({user_id:u.id,data:D,updated_at:new Date().toISOString()});if(r.error&&/does not exist|schema cache|relation/i.test(r.error.message||''))tableOk=false}catch(e){}},1200);
+ const u=user(),c=cloud();if(!u||!c||!tableOk)return;clearTimeout(saveT);const data=JSON.parse(JSON.stringify(D));
+ saveT=setTimeout(async()=>{try{if(user()?.id!==u.id)return;const r=await c.from('iasd_study_me').upsert({user_id:u.id,data,updated_at:new Date().toISOString()});if(r.error&&/does not exist|schema cache|relation/i.test(r.error.message||''))tableOk=false}catch(e){}},1200);
 }
 function save(){const d=cur();d.ts=Date.now();wr(key,d);push();try{window.dispatchEvent(new Event('iasd-study-me'))}catch(e){}}
 let loadedFor='';
@@ -38,17 +38,18 @@ async function load(){
  const u=user(),c=cloud();const d=cur();if(!u||!c||!tableOk)return d;
  try{const r=await c.from('iasd_study_me').select('data').eq('user_id',u.id).maybeSingle();
   if(r.error){if(/does not exist|schema cache|relation/i.test(r.error.message||''))tableOk=false;return d}
-  if(r.data&&r.data.data&&r.data.data.v){D=merge(D,r.data.data);wr(key,D)}}catch(e){}
+  if(user()?.id!==u.id)return d;if(r.data&&r.data.data&&r.data.data.v){D=merge(cur(),r.data.data);wr(key,D)}}catch(e){}
  return D;
 }
 function course(cid,title,total){const d=cur(),k=cid||'sala';const c=d.courses[k]=d.courses[k]||{title:title||'Estudo',total:total||0,lessons:{},trophy:0};if(title)c.title=title;if(total)c.total=total;return c}
 function lesson(c,li,title){const l=c.lessons[li]=c.lessons[li]||{t:title||'',d:0,a:{}};if(title)l.t=title;return l}
+function migrateCourse(cid,lessons){const c=cur().courses[cid];if(!c)return;let changed=false;for(const l of lessons){const old=String(l.legacyIndex);if(l.id&&l.legacyIndex!=null&&c.lessons[old]){if(!c.lessons[l.id])c.lessons[l.id]=c.lessons[old];delete c.lessons[old];changed=true;}}if(changed)save();}
 function rec(cid,ctitle,total,li,ltitle,bid,q,a){
  if(!String(a||'').trim())return;const c=course(cid,ctitle,total),l=lesson(c,li,ltitle);l.a[bid]={q:String(q||'').slice(0,300),a:String(a).slice(0,1500),ts:Date.now()};save();
 }
 function mark(cid,li,bid,r){const d=cur(),c=d.courses[cid||'sala'],l=c&&c.lessons[li],a=l&&l.a[bid];if(a){a.r=r;save()}}
 function done(cid,ctitle,total,li,ltitle,on){
- const c=course(cid,ctitle,total),l=lesson(c,li,ltitle);l.d=on?Date.now():0;
+ const c=course(cid,ctitle,total),l=lesson(c,li,ltitle);l.d=on?Date.now():0;l.dt=Date.now();
  const n=Object.values(c.lessons).filter(x=>x.d).length;let trophy=false;
  if(on&&c.total&&n>=c.total&&!c.trophy){c.trophy=Date.now();trophy=true}
  save();return {trophy,n,total:c.total,title:c.title};
@@ -94,6 +95,6 @@ const SEALS=[
 function view(){ // para a seção "Meu estudo" no perfil
  const d=cur();return Object.keys(d.courses).map(k=>({id:k,...d.courses[k]})).filter(c=>Object.keys(c.lessons).length||c.trophy);
 }
-window.IASDStudyMe={mark,load,loadOnce,rec,done,stat,counts,finish,isGuest,has,SEALS,view,get:cur};
+window.IASDStudyMe={migrateCourse,mark,load,loadOnce,rec,done,stat,counts,finish,isGuest,has,SEALS,view,get:cur};
 try{window.addEventListener('iasd-auth',()=>{D=null;key='';loadedFor='';loadOnce().then(()=>{try{window.dispatchEvent(new Event('iasd-study-me'))}catch(e){}})})}catch(e){}
 })();
