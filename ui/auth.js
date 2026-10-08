@@ -144,8 +144,8 @@ async function submit(){
   }
   data=r.data;
   if(!data.user?.email_confirmed_at){await cloud.auth.signOut();cloudUser=null;cloudRole=null;busy=false;b.disabled=false;return fb('<b>✉ Confirme seu e-mail primeiro.</b> Verifique sua caixa de entrada e o spam.','warn')}
-  try{if(keep.remember===false){localStorage.setItem('iasd-noremember','1');sessionStorage.setItem('iasd-alive','1')}else localStorage.removeItem('iasd-noremember')}catch(e){}
-  cloudUser=data.user;authNotice='';closeAuthModal();await loadCloud();await loadMyProfile();go('Painel');
+  try{if(window.IASDStudyDevices?.cameraLoginPath())keep.remember=true;if(keep.remember===false){localStorage.setItem('iasd-noremember','1');sessionStorage.setItem('iasd-alive','1')}else localStorage.removeItem('iasd-noremember')}catch(e){}
+  cloudUser=data.user;authNotice='';closeAuthModal();await loadCloud();await loadMyProfile();if(!window.IASDStudyDevices?.restoreLogin()){if(window.IASDStudyDevices?.cameraLoginPath())go('Estudo');else go('Painel')}
   const dn=(myProfile?.full_name||data.user.user_metadata?.full_name||data.user.email?.split('@')[0]||'').trim();showWelcomePopup(dn);
  }catch(e){busy=false;const x=$('au-go');if(x){x.disabled=false;x.firstChild.textContent=(mode==='signup'?'Criar conta':'Entrar')+' '}fb(esc(e.message||'Não foi possível acessar sua conta.'))}
 }
@@ -207,6 +207,7 @@ function watch(){
   if(ev==='PASSWORD_RECOVERY')setTimeout(newPass,0);
   if(ss&&(ev==='INITIAL_SESSION'||ev==='SIGNED_IN'))setTimeout(()=>{try{window.dispatchEvent(new Event('iasd-auth'))}catch(e){}},400);
   if(ss&&(ev==='INITIAL_SESSION'||ev==='SIGNED_IN')){try{
+   if(window.IASDStudyDevices?.cameraLoginPath()){localStorage.removeItem('iasd-noremember');sessionStorage.setItem('iasd-alive','1')}
    if(localStorage.getItem('iasd-noremember')==='1'&&!sessionStorage.getItem('iasd-alive')&&!/access_token=|[?&]code=/.test(location.hash+location.search)){localStorage.removeItem('iasd-noremember');localStorage.removeItem('iasd-auth-backup');setTimeout(()=>window.iasdCloud.auth.signOut(),0)}
    sessionStorage.setItem('iasd-alive','1')}catch(e){}}
  });

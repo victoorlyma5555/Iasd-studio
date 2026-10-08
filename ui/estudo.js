@@ -563,9 +563,9 @@ function mkPeer(id){
  pc.aT=pc.addTransceiver('audio',{direction:'sendrecv'});pc.vT=pc.addTransceiver('video',{direction:'sendrecv'});
  if(V.aTrack)pc.aT.sender.replaceTrack(V.aTrack).catch(()=>{});
  if(V.vTrack)pc.vT.sender.replaceTrack(V.vTrack).catch(()=>{});
- pc.onnegotiationneeded=async()=>{try{pc.mk=true;await pc.setLocalDescription();sig(id,'desc',pc.localDescription)}catch(e){console.warn(e)}finally{pc.mk=false}};
+ pc.onnegotiationneeded=async()=>{try{pc.mk=true;await pc.setLocalDescription();await window.IASDStudyDevices?.optimizeSender(pc.vT.sender);sig(id,'desc',pc.localDescription)}catch(e){console.warn(e)}finally{pc.mk=false}};
  pc.onicecandidate=e=>{if(e.candidate)sig(id,'ice',e.candidate)};
- pc.ontrack=e=>{const ms=V.tiles[id]||(V.tiles[id]=new MediaStream());if(!ms.getTracks().includes(e.track))ms.addTrack(e.track);
+ pc.ontrack=e=>{window.IASDStudyDevices?.optimizeReceiver(e.receiver);const ms=V.tiles[id]||(V.tiles[id]=new MediaStream());if(!ms.getTracks().includes(e.track))ms.addTrack(e.track);
   attachAudio(id);e.track.onmute=e.track.onunmute=()=>paintDock();paintDock()};
  pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed'){try{pc.restartIce()}catch(e){}}paintDock()};
  return pc;
@@ -579,7 +579,7 @@ async function onSig(m){
    const collision=m.d.type==='offer'&&(pc.mk||pc.signalingState!=='stable');
    pc.ignore=!pc.polite&&collision;if(pc.ignore)return;
    await pc.setRemoteDescription(m.d);
-   if(m.d.type==='offer'){await pc.setLocalDescription();sig(m.from,'desc',pc.localDescription)}
+   if(m.d.type==='offer'){await pc.setLocalDescription();await window.IASDStudyDevices?.optimizeSender(pc.vT.sender);sig(m.from,'desc',pc.localDescription)}
   }else if(m.k==='ice'){try{await pc.addIceCandidate(m.d)}catch(e){if(!pc.ignore)console.warn(e)}}
  }catch(e){console.warn('sinalização',e)}
 }
