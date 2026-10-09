@@ -464,7 +464,7 @@ html[data-theme="light"] .es-expc h4{color:#a8690a}
 /* Quadros compactos mesmo com apenas uma pessoa. */
 .es-lgrid{grid-template-columns:repeat(auto-fit,minmax(180px,280px));justify-content:center;max-height:52dvh;overflow:auto;padding:4px}
 .es-lgrid .es-pic{max-height:210px;aspect-ratio:4/3}
-.es-lobby-nav{position:sticky;top:0;z-index:5;background:var(--au-bg,#0b1730);padding:8px 0;margin-bottom:8px}
+.es-lobby-nav{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:5;background:var(--au-bg,#0b1730);padding:8px 0;margin-bottom:8px}
 @media(max-width:640px){.es-lgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.es-lgrid .es-pic{max-height:150px}}
 
 #es-devices .study-mirror-option{display:flex;align-items:center;gap:10px;min-height:44px}#es-devices .study-mirror-option input{width:22px;height:22px;flex:none;padding:0}
