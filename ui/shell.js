@@ -35,7 +35,7 @@ const S={
   assigned:()=>!!g(()=>hasAssignedRole()),
   alerts:()=>!!g(()=>canSendSoundAlert()),
   give:()=>!!g(()=>cloudUser)&&!!g(()=>window.IASDAccess.canGivePerms(cloudRole)),
-  study:()=>!!g(()=>cloudUser)&&!!g(()=>IASDAccess.canStudy(cloudRole)),
+  study:()=>!!g(()=>cloudUser)&&g(()=>cloudUser.is_anonymous)!==true,
   founder:()=>!!g(()=>cloudUser)&&g(()=>cloudRole)==='founder'
 };
 const E=s=>{const f=g(()=>esc);return f?f(s):String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
