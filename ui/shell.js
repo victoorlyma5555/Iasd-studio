@@ -46,11 +46,11 @@ const P={close:'M6 6l12 12M18 6L6 18',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',
 const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n]||P.star}"/></svg>`;
 
 /* ---------- páginas do menu ---------- */
-const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Projeção','music','IASD Projetor'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Palavra em Cena','film','Palavra em Cena']];
+const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Sonoplastia','monitor','IASD Studio'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Palavra em Cena','film','Palavra em Cena']];
 const isAurora=()=>document.documentElement.getAttribute('data-skin')==='aurora';
 function mainPages(){const l=MAIN.filter(x=>x[0]!=='Projeção'||S.sound());if(isAurora())l.push(['Hinário','music','Hinário']);return l}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
-const TITLES={Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Projetor','Projeção':'IASD Projetor',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+const TITLES={Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Studio','Projeção':'IASD Studio WEB',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
   if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
   return TITLES[cur]||cur;
@@ -70,7 +70,7 @@ function searchable(){
 const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 
 const PROJECTOR_MENU_KEY='iasd-projector-menu-collapsed';
-function isProjectorPage(cur=S.cur()){return cur==='Projeção'||cur==='Sonoplastia'}
+function isProjectorPage(cur=S.cur()){return cur==='Projeção'}
 function projectorMenuCollapsed(){
   if(!isProjectorPage())return false;
   try{return localStorage.getItem(PROJECTOR_MENU_KEY)==='1'}catch(e){return false}
@@ -99,7 +99,7 @@ function sideHTML(){
   const sec=(t,body)=>body?`<div class="iu-sec">${t}</div>`+body:'';
   h+=nb('Painel');
   h+=sec('IGREJA',nb('Cronograma')+nb('Escalas'));
-  h+=sec('SONOPLASTIA',nb('Projeção')+nb('Hinário')+(S.alerts()?navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur):''));
+  h+=sec('SONOPLASTIA',nb('Sonoplastia')+nb('Hinário')+(S.alerts()?navBtn('Alertas',ic('bell',19),'Alertar sonoplastia',cur):''));
   h+=sec('ESTUDO E JOGOS',nb('Bíblia')+nb('Lição da Escola Sabatina')+(S.study()?navBtn('Estudo',ic('book',19),'Sala de Estudo',cur):'')+nb('Palavra em Cena')+nb('Jogo'));
   h+=sec('MINHAS ABAS',S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join(''));
   {let adm='';
@@ -163,7 +163,7 @@ function themeIcon(){
 /* ---------- Home ---------- */
 const CARDS=[
  ['Cronograma','calendar','Cronogramas','Veja a programação de hoje','home_icon_schedule','#5b3aa8','#e8792f'],
- ['Projeção','music','IASD Projetor','Abra o Studio de Projeção','home_icon_projection','#1e2a78','#7c3aed'],
+ ['Sonoplastia','monitor','IASD Studio','Escolha a versão WEB ou PC','home_icon_projection','#1e2a78','#7c3aed'],
  ['Bíblia','book','Bíblia','Leia e pesquise as Escrituras','home_icon_bible','#8a4b2a','#e9b56a'],
  ['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','home_icon_lesson','#1c3b6e','#4a7bd0'],
  ['Jogo','game','Jogos','Atividades e interação','home_icon_games','#a86a12','#f4c24a'],
@@ -174,7 +174,7 @@ const QUICK=[
  ['Sorteadores','dice','Sorteador','#92400e','#3b2a1a','sound'],
  ['Sorteadores','dice','Provai e Vede','#1d4ed8','#4c1d95','sound'],
  ['Mídia','music','Mídia e músicas','#b45309','#7c2d12','sound'],
- ['Projeção','play','IASD Projetor','#6d28d9','#312e81','sound'],
+ ['Sonoplastia','monitor','IASD Studio','#6d28d9','#312e81','sound'],
  ['Bíblia','book','Bíblia de Projeção','#9a3412','#1e293b','sound'],
  ['Alertas','horn','Alertar sonoplastia','#a16207','#422006','assigned']
 ];
@@ -539,7 +539,7 @@ const AUI={
 'Hinário':'<path d="M9 17.500V6.200l10-2v11.300" fill="currentColor" fill-opacity=".14"/><path d="M9 9.800l10-2"/><ellipse cx="6.500" cy="17.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/><ellipse cx="16.500" cy="15.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/>'
 };
 function auIc(id,size=20){const b=AUI[id==='Sonoplastia'?'Projeção':id];return b?`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`:''}
-const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Projeção','monitor','IASD Projetor','Studio de Projeção','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
+const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Sonoplastia','monitor','IASD Studio','Versão WEB ou PC','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
 function auDock(){
   const t=AU_DOCK.map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${auIc(go,26)||ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
   S.tabs().forEach(x=>t.push(`<button class="au-tile" data-go="${E('custom:'+x.id)}"><span class="au-ic" style="background:rgba(var(--au-a1-rgb),.16);color:var(--au-a1)">${E(x.icon||'✦')}</span><span><b>${E(x.title||'Aba')}</b><small>Aba da igreja</small></span></button>`));

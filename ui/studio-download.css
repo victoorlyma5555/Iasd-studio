@@ -16,3 +16,14 @@
 @media(max-width:1100px){.studio-download{flex-wrap:wrap}.studio-download-action{flex-basis:100%;display:flex;align-items:center;gap:20px}.studio-download-action small{margin:0}.studio-download-button{flex-shrink:0}}
 @media(max-width:600px){.studio-download{gap:16px;padding:22px 18px;border-radius:20px}.studio-download-symbol{flex-basis:52px;width:52px;height:52px}.studio-download-symbol svg{width:36px;height:36px}.studio-download-copy{flex-basis:100%}.studio-download-action{display:block}.studio-download-action small{margin-top:12px}.studio-download-kicker{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.studio-download-button{transition:none}}
+/* Informativo de entrada: mesma apresentação em monitor da página IASD Studio. */
+.studio-download{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:36px;padding:36px;overflow:hidden}
+.studio-download-copy h2{max-width:480px;font-size:clamp(28px,3vw,40px);letter-spacing:-.035em;background:transparent!important}
+.studio-download-action{max-width:360px;margin-top:24px;display:block}
+.studio-download-button{color:var(--au-on)!important}
+.studio-download-visual{display:flex;flex-direction:column;align-items:center;min-width:0;padding:12px 0}
+.studio-download-visual .studio-entry-monitor{width:100%;transform:rotate(-2deg);box-shadow:0 24px 45px rgba(0,0,0,.2)}
+.studio-download-visual .studio-entry-stand{margin-top:2px}
+.studio-download-visual img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:contain}
+@media(max-width:900px){.studio-download{grid-template-columns:1fr;gap:20px;padding:28px}.studio-download-visual{width:100%;max-width:650px;justify-self:center}.studio-download-action{display:block}.studio-download-action small{margin-top:12px}}
+@media(max-width:600px){.studio-download{padding:24px 20px}.studio-download-copy h2{font-size:30px}.studio-download-visual .studio-entry-monitor{transform:none}}
