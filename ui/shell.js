@@ -560,7 +560,8 @@ function homeAurora(){
   const proj='';
   return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||g(()=>bannerLayersHTML())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="au-c8 au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
 }
-api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return `<div class="iu-home"><h2>Administração do IASD Studio</h2><p>Central de administração do IASD Studio.</p><section class="iu-pan" id="iu-proj">${projInner()}</section></div>`};
+api.localProjectorPanel=()=>g(()=>canAdminProjector())?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:'';
+api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return window.IASDStudioAdmin?.render()||''};
 api.home=function(){
   try{
     if(isAurora())return homeAurora();
