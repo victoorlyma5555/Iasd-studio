@@ -17,6 +17,7 @@ const routes={
   'Estudo':'/estudo',
   'Fundador':'/admin',
   'Acervo':'/admin/acervo',
+  'Painel Sonoplastia':'/admin/sonoplastia',
   'Cargos':'/admin/cargos',
   'Perfil':'/perfil',
   'Alertas':'/alertas',

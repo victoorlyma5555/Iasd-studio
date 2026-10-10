@@ -4,7 +4,7 @@ const M=window.IASDModules;if(!M)return;
 const paths={globe:'M21 12a9 9 0 11-18 0 9 9 0 0118 0ZM3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z',monitor:'M3 4h18v12H3ZM8 21h8M12 16v5',folder:'M3 6h6l2 2h10v12H3Z',music:'M9 18V5l11-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0ZM20 16a3 3 0 11-6 0 3 3 0 016 0Z',download:'M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5',open:'M14 3h7v7M21 3l-9 9M10 3H3v18h18v-7'};
 const icon=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[n]}"/></svg>`;
 window.openStudioWeb=function(){
- if(typeof canUseSound==='function'&&canUseSound()){go('Projeção');return}
+ if(typeof canUseStudio==='function'&&canUseStudio()){go('Projeção');return}
  if(typeof openAuthModal==='function'&&!(typeof cloudUser!=='undefined'&&cloudUser)){openAuthModal();return}
  const note=document.getElementById('studio-web-access');if(note){note.hidden=false;note.focus()}
 };
