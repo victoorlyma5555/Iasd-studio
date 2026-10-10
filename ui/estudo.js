@@ -6,6 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const jq=v=>esc(JSON.stringify(String(v)));/* literal JS seguro dentro de onclick="..." */
 const cloud=()=>window.iasdCloud||null;
 const user=()=>{try{return typeof window.iasdCurrentUser==='function'?window.iasdCurrentUser():null}catch(e){return null}};
+const isMember=()=>{const u=user();return !!u&&u.is_anonymous!==true};
 const canCameraPhone=()=>{try{return !!user()&&window.IASDAccess.canManage(cloudRole)}catch(e){return false}};
 const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canStudy(cloudRole)}catch(e){return false}};
 const rid=()=>Math.random().toString(36).slice(2,9);
@@ -27,11 +28,11 @@ const urlCode=()=>{try{return (new URLSearchParams(location.search).get('sala')|
 /* ---------- dados ---------- */
 function sqlMsg(e){const m=(e&&e.message)||String(e);return /does not exist|schema cache|relation|function/i.test(m)?'Falta rodar o SQL docs/supabase-estudo.sql no Supabase.':/permiss|policy|row-level/i.test(m)?'Seu cargo não tem acesso a esta área.':m}
 async function load(){
- const c=cloud();if(!c||!isF())return;
+ const c=cloud();if(!c||!isMember())return;
  try{
-  let r=await c.from('iasd_study_courses').select('*').order('created_at');if(r.error)throw r.error;
+  let r=isF()?await c.from('iasd_study_courses').select('*').order('created_at'):await c.rpc('iasd_study_courses_public');if(r.error)throw r.error;
   let seeded='';try{seeded=localStorage.getItem('iasd-study-seed')||''}catch(e){}
-  if(!r.data.some(x=>x.title==='Ouvindo a Voz de Deus')&&!/ovdd/.test(seeded)){
+  if(isF()&&!r.data.some(x=>x.title==='Ouvindo a Voz de Deus')&&!/ovdd/.test(seeded)){
    const seed={title:'Ouvindo a Voz de Deus',description:'Estudo bíblico em 27 lições. Use “Importar lições” para carregar o conteúdo do estudo, ou “Editar curso” para montar à mão.',lessons:OVDD.map(t=>({title:t,blocks:[]}))};
    const ins=await c.from('iasd_study_courses').insert(seed).select();if(ins.error)throw ins.error;
    try{localStorage.setItem('iasd-study-seed',seeded+'ovdd')}catch(e){}
@@ -61,7 +62,7 @@ function saveStatus(text,error=false){const root=$('es-root');if(!root)return;le
 function saveProg(){
  const id=S.cid,u=user(),key=progressKey(id),data=JSON.parse(JSON.stringify(S.prog));
  try{localStorage.setItem(key,JSON.stringify(data));saveStatus(u?'Salvando…':'Salvo neste aparelho.');}catch(e){saveStatus('Não foi possível salvar neste aparelho.',true);}
- clearTimeout(saveT);if(!u||!id||!isF())return;
+ clearTimeout(saveT);if(!u||!id||!isMember())return;
  saveT=setTimeout(async()=>{try{if(user()?.id!==u.id)return;const r=await cloud().from('iasd_study_progress').upsert({user_id:u.id,course_id:id,data,updated_at:new Date().toISOString()});if(r.error)throw r.error;if(user()?.id===u.id&&S.cid===id)saveStatus('Progresso salvo.');}catch(e){if(user()?.id===u.id&&S.cid===id)saveStatus('Salvo neste aparelho. Falha na nuvem: '+sqlMsg(e),true);}},900);
 }
 function saveCourse(now){
@@ -90,13 +91,13 @@ const I=n=>{try{return IASDUI.icon?IASDUI.icon(n):''}catch(e){return ''}};
 function page(){
  return '<div class="pg es" id="es-root"><div class="pg-card pg-empty">Carregando…</div></div>';
 }
-function after(){if(new URLSearchParams(location.search).has('camera')){paint();window.IASDStudyDevices?.showPhone();return}if(!isF()){paint();paintBar();paintDock();tryResume();return}if(S.courses===null)load().then(tryResume);else{paint();tryResume()}paintBar();paintDock()}
+function after(){if(new URLSearchParams(location.search).has('camera')){paint();window.IASDStudyDevices?.showPhone();return}if(!isMember()){paint();paintBar();paintDock();tryResume();return}if(S.courses===null)load().then(tryResume);else{paint();tryResume()}paintBar();paintDock()}
 function paint(){
  const root=$('es-root');if(!root)return;
  {const cc=$('es-chat');if(cc&&cc.parentNode!==document.body){document.body.appendChild(cc);cc.classList.remove('inline')}}
  if(S.room&&S.room.mode==='lobby'){root.innerHTML=lobbyHTML();paintChat();paintDock();return}
  if(S.room&&!S.room.host&&!S.room.lesson){root.innerHTML=waitHTML();return}
- if(!isF()){root.innerHTML=(S.view==='lesson'&&S.room&&lessonSrc())?lessonHTML():guestHTML();afterPaint();return}
+ if(!isMember()){root.innerHTML=(S.view==='lesson'&&S.room&&lessonSrc())?lessonHTML():guestHTML();afterPaint();return}
  if(S.err&&!(S.courses||[]).length){root.innerHTML='<div class="pg-card"><h2>Sala de Estudo</h2><p class="es-err">'+esc(S.err)+'</p><button class="pg-gold" onclick="IASDEstudo.reload()">Tentar de novo</button></div>';return}
  if(S.view==='lesson'&&lessonSrc())root.innerHTML=lessonHTML();
  else if(S.view==='course'&&course())root.innerHTML=courseHTML();
@@ -120,10 +121,10 @@ function waitHTML(){
 }
 function homeHTML(){
  const cs=S.courses||[];
- return '<div class="es-hero"><div><span class="es-kick">ESTUDO BÍBLICO</span><h1>Sala de <em>Estudo</em></h1><p>Estude sozinho ou ao vivo com sua classe — no PC ou no celular, com voz e vídeo, tudo sincronizado.</p></div><span class="es-beta">TESTE · só fundador</span></div>'
+ return '<div class="es-hero"><div><span class="es-kick">ESTUDO BÍBLICO</span><h1>Sala de <em>Estudo</em></h1><p>Estude sozinho ou ao vivo com sua classe — no PC ou no celular, com voz e vídeo, tudo sincronizado.</p></div></div>'
  +'<div class="es-grid">'
  +'<section class="pg-card"><h2 class="es-h">📚 Meus cursos</h2>'+(cs.length?cs.map(c=>{const n=c.lessons.length;return '<button class="es-course" onclick="IASDEstudo.openCourse('+jq(c.id)+')"><b>'+esc(c.title)+'</b><small>'+n+' lição(ões)</small><span>›</span></button>'}).join(''):'<p class="muted">Nenhum curso ainda.</p>')
- +'<button class="pg-ghost es-wide" onclick="IASDEstudo.newCourse()">＋ Novo curso</button></section>'
+ +(isF()?'<button class="pg-ghost es-wide" onclick="IASDEstudo.newCourse()">＋ Novo curso</button>':'')+'</section>'
  +'<section class="pg-card"><h2 class="es-h">🎥 Sala ao vivo</h2>'
  +(S.room?'<p class="muted">Você está na sala <b>'+esc(S.room.code)+'</b>.</p><button class="pg-gold es-wide" onclick="IASDEstudo.backToRoom()">Voltar à sala</button>'
   :'<p class="muted">Crie uma sala e passe o código, ou entre numa sala existente. O dirigente conduz e todos acompanham a mesma lição.</p>'
@@ -134,14 +135,14 @@ function homeHTML(){
 }
 function pct(c,id){let d=0;(c.lessons||[]).forEach((l,i)=>{if(lp(i).d)d++});return c.lessons.length?Math.round(d*100/c.lessons.length):0}
 function courseHTML(){
- const c=course(),p=pct(c);
+ const c=course(),p=pct(c),editing=isF()&&S.edit;
  return '<div class="es-top"><button class="pg-ghost" onclick="IASDEstudo.home()">‹ Cursos</button></div>'+(S.room&&S.room.host?'<div class="es-roomb"><b>Sala '+esc(S.room.code)+'</b><span>Os alunos estão aguardando. Toque numa lição para abrir à turma, ou convide pelo painel ⚙.</span></div>':'')
- +'<div class="pg-card es-chead">'+(S.edit?'<input class="es-in es-title" value="'+esc(c.title)+'" oninput="IASDEstudo.setCourse(\'title\',this.value)"><textarea class="es-in" rows="2" oninput="IASDEstudo.setCourse(\'description\',this.value)" placeholder="Descrição">'+esc(c.description)+'</textarea>':'<h2 class="es-h">'+esc(c.title)+'</h2><p class="muted">'+esc(c.description)+'</p>')
+ +'<div class="pg-card es-chead">'+(editing?'<input class="es-in es-title" value="'+esc(c.title)+'" oninput="IASDEstudo.setCourse(\'title\',this.value)"><textarea class="es-in" rows="2" oninput="IASDEstudo.setCourse(\'description\',this.value)" placeholder="Descrição">'+esc(c.description)+'</textarea>':'<h2 class="es-h">'+esc(c.title)+'</h2><p class="muted">'+esc(c.description)+'</p>')
  +'<div class="es-prog"><i style="width:'+p+'%"></i></div><small>'+p+'% concluído</small>'
- +'<div class="es-row"><button class="pg-ghost" onclick="IASDEstudo.importPick()">⬆ Importar lições</button><input type="file" id="es-file" accept=".json,application/json" hidden onchange="IASDEstudo.importFile(this)"><button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(S.edit?'✔ Concluir edição':'✎ Editar curso')+'</button>'+(S.edit?'<button class="pg-ghost" onclick="IASDEstudo.addLesson()">＋ Lição</button><button class="pg-danger" onclick="IASDEstudo.delCourse()">Excluir curso</button>':'')+'</div></div>'
+ +(isF()?'<div class="es-row"><button class="pg-ghost" onclick="IASDEstudo.importPick()">⬆ Importar lições</button><input type="file" id="es-file" accept=".json,application/json" hidden onchange="IASDEstudo.importFile(this)"><button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(editing?'✔ Concluir edição':'✎ Editar curso')+'</button>'+(editing?'<button class="pg-ghost" onclick="IASDEstudo.addLesson()">＋ Lição</button><button class="pg-danger" onclick="IASDEstudo.delCourse()">Excluir curso</button>':'')+'</div>':'')+'</div>'
  +'<div class="es-lessons">'+c.lessons.map((l,i)=>{const d=lp(i).d,n=(l.blocks||[]).length,ans=Object.values(lp(i).a||{}).filter(Boolean).length;
   return '<div class="es-lrow'+(d?' done':'')+'"><button class="es-lbtn" onclick="IASDEstudo.openLesson('+i+')"><span class="es-n">'+(d?'✔':(i+1))+'</span><span><b>'+esc(l.title)+'</b><small>'+(n?n+' itens'+(ans?' · '+ans+' respondida(s)':''):'sem conteúdo ainda')+'</small></span></button>'
-  +(S.edit?'<span class="es-mv"><button onclick="IASDEstudo.moveLesson('+i+',-1)" aria-label="Subir">▲</button><button onclick="IASDEstudo.moveLesson('+i+',1)" aria-label="Descer">▼</button><button onclick="IASDEstudo.renameLesson('+i+')" aria-label="Renomear">✎</button><button onclick="IASDEstudo.delLesson('+i+')" aria-label="Excluir">🗑</button></span>':'')+'</div>'}).join('')+'</div>';
+  +(editing?'<span class="es-mv"><button onclick="IASDEstudo.moveLesson('+i+',-1)" aria-label="Subir">▲</button><button onclick="IASDEstudo.moveLesson('+i+',1)" aria-label="Descer">▼</button><button onclick="IASDEstudo.renameLesson('+i+')" aria-label="Renomear">✎</button><button onclick="IASDEstudo.delLesson('+i+')" aria-label="Excluir">🗑</button></span>':'')+'</div>'}).join('')+'</div>';
 }
 /* fonte da lição: dirigente usa a própria; participante usa a que o dirigente enviou */
 function lessonSrc(){
@@ -152,10 +153,10 @@ function lessonSrc(){
 }
 function curBi(){return S.room?S.room.bi:-1}
 function lessonHTML(){
- const L=lessonSrc(),R=S.room,host=!R||R.host,editing=S.edit&&host&&!R;
+ const L=lessonSrc(),R=S.room,host=!R||R.host,editing=S.edit&&host&&!R&&isF();
  const li=L.li!=null?L.li:S.li,P=lp(li);
  let h='<div class="es-top"><button class="pg-ghost" onclick="IASDEstudo.'+(R&&!R.host?'home':'course')+'()">‹ '+(R&&!R.host?'Sair da lição':'Lições')+'</button>'
-  +(host&&!R?'<button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(S.edit?'✔ Concluir':'✎ Editar lição')+'</button>':'')
+  +(host&&!R&&isF()?'<button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(S.edit?'✔ Concluir':'✎ Editar lição')+'</button>':'')
   +(R?'<span class="es-badge">'+(R.host?'Você conduz':(R.follow?'Seguindo o dirigente':'Leitura livre'))+'</span>'+(R.host?'':'<span class="es-badge es-awb" id="es-away" hidden></span>'):'')
   +(R&&!R.host&&!(R.lock&&R.lock.f)?'<button class="pg-ghost" onclick="IASDEstudo.toggleFollow()">'+(R.follow?'Parar de seguir':'Seguir o dirigente')+'</button>':'')+'</div>';
  h+='<div class="pg-card es-lesson"><span class="es-kick">LIÇÃO '+(li+1)+'</span>'+(editing?'<input class="es-in es-title" value="'+esc(L.title)+'" oninput="IASDEstudo.setLessonTitle(this.value)">':'<h2 class="es-h">'+esc(L.title)+'</h2>');
@@ -288,7 +289,7 @@ async function newCourse(){const t=await IASDDialog.prompt('Nome do curso:','', 
 async function delCourse(){const c=course();if(!c)return;if(!(await IASDDialog.confirm('Excluir o curso “'+c.title+'” e todo o progresso?')))return;
  const r=await cloud().from('iasd_study_courses').delete().eq('id',c.id);if(r.error){toast(sqlMsg(r.error));return}
  S.courses=S.courses.filter(x=>x.id!==c.id);S.cid=null;homeGo()}
-function toggleEdit(){S.edit=!S.edit;if(!S.edit)saveCourse(true);paint()}
+function toggleEdit(){if(!isF())return;S.edit=!S.edit;if(!S.edit)saveCourse(true);paint()}
 async function addLesson(){const c=course();c.lessons.push({id:'lesson-'+crypto.randomUUID(),title:'Lição '+(c.lessons.length+1),blocks:[]});saveCourse(true);paint()}
 async function renameLesson(i){const c=course(),t=await IASDDialog.prompt('Título da lição:',c.lessons[i].title,{title:'Renomear lição'});if(t==null||!t.trim())return;c.lessons[i].title=t.trim();saveCourse(true);paint()}
 async function delLesson(i){const c=course();if(!(await IASDDialog.confirm('Excluir a lição “'+c.lessons[i].title+'”?')))return;c.lessons.splice(i,1);saveCourse(true);saveProg();paint()}
@@ -372,7 +373,7 @@ async function startRoom(code,host,opts){
  const c=cloud();if(!c){toast('Sem conexão com o servidor.');return false}
  let signing=null,publicKey=null;
  try{const security=window.IASDStudyRoomSecurity;if(!security)throw Error('Atualize a página para usar a sala.');
-  if(host){if(!isF())throw Error('Só o dirigente autorizado pode criar a sala.');try{signing=JSON.parse(sessionStorage.getItem('iasd-room-key-'+code)||'null')}catch{}if(!signing){signing=await security.keys();sessionStorage.setItem('iasd-room-key-'+code,JSON.stringify(signing));}const result=await c.rpc('iasd_study_room_register',{p_code:code,p_key:signing.publicKey});if(result.error)throw result.error;publicKey=signing.publicKey;}
+  if(host){if(!isMember())throw Error('Entre na sua conta para criar uma sala.');try{signing=JSON.parse(sessionStorage.getItem('iasd-room-key-'+code)||'null')}catch{}if(!signing){signing=await security.keys();sessionStorage.setItem('iasd-room-key-'+code,JSON.stringify(signing));}const result=await c.rpc('iasd_study_room_register',{p_code:code,p_key:signing.publicKey});if(result.error)throw result.error;publicKey=signing.publicKey;}
   else{const result=await c.rpc('iasd_study_room_lookup',{p_code:code});if(result.error)throw result.error;publicKey=result.data;if(!publicKey)throw Error('Sala não encontrada ou expirada. Confira o código.');}
  }catch(e){toast('Não foi possível abrir a sala: '+sqlMsg(e));return false;}
  if(S.room&&!opts.snap)leave(true);
@@ -423,10 +424,10 @@ async function startRoom(code,host,opts){
  saveRoom();paint();paintBar();paintDock();syncVoicePeers();return true
 }
 async function track(){const R=S.room;if(!R||!R.ch)return;try{await R.ch.track({id:R.me,name:myName(),host:R.host,hand:R.hand,soundGroup:R.soundGroup||'',voice:true,mic:R.voice?R.voice.mic:false,cam:R.voice?R.voice.cam:false,away:isAway()})}catch(e){}}
-function createRoom(){if(!course()&&!(S.courses||[]).length){toast('Crie um curso antes.');return}
+function createRoom(){if(!isMember()){toast('Entre na sua conta para criar uma sala.');return}if(!course()&&!(S.courses||[]).length){toast('Não há cursos disponíveis para abrir uma sala.');return}
  const c=course()||S.courses[0];S.cid=c.id;S.view='course';loadProg().then(async()=>{await startRoom(mkCode(),true);if(S.room){S.view='course';paint();toast('Sala criada. Escolha a lição para abrir à turma, ou convide pelo painel ⚙.')}})}
 async function joinRoom(){const v=($('es-code')&&$('es-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<4){toast('Digite o código da sala.');return}
- if(!isF()){const g=$('es-gname'),n=((g&&g.value)||'').trim();if(!n&&!guestName()){toast('Escreva seu nome.');return}if(n){try{localStorage.setItem(GN,n)}catch(e){}}}
+ if(!isMember()){const g=$('es-gname'),n=((g&&g.value)||'').trim();if(!n&&!guestName()){toast('Escreva seu nome.');return}if(n){try{localStorage.setItem(GN,n)}catch(e){}}}
  const ok=await startRoom(v,false);if(ok&&S.room)toast('Aguardando o dirigente…')}
 function pushLesson(force){const R=S.room;if(!R||!R.host)return;const l=lesson();
  if(!l||S.view!=='lesson'){R.lesson=null;send('st',{lesson:null,bi:-1,rev:{}});saveRoom();return}
@@ -858,7 +859,7 @@ function tryResume(){
  if(suspOver(r)){clearRoom();toast('A sala '+r.code+' foi fechada: ficou suspensa por mais de '+SUSP_MIN+' min.');return}
  const uc=urlCode();if(uc&&uc!==r.code)return;
  if(r.host){
-  if(!isF())return;const c=(S.courses||[]).find(x=>x.id===r.cid);if(!c)return;
+  if(!isMember())return;const c=(S.courses||[]).find(x=>x.id===r.cid);if(!c)return;
   S.cid=c.id;S.li=Math.min(r.li||0,Math.max(0,c.lessons.length-1));
   loadProg().then(()=>startRoom(r.code,true,{me:r.me,saved:r})).then(ok=>{if(ok){paint();toast('Você voltou para a sala '+r.code+'.')}});
  }else{
@@ -896,3 +897,4 @@ async function importFile(inp){
 window.IASDEstudo={setSoundGroup,onHowl,sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
 window.IASDEstudoCore={canCameraPhone,ensureVoice,stopMic,stopCam,replaceMediaTrack,mediaConstraints:()=>({audio:AUDIO_C,video:VIDEO_C}),ice:async()=>{await loadTurn();return ICE()},stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
 })();
+
