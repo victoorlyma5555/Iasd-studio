@@ -50,7 +50,7 @@ const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],
 const isAurora=()=>document.documentElement.getAttribute('data-skin')==='aurora';
 function mainPages(){const l=MAIN.filter(x=>x[0]!=='Projeção'||S.sound());if(isAurora())l.push(['Hinário','music','Hinário']);return l}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
-const TITLES={'Painel Sonoplastia':'Painel da sonoplastia',Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Studio','Projeção':'IASD Studio WEB',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
+const TITLES={'Painel Sonoplastia':'Administração do IASD Studio',Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Studio','Projeção':'IASD Studio WEB',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
   if(String(cur).startsWith('custom:')){const t=S.tabs().find(x=>'custom:'+x.id===cur);return t?.title||'Aba'}
   return TITLES[cur]||cur;
@@ -64,7 +64,7 @@ function searchable(){
   if(S.study())out.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
   if(S.founder())out.push({id:'Fundador',icon:'crown',label:'Painel do Fundador'});
   if(S.manage())out.push({id:'Acervo',icon:'folder',label:'Acervo do Site'});
-  if(g(()=>canAdminProjector()))out.push({id:'Painel Sonoplastia',icon:'monitor',label:'Painel da sonoplastia'});
+  if(g(()=>canAdminProjector()))out.push({id:'Painel Sonoplastia',icon:'monitor',label:'Administração do IASD Studio'});
   if(S.give())out.push({id:'Cargos',icon:'users',label:'Cargos e acessos'});
   return out;
 }
@@ -104,7 +104,7 @@ function sideHTML(){
   h+=sec('ESTUDO E JOGOS',nb('Bíblia')+nb('Lição da Escola Sabatina')+(S.study()?navBtn('Estudo',ic('book',19),'Sala de Estudo',cur):'')+nb('Palavra em Cena')+nb('Jogo'));
   h+=sec('MINHAS ABAS',S.tabs().map(t=>navBtn('custom:'+t.id,`<span class="iu-glyph">${E(t.icon||'✦')}</span>`,t.title||'Aba',cur)).join(''));
   {let adm='';
-   if(g(()=>canAdminProjector()))adm+=navBtn('Painel Sonoplastia',ic('monitor',19),'Painel da sonoplastia',cur);
+   if(g(()=>canAdminProjector()))adm+=navBtn('Painel Sonoplastia',ic('monitor',19),'Administração do IASD Studio',cur);
    if(S.give())adm+=navBtn('Cargos',ic('users',19),'Cargos e acessos',cur);
    if(S.manage()){
     if(S.founder())adm+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
@@ -560,7 +560,7 @@ function homeAurora(){
   const proj='';
   return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||g(()=>bannerLayersHTML())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="au-c8 au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
 }
-api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return `<div class="iu-home"><h2>Painel da sonoplastia</h2><p>Conexão do projetor e equipe em serviço.</p><section class="iu-pan" id="iu-proj">${projInner()}</section></div>`};
+api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return `<div class="iu-home"><h2>Administração do IASD Studio</h2><p>Central de administração do IASD Studio.</p><section class="iu-pan" id="iu-proj">${projInner()}</section></div>`};
 api.home=function(){
   try{
     if(isAurora())return homeAurora();
