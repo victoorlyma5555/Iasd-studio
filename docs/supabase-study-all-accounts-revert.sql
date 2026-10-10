@@ -30,4 +30,3 @@ revoke all on function public.iasd_study_room_register(text,jsonb) from public,a
 grant execute on function public.iasd_study_room_register(text,jsonb) to authenticated;
 
 commit;
-

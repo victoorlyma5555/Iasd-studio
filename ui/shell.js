@@ -689,4 +689,3 @@ g(()=>IASDPresence.onChange(()=>{if(S.cur()==='Painel Sonoplastia'&&g(()=>canAdm
 api.passage=()=>passage;
 window.IASDUI=api;
 })();
-

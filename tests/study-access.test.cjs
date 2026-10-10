@@ -21,4 +21,3 @@ test('authorized course managers keep the existing editing catalog',async()=>{
 test('anonymous sessions do not load the authenticated study catalog',async()=>{
  const f=fixture({anonymous:true});assert.equal(f.T.isMember(),false);await f.T.load();assert.deepEqual(f.rpcCalls,[]);assert.deepEqual(f.reads,[]);
 });
-
