@@ -16,3 +16,7 @@
 .studio-entry-option>header{justify-content:flex-start;text-align:left}.studio-entry-option li{border:0;padding:0;background:none}.studio-entry-option li svg{display:block}
 .studio-entry .studio-entry-head,.studio-entry .studio-entry-option>header,.studio-entry .studio-entry-option>header>div,.studio-entry .studio-entry-head h2,.studio-entry .studio-entry-head p,.studio-entry .studio-entry-option h3{background:transparent!important}.studio-entry .studio-entry-option>header{justify-content:flex-start!important}.studio-entry .studio-entry-head{display:block!important}
 .studio-entry .studio-entry-action{color:var(--au-on,#fff)!important}.iu-nav.on[data-go="Sonoplastia"]{color:var(--au-tx,var(--iu-tx))!important}
+
+.stt-configure{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:8px 13px;border:1px solid rgba(var(--au-a1-rgb),.45);border-radius:10px;background:rgba(var(--au-a1-rgb),.12);color:var(--au-tx);font:700 12px/1.3 Inter,sans-serif;white-space:nowrap;cursor:pointer}.stt-configure:hover{background:rgba(var(--au-a1-rgb),.22)}.stt-configure:focus-visible{outline:2px solid var(--au-a1);outline-offset:3px}.stt-configure svg{flex-shrink:0}
+
+.stt-brand{display:inline-flex;align-items:center;gap:9px;white-space:nowrap}.stt-brand img{display:block;width:30px;height:30px;object-fit:contain;flex-shrink:0}

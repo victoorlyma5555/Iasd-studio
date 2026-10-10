@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="240 60 280 300" role="img" aria-labelledby="title">
+  <title id="title">IASD Studio — Camadas, reconstrução vetorial da referência aprovada</title>
+  <defs>
+    <linearGradient id="top" x1="308" y1="80" x2="489" y2="186" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#079EFF"/><stop offset=".48" stop-color="#0879FF"/><stop offset="1" stop-color="#0048ED"/>
+    </linearGradient>
+    <linearGradient id="middle" x1="269" y1="144" x2="503" y2="275" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#155FE6"/><stop offset=".5" stop-color="#1152CC"/><stop offset="1" stop-color="#063882"/>
+    </linearGradient>
+    <linearGradient id="lower" x1="269" y1="234" x2="427" y2="338" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C4B9F"/><stop offset=".48" stop-color="#092C61"/><stop offset="1" stop-color="#05142E"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="288" y1="211" x2="468" y2="260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1466EE"/><stop offset="1" stop-color="#0A4AB5"/>
+    </linearGradient>
+    <clipPath id="middle-clip"><path d="M251.5 230.5 V171 C251.5 146 269.5 126.5 294 134 L485.5 210 C501 216 509.5 226 509.5 243 V260 C509.5 278 500 291 479 282.5 L288 211Z"/></clipPath>
+  </defs>
+  <path fill="url(#top)" d="M285.5 108 L338.5 74 C349 67 356.5 66.5 368.5 71 L488 113 C502.5 118 509.5 129 509.5 144 V196.5Z"/>
+  <path fill="url(#middle)" d="M251.5 230.5 V171 C251.5 146 269.5 126.5 294 134 L485.5 210 C501 216 509.5 226 509.5 243 V260 C509.5 278 500 291 479 282.5 L288 211Z"/>
+  <path clip-path="url(#middle-clip)" fill="url(#fold)" d="M251.5 230.5 L384 167.8 L509.5 217.5 V285 L288 211Z"/>
+  <path fill="url(#lower)" d="M251.5 264 C251.5 240.5 271.5 224.5 293.5 234 L475.5 306 L414.5 341 C405 347 394 347.5 382 343 L269.5 299 C258 294.5 251.5 283.5 251.5 272Z"/>
+</svg>
