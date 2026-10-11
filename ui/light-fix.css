@@ -38,3 +38,15 @@ html[data-theme="light"] body.iu .panel:not(.sound-hub-head)>p{color:var(--au-mu
 html[data-theme="light"] body.iu .pg-alertas textarea:not(#zz1):not(#zz2){background:#fff!important;border:1px solid rgba(var(--au-w),.18)!important;border-radius:14px!important}
 html[data-theme="light"] body.iu :is(.iu-search,.iu-top) input:not(#zz1):not(#zz2){background:transparent!important;border:0!important;box-shadow:none!important}
 html[data-theme="light"] body.iu .iu-side :is(button,a).on,html[data-theme="light"] body.iu .iu-side :is(button,a).on *{color:#7a4a12!important}
+/* Sala de Estudos: contornos legíveis em todas as etapas do estudo. */
+html[data-theme="light"] body.iu .es{--iu-bd:#b5c6df;--es-bd:#b5c6df;--study-accent:#2864d6}
+html[data-theme="light"] body.iu .es :is(.es-hero-v2,.es-mode-switch,.es-course-card,.es-live-card,.es-chead-v2,.es-lesson,.es-lbtn,.es-pop,.es-empty){border:1px solid #a9bddb!important}
+html[data-theme="light"] body.iu .es :is(.es-b,.es-ans,.es-in,.es-join input,.es-course-meta span,.es-roomb){border:1px solid #b0c2dc!important}
+html[data-theme="light"] body.iu .es .es-q{border-left:3px solid #3974de!important}
+html[data-theme="light"] body.iu .es :is(.pg-ghost,.es-vchip,.es-open-course){border:1px solid #9fb8dc!important}
+html[data-theme="light"] body.iu .es .es-mode-tab.active{border:1px solid #3974de!important;background:#e7efff;box-shadow:inset 3px 0 #3974de}
+html[data-theme="light"] body.iu .es .es-lbtn:hover{border-color:#3974de!important;background:#edf3ff}
+html[data-theme="light"] body.iu .es :is(button,input,textarea):focus-visible{outline:3px solid #3974de;outline-offset:3px}
+html[data-theme="light"] body.iu .es .es-chead-v2 .muted{color:#526887!important}
+html[data-theme="light"] body.iu .es .es-q:not(#zz1):not(#zz2){border-left:3px solid #3974de!important}
+html[data-theme="light"] body.iu .es :is(input,textarea):not(#zz1):not(#zz2){border:1px solid #9fb4d2!important}

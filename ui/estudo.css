@@ -1,5 +1,5 @@
 /* Sala de Estudo (fundador) */
-body.iu .es{--es-bd:var(--iu-bd);--es-sf:var(--iu-sf);--es-sf2:var(--iu-sf2);--es-tx:var(--iu-tx);--es-mu:var(--iu-mu);--es-gd:var(--iu-gd,var(--au-a1,#f0b44c))}
+body.iu .es{--study-accent:#4387ff;--es-bd:var(--iu-bd);--es-sf:var(--iu-sf);--es-sf2:var(--iu-sf2);--es-tx:var(--iu-tx);--es-mu:var(--iu-mu);--es-gd:var(--iu-gd,var(--au-a1,#f0b44c))}
 .es h1,.es h2,.es h3{margin:0}.es .muted{color:var(--es-mu);margin:6px 0 12px}
 .es-hero{position:relative;border-radius:18px;padding:26px 24px;background:var(--iu-ban);border:1px solid var(--es-bd);display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
 .es-hero h1{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-.02em;color:var(--es-tx)}.es-hero h1 em{font-style:normal;color:var(--es-gd)}
@@ -585,7 +585,7 @@ body.iu .es-live-art .es-svg-icon{width:24px;height:24px}
 body.iu .es-course-art>.es-svg-icon{width:46px;height:46px}
 body.iu .es-home .es-section-heading h2{font-size:22px;letter-spacing:-.025em}
 body.iu .es-home .es-section-heading p{max-width:760px;font-size:14px}
-body.iu .es-mode-switch{max-width:1040px;margin:0 auto;width:100%}
+body.iu .es-mode-switch{max-width:none;margin:0;width:100%}
 body.iu .es-course-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:18px}
 body.iu .es-course-art{height:138px}
 body.iu .es-course-copy{padding:18px}
@@ -638,7 +638,7 @@ html[data-theme="light"] body.iu .es-hero-book{box-shadow:0 17px 30px rgba(31,56
 
 /* Escala do banner no desktop e leitura confortável no celular. */
 @media(min-width:721px){
- body.iu .es-home{width:min(100%,1720px);max-width:1720px}
+ body.iu .es-home{width:min(100%,1440px);max-width:1440px}
  body.iu .es-hero-v2{width:100%;min-height:clamp(220px,15vw,280px);padding:clamp(36px,4vw,64px) clamp(36px,6vw,92px)}
  body.iu .es-hero-v2 .es-hero-copy{max-width:900px}
  body.iu .es-hero-v2 h1{font-size:clamp(36px,4vw,56px)}
@@ -646,6 +646,11 @@ html[data-theme="light"] body.iu .es-hero-book{box-shadow:0 17px 30px rgba(31,56
  body.iu .es-hero-visual{width:250px;height:180px}
  body.iu .es-hero-book{width:166px;height:120px}
  body.iu .es-hero-book svg{width:98px;height:76px}
+ body.iu .es-section-heading{justify-content:flex-start;gap:24px}
+ body.iu .es-course-card:only-child{grid-column:1/-1;display:grid;grid-template-columns:280px minmax(0,1fr)}
+ body.iu .es-course-card:only-child .es-course-art{height:100%;min-height:210px}
+ body.iu .es-course-card:only-child .es-course-copy{padding:24px;max-width:820px}
+ body.iu .es-course-card:only-child .es-open-course{width:auto;min-width:220px;align-self:flex-start}
 }
 @media(max-width:720px){
  body.iu .es-mode-switch{grid-template-columns:minmax(0,1fr);gap:6px}

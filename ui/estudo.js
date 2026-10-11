@@ -8,7 +8,7 @@ const cloud=()=>window.iasdCloud||null;
 const user=()=>{try{return typeof window.iasdCurrentUser==='function'?window.iasdCurrentUser():null}catch(e){return null}};
 const isMember=()=>{const u=user();return !!u&&u.is_anonymous!==true};
 const canCameraPhone=()=>{try{return !!user()&&window.IASDAccess.canManage(cloudRole)}catch(e){return false}};
-const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canStudy(cloudRole)}catch(e){return false}};
+const isF=()=>{try{return !!user()&&!!window.IASDAccess&&IASDAccess.canManage(cloudRole)}catch(e){return false}};
 const rid=()=>Math.random().toString(36).slice(2,9);
 const $=id=>document.getElementById(id);
 const toast=m=>{try{IASDPages.toast(m)}catch(e){}let t=$('bb-toast');if(!t){t=document.createElement('div');t.id='bb-toast';t.className='bb-toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2400)};
@@ -65,9 +65,9 @@ function saveProg(){
  clearTimeout(saveT);if(!u||!id||!isMember())return;
  saveT=setTimeout(async()=>{try{if(user()?.id!==u.id)return;const r=await cloud().from('iasd_study_progress').upsert({user_id:u.id,course_id:id,data,updated_at:new Date().toISOString()});if(r.error)throw r.error;if(user()?.id===u.id&&S.cid===id)saveStatus('Progresso salvo.');}catch(e){if(user()?.id===u.id&&S.cid===id)saveStatus('Salvo neste aparelho. Falha na nuvem: '+sqlMsg(e),true);}},900);
 }
-function saveCourse(now){
+function saveCourse(now){if(!isF())return;
  const c=course();if(!c)return;clearTimeout(courseT);
- const run=async()=>{try{const r=await cloud().from('iasd_study_courses').update({title:c.title,description:c.description,lessons:c.lessons,updated_at:new Date().toISOString()}).eq('id',c.id);if(r.error)throw r.error}catch(e){toast('Não salvou: '+sqlMsg(e))}};
+ const run=async()=>{if(!isF())return;try{const r=await cloud().from('iasd_study_courses').update({title:c.title,description:c.description,lessons:c.lessons,updated_at:new Date().toISOString()}).eq('id',c.id);if(r.error)throw r.error}catch(e){toast('Não salvou: '+sqlMsg(e))}};
  if(now)run();else courseT=setTimeout(run,700);
 }
 const lesson=()=>{const c=course();return c&&c.lessons[S.li]||null};
@@ -319,19 +319,19 @@ function debounceSend(bid,text){const R=S.room;if(R)(R.ans[bid]=R.ans[bid]||{})[
 function homeGo(){S.view='home';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()}
 async function openCourse(id){S.cid=id;S.view='course';S.edit=false;await loadProg();paint()}
 async function openLesson(i){S.li=i;S.view='lesson';S.edit=false;if(S.room&&S.room.host)pushLesson();paint();window.scrollTo({top:0})}
-function setCourse(k,v){const c=course();if(!c)return;c[k]=v;saveCourse()}
-function setLessonTitle(v){const l=lesson();if(!l)return;l.title=v;saveCourse()}
-async function newCourse(){const t=await IASDDialog.prompt('Nome do curso:','', {title:'Novo curso'});if(!t)return;
+function setCourse(k,v){if(!isF())return;const c=course();if(!c)return;c[k]=v;saveCourse()}
+function setLessonTitle(v){if(!isF())return;const l=lesson();if(!l)return;l.title=v;saveCourse()}
+async function newCourse(){if(!isF())return;const t=await IASDDialog.prompt('Nome do curso:','', {title:'Novo curso'});if(!t)return;
  const r=await cloud().from('iasd_study_courses').insert({title:t.trim(),description:'',lessons:[{title:'Lição 1',blocks:[]}]}).select();
  if(r.error){toast(sqlMsg(r.error));return}S.courses.push(r.data[0]);openCourse(r.data[0].id)}
-async function delCourse(){const c=course();if(!c)return;if(!(await IASDDialog.confirm('Excluir o curso “'+c.title+'” e todo o progresso?')))return;
+async function delCourse(){if(!isF())return;const c=course();if(!c)return;if(!(await IASDDialog.confirm('Excluir o curso “'+c.title+'” e todo o progresso?')))return;
  const r=await cloud().from('iasd_study_courses').delete().eq('id',c.id);if(r.error){toast(sqlMsg(r.error));return}
  S.courses=S.courses.filter(x=>x.id!==c.id);S.cid=null;homeGo()}
 function toggleEdit(){if(!isF())return;S.edit=!S.edit;if(!S.edit)saveCourse(true);paint()}
-async function addLesson(){const c=course();c.lessons.push({id:'lesson-'+crypto.randomUUID(),title:'Lição '+(c.lessons.length+1),blocks:[]});saveCourse(true);paint()}
-async function renameLesson(i){const c=course(),t=await IASDDialog.prompt('Título da lição:',c.lessons[i].title,{title:'Renomear lição'});if(t==null||!t.trim())return;c.lessons[i].title=t.trim();saveCourse(true);paint()}
-async function delLesson(i){const c=course();if(!(await IASDDialog.confirm('Excluir a lição “'+c.lessons[i].title+'”?')))return;c.lessons.splice(i,1);saveCourse(true);saveProg();paint()}
-function moveLesson(i,d){const c=course(),j=i+d;if(j<0||j>=c.lessons.length)return;const a=c.lessons;[a[i],a[j]]=[a[j],a[i]];saveProg();saveCourse(true);paint()}
+async function addLesson(){if(!isF())return;const c=course();c.lessons.push({id:'lesson-'+crypto.randomUUID(),title:'Lição '+(c.lessons.length+1),blocks:[]});saveCourse(true);paint()}
+async function renameLesson(i){if(!isF())return;const c=course(),t=await IASDDialog.prompt('Título da lição:',c.lessons[i].title,{title:'Renomear lição'});if(t==null||!t.trim())return;c.lessons[i].title=t.trim();saveCourse(true);paint()}
+async function delLesson(i){if(!isF())return;const c=course();if(!(await IASDDialog.confirm('Excluir a lição “'+c.lessons[i].title+'”?')))return;c.lessons.splice(i,1);saveCourse(true);saveProg();paint()}
+function moveLesson(i,d){if(!isF())return;const c=course(),j=i+d;if(j<0||j>=c.lessons.length)return;const a=c.lessons;[a[i],a[j]]=[a[j],a[i]];saveProg();saveCourse(true);paint()}
 function toggleDone(li){
  const P=lp(li);P.d=!P.d;P.updated=Date.now();saveProg();
  try{const ci=courseInfo(),L=lessonSrc(),M=window.IASDStudyMe;
@@ -343,13 +343,13 @@ function toggleDone(li){
   }}catch(e){console.warn(e)}
  paint()}
 function blocks(){const l=lesson();return l?l.blocks:null}
-async function addBlock(t){const b=blocks();if(!b)return;
+async function addBlock(t){if(!isF())return;const b=blocks();if(!b)return;
  if(t==='text'){const x=await IASDDialog.prompt('Texto:','',{title:'Novo texto',multiline:true});if(!x)return;b.push({id:rid(),t:'text',text:x})}
  if(t==='q'){const x=await IASDDialog.prompt('Pergunta:','',{title:'Nova pergunta'});if(!x)return;const g=await IASDDialog.prompt('Resposta-guia (opcional, só você vê):','',{title:'Resposta-guia'});b.push({id:rid(),t:'q',text:x.trim(),guide:(g||'').trim()})}
  if(t==='v'){const x=await IASDDialog.prompt('Referência (ex.: João 3:16-17):','',{title:'Novo versículo'});if(!x)return;const r=parseRef(x);if(!r){toast('Referência não reconhecida.');return}
   b.push({id:rid(),t:'v',ref:r.name+' '+r.chapter+(r.from?':'+r.from+(r.to&&r.to!==r.from?'-'+r.to:''):'')})}
  saveCourse(true);paint()}
-async function editBlock(i){const b=blocks()[i];if(!b)return;
+async function editBlock(i){if(!isF())return;const b=blocks()[i];if(!b)return;
  const normRef=x=>{const r=parseRef(x);return r?r.name+' '+r.chapter+(r.from?':'+r.from+(r.to&&r.to!==r.from?'-'+r.to:''):''):null};
  if(b.t==='v'){const x=await IASDDialog.prompt('Referência:',b.ref,{title:'Editar versículo'});if(!x)return;const r=normRef(x);if(!r){toast('Referência não reconhecida.');return}b.ref=r}
  else if(b.t==='q'){
@@ -361,9 +361,9 @@ async function editBlock(i){const b=blocks()[i];if(!b)return;
  else if(b.t==='check'||b.t==='list'){const x=await IASDDialog.prompt('Um item por linha:',(b.items||[]).join('\n'),{title:'Editar “'+(b.h||'lista')+'”',multiline:true});if(x==null)return;b.items=x.split('\n').map(t=>t.trim()).filter(Boolean)}
  else{const x=await IASDDialog.prompt('Texto:',b.text,{title:'Editar',multiline:true});if(x==null||!x.trim())return;b.text=x}
  saveCourse(true);paint()}
-function delBlock(i){blocks().splice(i,1);saveCourse(true);paint()}
-function moveBlock(i,d){const a=blocks(),j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];saveCourse(true);paint()}
-function bulk(){
+function delBlock(i){if(!isF())return;blocks().splice(i,1);saveCourse(true);paint()}
+function moveBlock(i,d){if(!isF())return;const a=blocks(),j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];saveCourse(true);paint()}
+function bulk(){if(!isF())return;
  const ta=$('es-bulk'),b=blocks();if(!ta||!b)return;const lines=ta.value.split(/\n+/).map(s=>s.trim()).filter(Boolean);if(!lines.length)return;
  let buf=[];const flush=()=>{if(buf.length){b.push({id:rid(),t:'text',text:buf.join('\n')});buf=[]}};
  lines.forEach(l=>{
@@ -911,7 +911,7 @@ setInterval(()=>{const R=S.room;if(R&&R.ch&&R.ch.state!=='joined'&&!R.reconnecti
 
 
 /* ---------- importar lições (arquivo .json do próprio fundador) ---------- */
-function importPick(){const f=$('es-file');if(f){f.value='';f.click()}}
+function importPick(){if(!isF())return;const f=$('es-file');if(f){f.value='';f.click()}}
 function cleanBlock(b){
  const T=['text','q','v','note','check','list'];if(!b||!T.includes(b.t))return null;
  const str=(x,n)=>String(x==null?'':x).slice(0,n),arr=(x,n)=>Array.isArray(x)?x.slice(0,n).map(y=>str(y,1200)):[];
@@ -923,7 +923,7 @@ function cleanBlock(b){
  if(b.items)o.items=arr(b.items,30);
  return o;
 }
-async function importFile(inp){
+async function importFile(inp){if(!isF())return;
  const f=inp.files&&inp.files[0];if(!f)return;const c=course();if(!c)return;
  let j;try{j=JSON.parse(await f.text())}catch(e){toast('Arquivo inválido (não é um .json).');return}
  const ls=Array.isArray(j)?j:j&&j.lessons;if(!Array.isArray(ls)||!ls.length){toast('Não encontrei lições nesse arquivo.');return}
