@@ -635,6 +635,30 @@ body.iu .es-live-art{width:52px;height:52px}
 .es-hand{gap:8px}.es-hand button{height:32px}
 html[data-theme="light"] body.iu .es-pop{box-shadow:0 24px 60px rgba(24,48,88,.2)}
 html[data-theme="light"] body.iu .es-hero-book{box-shadow:0 17px 30px rgba(31,56,100,.2)}
+
+/* Escala do banner no desktop e leitura confortável no celular. */
+@media(min-width:721px){
+ body.iu .es-home{width:min(100%,1720px);max-width:1720px}
+ body.iu .es-hero-v2{width:100%;min-height:clamp(220px,15vw,280px);padding:clamp(36px,4vw,64px) clamp(36px,6vw,92px)}
+ body.iu .es-hero-v2 .es-hero-copy{max-width:900px}
+ body.iu .es-hero-v2 h1{font-size:clamp(36px,4vw,56px)}
+ body.iu .es-hero-v2 p{max-width:720px;font-size:17px}
+ body.iu .es-hero-visual{width:250px;height:180px}
+ body.iu .es-hero-book{width:166px;height:120px}
+ body.iu .es-hero-book svg{width:98px;height:76px}
+}
+@media(max-width:720px){
+ body.iu .es-mode-switch{grid-template-columns:minmax(0,1fr);gap:6px}
+ body.iu .es-mode-tab{min-height:62px;padding:10px 12px}
+ body.iu .es-live-actions{grid-template-columns:minmax(0,1fr);gap:12px}
+ body.iu .es-live-card{grid-template-columns:46px minmax(0,1fr);padding:16px;column-gap:12px}
+ body.iu .es-live-card h3{font-size:16px}
+ body.iu .es-live-card p{font-size:13px;line-height:1.45}
+}
+@media(max-width:480px){
+ body.iu .es-hero-v2{min-height:0}
+ body.iu .es-live-card{padding:14px}
+}
 @media(min-width:641px){
  .es-pop{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;align-content:start}
  .es-pop>.es-ph{grid-column:1/-1}
