@@ -18,7 +18,7 @@ let TURN_DYN=null;
 const ICE=()=>({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}].concat(TURN_DYN||[],window.IASD_TURN||[]),iceCandidatePoolSize:4});
 async function loadTurn(){if(TURN_DYN)return;try{const c=new AbortController(),t=setTimeout(()=>c.abort(),4500);const r=await fetch('/api/turn',{signal:c.signal,cache:'no-store'});clearTimeout(t);if(r.ok){const j=await r.json();if(Array.isArray(j.iceServers))TURN_DYN=j.iceServers}}catch(e){}}
 
-const S={view:'home',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{},sent:{},verdict:{}};
+const S={view:'home',studyMode:'solo',courses:null,err:'',cid:null,li:0,edit:false,prog:{},room:null,openV:{},sent:{},verdict:{}};
 const course=()=>(S.courses||[]).find(c=>c.id===S.cid)||null;
 const GN='iasd-study-guest-name';
 const guestName=()=>{try{return (localStorage.getItem(GN)||'').trim()}catch(e){return ''}};
@@ -121,28 +121,35 @@ function waitHTML(){
 }
 function homeHTML(){
  const cs=S.courses||[];
- return '<div class="es-hero"><div><span class="es-kick">ESTUDO BÍBLICO</span><h1>Sala de <em>Estudo</em></h1><p>Estude sozinho ou ao vivo com sua classe — no PC ou no celular, com voz e vídeo, tudo sincronizado.</p></div></div>'
- +'<div class="es-grid">'
- +'<section class="pg-card"><h2 class="es-h">📚 Meus cursos</h2>'+(cs.length?cs.map(c=>{const n=c.lessons.length;return '<button class="es-course" onclick="IASDEstudo.openCourse('+jq(c.id)+')"><b>'+esc(c.title)+'</b><small>'+n+' lição(ões)</small><span>›</span></button>'}).join(''):'<p class="muted">Nenhum curso ainda.</p>')
- +(isF()?'<button class="pg-ghost es-wide" onclick="IASDEstudo.newCourse()">＋ Novo curso</button>':'')+'</section>'
- +'<section class="pg-card"><h2 class="es-h">🎥 Sala ao vivo</h2>'
- +(S.room?'<p class="muted">Você está na sala <b>'+esc(S.room.code)+'</b>.</p><button class="pg-gold es-wide" onclick="IASDEstudo.backToRoom()">Voltar à sala</button>'
-  :'<p class="muted">Crie uma sala e passe o código, ou entre numa sala existente. O dirigente conduz e todos acompanham a mesma lição.</p>'
-  +'<button class="pg-gold es-wide" onclick="IASDEstudo.createRoom()">Criar sala (sou o dirigente)</button>'
-  +'<div class="es-join"><input id="es-code" maxlength="8" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters"><button class="pg-ghost" onclick="IASDEstudo.joinRoom()">Entrar</button></div>')
- +'<small class="es-note">Voz e vídeo funcionam direto entre os aparelhos. Em algumas redes 4G pode ser preciso um servidor de apoio (TURN).</small></section>'
- +'</div>';
+ const solo=S.studyMode!=='live';
+ const tabs='<div class="es-mode-switch" role="group" aria-label="Escolha como estudar">'
+  +'<button type="button" aria-pressed="'+solo+'" class="es-mode-tab'+(solo?' active':'')+'" onclick="IASDEstudo.setStudyMode(\'solo\')"><span class="es-mode-icon">'+I('book')+'</span><span><b>Estudar sozinho</b><small>No seu ritmo, com progresso salvo</small></span></button>'
+  +'<button type="button" aria-pressed="'+!solo+'" class="es-mode-tab'+(!solo?' active':'')+'" onclick="IASDEstudo.setStudyMode(\'live\')"><span class="es-mode-icon">'+I('users')+'</span><span><b>Estudar ao vivo</b><small>Com a classe, por código e chamada</small></span></button>'
+  +'</div>';
+ const soloContent='<section class="es-mode-panel" aria-label="Estudar sozinho">'
+  +'<div class="es-section-heading"><div><h2>Escolha um curso</h2><p>Retome de onde parou ou comece uma nova jornada de estudo.</p></div>'+(isF()?'<button type="button" class="pg-ghost" onclick="IASDEstudo.newCourse()">＋ Novo curso</button>':'')+'</div>'
+  +(cs.length?'<div class="es-course-grid">'+cs.map((c,i)=>{const n=c.lessons.length;return '<article class="es-course-card"><div class="es-course-art tone-'+(i%4)+'" aria-hidden="true">'+I('book')+'<span>'+String(i+1).padStart(2,'0')+'</span></div><div class="es-course-copy"><span class="es-course-type">CURSO BÍBLICO</span><h3>'+esc(c.title)+'</h3><p>'+esc(c.description||'Avance pelas lições e aprofunde seu estudo da Bíblia.')+'</p><div class="es-course-meta"><span>'+n+' '+(n===1?'lição':'lições')+'</span><span>Estudo individual</span></div><button type="button" class="es-open-course" onclick="IASDEstudo.openCourse('+jq(c.id)+')">Abrir curso <span aria-hidden="true">→</span></button></div></article>'}).join('')+'</div>':'<div class="es-empty"><span>'+I('book')+'</span><h3>Nenhum curso disponível ainda</h3><p>Quando um curso for publicado, ele aparecerá aqui para você estudar no seu ritmo.</p></div>')
+  +'</section>';
+ const liveContent='<section class="es-mode-panel es-live-panel" aria-label="Estudar ao vivo">'
+  +'<div class="es-section-heading"><div><h2>Reúna sua classe</h2><p>Crie uma sala para conduzir o estudo ou entre usando o código compartilhado pelo dirigente.</p></div></div>'
+  +(S.room?'<div class="es-active-room"><span class="es-live-dot"></span><div><b>Sua sala está ativa</b><small>Código da sala · <strong>'+esc(S.room.code)+'</strong></small></div><button type="button" class="pg-blue" onclick="IASDEstudo.backToRoom()">Voltar à sala</button></div>'
+   :'<div class="es-live-actions"><article class="es-live-card es-live-create"><span class="es-live-art">'+I('users')+'</span><div><h3>Conduzir um estudo</h3><p>Abra uma sala, convide a classe e acompanhe todos na mesma lição.</p></div><button type="button" class="pg-blue" onclick="IASDEstudo.createRoom()">Criar sala</button></article><article class="es-live-card es-live-join"><span class="es-live-art">'+I('link')+'</span><div><h3>Entrar em uma sala</h3><p>Digite o código recebido do dirigente para acompanhar o estudo.</p></div><label for="es-code">Código da sala</label><div class="es-join"><input id="es-code" maxlength="8" placeholder="EX.: A7K2Q" autocomplete="off" autocapitalize="characters" aria-label="Código da sala"><button type="button" class="pg-ghost" onclick="IASDEstudo.joinRoom()">Entrar</button></div></article></div>'
+   +'<p class="es-live-note">Sua câmera e seu microfone começam desligados. Você escolhe quando ativá-los.</p>')
+  +'</section>';
+ return '<div class="es-home"><header class="es-hero es-hero-v2"><div class="es-hero-copy"><span class="es-kick">APRENDIZADO BÍBLICO</span><h1>Seu tempo com a <em>Palavra</em></h1><p>Estude no seu ritmo ou compartilhe a jornada com sua classe.</p></div><div class="es-hero-visual" aria-hidden="true"><div class="es-hero-orbit"></div><div class="es-hero-book">'+I('book')+'</div></div></header>'
+  +tabs+(solo?soloContent:liveContent)+'</div>';
 }
+function setStudyMode(mode){S.studyMode=mode==='live'?'live':'solo';paint()}
 function pct(c,id){let d=0;(c.lessons||[]).forEach((l,i)=>{if(lp(i).d)d++});return c.lessons.length?Math.round(d*100/c.lessons.length):0}
 function courseHTML(){
  const c=course(),p=pct(c),editing=isF()&&S.edit;
- return '<div class="es-top"><button class="pg-ghost" onclick="IASDEstudo.home()">‹ Cursos</button></div>'+(S.room&&S.room.host?'<div class="es-roomb"><b>Sala '+esc(S.room.code)+'</b><span>Os alunos estão aguardando. Toque numa lição para abrir à turma, ou convide pelo painel ⚙.</span></div>':'')
- +'<div class="pg-card es-chead">'+(editing?'<input class="es-in es-title" value="'+esc(c.title)+'" oninput="IASDEstudo.setCourse(\'title\',this.value)"><textarea class="es-in" rows="2" oninput="IASDEstudo.setCourse(\'description\',this.value)" placeholder="Descrição">'+esc(c.description)+'</textarea>':'<h2 class="es-h">'+esc(c.title)+'</h2><p class="muted">'+esc(c.description)+'</p>')
+ return '<div class="es-course-page"><div class="es-top"><button class="pg-ghost" onclick="IASDEstudo.home()">‹ Voltar aos estudos</button></div>'+(S.room&&S.room.host?'<div class="es-roomb"><b>Sala '+esc(S.room.code)+'</b><span>Os alunos estão aguardando. Toque numa lição para abrir à turma, ou convide pelo painel ⚙.</span></div>':'')
+ +'<div class="pg-card es-chead es-chead-v2">'+(editing?'<input class="es-in es-title" value="'+esc(c.title)+'" oninput="IASDEstudo.setCourse(\'title\',this.value)"><textarea class="es-in" rows="2" oninput="IASDEstudo.setCourse(\'description\',this.value)" placeholder="Descrição">'+esc(c.description)+'</textarea>':'<div class="es-course-title"><span class="es-course-symbol">'+I('book')+'</span><div><span class="es-kick">ESTUDO INDIVIDUAL</span><h1 class="es-h">'+esc(c.title)+'</h1><p class="muted">'+esc(c.description)+'</p></div></div>')
  +'<div class="es-prog"><i style="width:'+p+'%"></i></div><small>'+p+'% concluído</small>'
  +(isF()?'<div class="es-row"><button class="pg-ghost" onclick="IASDEstudo.importPick()">⬆ Importar lições</button><input type="file" id="es-file" accept=".json,application/json" hidden onchange="IASDEstudo.importFile(this)"><button class="pg-ghost" onclick="IASDEstudo.toggleEdit()">'+(editing?'✔ Concluir edição':'✎ Editar curso')+'</button>'+(editing?'<button class="pg-ghost" onclick="IASDEstudo.addLesson()">＋ Lição</button><button class="pg-danger" onclick="IASDEstudo.delCourse()">Excluir curso</button>':'')+'</div>':'')+'</div>'
  +'<div class="es-lessons">'+c.lessons.map((l,i)=>{const d=lp(i).d,n=(l.blocks||[]).length,ans=Object.values(lp(i).a||{}).filter(Boolean).length;
   return '<div class="es-lrow'+(d?' done':'')+'"><button class="es-lbtn" onclick="IASDEstudo.openLesson('+i+')"><span class="es-n">'+(d?'✔':(i+1))+'</span><span><b>'+esc(l.title)+'</b><small>'+(n?n+' itens'+(ans?' · '+ans+' respondida(s)':''):'sem conteúdo ainda')+'</small></span></button>'
-  +(editing?'<span class="es-mv"><button onclick="IASDEstudo.moveLesson('+i+',-1)" aria-label="Subir">▲</button><button onclick="IASDEstudo.moveLesson('+i+',1)" aria-label="Descer">▼</button><button onclick="IASDEstudo.renameLesson('+i+')" aria-label="Renomear">✎</button><button onclick="IASDEstudo.delLesson('+i+')" aria-label="Excluir">🗑</button></span>':'')+'</div>'}).join('')+'</div>';
+  +(editing?'<span class="es-mv"><button onclick="IASDEstudo.moveLesson('+i+',-1)" aria-label="Subir">▲</button><button onclick="IASDEstudo.moveLesson('+i+',1)" aria-label="Descer">▼</button><button onclick="IASDEstudo.renameLesson('+i+')" aria-label="Renomear">✎</button><button onclick="IASDEstudo.delLesson('+i+')" aria-label="Excluir">🗑</button></span>':'')+'</div>'}).join('')+'</div></div>';
 }
 /* fonte da lição: dirigente usa a própria; participante usa a que o dirigente enviou */
 function lessonSrc(){
@@ -164,7 +171,7 @@ function lessonHTML(){
  h+='<div class="es-blocks">'+L.blocks.map((b,i)=>blockHTML(b,i,li,P,editing)).join('')+'</div>';
  if(editing)h+=editorHTML();
  if(!editing&&L.blocks.length)h+='<div class="es-end"><button class="'+(P.d?'pg-ghost':'pg-gold')+'" onclick="IASDEstudo.toggleDone('+li+')">'+(P.d?'✔ Lição concluída (desfazer)':(R&&!R.host?'Concluir lição':'Marcar lição como concluída'))+'</button>'+((!R||host)?nextBtn(li):'')+'</div>';
- return h+'</div>';
+ return '<div class="es-lesson-page">'+h+'</div>';
 }
 function nextBtn(li){const c=course();if(!c||li>=c.lessons.length-1)return '';return '<button class="pg-ghost" onclick="IASDEstudo.openLesson('+(li+1)+')">Próxima lição ›</button>'}
 function gl(b,i){return '<span class="es-bctl">'+(S.edit&&!S.room?'<button onclick="IASDEstudo.moveBlock('+i+',-1)">▲</button><button onclick="IASDEstudo.moveBlock('+i+',1)">▼</button><button onclick="IASDEstudo.editBlock('+i+')">✎</button><button onclick="IASDEstudo.delBlock('+i+')">🗑</button>':'')+'</span>'}
@@ -894,6 +901,6 @@ async function importFile(inp){
  c.lessons=out;if(j.description)c.description=String(j.description).slice(0,400);
  saveCourse(true);S.edit=false;paint();toast('Importado: '+out.length+' lições.')}
 
-window.IASDEstudo={setSoundGroup,onHowl,sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
+window.IASDEstudo={setStudyMode,setSoundGroup,onHowl,sendAns,explain,importPick,importFile,setOpt,toggleCheck,page,after,reload:()=>{S.courses=null;load()},home:homeGo,openCourse,openLesson,course:()=>{S.view='course';S.edit=false;if(S.room&&S.room.host)pushLesson();paint()},setCourse,setLessonTitle,newCourse,delCourse,toggleEdit,addLesson,renameLesson,delLesson,moveLesson,toggleDone,addBlock,editBlock,delBlock,moveBlock,bulk,toggleVerse,createRoom,joinRoom,backToRoom,setPos,toggleFollow,revealToggle,leaveAsk,toggleHand,react,copyInvite,togglePanel,muteFrom,setMode,setLock,toggleHost,toggleChat,sendChat,toggleRx,openStage,challenge,revealCur,setChooser,setScope,breakGo,muteAll,callPeer,shareWA,shareNative,endRoom,startVoice,toggleMic,toggleCam,hideFrom,leaveParked,openGal,closeGal};
 window.IASDEstudoCore={canCameraPhone,ensureVoice,stopMic,stopCam,replaceMediaTrack,mediaConstraints:()=>({audio:AUDIO_C,video:VIDEO_C}),ice:async()=>{await loadTurn();return ICE()},stream:id=>{const R=S.room,V=R&&R.voice;if(!V)return null;if(id===R.me)return V.cam&&V.vTrack?new MediaStream([V.vTrack]):null;const ms=V.tiles[id];return ms&&ms.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted)?ms:null},S,send,toast,esc,myName,lessonSrc,parseRef,track,paintBar,repaintRv:paintReveals,muteMic,endedByHost,chapter:(b,c)=>fetchBibleChapter(b,c,'nvi')};
 })();
