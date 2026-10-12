@@ -581,7 +581,7 @@ function hmCommunity(){
 }
 /* ---------- Identidade v2: cartão de escala, semana, atalhos de estudo, comunidade e área do membro ---------- */
 function hmEscala(){
-  return `<button type="button" class="hm-esc hm-act hm-rv" style="--i:0" data-go="Escalas"><span class="hm-esc-ic">${ic('users',30)}</span><span class="hm-txt"><small>SUA PRÓXIMA ESCALA</small><b>Veja quando é a sua vez de servir</b><em>Toque para ver a equipe</em></span><span class="hm-go">${ic('chev',20)}</span></button>`;
+  return `<button type="button" class="hm-esc hm-act hm-rv" style="--i:0" data-go="Escalas"><span class="hm-esc-ic">${hmBadge('escalas',64)}</span><span class="hm-txt"><small>SUA PRÓXIMA ESCALA</small><b>Veja quando é a sua vez de servir</b><em>Toque para ver a equipe</em></span><span class="hm-go">${ic('chev',20)}</span></button>`;
 }
 function hmWeek(){
   const today=new Date().toLocaleDateString('en-CA');
