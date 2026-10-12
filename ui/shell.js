@@ -579,9 +579,37 @@ function hmCommunity(){
   const card=([k,badge,title,sub0,cta,feat],i)=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button type="button" class="hm-ccard hm-act hm-rv${feat?' is-feature':''}" style="--i:${i}" data-act="ex" data-ex="${k}"><span class="hm-badge">${hmBadge(badge,feat?84:60)}</span><span class="hm-txt"><b>${E(title)}</b><small>${E(sub)}</small></span><span class="hm-cta">${E(cta)}${ic('chev',14)}</span></button>`};
   return `<section class="hm-comm au-c8 hm-rv" aria-labelledby="hm-comm-t"><div class="hm-head"><span class="hm-sticker">${hmBadge('pomba',46)}</span><div><h2 id="hm-comm-t">Para a comunidade</h2><p>Orar, ler, celebrar e crescer juntos.</p></div></div><div class="hm-comm-grid">${HM_COMM.map(card).join('')}</div><button type="button" class="hm-arena hm-act" data-go="Jogo"><span class="hm-badge">${hmBadge('arena',54)}</span><span class="hm-txt"><b>Arena da turma</b><small>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</small></span><span class="hm-chips"><i>Quiz</i><i>Verdadeiro ou falso</i><i>Votação</i></span><span class="hm-cta">Abrir jogos${ic('chev',14)}</span></button></section>`;
 }
+/* ---------- Identidade v2: cartão de escala, semana, atalhos de estudo, comunidade e área do membro ---------- */
+function hmEscala(){
+  return `<button type="button" class="hm-esc hm-act hm-rv" style="--i:0" data-go="Escalas"><span class="hm-esc-ic">${ic('users',30)}</span><span class="hm-txt"><small>SUA PRÓXIMA ESCALA</small><b>Veja quando é a sua vez de servir</b><em>Toque para ver a equipe</em></span><span class="hm-go">${ic('chev',20)}</span></button>`;
+}
+function hmWeek(){
+  const today=new Date().toLocaleDateString('en-CA');
+  const list=(S.schedules()||[]).filter(x=>x&&x.date&&x.date>=today).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).slice(0,6);
+  const cols=['a','b','c'];
+  const item=(x,i)=>{const d=new Date(x.date+'T12:00:00'),wd=d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','').toUpperCase(),n=parseItems(x.items).length;return `<button type="button" class="hm-day hm-act c-${cols[i%3]}" data-go="Cronograma"><span class="hm-when">${E(wd)} ${d.getDate()}</span><b>${E(x.name||'Programação')}</b><small>${n} atividade${n===1?'':'s'}</small></button>`};
+  const body=list.length?list.map(item).join(''):`<button type="button" class="hm-day hm-act c-a" data-go="Cronograma"><span class="hm-when">EM BREVE</span><b>Nenhuma programação cadastrada</b><small>Toque para abrir o cronograma</small></button>`;
+  return `<section class="hm-week au-c12 hm-rv" style="--i:1" aria-labelledby="hm-week-t"><div class="hm-sec"><h2 id="hm-week-t">Esta semana</h2><button type="button" class="hm-link" data-go="Cronograma">Ver cronograma${ic('chev',14)}</button></div><div class="hm-strip">${body}</div></section>`;
+}
+function hmDuo(){
+  return `<nav class="hm-duo au-c12 hm-rv" style="--i:2" aria-label="Estudo"><button type="button" class="hm-act hm-bib" data-go="Bíblia"><span class="hm-sq">${ic('book',24)}</span><b>Bíblia</b><small>Ler e pesquisar</small></button><button type="button" class="hm-act hm-lic" data-go="Lição da Escola Sabatina"><span class="hm-sq">${ic('star',24)}</span><b>Lição Sabática</b><small>Estudo da semana</small></button></nav>`;
+}
+function hmComm2(){
+  const card=([k,icn,t,s],i)=>`<button type="button" class="hm-cm hm-act hm-rv c-${'abcd'[i]}" style="--i:${i}" data-act="ex" data-ex="${k}"><span class="hm-sq">${ic(icn,22)}</span><b>${E(t)}</b><small>${E(s)}</small></button>`;
+  const items=[['prayer','plus','Pedidos de oração','Orar uns pelos outros'],['plan','book','Plano de leitura','Ler junto, dia a dia'],['remind','bell','Lembrete diário','Versículo do dia'],['cards','star','Cartão de parabéns','Aniversários e datas']];
+  return `<section class="hm-comm2 au-c12 hm-rv" aria-labelledby="hm-cm-t"><div class="hm-sec"><h2 id="hm-cm-t">Comunidade</h2></div><div class="hm-cm-grid">${items.map(card).join('')}</div><button type="button" class="hm-arena2 hm-act" data-go="Jogo"><span class="hm-sq">${ic('game',26)}</span><span class="hm-txt"><b>Arena da turma</b><small>Quiz, votação e jogos pelo celular</small></span><span class="hm-go">${ic('chev',18)}</span></button></section>`;
+}
+function hmArea(){
+  if(!S.user())return '';
+  const rows=[['Perfil','user','Meu perfil'],['Escalas','users','Minhas escalas']];
+  if(S.alerts())rows.push(['Alertas','bell','Alertar sonoplastia']);
+  if(S.sound())rows.push(['Sonoplastia','monitor','IASD Studio']);
+  if(S.study())rows.push(['Estudo','book','Sala de Estudo']);
+  return `<section class="hm-area au-c12 hm-rv" aria-labelledby="hm-ar-t"><div class="hm-sec"><h2 id="hm-ar-t">Sua área</h2></div><div class="hm-list">${rows.map(([go,i,l])=>`<button type="button" class="hm-row hm-act" data-go="${E(go)}"><span class="hm-sq">${ic(i,20)}</span><b>${E(l)}</b>${ic('chev',16)}</button>`).join('')}</div></section>`;
+}
 function homeAurora(){
   const hd=!!api.headerEnabled;   // com o cabeçalho dinâmico, o banner é o próprio cabeçalho
-  return `<div class="iu-home au-home hm"><div class="au-grid">${hd?'':auBanner()}${hmQuick()}<div class="hm-word au-c4 hm-rv">${passageHTML()}</div>${hmCommunity()}</div>${sideTabsHTML()}</div>`;
+  return `<div class="iu-home au-home hm id"><div class="au-grid">${hd?'':auBanner()}${hmEscala()}${hmWeek()}<div class="hm-word au-c12 hm-rv">${passageHTML()}</div>${hmDuo()}${hmComm2()}${hmArea()}</div>${sideTabsHTML()}</div>`;
 }
 api.localProjectorPanel=()=>g(()=>canAdminProjector())?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:'';
 api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return window.IASDStudioAdmin?.render()||''};
