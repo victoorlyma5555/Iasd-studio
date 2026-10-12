@@ -230,7 +230,7 @@
     const sl = slides(), nsig = sl.map(s => s.slot + '|' + s.path + '|' + num(s.f.position_x, 50) + ',' + num(s.f.position_y, 50) + ',' + num(s.f.zoom, 1)).join(';') + '#' + seconds();
     const bg = hd.querySelector('.hd-bg');
     if (nsig !== sig) { sig = nsig; bg.innerHTML = bgHTML(sl); hd.querySelector('#hd-ctl').innerHTML = ctlHTML(sl.length); setupCarousel(hd); }
-    hd.dataset.mode = home ? 'home' : 'page'; hd.classList.toggle('has-photos', sl.length > 0);
+    hd.dataset.mode = home ? 'home' : 'page'; hd.dataset.page = (location.pathname.split('/')[1] || 'inicio').toLowerCase(); hd.classList.toggle('has-photos', sl.length > 0);
     hd.classList.toggle('no-title', !home && !!document.querySelector('#content h1, main h1'));   // a própria página já tem o título
     const bodyHtml = bodyHTML(home, sl); const key = (home ? 'h' : 'p') + bodyHtml;
     if (key !== lastBody) { lastBody = key; const body = hd.querySelector('#hd-body'); body.innerHTML = bodyHtml; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }

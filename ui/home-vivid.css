@@ -1,25 +1,63 @@
-/* Home v2: mais cor, menos rolagem. Cada acesso principal tem a sua cor; no celular o topo é mais baixo e os acessos viram cartões horizontais.
-   Carregue DEPOIS de home-upgrade.css e palette-comunhao.css. Para desfazer, remova o <link> deste arquivo. */
+/* IASD APP · Identidade v2 — componentes da Home e das abas (carregue DEPOIS de home-upgrade.css e palette-comunhao.css).
+   Para desfazer: ?ui=old ou remova o <link> deste arquivo. */
 
-/* ---------- cada acesso com a sua cor (texto branco, contraste >= 4.5:1) ---------- */
-.hm-quick .hm-tile:nth-child(1) { --t1: #3a63f0; --t2: #4b27c4; }
-.hm-quick .hm-tile:nth-child(2) { --t1: #d9480f; --t2: #a3135a; }
-.hm-quick .hm-tile:nth-child(3) { --t1: #0b7f78; --t2: #0a4aa8; }
-.hm-quick .hm-tile:nth-child(4) { --t1: #b45309; --t2: #8e1d44; }
-.hm-quick .hm-tile:nth-child(5) { --t1: #1d4ed8; --t2: #0c1b66; }
-.hm-quick .hm-tile:not(.hm-more) { background: linear-gradient(150deg, var(--t1), var(--t2)); box-shadow: 0 22px 40px -24px var(--t2); }
-.hm-quick .hm-tile:not(.hm-more):hover, .hm-quick .hm-tile:not(.hm-more):focus-visible, .hm-quick .hm-tile:not(.hm-more).is-tap { box-shadow: 0 28px 46px -22px var(--t1); }
+/* ---------- acessos principais: cada um com a sua cor; Escalas em destaque (largura total) ---------- */
+.hm-quick .hm-tile { --t1: #2f5bff; --t2: #5a3df0; border: 0; background: linear-gradient(140deg, var(--t1), var(--t2)); box-shadow: 0 20px 36px -22px var(--t2); }
+.hm-quick .hm-tile[data-go="Cronograma"] { --t1: #5a3df0; --t2: #2f5bff; }
+.hm-quick .hm-tile[data-go="Bíblia"] { --t1: #0b8f86; --t2: #2f5bff; }
+.hm-quick .hm-tile[data-go="Lição da Escola Sabatina"] { --t1: #ff7a4a; --t2: #ff5fa2; }
+.hm-quick .hm-tile[data-go="Projeção"] { --t1: #1d3fd0; --t2: #0b1437; }
+.hm-quick .hm-tile[data-go="Escalas"] { --t1: #ffc24a; --t2: #ff7a4a; grid-column: 1 / -1; min-height: 132px; grid-template-rows: none; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 18px; padding: 20px 22px; box-shadow: 0 22px 40px -18px rgba(255, 122, 74, .7); }
+.hm-quick .hm-tile[data-go="Escalas"] .hm-txt b { font-size: 28px; }
+.hm-quick .hm-tile[data-go="Escalas"] .hm-txt small { font-size: 15px; }
+.hm-quick .hm-tile[data-go="Escalas"] .hm-badge .bdg { width: 84px; height: 84px; }
+.hm-quick .hm-tile[data-go="Escalas"], .hm-quick .hm-tile[data-go="Escalas"] .hm-txt b, .hm-quick .hm-tile[data-go="Lição da Escola Sabatina"], .hm-quick .hm-tile[data-go="Lição da Escola Sabatina"] .hm-txt b { color: #1a0d00 !important; }
+.hm-quick .hm-tile[data-go="Escalas"] .hm-txt small, .hm-quick .hm-tile[data-go="Lição da Escola Sabatina"] .hm-txt small { color: #3a1a00 !important; }
+.hm-quick .hm-tile[data-go="Escalas"] .hm-go, .hm-quick .hm-tile[data-go="Lição da Escola Sabatina"] .hm-go { background: rgba(11, 20, 55, .85); color: #fff; }
 .hm-quick .hm-more { background: transparent; color: var(--au-tx) !important; border: 2px dashed rgba(var(--au-w), .38); box-shadow: none; }
 .hm-quick .hm-more .hm-txt b { color: var(--au-tx) !important; }
 .hm-quick .hm-more .hm-txt small { color: var(--au-mu) !important; }
+.hm-quick .hm-tile:hover, .hm-quick .hm-tile:focus-visible, .hm-quick .hm-tile.is-tap { border-color: transparent; transform: translateY(calc(-6px * var(--mv, 1))) rotate(calc(-.5deg * var(--mv, 1))); }
 
-/* ---------- celular: topo mais baixo e acessos horizontais ---------- */
+/* ---------- Palavra do dia e Comunidade ---------- */
+html[data-skin="aurora"] .hm-word .iu-pas { background-image: linear-gradient(140deg, #0b8f86, #2f5bff); border: 0; }
+.hm-comm { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.hm-comm .hm-head h2 { color: var(--au-tx) !important; }
+.hm-comm .hm-head p { color: var(--au-mu) !important; }
+.hm-ccard { border: 0; border-radius: 30px; background: var(--au-card1); box-shadow: 0 14px 30px -18px rgba(20, 40, 140, .45); }
+.hm-ccard.is-feature { background: linear-gradient(135deg, #ff5fa2, #ff7a4a); color: #1a0d00; }
+.hm-ccard.is-feature .hm-txt b, .hm-ccard.is-feature .hm-txt small, .hm-ccard.is-feature .hm-cta { color: #1a0d00 !important; }
+.hm-arena { border: 0; border-radius: 30px; background: linear-gradient(135deg, #1d3fd0, #0b1437); }
+
+/* ---------- cabeçalho (carrossel) ---------- */
+.hd { background: #0b1437; border-radius: 0 0 clamp(28px, 5vw, 48px) clamp(28px, 5vw, 48px); }
+/* cabeçalho das abas: cada uma com a sua cor (a Home usa as fotos) */
+.hd[data-mode="page"] { background: linear-gradient(150deg, #2f5bff, #5a3df0 70%, #0b1437); }
+.hd[data-mode="page"] .hd-bg, .hd[data-mode="page"] .hd-mesh { display: none; }
+.hd[data-mode="page"][data-page="escalas"] { background: linear-gradient(150deg, #ff7a4a, #e0357a 70%, #7b3df0); }
+.hd[data-mode="page"][data-page="cronograma"], .hd[data-mode="page"][data-page="cronogramas"] { background: linear-gradient(150deg, #7b5cff, #2f5bff 70%, #0b1437); }
+.hd[data-mode="page"][data-page="biblia"], .hd[data-mode="page"][data-page="licao"] { background: linear-gradient(150deg, #0b8f86, #2f5bff 75%, #0b1437); }
+.hd[data-mode="page"][data-page="jogo"], .hd[data-mode="page"][data-page="oracao"] { background: linear-gradient(150deg, #ff5fa2, #ff7a4a 70%, #ffc24a); }
+.hd-btn--p { background: linear-gradient(135deg, #ffc24a, #ff7a4a) !important; color: #1a0d00 !important; border: 0 !important; }
+
+/* ---------- barra inferior (abas) ---------- */
+html[data-skin="aurora"] .iu-bn { background: var(--au-card1); border: 0; box-shadow: 0 -8px 30px -12px rgba(11, 20, 55, .35); }
+html[data-skin="aurora"] .iu-bn .on { background: linear-gradient(135deg, #2f5bff, #5a3df0) !important; color: #fff !important; box-shadow: 0 8px 18px -8px rgba(47, 91, 255, .8); }
+
+/* ---------- botões e cartões das abas ---------- */
+html[data-skin="aurora"] .iu-btn.p { background: linear-gradient(135deg, #ffc24a, #ff7a4a); color: #1a0d00; border: 0; font-weight: 800; }
+html[data-skin="aurora"] .au-card { border-radius: 30px; }
+
+/* ---------- celular: topo mais baixo e acessos compactos ---------- */
 @media (max-width: 700px) {
   .hd[data-mode="home"] { --hd-h: clamp(380px, 54svh, 470px); }
   .hd[data-mode="home"] .hd-chip { display: none; }
   .hm-quick .hm-go { display: none; }
-  .hm-quick .hm-tile { min-height: 124px; gap: 8px; padding: 12px 14px; border-radius: 24px; }
+  .hm-quick .hm-tile { min-height: 124px; gap: 8px; padding: 12px 14px; border-radius: 26px; }
   .hm-quick .hm-tile .bdg { width: 44px; height: 44px; }
   .hm-quick .hm-txt b { font-size: 17px; }
   .hm-quick .hm-txt small { font-size: 12.5px; }
+  .hm-quick .hm-tile[data-go="Escalas"] { min-height: 108px; padding: 14px 16px; gap: 14px; }
+  .hm-quick .hm-tile[data-go="Escalas"] .hm-badge .bdg { width: 64px; height: 64px; }
+  .hm-quick .hm-tile[data-go="Escalas"] .hm-txt b { font-size: 24px; }
 }

@@ -1,37 +1,36 @@
-/* IASD APP · Paleta "Comunhão": azul em degradê, dourado só de detalhe, papel-cimento no claro e azul-marinho no escuro.
+/* IASD APP · Identidade v2 (paleta "comunhao"): azul-noite + azul vivo, sol (dourado/laranja) de destaque, violeta/rosa de apoio.
    Entra no mesmo sistema de paletas do app (variáveis --au-*), então todo o site acompanha. Também deixa TODOS os popups opacos.
-   Carregue DEPOIS de ui/aurora*.css. Para outra paleta, escolha-a no Perfil. */
+   Carregue DEPOIS de ui/aurora*.css. Para a interface antiga: ?ui=old */
 
-/* ---------- claro: papel de cimento + azul vivo ---------- */
+/* ---------- claro ---------- */
 html[data-skin="aurora"][data-palette="comunhao"]:not([data-theme="dark"]) {
   color-scheme: light;
-  --au-bg: #eceff4; --au-bgrgb: 236, 239, 244; --au-tx: #08184a; --au-mu: #45558a; --au-w: 8, 24, 74; --au-k: 8, 24, 74;
-  --au-a1: #1f5fe6; --au-a1-rgb: 31, 95, 230; --au-a2: #0b3fc2; --au-a2-rgb: 11, 63, 194;
-  --au-b: #1f63ff; --au-b-rgb: 31, 99, 255; --au-c1: #1aa3f5; --au-c1-rgb: 26, 163, 245; --au-c2: #f0a91f; --au-c2-rgb: 240, 169, 31; --au-c3: #5f8bff; --au-c3-rgb: 95, 139, 255;
-  --au-gold: #f6b23a; --au-gold2: #ec8714; --au-on: #ffffff;
-  --au-card1: #ffffff; --au-card2: #eaf0fb; --au-pop: #ffffff; --au-glass: linear-gradient(160deg, #ffffff, #eef3fc);
-  --au-grad: linear-gradient(135deg, #3b82ff, #0b3fc2);
-  --cm-surf1: #2461e0; --cm-surf2: #0a2a8f; --cm-surf-tx: #ffffff; --cm-surf-mu: #eef3ff; --cm-pop: #ffffff;
+  --au-bg: #f4f6ff; --au-bgrgb: 244, 246, 255; --au-tx: #0b1437; --au-mu: #46568d; --au-w: 11, 20, 55; --au-k: 11, 20, 55;
+  --au-a1: #2f5bff; --au-a1-rgb: 47, 91, 255; --au-a2: #5a3df0; --au-a2-rgb: 90, 61, 240;
+  --au-b: #2f5bff; --au-b-rgb: 47, 91, 255; --au-c1: #0b8f86; --au-c1-rgb: 11, 143, 134; --au-c2: #ff7a4a; --au-c2-rgb: 255, 122, 74; --au-c3: #7b5cff; --au-c3-rgb: 123, 92, 255;
+  --au-gold: #ffc24a; --au-gold2: #ff7a4a; --au-on: #ffffff;
+  --au-card1: #ffffff; --au-card2: #eaeefc; --au-pop: #ffffff; --au-glass: linear-gradient(160deg, #ffffff, #eef1ff);
+  --au-grad: linear-gradient(135deg, #2f5bff, #5a3df0);
+  --cm-surf1: #2f5bff; --cm-surf2: #5a3df0; --cm-surf-tx: #ffffff; --cm-surf-mu: #eef2ff; --cm-pop: #ffffff;
   --au-bgimg:
-    radial-gradient(1100px 620px at 6% -8%, rgba(31, 99, 255, .17), transparent 62%),
-    radial-gradient(900px 600px at 100% 24%, rgba(26, 163, 245, .15), transparent 60%),
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .1 0 0 0 0 .16 0 0 0 0 .32 0 0 0 .075 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
-    linear-gradient(180deg, #f4f6f9, #e6eaf1);
+    radial-gradient(1000px 560px at 8% -6%, rgba(47, 91, 255, .13), transparent 62%),
+    radial-gradient(800px 520px at 100% 30%, rgba(255, 122, 74, .10), transparent 60%),
+    linear-gradient(180deg, #f6f8ff, #eaeefc);
 }
-/* ---------- escuro: azul-marinho profundo ---------- */
+/* ---------- escuro ---------- */
 html[data-skin="aurora"][data-palette="comunhao"][data-theme="dark"] {
   color-scheme: dark;
-  --au-bg: #061038; --au-bgrgb: 6, 16, 56; --au-tx: #f2f6ff; --au-mu: #aebde9; --au-w: 255, 255, 255; --au-k: 0, 0, 0;
-  --au-a1: #6aa8ff; --au-a1-rgb: 106, 168, 255; --au-a2: #3b82ff; --au-a2-rgb: 59, 130, 255;
-  --au-b: #2f6bff; --au-b-rgb: 47, 107, 255; --au-c1: #4fc3ff; --au-c1-rgb: 79, 195, 255; --au-c2: #ffc94d; --au-c2-rgb: 255, 201, 77; --au-c3: #8fb0ff; --au-c3-rgb: 143, 176, 255;
-  --au-gold: #f6b23a; --au-gold2: #ec8714; --au-on: #05103a;
-  --au-card1: #10246f; --au-card2: #0a1850; --au-pop: #0c1d5e; --au-glass: linear-gradient(160deg, #132c80, #0c1c5c);
-  --au-grad: linear-gradient(135deg, #8cbcff, #3b82ff);
-  --cm-surf1: #1d52c8; --cm-surf2: #081f73; --cm-surf-tx: #ffffff; --cm-surf-mu: #e7eeff; --cm-pop: #0c1d5e;
+  --au-bg: #070f33; --au-bgrgb: 7, 15, 51; --au-tx: #f2f6ff; --au-mu: #a9b9ea; --au-w: 255, 255, 255; --au-k: 0, 0, 0;
+  --au-a1: #7f9bff; --au-a1-rgb: 127, 155, 255; --au-a2: #8f78ff; --au-a2-rgb: 143, 120, 255;
+  --au-b: #3f6bff; --au-b-rgb: 63, 107, 255; --au-c1: #38c5b8; --au-c1-rgb: 56, 197, 184; --au-c2: #ff9a6a; --au-c2-rgb: 255, 154, 106; --au-c3: #a08cff; --au-c3-rgb: 160, 140, 255;
+  --au-gold: #ffc24a; --au-gold2: #ff7a4a; --au-on: #0b1437;
+  --au-card1: #112270; --au-card2: #0b1858; --au-pop: #0d1d63; --au-glass: linear-gradient(160deg, #15297f, #0d1d63);
+  --au-grad: linear-gradient(135deg, #7f9bff, #5a3df0);
+  --cm-surf1: #2f5bff; --cm-surf2: #3a2bb8; --cm-surf-tx: #ffffff; --cm-surf-mu: #e7eeff; --cm-pop: #0d1d63;
   --au-bgimg:
-    radial-gradient(1100px 640px at 8% -10%, rgba(47, 107, 255, .32), transparent 62%),
-    radial-gradient(900px 620px at 100% 26%, rgba(79, 195, 255, .16), transparent 60%),
-    linear-gradient(180deg, #08164a, #040b2b);
+    radial-gradient(1000px 600px at 8% -10%, rgba(63, 107, 255, .30), transparent 62%),
+    radial-gradient(800px 560px at 100% 28%, rgba(255, 122, 74, .12), transparent 60%),
+    linear-gradient(180deg, #08164a, #050b2c);
 }
 
 /* ===================== popups SEM transparência (todos os tipos) ===================== */
@@ -42,17 +41,17 @@ html[data-skin="aurora"][data-palette="comunhao"][data-theme="dark"] {
   background: var(--cm-pop, var(--au-pop, #fff)) !important; background-image: none !important; opacity: 1 !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
-/* menu (painel) opaco, em degradê de azul, com texto claro */
+/* menu (painel): azul-noite em degradê, texto claro */
 html[data-skin="aurora"] body.iu .iu-side {
-  background: linear-gradient(185deg, #1458f0 0%, #0b36b8 52%, #071a6e 100%) !important; opacity: 1 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  background: linear-gradient(185deg, #1f3fd0 0%, #0f1f8a 50%, #0b1437 100%) !important; opacity: 1 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   --au-tx: #ffffff; --au-mu: #d4e1ff; --au-w: 255, 255, 255; color: #fff;
 }
-html[data-skin="aurora"] body.iu .iu-side .iu-nav.on { background: #ffffff !important; color: #0b36b8 !important; box-shadow: none !important; }
-html[data-skin="aurora"] body.iu .iu-side .iu-nav.on svg { background: linear-gradient(135deg, #3b82ff, #0b3fc2) !important; color: #fff !important; }
+html[data-skin="aurora"] body.iu .iu-side .iu-nav.on { background: #ffffff !important; color: #0b1437 !important; box-shadow: none !important; }
+html[data-skin="aurora"] body.iu .iu-side .iu-nav.on svg { background: linear-gradient(135deg, #2f5bff, #5a3df0) !important; color: #fff !important; }
 html[data-skin="aurora"] body.iu .iu-side .iu-nav svg { background: rgba(255, 255, 255, .16); color: #fff; }
-html[data-skin="aurora"] body.iu .iu-side .iu-side-me { background: #ffffff !important; color: #0b36b8 !important; border-color: transparent !important; }
-html[data-skin="aurora"] body.iu .iu-side .iu-side-me small { color: #45558a !important; }
-html[data-skin="aurora"] body.iu .iu-side .iu-tag { background: linear-gradient(135deg, #f6b23a, #ec8714) !important; color: #1b1100 !important; }
+html[data-skin="aurora"] body.iu .iu-side .iu-side-me { background: #ffffff !important; color: #0b1437 !important; border-color: transparent !important; }
+html[data-skin="aurora"] body.iu .iu-side .iu-side-me small { color: #46568d !important; }
+html[data-skin="aurora"] body.iu .iu-side .iu-tag { background: linear-gradient(135deg, #ffc24a, #ff7a4a) !important; color: #1b1100 !important; }
 /* fundos que escurecem a página atrás do popup: sem desfoque */
 .auth-backdrop, .iasd-edit-backdrop, .welcome-backdrop, .device-preview-backdrop, .quick-backdrop, .profile-crop-backdrop, .required-profile-backdrop, .layout-overlay, .iu-sd-bk, .iu-ov,
-.sth-pop-ov, .ed-ov, .cg-ov, .es-pop-ov, .vs-ov { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(4, 12, 48, .66); }
+.sth-pop-ov, .ed-ov, .cg-ov, .es-pop-ov, .vs-ov { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgba(7, 15, 51, .68); }

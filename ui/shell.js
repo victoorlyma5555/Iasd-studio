@@ -560,7 +560,7 @@ function auArena(){
 }
 /* ---------- Home melhorada: poucos acessos principais, comunidade organizada, Palavra do dia compacta ---------- */
 const hmBadge=(name,size,shape)=>g(()=>window.IASDBadge.html(name,size,shape))||ic('star',Math.round(size/2));
-const HM_QUICK=[['Cronograma','cronograma','Cronogramas','Programação dos cultos'],['Escalas','escalas','Escalas','Quem serve e quando'],['Bíblia','biblia','Bíblia','Ler e pesquisar'],['Lição da Escola Sabatina','licao','Lição Sabática','Estudo da semana']];
+const HM_QUICK=[['Escalas','escalas','Escalas','Veja quando é a sua vez de servir'],['Cronograma','cronograma','Cronogramas','Programação dos cultos'],['Bíblia','biblia','Bíblia','Ler e pesquisar'],['Lição da Escola Sabatina','licao','Lição Sabática','Estudo da semana']];
 function hmQuick(){
   const tile=([go,badge,label,sub],i)=>`<button type="button" class="hm-tile hm-act hm-rv" style="--i:${i}" data-go="${E(go)}"><span class="hm-badge">${hmBadge(badge,66)}</span><span class="hm-txt"><b>${E(label)}</b><small>${E(sub)}</small></span><span class="hm-go">${ic('chev',16)}</span></button>`;
   const items=HM_QUICK.slice();
