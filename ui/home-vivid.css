@@ -28,7 +28,7 @@ html[data-skin="aurora"] body.iu #iu-top :is(.iu-search, .iu-ib, .iu-me) { backg
 .hm-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
 .hm-link { border: 0; background: none; color: var(--au-a1); font: 700 15px/1 "Archivo", sans-serif; min-height: 44px; padding: 0 4px; cursor: pointer; }
 .hm-empty { color: var(--au-mu); margin: 8px 0 0; }
-.hm-sq { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--mist); color: var(--au-a1); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), background .2s, color .2s; }
+.hm-sq { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--mist); color: var(--au-a1); transition: transform .3s cubic-bezier(.2, .8, .2, 1), background .2s, color .2s; }
 .hm.id .hm-act:hover .hm-sq { background: var(--royal); color: #fff; transform: rotate(-6deg) scale(1.08); }
 
 /* ---------- carrossel (o cabeçalho vira o cartão da esquerda) ---------- */
@@ -54,7 +54,7 @@ html[data-skin="aurora"] body.iu #iu-top :is(.iu-search, .iu-ib, .iu-me) { backg
 html[data-skin="aurora"] .hm.id .hm-esc .hm-txt small { color: #f2c230 !important; font: 700 12.5px/1 "Archivo", sans-serif; letter-spacing: .06em; }
 html[data-skin="aurora"] .hm.id .hm-esc .hm-txt b { color: #fff !important; font-size: clamp(24px, 3vw, 34px); line-height: 1.1; }
 html[data-skin="aurora"] .hm.id .hm-esc .hm-txt em { color: #e6e9ff !important; font-style: normal; font-size: 16px; }
-.hm-esc .hm-go { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #fff; color: var(--royal); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+.hm-esc .hm-go { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #fff; color: var(--royal); transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
 .hm-esc:hover .hm-go, .hm-esc:focus-visible .hm-go { transform: translateX(calc(4px * var(--mv, 1))); }
 
 /* ---------- esta semana (lista) ---------- */
@@ -89,7 +89,7 @@ html[data-skin="aurora"] .hm.id .hm-cm b { color: var(--au-tx) !important; font-
 .hm-row:hover, .hm-row:focus-visible { background: var(--mist); }
 
 /* ---------- botões e barra de abas (celular) ---------- */
-html[data-skin="aurora"] .iu-btn.p { position: relative; overflow: hidden; background: var(--royal); color: #fff; border: 0; border-radius: 999px; font-weight: 600; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s; }
+html[data-skin="aurora"] .iu-btn.p { position: relative; overflow: hidden; background: var(--royal); color: #fff; border: 0; border-radius: 999px; font-weight: 600; transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .25s; }
 html[data-skin="aurora"] .iu-btn.p:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -10px rgba(31, 43, 224, .6); }
 html[data-skin="aurora"] .iu-btn.p:active { transform: scale(.97); }
 html[data-skin="aurora"] .iu-bn { background: var(--au-bg); border: 0; border-radius: 999px; box-shadow: 0 14px 36px -10px rgba(14, 18, 48, .3), 0 0 0 1px var(--ln); padding: 6px; }
@@ -130,3 +130,7 @@ html[data-skin="aurora"] body.iu #iu-top .hd-link:not(#_), html[data-skin="auror
 html[data-skin="aurora"] body.iu #iu-top .hd-link[aria-current="page"]:not(#_), html[data-skin="aurora"] body.iu #iu-top .hd-link[aria-current="page"] span:not(#_) { color: var(--au-a1) !important; }
 html[data-skin="aurora"] body.iu #iu-top .hd-brand i:not(#_) { color: var(--au-a1) !important; }
 html[data-skin="aurora"] body.iu #iu-top .iu-search input::placeholder { color: var(--au-mu); opacity: 1; }
+
+/* sem cartão dentro de cartão: os botões da Comunidade viram linhas simples dentro do bloco */
+.hm-cm { background: transparent !important; border: 0 !important; border-radius: 14px; }
+.hm-cm:hover, .hm-cm:focus-visible { background: var(--mist) !important; box-shadow: none; }

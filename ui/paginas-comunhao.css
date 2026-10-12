@@ -16,7 +16,7 @@ html[data-skin="aurora"] body.iu :is(.iu-btn, .pg-ghost):not(.p):not(.primary):n
 html[data-skin="aurora"] body.iu :is(.iu-btn, .pg-ghost):hover { filter: brightness(.97); }
 
 /* ---------- calendário (Escalas) ---------- */
-html[data-skin="aurora"] body.iu .es-day:not(#_) { background: transparent !important; background-image: none !important; border: 2px solid transparent !important; border-radius: 12px !important; color: var(--au-tx) !important; box-shadow: none !important; font-weight: 600; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background .2s; }
+html[data-skin="aurora"] body.iu .es-day:not(#_) { background: transparent !important; background-image: none !important; border: 2px solid transparent !important; border-radius: 12px !important; color: var(--au-tx) !important; box-shadow: none !important; font-weight: 600; transition: transform .2s cubic-bezier(.2, .8, .2, 1), background .2s; }
 html[data-skin="aurora"] body.iu .es-day:hover:not(#_) { background: var(--mist) !important; transform: translateY(-2px); }
 html[data-skin="aurora"] body.iu .es-day.today:not(#_) { border-color: var(--royal) !important; }
 html[data-skin="aurora"] body.iu .es-day.on:not(#_) { background: var(--royal) !important; border-color: var(--royal) !important; color: #fff !important; }
@@ -24,7 +24,7 @@ html[data-skin="aurora"] body.iu .es-day.out:not(#_) { opacity: .35; }
 html[data-skin="aurora"] body.iu .es-day.has::after { background: var(--gold) !important; }
 
 /* ---------- filtros e abas internas ---------- */
-html[data-skin="aurora"] body.iu :is(.es-chip, .es-area, .chip, .pg-sel, .sq):not(#_) { background: var(--mist); border: 0; border-radius: 999px; color: var(--au-tx); box-shadow: none; transition: background .2s, color .2s, transform .2s cubic-bezier(.34, 1.56, .64, 1); }
+html[data-skin="aurora"] body.iu :is(.es-chip, .es-area, .chip, .pg-sel, .sq):not(#_) { background: var(--mist); border: 0; border-radius: 999px; color: var(--au-tx); box-shadow: none; transition: background .2s, color .2s, transform .2s cubic-bezier(.2, .8, .2, 1); }
 html[data-skin="aurora"] body.iu :is(.es-chip, .es-area, .chip, .pg-sel, .sq):hover { transform: translateY(-2px); }
 html[data-skin="aurora"] body.iu :is(.es-chip, .es-area, .chip, .pg-sel, .sq).on:not(#_) { background: var(--royal); color: #fff; }
 html[data-skin="aurora"] body.iu :is(.es-chip, .es-area, .chip, .pg-sel, .sq).on * { color: #fff !important; }
@@ -48,7 +48,7 @@ html[data-skin="aurora"] body.iu .es-feat h2 { margin: 0; color: #fff; font-size
 .es-ppl i:nth-child(2) { background: var(--gold); color: #0e1230; }
 .es-ppl i:nth-child(3) { background: #e6e9ff; }
 .es-ppl span { margin-left: 18px; }
-.es-fb { justify-self: start; min-height: 46px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: var(--royal); font: 600 15px/1 "Archivo", sans-serif; cursor: pointer; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
+.es-fb { justify-self: start; min-height: 46px; padding: 0 22px; border: 0; border-radius: 999px; background: #fff; color: var(--royal); font: 600 15px/1 "Archivo", sans-serif; cursor: pointer; transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
 .es-fb:hover { transform: translateY(-2px); }
 .es-fb:active { transform: scale(.96); }
 .es-upw h3 { margin: 0 0 10px; font-size: 20px; }
