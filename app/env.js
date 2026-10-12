@@ -52,7 +52,7 @@
     const today = new Date().toLocaleDateString('en-CA');
     const saturday = (() => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return d.toLocaleDateString('en-CA'); })();
     const TABLES = {
-      iasd_profiles: logged ? [{ user_id: 'demo-user', full_name: 'Maria Souza (demonstração)', avatar_path: null }] : [],
+      iasd_profiles: logged ? [{ user_id: 'demo-user', full_name: 'Maria Souza (demonstração)', phone: '+5575999999999', avatar_path: null }] : [],
       iasd_members: logged && ROLE_DB[role] ? [{ user_id: 'demo-user', role: ROLE_DB[role] }] : [],
       iasd_schedules: [
         { id: 'demo-hoje', name: 'Programação de hoje (demonstração)', service_date: today, updated_at: today, items: ['08:30 — Recepção — Equipe de recepção', '09:00 — Escola Sabatina — Professores', '10:30 — Louvor e adoração — Ministério de música', '11:00 — Mensagem — Pastor convidado', '12:15 — Confraternização'] },
