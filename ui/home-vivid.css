@@ -1,0 +1,25 @@
+/* Home v2: mais cor, menos rolagem. Cada acesso principal tem a sua cor; no celular o topo é mais baixo e os acessos viram cartões horizontais.
+   Carregue DEPOIS de home-upgrade.css e palette-comunhao.css. Para desfazer, remova o <link> deste arquivo. */
+
+/* ---------- cada acesso com a sua cor (texto branco, contraste >= 4.5:1) ---------- */
+.hm-quick .hm-tile:nth-child(1) { --t1: #3a63f0; --t2: #4b27c4; }
+.hm-quick .hm-tile:nth-child(2) { --t1: #d9480f; --t2: #a3135a; }
+.hm-quick .hm-tile:nth-child(3) { --t1: #0b7f78; --t2: #0a4aa8; }
+.hm-quick .hm-tile:nth-child(4) { --t1: #b45309; --t2: #8e1d44; }
+.hm-quick .hm-tile:nth-child(5) { --t1: #1d4ed8; --t2: #0c1b66; }
+.hm-quick .hm-tile:not(.hm-more) { background: linear-gradient(150deg, var(--t1), var(--t2)); box-shadow: 0 22px 40px -24px var(--t2); }
+.hm-quick .hm-tile:not(.hm-more):hover, .hm-quick .hm-tile:not(.hm-more):focus-visible, .hm-quick .hm-tile:not(.hm-more).is-tap { box-shadow: 0 28px 46px -22px var(--t1); }
+.hm-quick .hm-more { background: transparent; color: var(--au-tx) !important; border: 2px dashed rgba(var(--au-w), .38); box-shadow: none; }
+.hm-quick .hm-more .hm-txt b { color: var(--au-tx) !important; }
+.hm-quick .hm-more .hm-txt small { color: var(--au-mu) !important; }
+
+/* ---------- celular: topo mais baixo e acessos horizontais ---------- */
+@media (max-width: 700px) {
+  .hd[data-mode="home"] { --hd-h: clamp(380px, 54svh, 470px); }
+  .hd[data-mode="home"] .hd-chip { display: none; }
+  .hm-quick .hm-go { display: none; }
+  .hm-quick .hm-tile { min-height: 124px; gap: 8px; padding: 12px 14px; border-radius: 24px; }
+  .hm-quick .hm-tile .bdg { width: 44px; height: 44px; }
+  .hm-quick .hm-txt b { font-size: 17px; }
+  .hm-quick .hm-txt small { font-size: 12.5px; }
+}
