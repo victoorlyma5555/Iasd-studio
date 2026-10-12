@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR" data-skin="aurora" data-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teste dos selos</title>
+<style>
+html[data-skin="aurora"]{--au-bg:#0e0818;--au-tx:#f4efe8;--au-mu:#a8a2bd;--au-a1:#ffc15e;--au-a2:#ff8a4c;--au-b:#7b5cff}
+html[data-theme="light"]{--au-bg:#f6f3ee;--au-tx:#1c1a24}
+html[data-palette="azulbranco"]{--au-bg:#f3f7ff;--au-tx:#0f1c3a;--au-a1:#f5a524;--au-b:#2563eb}
+html[data-palette="oceano"]{--au-bg:#05141f;--au-a1:#5ef0d0;--au-b:#2ea8ff}
+body{margin:0;padding:20px;background:var(--au-bg);color:var(--au-tx);font:14px system-ui}
+h2{font-size:14px;margin:18px 0 6px;color:var(--au-mu)} .row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.cell{display:grid;gap:4px;justify-items:center;font-size:11px;color:var(--au-mu)} button{margin:2px;padding:6px 10px}
+</style><link rel="stylesheet" href="/ui/badges.css"></head>
+<body>
+<div><button onclick="document.documentElement.dataset.theme='dark'">escuro</button><button onclick="document.documentElement.dataset.theme='light'">claro</button>
+<button onclick="document.documentElement.removeAttribute('data-palette')">aurora</button><button onclick="document.documentElement.dataset.palette='azulbranco'">azul e branco</button><button onclick="document.documentElement.dataset.palette='oceano'">oceano</button></div>
+<h2>Cada significado na sua forma preferida (passe o mouse)</h2><div class="row" id="a"></div>
+<h2>Todas as formas (ícone: bíblia)</h2><div class="row" id="b"></div>
+<h2>Pequenos (28 px)</h2><div class="row" id="c"></div>
+<script src="/ui/badges.js"></script>
+<script>
+const B=IASDBadge; const a=document.getElementById('a'),b=document.getElementById('b'),c=document.getElementById('c');
+B.names.forEach(n=>{a.insertAdjacentHTML('beforeend','<div class="cell hm-act" tabindex="0">'+B.html(n,128)+'<span>'+n+'</span></div>')});
+B.shapes.forEach(s=>{b.insertAdjacentHTML('beforeend','<div class="cell hm-act" tabindex="0">'+B.html('biblia',84,s)+'<span>'+s+'</span></div>')});
+B.names.forEach(n=>{c.insertAdjacentHTML('beforeend',B.html(n,28))});
+</script></body></html>

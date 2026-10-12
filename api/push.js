@@ -13,6 +13,8 @@ const UUID=/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 function cors(req,res){const o=String(req.headers.origin||'');if(/^https:\/\/(www\.)?iasdapp\.com\.br$/.test(o)){res.setHeader('Access-Control-Allow-Origin',o);res.setHeader('Vary','Origin');res.setHeader('Access-Control-Allow-Headers','authorization,content-type');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS')}}
 async function sb(path,key,opt={}){const r=await fetch(SB+path,{...opt,headers:{apikey:key,...((opt.token||!/^sb_/.test(key))?{Authorization:'Bearer '+(opt.token||key)}:{}),'Content-Type':'application/json',...(opt.headers||{})}});const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch{}return {ok:r.ok,status:r.status,json:j}}
 module.exports=async function handler(req,res){
+  /* preview e desenvolvimento nunca executam esta função (ela usa segredos e o banco de produção) */
+  if(process.env.VERCEL_ENV&&process.env.VERCEL_ENV!=='production'){res.statusCode=503;res.setHeader('content-type','application/json; charset=utf-8');return res.end(JSON.stringify({error:'Desativado fora da produção.'}))}
  cors(req,res);res.setHeader('Cache-Control','no-store');
  if(req.method==='OPTIONS')return res.status(204).end();
  const pub=process.env.VAPID_PUBLIC_KEY,priv=process.env.VAPID_PRIVATE_KEY,svc=process.env.SUPABASE_SERVICE_ROLE_KEY;

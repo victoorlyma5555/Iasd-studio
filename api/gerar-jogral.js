@@ -39,6 +39,8 @@ async function callGemini(model,key,prompt,signal){
   body:JSON.stringify({systemInstruction:{parts:[{text:SYSTEM}]},safetySettings:SAFETY,contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.9,topP:0.95,maxOutputTokens:6144}})});
 }
 module.exports=async function handler(req,res){
+  /* preview e desenvolvimento nunca executam esta função (ela usa segredos e o banco de produção) */
+  if(process.env.VERCEL_ENV&&process.env.VERCEL_ENV!=='production'){res.statusCode=503;res.setHeader('content-type','application/json; charset=utf-8');return res.end(JSON.stringify({error:'Desativado fora da produção.'}))}
  res.setHeader('Cache-Control','no-store');
  const key=process.env.GEMINI_API_KEY;
  if(req.method==='GET')return res.status(200).json({ready:!!key});

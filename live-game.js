@@ -5,9 +5,10 @@
      semente = código, então telão e celulares mostram as mesmas perguntas sem precisar de nada novo no servidor. */
 (()=>{
 'use strict';
-const URL='https://gtsaaixuampeaivugxdm.supabase.co',KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
+const __P=['iasdapp.com.br','www.iasdapp.com.br','iasd-studio.vercel.app'].includes(location.hostname.toLowerCase()),__C=(window.IASD_ENV&&window.IASD_ENV.cloud)||null;   /* preview/localhost nunca usam o banco de produção */
+const URL=__P?'https://gtsaaixuampeaivugxdm.supabase.co':(__C?__C.url:''),KEY=__P?'sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf':(__C?__C.key:'');
 const H={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'};
-const api=async(path,opt={})=>{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),8000);try{const r=await fetch(URL+'/rest/v1/'+path,{...opt,signal:ac.signal,headers:{...H,...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}finally{clearTimeout(to)}};
+const api=async(path,opt={})=>{if(!URL)throw Error('Modo demonstração: o jogo ao vivo precisa do backend de teste.');const ac=new AbortController(),to=setTimeout(()=>ac.abort(),8000);try{const r=await fetch(URL+'/rest/v1/'+path,{...opt,signal:ac.signal,headers:{...H,...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());const t=await r.text();return t?JSON.parse(t):null}finally{clearTimeout(to)}};
 const rpc=(name,body)=>api('rpc/'+name,{method:'POST',body:JSON.stringify(body)});
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

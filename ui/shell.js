@@ -93,7 +93,8 @@ function sideHTML(){
   const cur=S.cur(),projector=isProjectorPage(cur),collapsed=projector&&projectorMenuCollapsed();
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
   if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
-  {let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
+  if(!S.user()){h+=`<button class="iu-side-me" data-act="account" aria-label="Entrar na minha conta"><i>${ic('user',20)}</i><span><b>Entrar</b><small>Área de membros</small></span></button>`}   /* visitante: sem atalho para o perfil */
+  else{let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
   h+=`<button class="iu-side-me" data-go="Perfil" aria-label="Abrir meu perfil"><i>${ic('user',20)}</i><span><b>${E(nm)}</b><small>Conta, ranking e conquistas</small></span></button>`}
   const pages=mainPages(),pg=id=>pages.find(x=>x[0]===id);
   const nb=id=>{const x=pg(id);return x?navBtn(x[0],(isAurora()&&auIc(x[0],20))||ic(x[1],19),x[2],cur):''};
@@ -314,7 +315,8 @@ function loadPassage(){
 }
 function passageInner(){
   const long=passage.text.length>150;
-  return `<div class="iu-ph">${ic('book',20)}<h2>Passagem do dia</h2></div><q${long?' class="long"':''}>${E(passage.text)}</q><small>${E(passage.ref)}</small><div class="iu-two"><button class="iu-btn" data-act="passage">${ic('book',16)}Ver versículo</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button><button class="iu-btn iu-sharev" data-act="vshare">${ic('share',16)}Compartilhar versículo</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
+  /* Palavra do dia compacta: cabeçalho pequeno, versículo, três ações em linha */
+  return `<div class="hm-pas-h"><span class="hm-sticker">${g(()=>window.IASDBadge.html('pomba',40))||ic('book',20)}</span><div><b>Palavra do dia</b><small>${E(passage.ref)}</small></div></div><q${long?' class="long"':''}>${E(passage.text)}</q><div class="iu-two hm-pas-a"><button class="iu-btn" data-act="passage">${ic('book',16)}Ler no contexto</button><button class="iu-btn" data-go="Bíblia">${ic('search',16)}Pesquisar</button><button class="iu-btn iu-sharev" data-act="vshare">${ic('share',16)}Compartilhar</button></div>${S.manage()?'<button class="iu-edit" data-act="cover" data-slot="home_passage">✎ Editar imagem</button>':''}`;
 }
 function passageStyle(){return bgImage('home_passage','linear-gradient(180deg,rgba(8,16,38,.25),rgba(8,16,38,.82))')}
 function updatePassage(){const el=$('iu-passage');if(el){el.innerHTML=passageInner();el.setAttribute('style',passageStyle())}}
@@ -556,9 +558,30 @@ function auBanner(){
 function auArena(){
   return `<article class="au-card au-arena au-c4"><div class="au-orbit s"></div><div><div class="au-lab"><i></i>Jogo coletivo</div><h2>Arena<br>da turma</h2><p>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</p></div><div><div class="au-chips"><span>Quiz</span><span>Verdadeiro ou falso</span><span>Travessia</span><span>Aposta</span><span>Votação</span></div><button class="iu-btn p" data-go="Jogo">${ic('game',16)}Abrir jogos</button></div></article>`;
 }
+/* ---------- Home melhorada: poucos acessos principais, comunidade organizada, Palavra do dia compacta ---------- */
+const hmBadge=(name,size,shape)=>g(()=>window.IASDBadge.html(name,size,shape))||ic('star',Math.round(size/2));
+const HM_QUICK=[['Cronograma','cronograma','Cronogramas','Programação dos cultos'],['Escalas','escalas','Escalas','Quem serve e quando'],['Bíblia','biblia','Bíblia','Ler e pesquisar'],['Lição da Escola Sabatina','licao','Lição Sabática','Estudo da semana']];
+function hmQuick(){
+  const tile=([go,badge,label,sub],i)=>`<button type="button" class="hm-tile hm-act hm-rv" style="--i:${i}" data-go="${E(go)}"><span class="hm-badge">${hmBadge(badge,66)}</span><span class="hm-txt"><b>${E(label)}</b><small>${E(sub)}</small></span><span class="hm-go">${ic('chev',16)}</span></button>`;
+  const items=HM_QUICK.slice();
+  if(S.sound())items.push(['Projeção','estudio','IASD Studio','Projeção e telão']);   // só para quem tem permissão
+  const more=`<button type="button" class="hm-tile hm-act hm-rv hm-more" style="--i:${items.length}" data-act="menu" aria-haspopup="dialog" aria-controls="iu-side"><span class="hm-badge">${hmBadge('mais',66)}</span><span class="hm-txt"><b>Ver tudo</b><small>Hinário, jogos e mais</small></span><span class="hm-go">${ic('chev',16)}</span></button>`;
+  return `<nav class="hm-quick au-c12" aria-label="Acessos principais">${items.map(tile).join('')}${more}</nav>`;
+}
+const HM_COMM=[
+  ['prayer','oracao','Pedidos de oração','Um mural para orarmos uns pelos outros','Abrir o mural','feature'],
+  ['plan','plano','Plano de leitura','__PLAN__','Continuar'],
+  ['remind','lembrete','Lembrete diário','Receba o versículo do dia','Ativar'],
+  ['cards','parabens','Cartão de parabéns','Aniversários e datas especiais','Criar cartão'],
+  ['champ','campeoes','Campeões','O pódio do Domingo Jovem','Ver pódio']
+];
+function hmCommunity(){
+  const card=([k,badge,title,sub0,cta,feat],i)=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button type="button" class="hm-ccard hm-act hm-rv${feat?' is-feature':''}" style="--i:${i}" data-act="ex" data-ex="${k}"><span class="hm-badge">${hmBadge(badge,feat?84:60)}</span><span class="hm-txt"><b>${E(title)}</b><small>${E(sub)}</small></span><span class="hm-cta">${E(cta)}${ic('chev',14)}</span></button>`};
+  return `<section class="hm-comm au-c8 hm-rv" aria-labelledby="hm-comm-t"><div class="hm-head"><span class="hm-sticker">${hmBadge('pomba',46)}</span><div><h2 id="hm-comm-t">Para a comunidade</h2><p>Orar, ler, celebrar e crescer juntos.</p></div></div><div class="hm-comm-grid">${HM_COMM.map(card).join('')}</div><button type="button" class="hm-arena hm-act" data-go="Jogo"><span class="hm-badge">${hmBadge('arena',54)}</span><span class="hm-txt"><b>Arena da turma</b><small>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</small></span><span class="hm-chips"><i>Quiz</i><i>Verdadeiro ou falso</i><i>Votação</i></span><span class="hm-cta">Abrir jogos${ic('chev',14)}</span></button></section>`;
+}
 function homeAurora(){
-  const proj='';
-  return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||g(()=>bannerLayersHTML())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="au-c8 au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
+  const hd=!!api.headerEnabled;   // com o cabeçalho dinâmico, o banner é o próprio cabeçalho
+  return `<div class="iu-home au-home hm"><div class="au-grid">${hd?'':auBanner()}${hmQuick()}<div class="hm-word au-c4 hm-rv">${passageHTML()}</div>${hmCommunity()}</div>${sideTabsHTML()}</div>`;
 }
 api.localProjectorPanel=()=>g(()=>canAdminProjector())?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:'';
 api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return window.IASDStudioAdmin?.render()||''};
@@ -603,7 +626,7 @@ function bind(){
   document.addEventListener('click',e=>{
     if(!api.enabled||!mounted)return;
     const goEl=e.target.closest('[data-go]');
-    if(goEl&&goEl.closest('.iu-side,.iu-top,.iu-bn,.iu-home')){
+    if(goEl&&goEl.closest('.iu-side,.iu-top,.iu-bn,.iu-home,.hd')){
       e.preventDefault();
       document.body.classList.remove('iu-open');closeSideTab();
       const q=$('iu-q'),sr=$('iu-sr');if(sr){sr.hidden=true}if(q&&goEl.closest('.iu-sr'))q.value='';
@@ -611,7 +634,7 @@ function bind(){
       return;
     }
     const act=e.target.closest('[data-act]');
-    if(act&&act.closest('.iu-side,.iu-top,.iu-home,.iu-bn')){
+    if(act&&act.closest('.iu-side,.iu-top,.iu-home,.iu-bn,.hd')){
       const a=act.dataset.act;
       if(a==='ex'){g(()=>window.IASDExtras.open(act.dataset.ex));return}
       if(a==='menu')document.body.classList.add('iu-open');
