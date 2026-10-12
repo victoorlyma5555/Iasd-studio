@@ -601,6 +601,7 @@ window.addEventListener('iasd-access-changed',()=>escSync());
 function escList(){return (typeof data!=='undefined'&&Array.isArray(data.escalas)?data.escalas:[]).map(parseEsc).filter(e=>e.date)}
 const escCan=k=>!!(typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.canEscala(k,cloudRole));
 const todayD=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+window.IASDEsc={upcoming:function(n){const t=todayD();return escList().filter(function(e){return e.date>=t}).sort(function(x,y){return x.date-y.date}).slice(0,n||12)}};
 function escFiltered(list){const today=todayD();return list.filter(e=>(ES.area==='all'||e.area.toLowerCase()===ES.area.toLowerCase())&&(ES.status==='all'||(ES.status==='next'?e.date>=today:e.date<today)))}
 function escalas(){setTimeout(escSync,0);const head=AU()?'<header class="sv-ph"><div><h1>Escalas</h1><p>Quem serve, quando e com quem.</p></div><div class="ap-hact"><button class="pg-ghost" onclick="IASDPages.esExport()">Exportar CSV</button>'+(escCan('add')?'<button class="pg-gold" onclick="IASDPages.esOpenAdd()">'+I('plus')+'Adicionar escalado</button>':'')+'</div></header>':'';return '<div class="pg pg-escalas">'+head+'<div id="esc-root">'+esBody()+'</div></div>'}
 function esRender(){const r=document.getElementById('esc-root');if(r)r.innerHTML=esBody()}

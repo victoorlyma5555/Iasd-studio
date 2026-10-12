@@ -68,6 +68,7 @@
     const hd = document.createElement('div'); hd.id = 'hd'; hd.className = 'hd'; hd.setAttribute('role', 'banner'); hd.setAttribute('data-mode', 'page');   // div (não <header>): o app antigo esconde <header> soltos
     hd.innerHTML = '<div class="hd-bg" aria-hidden="true"></div><div class="hd-mesh" aria-hidden="true"></div><div class="hd-scrim" aria-hidden="true"></div><div class="hd-body" id="hd-body"></div><div class="hd-ctl" id="hd-ctl"></div>';
     main.parentNode.insertBefore(hd, main);
+    sig = ''; lastBody = '';
     wire(hd);
     return hd;
   }
@@ -227,6 +228,7 @@
     const hd = build(); if (!hd) return;
     enhanceTop(); injectMotionPref(); syncDrawer();
     const home = document.body.classList.contains('iu-is-home');
+    { const slot = document.getElementById('hm-hero-slot'), mainEl = document.querySelector('body > main'); if (home && slot) { if (hd.parentNode !== slot) slot.appendChild(hd); } else if (mainEl && mainEl.previousElementSibling !== hd) { mainEl.parentNode.insertBefore(hd, mainEl); } }
     const sl = slides(), nsig = sl.map(s => s.slot + '|' + s.path + '|' + num(s.f.position_x, 50) + ',' + num(s.f.position_y, 50) + ',' + num(s.f.zoom, 1)).join(';') + '#' + seconds();
     const bg = hd.querySelector('.hd-bg');
     if (nsig !== sig) { sig = nsig; bg.innerHTML = bgHTML(sl); hd.querySelector('#hd-ctl').innerHTML = ctlHTML(sl.length); setupCarousel(hd); }
