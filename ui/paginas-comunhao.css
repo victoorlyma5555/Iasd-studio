@@ -1,0 +1,32 @@
+/* IASD APP · Identidade Comunhão — miolo das abas (carregue DEPOIS de home-vivid.css). Interface antiga: ?ui=old */
+html[data-skin="aurora"] { --royal: #1f2be0; --gold: #f2c230; }
+
+/* títulos e rótulos em letra condensada */
+html[data-skin="aurora"] :is(.pg-kick, .es-dow, .es-hint, .es-mt, .es-dt) { font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--au-mu); }
+html[data-skin="aurora"] :is(.pg-hero h1, .pg-hero h2, .ap-ht, .es-main h2, .es-main h3) { font-family: "Archivo", "Bricolage Grotesque", sans-serif; font-stretch: 68%; font-weight: 900; text-transform: uppercase; letter-spacing: -.005em; line-height: .95; }
+
+/* cartões e calendário: contorno fino, cantos de 16 */
+html[data-skin="aurora"] :is(.pg-card, .es-cal, .es-upw, .es-main) { background: var(--au-bg); border: 2px solid var(--au-tx); border-radius: 16px; box-shadow: none; }
+html[data-skin="aurora"] .es-ups > * { background: var(--au-bg); border: 2px solid var(--au-tx); border-radius: 14px; box-shadow: none; }
+
+/* dias do calendário: quadrados com cantos suaves */
+html[data-skin="aurora"] body.iu .es-day:not(#_) { background: transparent !important; background-image: none !important; border: 2px solid transparent !important; border-radius: 10px !important; color: var(--au-tx) !important; box-shadow: none !important; font-weight: 700; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background .2s, border-color .2s; }
+html[data-skin="aurora"] body.iu .es-day.today:not(#_) { border-color: var(--au-tx) !important; }
+html[data-skin="aurora"] body.iu .es-day.on:not(#_) { background: var(--royal) !important; border-color: var(--royal) !important; color: #fff !important; }
+html[data-skin="aurora"] body.iu .es-day.out:not(#_) { opacity: .35; }
+html[data-skin="aurora"] .es-day:hover { border-color: var(--au-a1); transform: translateY(-2px); }
+html[data-skin="aurora"] .es-day:active { transform: scale(.94); }
+html[data-skin="aurora"] .es-day.out { opacity: .35; }
+html[data-skin="aurora"] .es-day.today { border-color: var(--au-tx); }
+html[data-skin="aurora"] .es-day.has::after { background: var(--gold) !important; }
+html[data-skin="aurora"] .es-day.on { background: var(--royal) !important; border-color: var(--royal) !important; color: #fff !important; }
+
+/* filtros (áreas): pílulas com contorno; a ativa em azul */
+html[data-skin="aurora"] :is(.es-chip, .es-area) { background: transparent; border: 2px solid var(--au-tx); border-radius: 999px; color: var(--au-tx); box-shadow: none; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background .2s, color .2s; }
+html[data-skin="aurora"] :is(.es-chip, .es-area):hover { transform: translateY(-2px); }
+html[data-skin="aurora"] :is(.es-chip, .es-area).on { background: var(--royal); border-color: var(--royal); color: #fff; }
+html[data-skin="aurora"] :is(.es-chip, .es-area).on * { color: #fff !important; }
+
+/* botões secundários */
+html[data-skin="aurora"] .pg-ghost { background: transparent; border: 2px solid var(--au-tx); border-radius: 999px; color: var(--au-tx); box-shadow: none; }
+html[data-skin="aurora"] .pg-ghost:hover { border-color: var(--royal); color: var(--royal); }
