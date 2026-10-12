@@ -581,7 +581,7 @@ function hmCommunity(){
 }
 /* ---------- Identidade v2: cartão de escala, semana, atalhos de estudo, comunidade e área do membro ---------- */
 function hmEscala(){
-  return `<button type="button" class="hm-esc hm-act hm-rv" style="--i:0" data-go="Escalas"><span class="hm-esc-ic">${ic('users',30)}</span><span class="hm-txt"><small>SUA PRÓXIMA ESCALA</small><b>Veja quando é a sua vez de servir</b><em>Toque para ver a equipe</em></span><span class="hm-go">${ic('chev',20)}</span></button>`;
+  return `<button type="button" class="hm-esc hm-act hm-rv" style="--i:0" data-go="Escalas"><span class="hm-esc-ic">${hmBadge('escalas',70)}</span><span class="hm-txt"><small>SUA PRÓXIMA ESCALA</small><b>Veja quando é a sua vez de servir</b><em>Toque para ver a equipe</em></span><span class="hm-go">${ic('chev',20)}</span></button>`;
 }
 function hmWeek(){
   const today=new Date().toLocaleDateString('en-CA');
@@ -592,12 +592,12 @@ function hmWeek(){
   return `<section class="hm-week au-c12 hm-rv" style="--i:1" aria-labelledby="hm-week-t"><div class="hm-sec"><h2 id="hm-week-t">Esta semana</h2><button type="button" class="hm-link" data-go="Cronograma">Ver cronograma${ic('chev',14)}</button></div><div class="hm-strip">${body}</div></section>`;
 }
 function hmDuo(){
-  return `<nav class="hm-duo au-c12 hm-rv" style="--i:2" aria-label="Estudo"><button type="button" class="hm-act hm-bib" data-go="Bíblia"><span class="hm-sq">${ic('book',24)}</span><b>Bíblia</b><small>Ler e pesquisar</small></button><button type="button" class="hm-act hm-lic" data-go="Lição da Escola Sabatina"><span class="hm-sq">${ic('star',24)}</span><b>Lição Sabática</b><small>Estudo da semana</small></button></nav>`;
+  return `<nav class="hm-duo au-c12 hm-rv" style="--i:2" aria-label="Estudo"><button type="button" class="hm-act hm-bib" data-go="Bíblia"><span class="hm-bd">${hmBadge('biblia',58)}</span><b>Bíblia</b><small>Ler e pesquisar</small></button><button type="button" class="hm-act hm-lic" data-go="Lição da Escola Sabatina"><span class="hm-bd">${hmBadge('licao',58)}</span><b>Lição Sabática</b><small>Estudo da semana</small></button></nav>`;
 }
 function hmComm2(){
-  const card=([k,icn,t,s],i)=>`<button type="button" class="hm-cm hm-act hm-rv c-${'abcd'[i]}" style="--i:${i}" data-act="ex" data-ex="${k}"><span class="hm-sq">${ic(icn,22)}</span><b>${E(t)}</b><small>${E(s)}</small></button>`;
-  const items=[['prayer','plus','Pedidos de oração','Orar uns pelos outros'],['plan','book','Plano de leitura','Ler junto, dia a dia'],['remind','bell','Lembrete diário','Versículo do dia'],['cards','star','Cartão de parabéns','Aniversários e datas']];
-  return `<section class="hm-comm2 au-c12 hm-rv" aria-labelledby="hm-cm-t"><div class="hm-sec"><h2 id="hm-cm-t">Comunidade</h2></div><div class="hm-cm-grid">${items.map(card).join('')}</div><button type="button" class="hm-arena2 hm-act" data-go="Jogo"><span class="hm-sq">${ic('game',26)}</span><span class="hm-txt"><b>Arena da turma</b><small>Quiz, votação e jogos pelo celular</small></span><span class="hm-go">${ic('chev',18)}</span></button></section>`;
+  const card=([k,icn,t,s],i)=>`<button type="button" class="hm-cm hm-act hm-rv c-${'abcd'[i]}" style="--i:${i}" data-act="ex" data-ex="${k}"><span class="hm-bd">${hmBadge(icn,54)}</span><b>${E(t)}</b><small>${E(s)}</small></button>`;
+  const items=[['prayer','oracao','Pedidos de oração','Orar uns pelos outros'],['plan','plano','Plano de leitura','Ler junto, dia a dia'],['remind','lembrete','Lembrete diário','Versículo do dia'],['cards','parabens','Cartão de parabéns','Aniversários e datas']];
+  return `<section class="hm-comm2 au-c12 hm-rv" aria-labelledby="hm-cm-t"><div class="hm-sec"><h2 id="hm-cm-t">Comunidade</h2></div><div class="hm-cm-grid">${items.map(card).join('')}</div><button type="button" class="hm-arena2 hm-act" data-go="Jogo"><span class="hm-bd">${hmBadge('arena',56)}</span><span class="hm-txt"><b>Arena da turma</b><small>Quiz, votação e jogos pelo celular</small></span><span class="hm-go">${ic('chev',18)}</span></button></section>`;
 }
 function hmArea(){
   if(!S.user())return '';
