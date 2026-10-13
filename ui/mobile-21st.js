@@ -23,6 +23,9 @@ function onScroll(){
     const y=Math.max(0,window.scrollY||document.documentElement.scrollTop||0),dy=y-lastY;lastY=y;
     const b=document.body;if(!b)return;
     b.classList.toggle('m21-scrolled',y>8);
+    if(y>64)b.classList.add('m21-compact');else if(y<14)b.classList.remove('m21-compact');
+    const max=(document.documentElement.scrollHeight||0)-window.innerHeight;
+    b.style.setProperty('--m21-prog',max>40?Math.min(1,y/max).toFixed(4):'0');
     if(dy>0){down+=dy;up=0}else if(dy<0){up-=dy;down=0}
     const typing=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.iu-search');
     if(small.matches&&y>90&&down>28&&!typing&&!b.classList.contains('iu-open'))b.classList.add('m21-hide');
@@ -41,6 +44,57 @@ document.addEventListener('pointerdown',e=>{
   }
   if(e.target.closest&&e.target.closest('.iu-bn button,.au-tile,.iu-ex'))buzz(6);
 },{passive:true});
+
+/* ---------- cabeçalho: saudação com nome, busca que expande ---------- */
+function greetName(){
+  try{const p=myProfile;const n=p&&p.full_name;if(n)return String(n).trim().split(/\s+/)[0]}catch(e){}
+  try{const u=cloudUser;if(u){const n=(u.user_metadata&&u.user_metadata.full_name)||(u.email||'').split('@')[0];if(n)return String(n).trim().split(/\s+/)[0]}}catch(e){}
+  return '';
+}
+function greetPhrase(){const h=new Date().getHours();return h<5?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function enhanceHeader(){
+  const top=$('#iu-top');if(!top)return;
+  const name=greetName(),phrase=greetPhrase();
+  const date=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const key=phrase+'|'+name+'|'+date;
+  let hello=$('.m21-hello',top);
+  if(!hello){
+    hello=document.createElement('div');hello.className='m21-hello';
+    hello.innerHTML='<div class="m21-hello-in"><button type="button" class="m21-hello-btn" aria-label="Voltar ao topo"><span class="m21-hi"><b></b><small></small></span><span class="m21-wave" aria-hidden="true">👋</span></button></div>';
+    top.insertBefore(hello,top.firstChild);
+  }
+  if(hello.getAttribute('data-k')!==key){
+    hello.setAttribute('data-k',key);
+    $('.m21-hi b',hello).innerHTML=esc(phrase)+(name?', <i class="m21-nm">'+esc(name)+'</i>':'');
+    $('.m21-hi small',hello).textContent=date;
+  }
+  const search=$('.iu-search',top);
+  if(search&&!$('.m21-cancel',search)){
+    const c=document.createElement('button');c.type='button';c.className='m21-cancel';c.textContent='Cancelar';
+    search.appendChild(c);
+  }
+}
+document.addEventListener('click',e=>{
+  const h=e.target.closest&&e.target.closest('.m21-hello-btn');
+  if(h){
+    const w=$('.m21-wave',h);if(w){w.classList.remove('m21-waving');void w.offsetWidth;w.classList.add('m21-waving')}
+    buzz(8);window.scrollTo({top:0,behavior:rm.matches?'auto':'smooth'});return;
+  }
+  const c=e.target.closest&&e.target.closest('.m21-cancel');
+  if(c){
+    const q=$('#iu-q');if(q){q.value='';q.dispatchEvent(new Event('input',{bubbles:true}));q.blur()}
+    document.body.classList.remove('m21-searching');
+  }
+});
+document.addEventListener('focusin',e=>{
+  if(small.matches&&e.target.closest&&e.target.closest('.iu-search'))document.body.classList.add('m21-searching');
+});
+document.addEventListener('focusout',e=>{
+  const s=e.target.closest&&e.target.closest('.iu-search');
+  if(!s||s.contains(e.relatedTarget))return;
+  setTimeout(()=>{const a=document.activeElement;if(!a||!a.closest||!a.closest('.iu-search'))document.body.classList.remove('m21-searching')},140);
+});
 
 /* ---------- menu inferior: indicador deslizante (tubelight) + lupa do dock ---------- */
 let prevX=null,prevW=null;
@@ -127,36 +181,113 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',tileMove,{passive:true});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,tileEnd,{passive:true}));
 
-/* cor de cada atalho (vem do ícone, que segue a paleta do skin) + tamanhos do bento */
+/* cor de cada atalho (vem do ícone, que segue a paleta do skin) */
 function tintDock(){
-  $$('.au-dock').forEach(dock=>{
-    const tiles=$$('.au-tile',dock),n=tiles.length,bigN=n>=5?2:0;
-    tiles.forEach((t,i)=>{
-      t.classList.toggle('m21-big',i<bigN);
-      const ic=$('.au-ic',t);
-      if(ic){const c=(getComputedStyle(ic).color.match(/[\d.]+/g)||[]).slice(0,3).map(x=>Math.round(+x));
-        if(c.length===3)t.style.setProperty('--m21-tc',c.join(','))}
-    });
-    const rest=tiles.slice(bigN),r=rest.length%4;
-    rest.forEach((t,i)=>{
-      const span=r&&i>=rest.length-r?12/r:3;
-      t.style.setProperty('--m21-span',String(span));
-      t.classList.toggle('m21-big',span>=6); /* cartão largo da última linha também fica na horizontal */
-    });
+  let probe=null;
+  $$('.au-dock .au-tile').forEach(t=>{
+    const ic=$('.au-ic',t);if(!ic)return;
+    const m=(ic.getAttribute('style')||'').match(/(?:^|;)\s*color\s*:\s*([^;]+)/);
+    if(!m)return;
+    if(!probe){probe=document.createElement('span');probe.style.cssText='position:absolute;visibility:hidden;pointer-events:none';document.body.appendChild(probe)}
+    probe.style.color='';probe.style.color=m[1].trim();
+    const c=(getComputedStyle(probe).color.match(/[\d.]+/g)||[]).slice(0,3).map(x=>Math.round(+x));
+    if(c.length===3)t.style.setProperty('--m21-tc',c.join(','));
   });
+  if(probe)probe.remove();
 }
 
-let dockSeen=false;
+/* ---------- acesso rápido: leque de cartões (padrão "Card Fan Carousel" do 21st.dev, reescrito) ---------- */
+function fanInit(dock){
+  const tiles=$$('.au-tile',dock),n=tiles.length;
+  if(n<3)return;
+  dock.setAttribute('role','group');dock.setAttribute('aria-roledescription','carrossel');
+  tiles.forEach((t,i)=>t.setAttribute('data-n',String(i+1).padStart(2,'0')));
+  const bar=document.createElement('div');bar.className='m21-fan-bar';
+  bar.innerHTML='<button type="button" aria-label="Anterior">‹</button><span class="m21-fan-count" aria-live="polite"></span><button type="button" aria-label="Próximo">›</button>';
+  dock.insertAdjacentElement('afterend',bar);
+  const count=$('.m21-fan-count',bar);
+  const STEP=64;                       /* px de arrasto para avançar um cartão */
+  let pos=0,target=0,raf=0,open=false,drag=false,moved=false,sx=0,sp=0,lx=0,lt=0,vel=0,lastIdx=-1;
+  const wrap=o=>{o=((o%n)+n)%n;return o>n/2?o-n:o};
+  const idxOf=p=>((Math.round(p)%n)+n)%n;
+  function render(){
+    tiles.forEach((t,i)=>{
+      const o=open?wrap(i-pos):0,a=Math.abs(o);
+      t.style.setProperty('--o',o.toFixed(3));
+      t.style.setProperty('--a',Math.min(a,3).toFixed(3));
+      t.style.setProperty('--z',String(200-Math.round(a*20)-(open?0:i)));
+      const hide=open&&a>2.6;
+      t.style.setProperty('--op',hide?'0':'1');
+      t.style.setProperty('--vis',hide?'hidden':'visible');
+      t.tabIndex=open&&Math.round(a)===0?0:-1;
+    });
+    const k=idxOf(pos);
+    count.innerHTML='<b>'+(k+1)+'</b> / '+n;
+    if(k!==lastIdx){if(lastIdx>=0)buzz(4);lastIdx=k}
+  }
+  function tick(){
+    raf=0;
+    const d=target-pos;
+    if(Math.abs(d)<.002){pos=target;render();return}
+    pos+=d*(rm.matches?1:.2);render();raf=requestAnimationFrame(tick);
+  }
+  function go(to){target=to;if(!raf)raf=requestAnimationFrame(tick)}
+  dock.addEventListener('pointerdown',e=>{
+    if(!phone.matches||!open||(e.pointerType==='mouse'&&e.button!==0))return;
+    drag=true;moved=false;sx=lx=e.clientX;sp=pos;lt=performance.now();vel=0;
+    if(raf){cancelAnimationFrame(raf);raf=0}
+  });
+  window.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    const dx=e.clientX-sx;
+    if(!moved&&Math.abs(dx)>6){moved=true;dock.classList.add('m21-drag');try{dock.setPointerCapture(e.pointerId)}catch(_){}}
+    if(!moved)return;
+    const now=performance.now();vel=(e.clientX-lx)/Math.max(1,now-lt);lx=e.clientX;lt=now;
+    pos=target=sp-dx/STEP;render();
+  },{passive:true});
+  const end=()=>{
+    if(!drag)return;
+    drag=false;dock.classList.remove('m21-drag');
+    if(moved){target=Math.round(pos-vel*2.2);go(target)}
+  };
+  window.addEventListener('pointerup',end,{passive:true});
+  window.addEventListener('pointercancel',end,{passive:true});
+  /* clique: depois de arrastar não abre nada; num cartão lateral só o traz para a frente */
+  dock.addEventListener('click',e=>{
+    if(!phone.matches||!open)return;
+    if(moved){e.preventDefault();e.stopPropagation();moved=false;return}
+    const t=e.target.closest('.au-tile');if(!t)return;
+    const o=wrap(tiles.indexOf(t)-Math.round(pos));
+    if(o!==0){e.preventDefault();e.stopPropagation();go(Math.round(pos)+o)}
+  },true);
+  dock.addEventListener('focusin',e=>{
+    if(!open)return;const t=e.target.closest&&e.target.closest('.au-tile');if(!t)return;
+    const o=wrap(tiles.indexOf(t)-Math.round(pos));if(o!==0)go(Math.round(pos)+o);
+  });
+  dock.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'){e.preventDefault();go(Math.round(pos)+1)}
+    else if(e.key==='ArrowLeft'){e.preventDefault();go(Math.round(pos)-1)}
+  });
+  const btns=$$('button',bar);
+  btns[0].addEventListener('click',()=>go(Math.round(pos)-1));
+  btns[1].addEventListener('click',()=>go(Math.round(pos)+1));
+  render();                            /* começa empilhado no centro */
+  const unfold=()=>{
+    if(open)return;
+    open=true;
+    if(!rm.matches){dock.classList.add('m21-fan-in');setTimeout(()=>dock.classList.remove('m21-fan-in'),900)}
+    render();
+  };
+  if(!('IntersectionObserver' in window)||rm.matches){unfold();return}
+  const io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){io.disconnect();setTimeout(unfold,120)}},{threshold:.3});
+  io.observe(dock);
+  setTimeout(unfold,2800);
+}
 function enhanceDock(){
   $$('.au-dock:not([data-m21])').forEach(dock=>{
     dock.setAttribute('data-m21','1');
-    $$('.au-tile',dock).forEach((t,i)=>t.style.setProperty('--i',i));
-    if(dockSeen||rm.matches||!('IntersectionObserver' in window)){dock.classList.add('m21-in','m21-still');return}
-    const io=new IntersectionObserver(es=>{
-      if(es.some(x=>x.isIntersecting)){dock.classList.add('m21-in');dockSeen=true;io.disconnect()}
-    },{threshold:.25});
-    io.observe(dock);
-    setTimeout(()=>{if(!dock.classList.contains('m21-in')){dock.classList.add('m21-in','m21-still')}io.disconnect()},2500);
+    tintDock();
+    fanInit(dock);
   });
 }
 
@@ -214,11 +345,12 @@ function enhanceExtras(){
 let pending=false;
 function enhance(){
   pending=false;
-  try{placeIndicator()}catch(e){}
-  try{enhanceDock()}catch(e){}
-  try{tintDock()}catch(e){}
-  try{enhanceExtras()}catch(e){}
-  try{stagger()}catch(e){}
+  try{enhanceHeader()}catch(e){console.warn('[m21] enhanceHeader',e)}
+  try{placeIndicator()}catch(e){console.warn('[m21] placeIndicator',e)}
+  try{enhanceDock()}catch(e){console.warn('[m21] enhanceDock',e)}
+  try{tintDock()}catch(e){console.warn('[m21] tintDock',e)}
+  try{enhanceExtras()}catch(e){console.warn('[m21] enhanceExtras',e)}
+  try{stagger()}catch(e){console.warn('[m21] stagger',e)}
 }
 function schedule(){if(!pending){pending=true;requestAnimationFrame(enhance)}}
 function start(){
