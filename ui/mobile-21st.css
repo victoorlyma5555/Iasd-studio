@@ -115,6 +115,24 @@ html:root body.iu :is(.iu-ib,.iu-me){position:relative;overflow:hidden}
     box-shadow:inset 0 0 0 1px rgba(var(--au-w,255,255,255),.2),0 14px 22px -10px rgba(var(--au-a1-rgb,37,99,235),.65)}
   html:root body.iu .au-tile.m21-hot .au-ic svg{filter:drop-shadow(0 4px 6px rgba(var(--au-k,0,0,0),.35))}
 
+  /* BENTO: os 2 primeiros viram cartões largos com subtítulo; os demais, cartões coloridos pela cor do ícone */
+  html:root body.iu .au-home .au-dock{
+    display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding:0;margin:0;border:0;border-radius:0;
+    background:none;box-shadow:none;overflow:visible;justify-content:stretch}
+  html:root body.iu .au-home .au-dock .au-tile{
+    grid-column:span var(--m21-span,3);flex:none;width:auto;min-width:0;padding:13px 4px 11px;border-radius:22px;
+    background:linear-gradient(155deg,color-mix(in srgb,rgb(var(--m21-tc,255,255,255)) 26%,transparent),color-mix(in srgb,rgb(var(--m21-tc,255,255,255)) 5%,transparent) 72%),var(--au-glass)!important;
+    border:1px solid color-mix(in srgb,rgb(var(--m21-tc,255,255,255)) 34%,transparent)!important;
+    box-shadow:0 14px 22px -18px rgba(var(--m21-tc,0,0,0),.75)!important}
+  html:root body.iu .au-home .au-dock .au-tile::before{inset:0;border-radius:inherit}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big{
+    --m21-span:6;flex-direction:row;align-items:center;justify-content:flex-start;text-align:left;gap:9px;padding:13px 10px;min-height:76px}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big>span:last-child{display:block;flex:1;text-align:left}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big b{text-align:left;font-size:14px;line-height:1.2;overflow-wrap:normal;word-break:normal;hyphens:manual}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big small{display:block!important;margin-top:3px;font-size:11.5px;line-height:1.25;opacity:.9;overflow-wrap:anywhere}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big .au-ic{width:42px;height:42px;flex:none}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big .au-ic svg{width:22px!important;height:22px!important}
+
   /* entrada em cascata (só depois que o JS marca html.m21-js) */
   html.m21-js body.iu .au-dock:not(.m21-in) .au-tile{opacity:0;transform:translateY(16px) scale(.86)}
   html.m21-js body.iu .au-dock.m21-in:not(.m21-still) .au-tile{animation:m21-rise .6s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 55ms)}
@@ -123,6 +141,11 @@ html:root body.iu :is(.iu-ib,.iu-me){position:relative;overflow:hidden}
 /* telas muito estreitas: rótulos dos atalhos sem quebrar no meio da palavra */
 @media (max-width:360px){
   html:root body.iu .au-tile b{font-size:10.5px;letter-spacing:-.01em}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big{gap:7px;padding:11px 8px}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big b{font-size:12.5px;letter-spacing:-.01em}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big small{font-size:10.5px}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big .au-ic{width:34px;height:34px}
+  html:root body.iu .au-home .au-dock .au-tile.m21-big .au-ic svg{width:19px!important;height:19px!important}
 }
 
 /* =========================================================

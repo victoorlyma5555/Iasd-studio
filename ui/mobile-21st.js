@@ -127,6 +127,25 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',tileMove,{passive:true});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,tileEnd,{passive:true}));
 
+/* cor de cada atalho (vem do ícone, que segue a paleta do skin) + tamanhos do bento */
+function tintDock(){
+  $$('.au-dock').forEach(dock=>{
+    const tiles=$$('.au-tile',dock),n=tiles.length,bigN=n>=5?2:0;
+    tiles.forEach((t,i)=>{
+      t.classList.toggle('m21-big',i<bigN);
+      const ic=$('.au-ic',t);
+      if(ic){const c=(getComputedStyle(ic).color.match(/[\d.]+/g)||[]).slice(0,3).map(x=>Math.round(+x));
+        if(c.length===3)t.style.setProperty('--m21-tc',c.join(','))}
+    });
+    const rest=tiles.slice(bigN),r=rest.length%4;
+    rest.forEach((t,i)=>{
+      const span=r&&i>=rest.length-r?12/r:3;
+      t.style.setProperty('--m21-span',String(span));
+      t.classList.toggle('m21-big',span>=6); /* cartão largo da última linha também fica na horizontal */
+    });
+  });
+}
+
 let dockSeen=false;
 function enhanceDock(){
   $$('.au-dock:not([data-m21])').forEach(dock=>{
@@ -197,6 +216,7 @@ function enhance(){
   pending=false;
   try{placeIndicator()}catch(e){}
   try{enhanceDock()}catch(e){}
+  try{tintDock()}catch(e){}
   try{enhanceExtras()}catch(e){}
   try{stagger()}catch(e){}
 }
@@ -204,6 +224,7 @@ function schedule(){if(!pending){pending=true;requestAnimationFrame(enhance)}}
 function start(){
   new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
   new MutationObserver(()=>{stagger();onScroll()}).observe(document.body,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(()=>setTimeout(tintDock,60)).observe(document.documentElement,{attributes:true,attributeFilter:['data-palette','data-theme','data-skin']});
   window.addEventListener('resize',()=>{placeIndicator();$$('.iu-extras .iu-qg').forEach(q=>q.dispatchEvent(new Event('scroll')))},{passive:true});
   if('ResizeObserver' in window){const bar=$('#iu-bn');if(bar)new ResizeObserver(()=>placeIndicator()).observe(bar)}
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(schedule);
