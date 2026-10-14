@@ -145,16 +145,11 @@ function passageHTML(){
   const ref=String(p.ref||'').replace(/\s*\(NVI\)\s*$/,'');
   return `<section class="hm-card hm-passage" id="hm-passage" aria-labelledby="hm-pas-t"><div class="hm-pas-img${url?'':' none'}" aria-hidden="true">${url?`<img src="${E(url)}" alt="" width="400" height="200" loading="lazy">`:''}</div>${edit}<div class="hm-pas-in"><span class="hm-kick">PALAVRA DO DIA</span><h2 id="hm-pas-t">${E(text)}</h2><small>${E(ref)}</small><hr><div class="hm-pas-acts"><button type="button" class="hm-btn ghost" data-act="passage">${svg('book',18)}Ler na Bíblia</button><button type="button" class="hm-btn ghost icon" data-hm="vdl" aria-label="Baixar imagem do versículo" title="Baixar imagem do versículo">${svg('arrow',18).replace('M5 12h14M13 6l6 6-6 6','M12 3v12M7 10l5 5 5-5M4 20h16')}</button></div><div class="hm-pas-more"><button type="button" data-go="Bíblia">Pesquisar na Bíblia</button><button type="button" data-act="vshare">Compartilhar</button></div></div></section>`;
 }
-const QUICK=[['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','lesson','Lição Sabática'],['Hinário','music','Hinário'],['Cronograma','calgrid','Cronogramas'],['Escalas','users','Escalas'],['Datas especiais','gift','Datas especiais'],['Jogo','grid','Jogos'],['Palavra em Cena','file','Jogral'],['Sonoplastia','sliders','Sonoplastia']];
+const QUICK=[['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','lesson','Lição Sabática'],['Hinário','music','Hinário'],['__members','users','Área de membros'],['Datas especiais','gift','Datas especiais'],['Jogo','grid','Jogos'],['Palavra em Cena','file','Jogral'],['Sonoplastia','sliders','Sonoplastia']];
 function quickHTML(){
-  const items=QUICK.filter(([id])=>id!=='Cronograma'||B.S.viewSchedules());
-  return `<section class="hm-sec" aria-labelledby="hm-q-t"><h2 class="hm-h" id="hm-q-t">Acessos rápidos</h2><div class="hm-quick" style="--n:${items.length}">${items.map(([id,ic,l],i)=>`<button type="button" class="hm-q${i===0?' first':''}" data-go="${E(id)}">${svg(ic,26,1.5)}<span>${E(l)}</span></button>`).join('')}</div></section>`;
-}
-function membersHTML(){
-  const L=B.topLinks?B.topLinks().members:[];
-  if(!L.length)return '';
-  const info={Cronograma:['calgrid','Cronogramas','Programação e atividades da igreja'],Escalas:['users','Escalas','Equipes do mês e próximos compromissos'],Alertas:['bell','Alertar sonoplastia','Envie avisos à equipe de som']};
-  return `<section class="hm-sec" id="hm-members" aria-labelledby="hm-mem-t"><h2 class="hm-h" id="hm-mem-t">Área de membros</h2><div class="hm-members">${L.map(x=>{const d=info[x.id]||['grid',x.label,''];return `<button type="button" class="hm-mc" data-go="${E(x.id)}"><span class="hm-mc-i">${svg(d[0],28,1.5)}</span><span><b>${E(d[1])}</b><small>${E(d[2])}</small></span>${svg('arrow',18,2)}</button>`}).join('')}</div></section>`;
+  const members=(B.topLinks?B.topLinks().members:[])[0];
+  const items=QUICK.filter(([id])=>id!=='__members'||!!members);
+  return `<section class="hm-sec" aria-labelledby="hm-q-t"><h2 class="hm-h" id="hm-q-t">Acessos rápidos</h2><div class="hm-quick" style="--n:${items.length}">${items.map(([id,ic,l],i)=>`<button type="button" class="hm-q${i===0?' first':''}" data-go="${E(id==='__members'?members.id:id)}">${svg(ic,26,1.5)}<span>${E(l)}</span></button>`).join('')}</div></section>`;
 }
 function myScaleHTML(){
   const s=myNextScale();
@@ -215,7 +210,7 @@ function safe(fn,name){try{return fn()}catch(e){console.error('[Home] bloco '+na
 function html(bridge){
   B=bridge;
   try{B.loadPassage().then(()=>update())}catch(e){}
-  return `<div class="iu-home hm"><div class="hm-bg" aria-hidden="true"><i class="a"></i><i class="b"></i></div><div class="hm-wrap">${safe(headerHTML,'cabeçalho')}${safe(greetingHTML,'saudação')}<div class="hm-row r1">${safe(bannerHTML,'banner')}${safe(passageHTML,'palavra')}</div>${safe(quickHTML,'acessos')}${safe(membersHTML,'membros')}<div class="hm-row r3">${safe(myScaleHTML,'escala')}${safe(meetingsHTML,'encontros')}${safe(studyHTML,'estudo')}</div><div class="hm-row r4">${safe(arenaHTML,'arena')}${safe(todayHTML,'hoje')}</div>${safe(communityHTML,'comunidade')}${safe(studioHTML,'studio')}${safe(footerHTML,'rodapé')}</div>${B.sideTabsHTML()}</div>`;
+  return `<div class="iu-home hm"><div class="hm-bg" aria-hidden="true"><i class="a"></i><i class="b"></i></div><div class="hm-wrap">${safe(headerHTML,'cabeçalho')}${safe(greetingHTML,'saudação')}<div class="hm-row r1">${safe(bannerHTML,'banner')}${safe(passageHTML,'palavra')}</div>${safe(quickHTML,'acessos')}<div class="hm-row r3">${safe(myScaleHTML,'escala')}${safe(meetingsHTML,'encontros')}${safe(studyHTML,'estudo')}</div><div class="hm-row r4">${safe(arenaHTML,'arena')}${safe(todayHTML,'hoje')}</div>${safe(communityHTML,'comunidade')}${safe(studioHTML,'studio')}${safe(footerHTML,'rodapé')}</div>${B.sideTabsHTML()}</div>`;
 }
 function update(){
   const el=document.getElementById('hm-passage');if(!el||!B)return;
