@@ -100,6 +100,8 @@ function memberLinks(){
   if(S.alerts())l.push({id:'Alertas',label:'Alertar sonoplastia',icon:'bell'});
   return l;
 }
+/* Quem não tem cargo nem permissão não vê o atalho Área de membros (as escalas continuam abertas pelo cartão Minha escala). */
+function hasMemberArea(){return S.viewSchedules()||S.alerts()||S.assigned()||!!g(()=>['add','edit','delete'].some(k=>window.IASDAccess.canEscala(k,cloudRole)))}
 function topLinks(){
   const L=(id,label,icon)=>({id,label,icon});
   const inline=[L('Painel','Início','home'),L('Bíblia','Bíblia','book'),L('Lição da Escola Sabatina','Lição Sabática','book'),L('Hinário','Hinário','music'),L('Jogo','Jogos','game'),L('Palavra em Cena','Jogral','film')];
@@ -107,7 +109,7 @@ function topLinks(){
   if(S.study())more.push(L('Estudo','Sala de Estudo','book'));
   if(S.sound())more.push(L('Sorteadores','Sorteadores','dice'),L('Mídia','Mídia e músicas','music'));
   S.tabs().forEach(t=>more.push(L('custom:'+t.id,t.title||'Aba','star')));
-  return {inline,more,members:memberLinks()};
+  return {inline,more,members:hasMemberArea()?memberLinks():[]};
 }
 function membersSideHTML(cur){
   return '<div class="iu-sec">ÁREA DE MEMBROS</div>'+memberLinks().map(x=>navBtn(x.id,(isAurora()&&auIc(x.id,20))||ic(x.icon,19),x.label,cur)).join('');
