@@ -1,13 +1,13 @@
 function toggleDesktopSidebar(){document.body.classList.toggle('iasd-sidebar-collapsed');try{localStorage.setItem('iasd-sidebar-collapsed',document.body.classList.contains('iasd-sidebar-collapsed')?'1':'0')}catch{}}try{if(localStorage.getItem('iasd-sidebar-collapsed')==='1')document.body.classList.add('iasd-sidebar-collapsed')}catch{}
 const CLOUD_URL='https://gtsaaixuampeaivugxdm.supabase.co',CLOUD_KEY='sb_publishable_0nIK7568ulLb9JN0ctyiug_wHWDV7Qf';
-const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.iasdCloud=cloud;window.iasdCurrentUser=()=>cloudUser;let cloudUser=null,cloudRole=null,cloudReady=false,cloudSchedules=[],cloudMessage='';
+const cloud=window.supabase?.createClient(CLOUD_URL,CLOUD_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});window.iasdCloud=cloud;window.iasdCurrentUser=()=>cloudUser;let cloudUser=null,cloudRole=null,cloudReady=false,appReady=false,cloudSchedules=[],cloudMessage='';
 function keepLogin(ss){try{if(ss?.refresh_token)localStorage.setItem('iasd-auth-backup',JSON.stringify({access_token:ss.access_token,refresh_token:ss.refresh_token}))}catch(e){}}
-async function initCloud(){if(!cloud){cloudMessage='Não foi possível carregar a conexão. Verifique sua internet.';render();return}try{navigator.storage?.persist?.()}catch(e){}
+async function initCloud(){if(!cloud){cloudMessage='Não foi possível carregar a conexão. Verifique sua internet.';cloudReady=true;appReady=true;render();return}try{navigator.storage?.persist?.()}catch(e){}
  try{const raw=JSON.parse(localStorage.getItem('sb-gtsaaixuampeaivugxdm-auth-token')||'null');if(raw?.user&&!cloudUser){cloudUser=raw.user;try{syncAccountUI()}catch(e){}}}catch(e){}
  let {data:{session}}=await cloud.auth.getSession();
  if(!session){try{const hp=new URLSearchParams((location.hash||'').replace(/^#/,''));if(hp.get('access_token')&&hp.get('refresh_token')){const hr=await cloud.auth.setSession({access_token:hp.get('access_token'),refresh_token:hp.get('refresh_token')});if(hr.data?.session){session=hr.data.session;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}}}catch(e){}}
  if(!session){try{const bk=JSON.parse(localStorage.getItem('iasd-auth-backup')||'null');if(bk?.refresh_token){const rr=await cloud.auth.setSession({access_token:bk.access_token,refresh_token:bk.refresh_token});if(rr.data?.session)session=rr.data.session}}catch(e){}}
- cloudUser=session?.user||null;if(session)keepLogin(session);try{syncAccountUI()}catch(e){}await Promise.all([loadCloud(),loadActiveTheme(),loadSiteText()]);window.IASDStudyDevices?.restoreLogin();if(cloudUser)setTimeout(ensureRequiredProfile,0);cloud.auth.onAuthStateChange((_event,session)=>{if(session)keepLogin(session);else if(_event==='SIGNED_OUT'&&window.__iasdLogout)try{localStorage.removeItem('iasd-auth-backup')}catch(e){}if(session?.user?.id!==cloudUser?.id){cloudUser=session?.user||null;setTimeout(async()=>{await loadCloud();ensureRequiredProfile()},0)}})}
+ cloudUser=session?.user||null;if(session)keepLogin(session);try{syncAccountUI()}catch(e){}await Promise.all([loadCloud(),loadActiveTheme(),loadSiteText()]);appReady=true;render();window.IASDStudyDevices?.restoreLogin();if(cloudUser)setTimeout(ensureRequiredProfile,0);cloud.auth.onAuthStateChange((_event,session)=>{if(session)keepLogin(session);else if(_event==='SIGNED_OUT'&&window.__iasdLogout)try{localStorage.removeItem('iasd-auth-backup')}catch(e){}if(session?.user?.id!==cloudUser?.id){cloudUser=session?.user||null;setTimeout(async()=>{await loadCloud();ensureRequiredProfile()},0)}})}
 async function loadMyPerms(){try{const r=await cloud.rpc('iasd_my_perms');window.IASDAccess?.setPerms(r&&!r.error?(r.data||[]):[])}catch(e){window.IASDAccess?.setPerms([])}try{const c=await cloud.rpc('iasd_my_cargos');window.__myCargos=c&&!c.error&&Array.isArray(c.data)?c.data:[]}catch(e){window.__myCargos=[]}}
 /* acessos em tempo real: se o cargo/permissão da pessoa muda, o site se ajusta na hora (sem recarregar) */
 let accChan=null,accChanUser=null,accTimer=null,accBusy=false;
@@ -1064,6 +1064,7 @@ if(!out)out='<div class="panel"><h2>Em breve</h2><p class="muted">Esta área ain
  const nf=document.getElementById('iasd-studio-frame');if(nf&&!keep){nf.classList.toggle('st-bg',!want)}}
 studioSoundNote();if(current==='Painel')startHomeCarousel();positionDashboardAccount();applyInlineEditors();if(current==='Projeção')updateProjectionConsole();
 try{window.IASDUI?.afterRender?.()}catch(e){console.error('IASD UI',e)}
+if(appReady)try{window.IASDBoot?.ready?.()}catch(e){}
 }
 const SABBATH_API='https://sabbath-school.adventech.io/api/v1';
 let sabbathState={view:'quarterlies',quarterly:null,lesson:null,day:null,data:null,loading:false,error:''};

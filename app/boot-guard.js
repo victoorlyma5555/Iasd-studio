@@ -4,14 +4,28 @@
 (function(){
 'use strict';
 var errors=[];
+var finished=false;
 function note(msg){errors.push(String(msg).slice(0,300));try{console.warn('[IASD boot]',msg)}catch(e){}}
 window.addEventListener('error',function(e){note((e&&e.message)||'erro de script')});
 window.addEventListener('unhandledrejection',function(e){note((e&&e.reason&&e.reason.message)||'promessa rejeitada')});
-function show(){
-  var c=document.getElementById('content');
-  if(!c||c.innerHTML.trim())return;
-  c.innerHTML='<div role="alert" style="max-width:520px;margin:64px auto;padding:24px;border:1px solid #c9a24a;border-radius:16px;font:16px/1.5 system-ui,sans-serif;text-align:center;background:#fff;color:#12284b"><h2 style="margin:0 0 8px">Não foi possível carregar o IASD APP</h2><p style="margin:0 0 16px">Verifique a internet e tente de novo. Se o problema continuar, avise a equipe de tecnologia.</p><button onclick="location.reload()" style="padding:10px 18px;border-radius:10px;border:0;background:#2563eb;color:#fff;font:600 15px system-ui,sans-serif;cursor:pointer">Recarregar</button>'+(errors.length?'<details style="margin-top:14px;text-align:left;font-size:12px;color:#5b6b8c"><summary>Detalhes técnicos</summary><pre style="white-space:pre-wrap">'+errors.join('\n').replace(/[<&]/g,'')+'</pre></details>':'')+'</div>';
+function reveal(){
+  if(finished)return;
+  finished=true;
+  document.documentElement.classList.remove('iasd-preboot');
+  document.body&&document.body.removeAttribute('aria-busy');
+  var splash=document.getElementById('iasd-boot-splash');
+  if(splash)splash.remove();
 }
-window.addEventListener('load',function(){setTimeout(show,3500)});
-window.IASDBoot=Object.freeze({errors:errors});
+function ready(){
+  requestAnimationFrame(function(){requestAnimationFrame(reveal)});
+}
+function show(){
+  if(finished)return;
+  var c=document.getElementById('content');
+  if(!c)return;
+  c.innerHTML='<div role="alert" style="max-width:520px;margin:64px auto;padding:24px;border:1px solid #c9a24a;border-radius:16px;font:16px/1.5 system-ui,sans-serif;text-align:center;background:#fff;color:#12284b"><h2 style="margin:0 0 8px">Não foi possível carregar o IASD APP</h2><p style="margin:0 0 16px">Verifique a internet e tente de novo. Se o problema continuar, avise a equipe de tecnologia.</p><button onclick="location.reload()" style="padding:10px 18px;border-radius:10px;border:0;background:#2563eb;color:#fff;font:600 15px system-ui,sans-serif;cursor:pointer">Recarregar</button>'+(errors.length?'<details style="margin-top:14px;text-align:left;font-size:12px;color:#5b6b8c"><summary>Detalhes técnicos</summary><pre style="white-space:pre-wrap">'+errors.join('\n').replace(/[<&]/g,'')+'</pre></details>':'')+'</div>';
+  reveal();
+}
+window.addEventListener('load',function(){setTimeout(show,12000)});
+window.IASDBoot=Object.freeze({errors:errors,ready:ready});
 })();
