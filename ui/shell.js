@@ -127,6 +127,7 @@ function topHTML(){
   return `<button class="iu-home-brand" data-go="Painel" aria-label="Ir para o início"><img src="/iasd-app-logo.png?v=1" alt=""><span><b>IASD <i>APP</i></b><small>COMUNIDADE E SERVIÇO</small></span></button>
 <button class="iu-ib iu-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}</button>
 <button class="iu-ib iu-back" data-act="back" aria-label="Voltar">${ic('back',20)}</button>
+<nav class="iu-topnav" id="iu-topnav" aria-label="Navegação principal"></nav>
 <div class="iu-title" id="iu-title"></div>
 <div class="iu-search" role="search">${ic('search',18)}<input id="iu-q" placeholder="Pesquisar no IASD APP..." aria-label="Pesquisar no IASD APP" autocomplete="off"><kbd>Ctrl + K</kbd><div class="iu-sr" id="iu-sr" hidden></div></div>
 <div class="iu-sp"></div>
@@ -765,6 +766,10 @@ function bind(){
   });
   new MutationObserver(themeIcon).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 }
+function topNavHTML(){
+  const cur=S.cur(),item=(id,label,icon,extra)=>'<button type="button" class="'+(cur===id?'on':'')+'" '+(extra||('data-go="'+E(id)+'"'))+(cur===id?' aria-current="page"':'')+'>'+ic(icon,18)+'<span>'+E(label)+'</span></button>';
+  return item('Painel','Início','home')+item('Bíblia','Bíblia','book')+(S.viewSchedules()?item('Cronograma','Programação','calendar'):'')+item('__community','Comunidade','users','onclick="go(\'Painel\');setTimeout(function(){var c=document.getElementById(\'hm-community\');if(c)c.scrollIntoView({behavior:\'smooth\'})},700)"');
+}
 function refresh(){
   const cur=S.cur();
   if(!S.sound()){proj.state='idle';proj.data=null}
@@ -774,6 +779,8 @@ function refresh(){
   document.body.classList.toggle('iu-is-home',cur==='Painel');
   document.body.classList.toggle('iu-is-landing',isLanding);
   document.body.classList.toggle('iu-is-home-ref',cur==='Painel'&&!!S.user()&&!!window.IASDHomeRef);
+  document.body.classList.toggle('iu-is-escalas-ref',cur==='Escalas'&&!!S.user()&&!!window.IASDEscalasRef);
+  {const tn=$('iu-topnav');if(tn)tn.innerHTML=topNavHTML()}
   document.body.classList.toggle('iu-is-games-ref',cur==='Jogo'&&!!S.user()&&!!window.IASDHomeRef&&!!window.IASDGamesRef);
   if(wasLanding!==isLanding)window.scrollTo({top:0,left:0,behavior:'auto'});
   const side=$('iu-side');if(side)side.innerHTML=sideHTML();

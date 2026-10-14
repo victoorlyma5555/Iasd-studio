@@ -605,7 +605,8 @@ function escList(){return (typeof data!=='undefined'&&Array.isArray(data.escalas
 const escCan=k=>!!(typeof cloudUser!=='undefined'&&cloudUser&&window.IASDAccess&&IASDAccess.canEscala(k,cloudRole));
 const todayD=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
 function escFiltered(list){const today=todayD();return list.filter(e=>(ES.area==='all'||e.area.toLowerCase()===ES.area.toLowerCase())&&(ES.status==='all'||(ES.status==='next'?e.date>=today:e.date<today)))}
-function escalas(){setTimeout(escSync,0);const head=AU()?hero('escalas',{au:['Equipes do mês','Escalas'],auR:'<div class="ap-hact"><button class="pg-ghost" onclick="IASDPages.esExport()">Exportar CSV</button>'+(escCan('add')?'<button class="pg-gold" onclick="IASDPages.esOpenAdd()">'+I('plus')+'Adicionar escalado</button>':'')+'</div>'}):'';return '<div class="pg pg-escalas">'+head+'<div id="esc-root">'+esBody()+'</div></div>'}
+function escBridge(){return {ES,AREAS,MESES,DOW,escList,escFiltered,escCan,isoOf,todayD,esc,jq}}
+function escalas(){setTimeout(escSync,0);const ref=!!window.IASDEscalasRef;let head=AU()?hero('escalas',{au:['Equipes do mês','Escalas'],auR:'<div class="ap-hact"><button class="pg-ghost" onclick="IASDPages.esExport()">Exportar CSV</button>'+(escCan('add')?'<button class="pg-gold" onclick="IASDPages.esOpenAdd()">'+I('plus')+'Adicionar escalado</button>':'')+'</div>'}):'';if(ref){try{head=window.IASDEscalasRef.hero(escBridge())}catch(e){console.error('[Escalas] hero novo falhou',e)}}return '<div class="pg pg-escalas'+(ref?' esr':'')+'">'+head+'<div id="esc-root">'+esBody()+'</div></div>'}
 function esRender(){const r=document.getElementById('esc-root');if(r)r.innerHTML=esBody()}
 function esSet(k,v){if(k==='m'||k==='y')ES[k]=+v;else ES[k]=v;if(k==='m'||k==='y')ES.anchor=new Date(ES.y,ES.m,1);esRender()}
 function esNav(d){if(ES.view==='week'){ES.anchor=new Date(ES.anchor.getFullYear(),ES.anchor.getMonth(),ES.anchor.getDate()+7*d);ES.m=ES.anchor.getMonth();ES.y=ES.anchor.getFullYear()}else{const x=new Date(ES.y,ES.m+d,1);ES.m=x.getMonth();ES.y=x.getFullYear();ES.anchor=x}esRender()}
@@ -643,6 +644,7 @@ function esDayClose(){ES.editing=null;const o=document.getElementById('ed-ov');i
 function esDayAdd(iso){esDayClose();esOpenAdd(iso)}
 function chip(e,del){const [n,ic,col]=areaInfo(e.area);return '<span class="es-chip" style="--ac:'+col+'" title="'+esc(e.name+' — '+e.area+(e.time?' às '+e.time:''))+'">'+I(ic)+'<b>'+esc(e.name)+'</b>'+(e.time?'<small>'+e.time+'</small>':'')+(del&&escCan('delete')?'<button class="es-x" onclick="event.stopPropagation();IASDPages.esDel('+e.i+')" aria-label="Remover">×</button>':'')+'</span>'}
 function esBody(){
+ if(window.IASDEscalasRef){try{return window.IASDEscalasRef.body(escBridge())}catch(e){console.error('[Escalas] layout novo falhou, usando o anterior',e)}}
  const all=escList(),list=escFiltered(all),today=todayD();
  const inMonth=e=>e.date.getMonth()===ES.m&&e.date.getFullYear()===ES.y;
  const years=[...new Set([now0.getFullYear()-1,now0.getFullYear(),now0.getFullYear()+1,ES.y,...all.map(e=>e.date.getFullYear())])].sort();
