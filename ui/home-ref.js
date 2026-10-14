@@ -29,6 +29,7 @@ const I={
   play:'M7 4l13 8-13 8z',
   star:'M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z'
 };
+const ICON_OF={home:'grid',book:'book',music:'music',game:'grid',film:'file',star:'gift',monitor:'sliders',dice:'grid',calendar:'calgrid',users:'users',bell:'bell'};
 const svg=(n,s=20,sw=1.7)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${I[n]||I.star}"/></svg>`;
 
 let B=null;                       /* ponte com o shell */
@@ -84,8 +85,12 @@ function headerHTML(active){
   if(prof&&prof.avatar_path){const src=g(()=>profileMediaUrl(prof.avatar_path));const st=g(()=>profileImageStyle('avatar'))||'';if(src)av=`<span class="hm-av"><img src="${E(src)}" alt="" style="${E(st)}"></span>`}
   else if(name)av=`<span class="hm-av">${E(name.slice(0,1).toUpperCase())}</span>`;
   const sched=B.S.viewSchedules();
+  const T=B.topLinks?B.topLinks():{inline:[],more:[],members:[]};
   const cur=id=>active===id?' class="on" aria-current="page"':'';
-  const nav=`<button type="button"${cur('Painel')} data-go="Painel">Início</button><button type="button"${cur('Bíblia')} data-go="Bíblia">Bíblia</button>${sched?`<button type="button"${cur('Cronograma')} data-go="Cronograma">Programação</button>`:''}${active==='Jogo'?'<button type="button" class="on" aria-current="page" data-go="Jogo">Jogos</button>':''}${active==='Painel'?'<button type="button" data-hm="community">Comunidade</button>':''}`;
+  const lnk=x=>`<button type="button" class="hm-in${active===x.id?' on':''}"${active===x.id?' aria-current="page"':''} data-go="${E(x.id)}">${E(x.label)}</button>`;
+  const row=x=>`<button type="button" role="menuitem" data-go="${E(x.id)}">${svg(ICON_OF[x.icon]||'grid',17)}<span>${E(x.label)}</span></button>`;
+  const moreMenu=`<div class="hm-menu hm-more-menu" role="menu" aria-label="Mais abas" hidden>${T.more.map(row).join('')}${T.members.length?'<div class="hm-menu-sec">Área de membros</div>'+T.members.map(row).join(''):''}</div>`;
+  const nav=T.inline.map(lnk).join('')+`<span class="hm-morew"><button type="button" class="hm-more" data-hm="more" aria-haspopup="menu" aria-expanded="false">Mais${svg('down',15,2)}</button>${moreMenu}</span>`;
   const bell=B.S.assigned()?`<button type="button" class="hm-bell" data-go="Alertas" aria-label="Notificações e alertas">${svg('bell',20)}</button><i class="hm-sep" aria-hidden="true"></i>`:'';
   return `<header class="hm-nav"><button type="button" class="hm-brand" data-go="Painel" aria-label="IASD APP, ir para o início"><img src="/iasd-app-logo.png?v=1" alt=""><b>IASD APP</b></button><nav class="hm-links" aria-label="Navegação principal">${nav}</nav><div class="hm-me">${bell}<button type="button" class="hm-prof" data-hm="menu" aria-haspopup="menu" aria-expanded="false" aria-controls="hm-menu">${av}<span class="hm-pname">${E(name)}</span>${svg('down',15,2)}</button>${menuHTML()}</div></header>`;
 }
@@ -144,6 +149,12 @@ const QUICK=[['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','lesson'
 function quickHTML(){
   const items=QUICK.filter(([id])=>id!=='Cronograma'||B.S.viewSchedules());
   return `<section class="hm-sec" aria-labelledby="hm-q-t"><h2 class="hm-h" id="hm-q-t">Acessos rápidos</h2><div class="hm-quick" style="--n:${items.length}">${items.map(([id,ic,l],i)=>`<button type="button" class="hm-q${i===0?' first':''}" data-go="${E(id)}">${svg(ic,26,1.5)}<span>${E(l)}</span></button>`).join('')}</div></section>`;
+}
+function membersHTML(){
+  const L=B.topLinks?B.topLinks().members:[];
+  if(!L.length)return '';
+  const info={Cronograma:['calgrid','Cronogramas','Programação e atividades da igreja'],Escalas:['users','Escalas','Equipes do mês e próximos compromissos'],Alertas:['bell','Alertar sonoplastia','Envie avisos à equipe de som']};
+  return `<section class="hm-sec" id="hm-members" aria-labelledby="hm-mem-t"><h2 class="hm-h" id="hm-mem-t">Área de membros</h2><div class="hm-members">${L.map(x=>{const d=info[x.id]||['grid',x.label,''];return `<button type="button" class="hm-mc" data-go="${E(x.id)}"><span class="hm-mc-i">${svg(d[0],28,1.5)}</span><span><b>${E(d[1])}</b><small>${E(d[2])}</small></span>${svg('arrow',18,2)}</button>`}).join('')}</div></section>`;
 }
 function myScaleHTML(){
   const s=myNextScale();
@@ -204,7 +215,7 @@ function safe(fn,name){try{return fn()}catch(e){console.error('[Home] bloco '+na
 function html(bridge){
   B=bridge;
   try{B.loadPassage().then(()=>update())}catch(e){}
-  return `<div class="iu-home hm"><div class="hm-bg" aria-hidden="true"><i class="a"></i><i class="b"></i></div><div class="hm-wrap">${safe(headerHTML,'cabeçalho')}${safe(greetingHTML,'saudação')}<div class="hm-row r1">${safe(bannerHTML,'banner')}${safe(passageHTML,'palavra')}</div>${safe(quickHTML,'acessos')}<div class="hm-row r3">${safe(myScaleHTML,'escala')}${safe(meetingsHTML,'encontros')}${safe(studyHTML,'estudo')}</div><div class="hm-row r4">${safe(arenaHTML,'arena')}${safe(todayHTML,'hoje')}</div>${safe(communityHTML,'comunidade')}${safe(studioHTML,'studio')}${safe(footerHTML,'rodapé')}</div>${B.sideTabsHTML()}</div>`;
+  return `<div class="iu-home hm"><div class="hm-bg" aria-hidden="true"><i class="a"></i><i class="b"></i></div><div class="hm-wrap">${safe(headerHTML,'cabeçalho')}${safe(greetingHTML,'saudação')}<div class="hm-row r1">${safe(bannerHTML,'banner')}${safe(passageHTML,'palavra')}</div>${safe(quickHTML,'acessos')}${safe(membersHTML,'membros')}<div class="hm-row r3">${safe(myScaleHTML,'escala')}${safe(meetingsHTML,'encontros')}${safe(studyHTML,'estudo')}</div><div class="hm-row r4">${safe(arenaHTML,'arena')}${safe(todayHTML,'hoje')}</div>${safe(communityHTML,'comunidade')}${safe(studioHTML,'studio')}${safe(footerHTML,'rodapé')}</div>${B.sideTabsHTML()}</div>`;
 }
 function update(){
   const el=document.getElementById('hm-passage');if(!el||!B)return;
@@ -264,10 +275,10 @@ function bind(){
     const h=e.target.closest('[data-hm]');
     if(!h){closeMenus();return}
     const a=h.dataset.hm;
-    if(a==='menu'||a==='adm'){
+    if(a==='menu'||a==='adm'||a==='more'){
       const menu=h.nextElementSibling;if(!menu)return;
       const open=menu.hidden;closeMenus(open?menu:null);menu.hidden=!open;h.setAttribute('aria-expanded',String(open));
-      if(open){const f=menu.querySelector('button');if(f&&a==='menu')try{f.focus({preventScroll:true})}catch(x){}}
+      if(open){const f=menu.querySelector('button');if(f&&a!=='adm')try{f.focus({preventScroll:true})}catch(x){}}
     }else if(a==='community'){const c=document.getElementById('hm-community');if(c){c.scrollIntoView({behavior:'smooth',block:'start'});try{c.focus({preventScroll:true})}catch(x){}}}
     else if(a==='vdl'){
       const p=B&&B.passage;if(!p)return;
@@ -285,5 +296,6 @@ function bind(){
 bind();
 
 function chrome(bridge,active){B=bridge;return {header:safe(()=>headerHTML(active),'cabeçalho'),footer:safe(footerHTML,'rodapé')}}
-window.IASDHomeRef={html,update,chrome};
+function menu(bridge){B=bridge;return safe(menuHTML,'menu')}
+window.IASDHomeRef={html,update,chrome,menu};
 })();

@@ -326,3 +326,18 @@ html[data-skin="aurora"] body.iu #content .hm #hm-q::placeholder { color: #8d92b
 html[data-skin="aurora"] body.iu #content .hm :is(h1, h2, h3) { color: var(--hm-ink); }
 html[data-skin="aurora"] body.iu #content .hm .hm-lnk { color: var(--hm-vio) !important; }
 html[data-skin="aurora"] body.iu #content .hm .hm-today > header time, html[data-skin] body.iu .hm .hm-ar-in p { color: var(--hm-mute) !important; }
+
+/* menu "Mais" do cabeçalho e Área de membros */
+.hm-morew { position: relative; display: inline-flex; align-items: center; }
+.hm-links .hm-more { display: inline-flex; align-items: center; gap: 6px; }
+.hm-morew .hm-menu { top: calc(100% - 4px); left: 50%; right: auto; transform: translateX(-50%); width: 260px; }
+.hm-links { gap: clamp(14px, 2.2vw, 30px); }
+.hm-members { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.hm-mc { display: flex; align-items: center; gap: 16px; min-height: 92px; padding: 16px 20px; border: 1px solid var(--hm-line); border-radius: 22px; background: linear-gradient(135deg, #fff, #f6f3ff); color: var(--hm-ink); text-align: left; transition: background-color 160ms ease-out, border-color 160ms ease-out; }
+.hm-mc:hover, .hm-mc:focus-visible { border-color: #cfc5ff; background: #f1edff; }
+.hm-mc-i { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 16px; background: #ece7ff; color: var(--hm-vio); flex: none; }
+.hm-mc > span:nth-child(2) { flex: 1; min-width: 0; }
+.hm-mc b { display: block; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+.hm-mc small { display: block; margin-top: 3px; color: var(--hm-mute); font-size: 12.5px; }
+.hm-mc > svg { color: var(--hm-vio); flex: none; }
+@media (max-width: 1100px) { .hm-links .hm-in { display: none; } }

@@ -3,8 +3,8 @@
 
 /* ---------- cabeçalho e menu lateral (só nesta página, só em telas largas) ---------- */
 @media (min-width: 901px) {
-  html[data-skin] body.iu.iu-is-escalas-ref { background: #f6f4ff !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-top {
+  html[data-skin] body.iu.iu-is-members { background: #f6f4ff !important; }
+  html[data-skin] body.iu.iu-is-members .iu-top {
     position: fixed !important;
     inset: 0 0 auto 0;
     z-index: 60;
@@ -19,30 +19,30 @@
     backdrop-filter: blur(12px);
     box-shadow: none !important;
   }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-top :is(.iu-title, .iu-menu, .iu-back, #iu-theme, .iu-sp) { display: none !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-home-brand { display: inline-flex !important; width: 224px; align-items: center; gap: 12px; padding: 0; border: 0; background: none; text-align: left; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-home-brand img { width: 52px; height: 52px; border-radius: 15px; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-home-brand b { color: #080d3f !important; font: 800 24px/1 "Plus Jakarta Sans", sans-serif; letter-spacing: -.04em; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-home-brand b i { color: #6230ff !important; font-style: normal; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-home-brand small { display: block; margin-top: 4px; color: #7d82ad; font: 700 9px/1 "JetBrains Mono", monospace; letter-spacing: .12em; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-topnav { display: flex; gap: 6px; margin-left: 6px; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-topnav button { display: inline-flex; height: 52px; align-items: center; gap: 10px; padding: 0 16px; border: 1px solid transparent; border-radius: 16px; background: none; color: #080d3f; font: 600 14px "Plus Jakarta Sans", sans-serif; cursor: pointer; transition: background-color 160ms ease-out, border-color 160ms ease-out; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-topnav button svg { color: #6230ff; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-topnav button:hover { background: #f1eeff; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-search { margin-left: auto; width: min(410px, 30vw); height: 52px; border: 1px solid #e3deff !important; border-radius: 16px; background: rgba(255, 255, 255, .85) !important; box-shadow: none !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-search input { background: transparent !important; color: #080d3f !important; border: 0 !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-top :is(#iu-bell, #iu-vis) { width: 48px; height: 48px; border: 1px solid #e3deff; border-radius: 16px; background: #fff; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-me { height: 52px; border: 1px solid #e3deff !important; border-radius: 999px; background: #fff !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-me .iu-av { border-radius: 50%; background: linear-gradient(135deg, #7c5cf5, #4d2bff); color: #fff; }
+  html[data-skin] body.iu.iu-is-members .iu-top :is(.iu-title, .iu-menu, .iu-back, #iu-theme, .iu-sp) { display: none !important; }
+  html[data-skin] body.iu.iu-is-members .iu-home-brand { display: inline-flex !important; width: 224px; align-items: center; gap: 12px; padding: 0; border: 0; background: none; text-align: left; }
+  html[data-skin] body.iu.iu-is-members .iu-home-brand img { width: 52px; height: 52px; border-radius: 15px; }
+  html[data-skin] body.iu.iu-is-members .iu-home-brand b { color: #080d3f !important; font: 800 24px/1 "Plus Jakarta Sans", sans-serif; letter-spacing: -.04em; }
+  html[data-skin] body.iu.iu-is-members .iu-home-brand b i { color: #6230ff !important; font-style: normal; }
+  html[data-skin] body.iu.iu-is-members .iu-home-brand small { display: block; margin-top: 4px; color: #7d82ad; font: 700 9px/1 "JetBrains Mono", monospace; letter-spacing: .12em; }
+  html[data-skin] body.iu.iu-is-members .iu-topnav { display: flex; gap: 6px; margin-left: 6px; }
+  html[data-skin] body.iu.iu-is-members .iu-topnav .iu-tn { display: inline-flex; height: 52px; align-items: center; gap: 10px; padding: 0 16px; border: 1px solid transparent; border-radius: 16px; background: none; color: #080d3f; font: 600 14px "Plus Jakarta Sans", sans-serif; cursor: pointer; transition: background-color 160ms ease-out, border-color 160ms ease-out; }
+  html[data-skin] body.iu.iu-is-members .iu-topnav .iu-tn svg { color: #6230ff; }
+  html[data-skin] body.iu.iu-is-members .iu-topnav .iu-tn:hover { background: #f1eeff; }
+  html[data-skin] body.iu.iu-is-members .iu-search { margin-left: auto; width: min(410px, 30vw); height: 52px; border: 1px solid #e3deff !important; border-radius: 16px; background: rgba(255, 255, 255, .85) !important; box-shadow: none !important; }
+  html[data-skin] body.iu.iu-is-members .iu-search input { background: transparent !important; color: #080d3f !important; border: 0 !important; }
+  html[data-skin] body.iu.iu-is-members .iu-top :is(#iu-bell, #iu-vis) { width: 48px; height: 48px; border: 1px solid #e3deff; border-radius: 16px; background: #fff; }
+  html[data-skin] body.iu.iu-is-members .iu-me { height: 52px; border: 1px solid #e3deff !important; border-radius: 999px; background: #fff !important; }
+  html[data-skin] body.iu.iu-is-members .iu-me .iu-av { border-radius: 50%; background: linear-gradient(135deg, #7c5cf5, #4d2bff); color: #fff; }
 
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-side { top: 76px !important; height: calc(100svh - 76px); border: 0 !important; background: transparent !important; box-shadow: none !important; padding-top: 6px; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-side .iu-logo, html[data-skin] body.iu.iu-is-escalas-ref .iu-side .iu-tag { display: none !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-nav { border-radius: 14px; color: #080d3f; transition: background-color 160ms ease-out; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-nav:hover { background: #f1eeff; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-nav.on { border: 0 !important; background: linear-gradient(90deg, #ddd5ff, #c9bcff) !important; color: #3a1fb8 !important; box-shadow: none !important; font-weight: 700; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-nav.on::before, html[data-skin] body.iu.iu-is-escalas-ref .iu-nav.on::after { display: none !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-sec { color: #7d82ad; }
-  html[data-skin] body.iu.iu-is-escalas-ref main { padding-top: 76px !important; }
+  html[data-skin] body.iu.iu-is-members .iu-side { top: 76px !important; height: calc(100svh - 76px); border: 0 !important; background: transparent !important; box-shadow: none !important; padding-top: 6px; }
+  html[data-skin] body.iu.iu-is-members .iu-side .iu-logo, html[data-skin] body.iu.iu-is-members .iu-side .iu-tag { display: none !important; }
+  html[data-skin] body.iu.iu-is-members .iu-nav { border-radius: 14px; color: #080d3f; transition: background-color 160ms ease-out; }
+  html[data-skin] body.iu.iu-is-members .iu-nav:hover { background: #f1eeff; }
+  html[data-skin] body.iu.iu-is-members .iu-nav.on { border: 0 !important; background: linear-gradient(90deg, #ddd5ff, #c9bcff) !important; color: #3a1fb8 !important; box-shadow: none !important; font-weight: 700; }
+  html[data-skin] body.iu.iu-is-members .iu-nav.on::before, html[data-skin] body.iu.iu-is-members .iu-nav.on::after { display: none !important; }
+  html[data-skin] body.iu.iu-is-members .iu-sec { color: #7d82ad; }
+  html[data-skin] body.iu.iu-is-members main { padding-top: 76px !important; }
 }
 
 /* ---------- conteúdo ---------- */
@@ -139,7 +139,7 @@ body.iu-is-escalas-ref .ed-box :is(b, small, p, label) { color: inherit; }
 
 /* ajustes de fidelidade e de contraste (vencem regras globais do tema) */
 @media (min-width: 901px) {
-  html[data-skin] body.iu.iu-is-escalas-ref main #content { max-width: none !important; padding: 0 30px 0 22px !important; margin: 0 !important; }
+  html[data-skin] body.iu.iu-is-members main #content { max-width: none !important; padding: 0 30px 0 22px !important; margin: 0 !important; }
 }
 .esr-hero::before { inset: 0 -10px 0 0; background: radial-gradient(ellipse 34% 80% at 62% 36%, rgba(190, 175, 255, .4), transparent 72%), radial-gradient(ellipse 26% 60% at 90% 8%, rgba(165, 205, 255, .3), transparent 72%); border-radius: 0; }
 .esr-art { left: auto; right: 330px; top: -2px; width: min(330px, 28%); }
@@ -158,7 +158,7 @@ html[data-skin] body.iu #content .esr .esr-s b { color: var(--ink) !important; }
 html[data-skin] body.iu #content .esr .esr-d.out .esr-n { color: #b3b6d4 !important; }
 .esr-hero { padding-top: 22px; min-height: 150px; }
 @media (min-width: 901px) {
-  html[data-skin] body.iu.iu-is-escalas-ref main { padding-left: 0 !important; padding-right: 0 !important; }
+  html[data-skin] body.iu.iu-is-members main { padding-left: 0 !important; padding-right: 0 !important; }
 }
 .esr-hero p { max-width: 600px; }
 
@@ -167,9 +167,15 @@ html[data-skin] body.iu #content .esr :is(h1, h2, h3, .esr-mt small) { color: va
 html[data-skin] body.iu #content .esr .esr-hero p { color: #3c4278 !important; }
 html[data-skin] body.iu #content .esr .esr-mt small { color: var(--mute) !important; }
 @media (min-width: 901px) {
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-me b { color: #080d3f !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-me small { color: #7d82ad !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-top :is(#iu-bell, #iu-vis) { color: #080d3f !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-search :is(svg, kbd) { color: #7d82ad !important; }
-  html[data-skin] body.iu.iu-is-escalas-ref .iu-search input::placeholder { color: #8d92bd !important; opacity: 1; }
+  html[data-skin] body.iu.iu-is-members .iu-me b { color: #080d3f !important; }
+  html[data-skin] body.iu.iu-is-members .iu-me small { color: #7d82ad !important; }
+  html[data-skin] body.iu.iu-is-members .iu-top :is(#iu-bell, #iu-vis) { color: #080d3f !important; }
+  html[data-skin] body.iu.iu-is-members .iu-search :is(svg, kbd) { color: #7d82ad !important; }
+  html[data-skin] body.iu.iu-is-members .iu-search input::placeholder { color: #8d92bd !important; opacity: 1; }
 }
+
+/* menu "Mais" e menu da conta no cabeçalho das páginas de membros */
+.iu-topmore-wrap { position: relative; display: inline-flex; }
+.iu-topmore-wrap .hm-menu { position: absolute; top: calc(100% + 4px); left: 0; right: auto; width: 260px; font-family: "Plus Jakarta Sans", sans-serif; }
+.iu-member-menu { position: absolute; z-index: 80; top: 70px; right: 24px; font-family: "Plus Jakarta Sans", sans-serif; }
+.iu-member-menu .hm-menu { position: static; display: grid; }

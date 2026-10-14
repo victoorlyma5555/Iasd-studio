@@ -90,8 +90,31 @@ function toggleProjectorMenu(){
 
 /* ---------- menu lateral ---------- */
 function navBtn(id,iconHtml,label,cur){return `<button class="iu-nav${cur===id?' on':''}" data-go="${E(id)}" aria-label="${E(label)}" data-label="${E(label)}">${iconHtml}<span>${E(label)}</span></button>`}
+/* Todas as abas ficam no menu do topo; o menu lateral existe só na área de membros (Cronogramas, Escalas, Alertar sonoplastia). */
+const MEMBER_PAGES=['Cronograma','Escalas','Alertas'];
+const isMembersPage=(cur=S.cur())=>MEMBER_PAGES.includes(cur)&&!!S.user()&&!!window.IASDHomeRef;
+function memberLinks(){
+  const l=[];
+  if(S.viewSchedules())l.push({id:'Cronograma',label:'Cronogramas',icon:'calendar'});
+  l.push({id:'Escalas',label:'Escalas',icon:'users'});
+  if(S.alerts())l.push({id:'Alertas',label:'Alertar sonoplastia',icon:'bell'});
+  return l;
+}
+function topLinks(){
+  const L=(id,label,icon)=>({id,label,icon});
+  const inline=[L('Painel','Início','home'),L('Bíblia','Bíblia','book'),L('Lição da Escola Sabatina','Lição Sabática','book'),L('Hinário','Hinário','music'),L('Jogo','Jogos','game'),L('Palavra em Cena','Jogral','film')];
+  const more=[L('Datas especiais','Datas especiais','star'),L('Sonoplastia','IASD Studio','monitor')];
+  if(S.study())more.push(L('Estudo','Sala de Estudo','book'));
+  if(S.sound())more.push(L('Sorteadores','Sorteadores','dice'),L('Mídia','Mídia e músicas','music'));
+  S.tabs().forEach(t=>more.push(L('custom:'+t.id,t.title||'Aba','star')));
+  return {inline,more,members:memberLinks()};
+}
+function membersSideHTML(cur){
+  return '<div class="iu-sec">ÁREA DE MEMBROS</div>'+memberLinks().map(x=>navBtn(x.id,(isAurora()&&auIc(x.id,20))||ic(x.icon,19),x.label,cur)).join('');
+}
 function sideHTML(){
   const cur=S.cur(),projector=isProjectorPage(cur),collapsed=projector&&projectorMenuCollapsed();
+  if(isMembersPage(cur))return membersSideHTML(cur);
   let h='<div class="iu-logo"><img src="/iasd-app-logo.png?v=1" alt=""><div><b>IASD <i>APP</i></b><small>SONOPLASTIA E PROJEÇÃO</small></div></div>';
   if(projector)h+=`<button class="iu-side-collapse" data-act="projector-menu-toggle" aria-label="${collapsed?'Expandir':'Recolher'} menu" title="${collapsed?'Expandir menu':'Recolher menu'}">${ic(collapsed?'chev':'back',18)}<span>${collapsed?'Expandir':'Recolher menu'}</span></button>`;
   {let nm='Meu perfil';try{nm=(window.myProfile&&window.myProfile.full_name)||nm}catch(e){}
@@ -730,7 +753,8 @@ function bind(){
       else if(a==='theme')g(()=>toggleTheme());
       else if(a==='vis'){g(()=>IASDPresence.setVisible(!IASDPresence.isVisible()));visIcon();updatePres()}
       else if(a==='pres-toggle'){g(()=>IASDPresence.setVisible(!!act.checked));visIcon()}
-      else if(a==='account')g(()=>toggleAccountMenu());
+      else if(a==='account'){if(isMembersPage()&&window.IASDHomeRef&&window.IASDHomeRef.menu)toggleMemberMenu(act);else g(()=>toggleAccountMenu())}
+      else if(a==='topmore'){const m=act.nextElementSibling;if(m){const open=m.hidden;closeTopMenus();m.hidden=!open;act.setAttribute('aria-expanded',String(open))}}
       else if(a==='newtab'){document.body.classList.remove('iu-open');g(()=>newTab())}
       else if(a==='landing-editor'){document.body.classList.remove('iu-open');g(()=>openLandingEditor())}
       else if(a==='projector-menu-toggle')toggleProjectorMenu();
@@ -766,9 +790,24 @@ function bind(){
   });
   new MutationObserver(themeIcon).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 }
+function closeTopMenus(){document.querySelectorAll('.iu-topmore-menu:not([hidden])').forEach(m=>{m.hidden=true;const b=m.previousElementSibling;if(b)b.setAttribute('aria-expanded','false')});const mm=$('iu-member-menu');if(mm)mm.remove()}
+function toggleMemberMenu(btn){
+  if($('iu-member-menu')){closeTopMenus();return}
+  closeTopMenus();
+  const wrap=document.createElement('div');wrap.id='iu-member-menu';wrap.className='iu-member-menu';
+  let html=g(()=>window.IASDHomeRef.menu(api.bridge()))||'';
+  html=html.replace(' hidden>','>').replace('data-hm="logout"','onclick="cloudLogout()"');
+  wrap.innerHTML=html;
+  (btn.closest('.iu-top')||document.body).appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(closeTopMenus,0)});
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.iu-topmore-wrap,.iu-member-menu,.iu-me'))closeTopMenus()});
 function topNavHTML(){
-  const cur=S.cur(),item=(id,label,icon,extra)=>'<button type="button" class="'+(cur===id?'on':'')+'" '+(extra||('data-go="'+E(id)+'"'))+(cur===id?' aria-current="page"':'')+'>'+ic(icon,18)+'<span>'+E(label)+'</span></button>';
-  return item('Painel','Início','home')+item('Bíblia','Bíblia','book')+(S.viewSchedules()?item('Cronograma','Programação','calendar'):'')+item('__community','Comunidade','users','onclick="go(\'Painel\');setTimeout(function(){var c=document.getElementById(\'hm-community\');if(c)c.scrollIntoView({behavior:\'smooth\'})},700)"');
+  const cur=S.cur(),T=topLinks();
+  const item=x=>'<button type="button" class="iu-tn'+(cur===x.id?' on':'')+'" data-go="'+E(x.id)+'"'+(cur===x.id?' aria-current="page"':'')+'>'+ic(x.icon,18)+'<span>'+E(x.label)+'</span></button>';
+  const row=x=>'<button type="button" role="menuitem" data-go="'+E(x.id)+'">'+ic(x.icon,17)+'<span>'+E(x.label)+'</span></button>';
+  const menu='<div class="hm-menu iu-topmore-menu" role="menu" aria-label="Mais abas" hidden>'+T.more.map(row).join('')+(T.members.length?'<div class="hm-menu-sec">Área de membros</div>'+T.members.map(row).join(''):'')+'</div>';
+  return T.inline.map(item).join('')+'<span class="iu-topmore-wrap"><button type="button" class="iu-tn" data-act="topmore" aria-haspopup="menu" aria-expanded="false"><span>Mais</span>'+ic('down',15)+'</button>'+menu+'</span>';
 }
 function refresh(){
   const cur=S.cur();
@@ -779,6 +818,7 @@ function refresh(){
   document.body.classList.toggle('iu-is-home',cur==='Painel');
   document.body.classList.toggle('iu-is-landing',isLanding);
   document.body.classList.toggle('iu-is-home-ref',cur==='Painel'&&!!S.user()&&!!window.IASDHomeRef);
+  document.body.classList.toggle('iu-is-members',isMembersPage(cur));
   document.body.classList.toggle('iu-is-escalas-ref',cur==='Escalas'&&!!S.user()&&!!window.IASDEscalasRef);
   {const tn=$('iu-topnav');if(tn)tn.innerHTML=topNavHTML()}
   document.body.classList.toggle('iu-is-games-ref',cur==='Jogo'&&!!S.user()&&!!window.IASDHomeRef&&!!window.IASDGamesRef);
@@ -810,7 +850,7 @@ api.fail=function(e){
   setTimeout(()=>g(()=>render()),0);
   return '';
 };
-api.bridge=()=>({S,g,E,ic,auName,auGreeting,parseItems,passage,loadPassage,imageOf,searchable,sideTabsHTML});
+api.bridge=()=>({S,g,E,ic,auName,auGreeting,parseItems,passage,loadPassage,imageOf,searchable,sideTabsHTML,topLinks});
 api.projState=()=>proj.state;
 g(()=>IASDPresence.onChange(()=>{if(S.cur()==='Painel Sonoplastia'&&g(()=>canAdminProjector()))updatePres()}));
 api.passage=()=>passage;
