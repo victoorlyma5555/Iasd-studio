@@ -13,6 +13,7 @@ const roles=Object.freeze({
 /* Catálogo: ready=false aparece como "em breve" (o site ainda não consulta essa permissão); sensitive=só o fundador concede */
 const catalog=Object.freeze([
  {group:'Cronogramas',items:[
+  {key:'cron.view',label:'Ver cronogramas',ready:true},
   {key:'cron.edit',label:'Criar e editar cronogramas',hint:'Inclui importar cronogramas antigos',ready:true},
   {key:'cron.delete',label:'Apagar cronogramas',ready:true}]},
  {group:'Escalas',items:[
@@ -51,6 +52,7 @@ window.IASDAccess=Object.freeze({
  canEditSite:role=>has('siteEditors',role)||can('site.edit'),
  canEditTexts:role=>has('management',role)||can('site.texts'),
  canManageTabs:role=>has('management',role)||can('site.tabs'),
+ canViewSchedules:role=>has('management',role)||has('scheduleEditors',role)||can('cron.view')||can('cron.edit')||can('cron.delete'),
  canEscala:(k,role)=>can('escala.'+k)||((k==='add'||k==='edit')&&[...perms].some(x=>x.startsWith('escala.area:')))||has('management',role)||has('scheduleEditors',role)||has('assigned',role),
  canStudy:role=>role==='founder'||can('study.use'),
  canModeratePrayer:role=>role==='founder'||can('prayer.moderate'),

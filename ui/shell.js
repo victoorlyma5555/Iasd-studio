@@ -30,6 +30,7 @@ const S={
   cur:()=>g(()=>current)||'Painel',
   tabs:()=>g(()=>customTabs)||[],
   schedules:()=>g(()=>cloudSchedules)||[],
+  viewSchedules:()=>!!g(()=>canViewSchedules()),
   sound:()=>!!g(()=>canUseSound()),
   manage:()=>!!g(()=>canManageSite()),
   assigned:()=>!!g(()=>hasAssignedRole()),
@@ -48,7 +49,7 @@ const ic=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="no
 /* ---------- páginas do menu ---------- */
 const MAIN=[['Painel','home','Início'],['Cronograma','calendar','Cronogramas'],['Escalas','users','Escalas'],['Sonoplastia','monitor','IASD Studio'],['Bíblia','book','Bíblia'],['Lição da Escola Sabatina','book','Lição Sabática'],['Jogo','game','Jogos'],['Palavra em Cena','film','Palavra em Cena']];
 const isAurora=()=>document.documentElement.getAttribute('data-skin')==='aurora';
-function mainPages(){const l=MAIN.filter(x=>x[0]!=='Projeção'||S.sound());if(isAurora())l.push(['Hinário','music','Hinário']);return l}
+function mainPages(){const l=MAIN.filter(x=>(x[0]!=='Projeção'||S.sound())&&(x[0]!=='Cronograma'||S.viewSchedules()));if(isAurora())l.push(['Hinário','music','Hinário']);return l}
 const MOBILE_BAR=[['Painel','home','Início'],['Bíblia','book','Bíblia'],['Cronograma','calendar','Cronograma'],['Escalas','users','Escalas'],['Palavra em Cena','film','Jogral']];
 const TITLES={'Painel Sonoplastia':'Administração do IASD Studio',Cargos:'Cargos e acessos',Estudo:'Sala de Estudo',Painel:'Início',Cronograma:'Cronogramas',Escalas:'Escalas',Sonoplastia:'IASD Studio','Projeção':'IASD Studio WEB',Sorteadores:'Sorteadores','Mídia':'Mídia',Bíblia:'Bíblia','Lição da Escola Sabatina':'Lição Sabática','Datas especiais':'Datas Especiais','Palavra em Cena':'Palavra em Cena',Jogo:'Jogos','Hinário':'Hinário',Fundador:'Painel do Fundador',Acervo:'Acervo do Site',Perfil:'Meu perfil',Alertas:'Alertar sonoplastia',Mais:'Menu'};
 function titleOf(cur){
@@ -109,6 +110,7 @@ function sideHTML(){
    if(S.manage()){
     if(S.founder())adm+=navBtn('Fundador',ic('crown',19),'Painel do Fundador',cur);
     adm+=navBtn('Acervo',ic('folder',19),'Acervo do Site',cur);
+    adm+=`<button class="iu-nav" data-act="landing-editor" aria-label="Editar página de entrada" data-label="Editar página de entrada">${ic('gear',19)}<span>Editar página de entrada</span></button>`;
     adm+=`<button class="iu-nav" data-act="newtab" aria-label="Criar aba" data-label="Criar aba">${ic('plus',19)}<span>Criar aba</span></button>`;
    }
    h+=sec('ADMINISTRAÇÃO',adm);}
@@ -117,12 +119,13 @@ function sideHTML(){
 }
 function barHTML(){
   const cur=S.cur();
-  return `<button class="iu-bn-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}Menu</button>`+MOBILE_BAR.map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('');
+  return `<button class="iu-bn-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}Menu</button>`+MOBILE_BAR.filter(([id])=>id!=='Cronograma'||S.viewSchedules()).map(([id,i,l])=>`<button class="${cur===id?'on':''}" data-go="${E(id)}">${ic(i,20)}${E(l)}</button>`).join('');
 }
 
 /* ---------- topo ---------- */
 function topHTML(){
-  return `<button class="iu-ib iu-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}</button>
+  return `<button class="iu-home-brand" data-go="Painel" aria-label="Ir para o início"><img src="/iasd-app-logo.png?v=1" alt=""><span><b>IASD <i>APP</i></b><small>COMUNIDADE E SERVIÇO</small></span></button>
+<button class="iu-ib iu-menu" data-act="menu" aria-label="Abrir menu">${ic('menu',20)}</button>
 <button class="iu-ib iu-back" data-act="back" aria-label="Voltar">${ic('back',20)}</button>
 <div class="iu-title" id="iu-title"></div>
 <div class="iu-search" role="search">${ic('search',18)}<input id="iu-q" placeholder="Pesquisar no IASD APP..." aria-label="Pesquisar no IASD APP" autocomplete="off"><kbd>Ctrl + K</kbd><div class="iu-sr" id="iu-sr" hidden></div></div>
@@ -190,7 +193,7 @@ function coverStyle(slot,c1,c2){
 }
 function cardsHTML(){
   const edit=S.manage();
-  const base=CARDS.filter(x=>x[0]!=='Projeção'||S.sound()).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
+  const base=CARDS.filter(x=>(x[0]!=='Projeção'||S.sound())&&(x[0]!=='Cronograma'||S.viewSchedules())).map(([go,icon,title,desc,slot,c1,c2])=>`<div class="iu-cw"><button class="iu-card" data-go="${E(go)}"><div class="im" style="${coverStyle(slot,c1,c2)}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge">${ic(icon,18)}</span><b>${E(title)}</b><small>${E(desc)}</small></div></button>${edit&&slot?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`);
   const custom=S.tabs().map(t=>{const slot='custom_cover_'+t.id;return `<div class="iu-cw"><button class="iu-card" data-go="${E('custom:'+t.id)}"><div class="im" style="${coverStyle(slot,'#1d2f6b','#6d4be0')}">${g(()=>IASDMedia.img(slot))||''}</div><div class="bd"><span class="iu-badge"><span class="iu-glyph">${E(t.icon||'✦')}</span></span><b>${E(t.title||'Aba')}</b><small>${E(t.description||'')}</small></div></button>${edit?`<button class="iu-ed" data-act="cover" data-slot="${E(slot)}">✎ Editar capa</button>`:''}</div>`});
   return base.concat(custom).join('');
 }
@@ -410,15 +413,15 @@ function rankHTML(){
   return `<section class="iu-rank"><div class="iu-pan iu-rank-main"><div class="iu-ph">${ic('users',22)}<div class="iu-rk-tt"><h2>Nossa comunidade em destaque</h2><small class="iu-sub">Quem aprende junto vai mais longe.</small></div><span class="iu-scope" id="iu-rank-scope">${ic('calendar',14)}${rank.scope==='week'?'Nesta semana':'Geral'}</span></div><div id="iu-rank-body">${rankBody()}</div></div></section>`;
 }
 const EXTRAS=[
- ['plan','📖','Plano de leitura','__PLAN__','#0f766e','#134e4a'],
- ['remind','🔔','Lembrete diário','Versículo do dia','#1d4ed8','#312e81'],
- ['prayer','🙏','Pedidos de oração','Orar uns pelos outros','#7c3aed','#4c1d95'],
- ['cards','🎉','Cartão de parabéns','Aniversários e datas','#db2777','#7c2d6b'],
- ['champ','🏆','Campeões','Pódio do Domingo Jovem','#b45309','#7c2d12']
+ ['prayer','🙏','Pedidos de oração','Orar uns pelos outros'],
+ ['plan','📖','Plano de leitura','__PLAN__'],
+ ['remind','🔔','Lembrete diário','Versículo do dia'],
+ ['cards','🎉','Cartão de parabéns','Aniversários e datas'],
+ ['champ','🏆','Campeões','Pódio do Domingo Jovem']
 ];
 function planSub(){try{const t=window.IASDExtras&&IASDExtras.planToday();if(t)return (t.done?'✓ ':'')+'Dia '+t.day+' · '+t.label}catch(e){}return 'Bíblia em 1 ano'}
 function extrasHTML(){
-  return `<section class="iu-pan iu-extras"><div class="iu-ph">${ic('star',20)}<h2>Para a comunidade</h2></div><div class="iu-qg">${EXTRAS.map(([k,em,t,sub0,c1,c2])=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button class="iu-q iu-ex" style="background:linear-gradient(135deg,${c1},${c2})" data-act="ex" data-ex="${k}"><span class="iu-em">${em}</span><span><b>${E(t)}</b><small>${E(sub)}</small></span></button>`}).join('')}</div></section>`;
+  return `<section class="au-community" aria-labelledby="au-community-title"><header class="au-community-head"><span class="au-community-kicker">FÉ DURANTE A SEMANA</span><h2 id="au-community-title">Oração e vida em comunidade</h2><p>Ore, acompanhe sua leitura e celebre as pessoas da igreja.</p></header><div class="au-community-grid">${EXTRAS.map(([k,em,t,sub0])=>{const sub=sub0==='__PLAN__'?planSub():sub0;return `<button type="button" class="au-community-card" data-act="ex" data-ex="${k}"><span class="au-community-icon" aria-hidden="true">${em}</span><span class="au-community-copy"><b>${E(t)}</b><small>${E(sub)}</small></span><span class="au-community-arrow" aria-hidden="true">${ic('chev',16)}</span></button>`}).join('')}</div></section>`;
 }
 /* Equipe: bloco só para quem tem cargo; recolhido no celular para não ocupar a tela inicial */
 function teamOpen(){try{const v=localStorage.getItem('iasd-ui-team-open');if(v!==null)return v==='1'}catch(e){}return window.innerWidth>900}
@@ -517,7 +520,7 @@ function quickHTML(){
 function bannerHTML(){
   const b=config.banner;
   const media=g(()=>homeCarouselMarkup())||'';
-  return `<section class="iu-ban">${media?'':'<div class="iu-orb"></div>'}<div class="iu-ban-shade"></div>${S.manage()?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}<div class="in"><div class="iu-eb">${E(b.eyebrow)}</div><h1>${E(b.title[0])} <i>${E(b.title[1])}</i></h1><p>${E(b.verse)}</p><small>${E(b.ref)}</small><br><button class="iu-btn p" data-go="Cronograma">${ic('calendar',17)}${E(b.button)}${ic('chev',16)}</button></div>${media}</section>`;
+  return `<section class="iu-ban">${media?'':'<div class="iu-orb"></div>'}<div class="iu-ban-shade"></div>${S.manage()?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}<div class="in"><div class="iu-eb">${E(b.eyebrow)}</div><h1>${E(b.title[0])} <i>${E(b.title[1])}</i></h1><p>${E(b.verse)}</p><small>${E(b.ref)}</small>${S.viewSchedules()?`<br><button class="iu-btn p" data-go="Cronograma">${ic('calendar',17)}${E(b.button)}${ic('chev',16)}</button>`:''}</div>${media}</section>`;
 }
 
 /* ---------- Home da interface Aurora (organização nova) ---------- */
@@ -527,6 +530,12 @@ function auName(){
   return String(n).trim().split(/\s+/)[0]||'';
 }
 function auGreeting(){const h=new Date().getHours();return h<5?'Boa madrugada':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+function auWelcome(){
+  const name=auName(),date=new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+  const label=date.charAt(0).toLocaleUpperCase('pt-BR')+date.slice(1);
+  const title=name?`${E(auGreeting())}, <span>${E(name)}</span>`:'<span>Bem-vindo</span> ao IASD APP';
+  return `<section class="au-home-head au-c12" aria-labelledby="au-home-title"><div><span class="au-home-date">${ic('calendar',15)}${E(label)}</span><h1 id="au-home-title">${title}</h1><p>${S.viewSchedules()?'Acompanhe a programação e encontre o que sua igreja precisa hoje.':'Encontre recursos para estudar e participar da vida da igreja.'}</p></div>${S.viewSchedules()?`<button class="iu-btn p" data-go="Cronograma">${ic('calendar',16)}Ver programação${ic('chev',16)}</button>`:''}</section>`;
+}
 
 /* ícones próprios da Aurora (duotom: preenchimento suave + traço) */
 const AUI={
@@ -541,31 +550,56 @@ const AUI={
 'Hinário':'<path d="M9 17.500V6.200l10-2v11.300" fill="currentColor" fill-opacity=".14"/><path d="M9 9.800l10-2"/><ellipse cx="6.500" cy="17.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/><ellipse cx="16.500" cy="15.500" rx="2.700" ry="2.200" fill="currentColor" fill-opacity=".45"/>'
 };
 function auIc(id,size=20){const b=AUI[id==='Sonoplastia'?'Projeção':id];return b?`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`:''}
-const AU_DOCK=[['Cronograma','calendar','Cronogramas','Programação de hoje','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Sonoplastia','monitor','IASD Studio','Versão WEB ou PC','var(--au-c1)','rgba(var(--au-c1-rgb),.14)'],['Bíblia','book','Bíblia','Leia e pesquise','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Lição da Escola Sabatina','book','Lição Sabática','Jovem e Adulto','var(--au-c3)','rgba(var(--au-c3-rgb),.18)'],['Jogo','game','Jogos','Atividades e interação','var(--au-a2)','rgba(var(--au-a2-rgb),.16)'],['Escalas','users','Escalas','Consulta mensal','var(--au-a1)','rgba(var(--au-a1-rgb),.16)'],['Palavra em Cena','film','Palavra em Cena','Jograis e apresentações','var(--au-c2)','rgba(var(--au-c2-rgb),.15)'],['Hinário','music','Hinário','Adventista','var(--au-c3)','rgba(var(--au-c3-rgb),.18)']];
-function auDock(){
-  const t=AU_DOCK.map(([go,i,l,sub,c,bg])=>`<button class="au-tile" data-go="${E(go)}"><span class="au-ic" style="background:${bg};color:${c}">${auIc(go,26)||ic(i,20)}</span><span><b>${E(l)}</b><small>${E(sub)}</small></span></button>`);
-  S.tabs().forEach(x=>t.push(`<button class="au-tile" data-go="${E('custom:'+x.id)}"><span class="au-ic" style="background:rgba(var(--au-a1-rgb),.16);color:var(--au-a1)">${E(x.icon||'✦')}</span><span><b>${E(x.title||'Aba')}</b><small>Aba da igreja</small></span></button>`));
-  return `<nav class="au-dock au-c12" aria-label="Atalhos">${t.join('')}</nav>`;
+function auHomeNavigation(){
+  const items=mainPages().filter(([id])=>id!=='Painel').map(([id,icon,label])=>({id,icon,label}));
+  S.tabs().forEach(t=>items.push({id:'custom:'+t.id,icon:'star',label:t.title||'Aba',glyph:t.icon||'✦'}));
+  if(S.alerts())items.push({id:'Alertas',icon:'bell',label:'Alertas'});
+  if(S.study())items.push({id:'Estudo',icon:'book',label:'Sala de Estudo'});
+  if(S.sound()){items.push({id:'Sorteadores',icon:'dice',label:'Sorteadores'},{id:'Mídia',icon:'music',label:'Mídia'});}
+  if(g(()=>canAdminProjector()))items.push({id:'Painel Sonoplastia',icon:'monitor',label:'Administração do Studio'});
+  if(S.give())items.push({id:'Cargos',icon:'users',label:'Cargos e acessos'});
+  if(S.founder())items.push({id:'Fundador',icon:'crown',label:'Fundador'});
+  if(S.manage())items.push({id:'Acervo',icon:'folder',label:'Acervo'},{id:'__newtab',icon:'plus',label:'Criar aba',action:'newtab'});
+  const cur=S.cur();
+  return `<section class="au-tools au-c12" aria-labelledby="au-tools-title"><header class="au-tools-head"><div><span class="au-tools-kicker">ACESSO DIRETO</span><h2 id="au-tools-title">Módulos do IASD APP</h2></div><p>Escolha uma ferramenta para começar.</p></header><nav class="au-primary-nav" aria-label="Módulos do IASD APP">${items.map(x=>`<button type="button" class="au-primary-link${cur===x.id?' is-current':''}" ${x.action?`data-act="${x.action}"`:`data-go="${E(x.id)}"`} ${cur===x.id?'aria-current="page"':''}><span class="au-primary-icon" aria-hidden="true">${x.glyph?E(x.glyph):auIc(x.id,19)||ic(x.icon,18)}</span><span>${E(x.label)}</span><span class="au-primary-arrow" aria-hidden="true">${ic('chev',15)}</span></button>`).join('')}</nav></section>`;
 }
 function auBanner(){
-  const car=g(()=>homeCarouselMarkup())||'',lay=g(()=>bannerLayersHTML())||'',mgr=S.manage();
-  if(!car&&!lay&&!mgr)return '';
-  const empty=!car&&!lay;
-  return `<article class="au-card au-banner au-c7${empty?' empty':''}${!car&&lay?' texts-only':''}" aria-label="Avisos e eventos">${car}${lay}${mgr?'<button class="iu-edit" data-act="banner">✎ Editar banner</button>':''}${empty?'<div class="au-empty"><span class="au-lab"><i></i>Avisos e eventos</span><b>Espaço do banner</b><p>Toque em “Editar banner” para colocar imagens e textos de eventos e anúncios importantes.</p></div>':''}</article>`;
+  const mural=g(()=>homePhotoMuralMarkup())||'',lay=g(()=>bannerLayersHTML())||'',mgr=S.manage();
+  const empty=!mural;
+  const count=Math.min(5,g(()=>homeBannerItems().length)||0);
+  return `<article class="au-banner au-c12${empty?' is-empty':''}" aria-label="Apresentação do IASD APP"><div class="au-mural-grid">${mural||'<div class="au-mural-empty"><span class="au-mural-kicker">VIDA EM COMUNIDADE</span><strong>Momentos da nossa igreja</strong><p>As fotos publicadas pela igreja aparecerão neste mural.</p></div>'}<div class="au-mural-fallback" role="status">Não foi possível carregar as fotos agora.</div></div><div class="au-mural-shade" aria-hidden="true"></div><div class="au-mural-caption"><span class="au-mural-kicker">IASD APP · COMUNIDADE E SERVIÇO</span><h1>Sua igreja mais conectada, <em>todos os dias.</em></h1><p>Programação, escalas, Bíblia e recursos para servir e participar da vida da igreja.</p><div class="au-hero-actions"><a class="au-hero-primary" href="#au-tools-title">Explorar módulos${ic('down',16)}</a><button class="au-hero-secondary" type="button" data-go="Bíblia">${ic('book',16)}Abrir Bíblia</button></div></div>${lay}${mgr?`<button class="iu-edit au-mural-edit" data-act="banner">✎ Gerenciar fotos</button>`:''}<span class="au-mural-count" aria-live="polite">${empty?'Mural da igreja':`${count} ${count===1?'foto publicada':'fotos publicadas'}`}</span></article>`;
 }
-function auArena(){
-  return `<article class="au-card au-arena au-c4"><div class="au-orbit s"></div><div><div class="au-lab"><i></i>Jogo coletivo</div><h2>Arena<br>da turma</h2><p>Crie uma sala, mostre o QR no telão e todo mundo joga pelo celular.</p></div><div><div class="au-chips"><span>Quiz</span><span>Verdadeiro ou falso</span><span>Travessia</span><span>Aposta</span><span>Votação</span></div><button class="iu-btn p" data-go="Jogo">${ic('game',16)}Abrir jogos</button></div></article>`;
+function auLanding(){
+  const heroItem=g(()=>homeBannerItems()[0])||null;
+  const heroUrl=heroItem?g(()=>imageUrl(heroItem.path))||'':'';
+  const heroMedia=heroUrl?(/\.(mp4|webm|mov)$/i.test(heroItem.path)?`<video class="au-landing-bg" muted loop playsinline autoplay src="${E(heroUrl)}" aria-hidden="true"></video>`:`<img class="au-landing-bg" src="${E(heroUrl)}" alt="" aria-hidden="true">`):'';
+  const count=Math.min(5,g(()=>homeBannerItems().length)||0);
+  const copy=(key,fallback)=>String(g(()=>siteTextOverrides[key])||fallback);
+  const opacity=Math.min(1,Math.max(.35,Number(copy('landing_background_visibility','.94'))||.94));
+  const kicker=copy('landing_kicker','A IGREJA PRESENTE TODOS OS DIAS');
+  const title=copy('landing_title','Organize sua igreja.');
+  const emphasis=copy('landing_title_emphasis','Fortaleça sua comunidade.');
+  const description=copy('landing_description','Programação, escalas, Bíblia e IASD Studio reunidos em uma experiência simples para membros e equipes.');
+  const primary=copy('landing_primary','Entrar no IASD APP');
+  const secondary=copy('landing_secondary','Criar minha conta');
+  const note=copy('landing_note','Acesso seguro para membros e equipes autorizadas.');
+  const demoModules=[['Escalas','Escalas'],['Projeção','IASD Studio'],['Bíblia','Bíblia'],['Lição da Escola Sabatina','Lição Sabática']].map(([id,label])=>`<span><i>${auIc(id,17)}</i><b>${label}</b></span>`).join('');
+  const heroLive=window.matchMedia&&window.matchMedia('(min-width:1101px)').matches&&!window.IASDHeroFailed;
+  return `<div class="iu-home au-landing${heroLive?' au-hero-live':''}" style="--au-landing-media-opacity:${opacity}"><header class="au-landing-nav"><div class="au-landing-brand"><img src="/iasd-app-logo.png?v=1" alt=""><b>IASD APP</b></div><nav class="au-landing-links" aria-label="Seções da página"><button type="button" class="au-landing-link on" onclick="document.getElementById('au-landing-features')?.scrollIntoView({behavior:'smooth',block:'center'})">Recursos${ic('down',15)}</button><button type="button" class="au-landing-link" disabled aria-disabled="true">Comunidade</button><button type="button" class="au-landing-link" disabled aria-disabled="true">Sobre</button></nav><div class="au-landing-nav-actions"><button type="button" class="au-landing-join" onclick="openAuthModal(true)">Criar conta</button><button type="button" class="au-landing-login" onclick="openAuthModal(false)">Entrar<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></header><section class="au-landing-hero" aria-labelledby="au-landing-title"><div class="au-landing-media">${heroMedia||'<div class="au-landing-empty"><span>IASD APP</span><strong>Comunidade, fé e serviço em um só lugar.</strong></div>'}</div><div class="au-landing-shade" aria-hidden="true"></div><div class="au-landing-shapes" aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div><div class="au-landing-copy"><span class="au-landing-kicker">${E(kicker)}</span><h1 id="au-landing-title">${E(title)}<br><em>${E(emphasis)}</em></h1><p>${E(description)}</p><div class="au-landing-actions"><button type="button" class="au-landing-primary" onclick="openAuthModal(false)">${E(primary)}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button type="button" class="au-landing-secondary" onclick="openAuthModal(true)">${E(secondary)}</button></div><small class="au-landing-note">${E(note)}</small></div><div class="au-phone-stage" aria-label="Demonstração do IASD APP e do IASD Studio"><span class="au-phone-label"><i></i>Veja o ecossistema em ação</span><div class="au-studio-monitor" aria-hidden="true"><div class="au-studio-screen"><img src="/design/assets/iasd-studio-real.png?v=1" alt="Captura real do IASD Studio"></div><div class="au-studio-stand"></div></div><div class="au-phone"><div class="au-phone-hardware" aria-hidden="true"></div><div class="au-phone-screen"><div class="au-phone-status"><b>9:41</b><span>● ● ◼</span></div><div class="au-phone-demo"><div class="au-phone-demo-track"><div class="au-phone-demo-head"><img src="/iasd-app-logo.png?v=1" alt=""><span><small>IASD APP</small><b>Bem-vindo!</b></span><i>☰</i></div><div class="au-phone-demo-hero"><small>COMUNIDADE E SERVIÇO</small><b>Tudo para sua igreja<br>em um só lugar.</b></div><section><small>ACESSO DIRETO</small><h3>Módulos</h3><div class="au-phone-modules">${demoModules}</div></section><section><small>FÉ DURANTE A SEMANA</small><h3>Oração e comunidade</h3><article class="prayer"><i>🙏</i><span><b>Pedidos de oração</b><small>Ore uns pelos outros</small></span><b>›</b></article><article><i>📖</i><span><b>Plano de leitura</b><small>Bíblia em 1 ano</small></span><b>›</b></article></section><section class="au-phone-verse"><small>PASSAGEM DO DIA</small><blockquote>“O Senhor é o meu pastor.”</blockquote><b>Salmos 23:1</b></section></div></div><nav><span class="on">⌂<b>Início</b></span><span>▦<b>Agenda</b></span><span>♧<b>Bíblia</b></span><span>◉<b>Perfil</b></span></nav></div></div><div class="au-device-caption"><small>IASD STUDIO</small><strong>Projeção e sonoplastia</strong></div></div><i class="au-landing-rule" aria-hidden="true"></i><div class="au-landing-features" id="au-landing-features" aria-label="Recursos do IASD APP"><span>${auIc('Cronograma',18)}Programação</span><span>${auIc('Escalas',18)}Escalas</span><span>${auIc('Bíblia',18)}Bíblia</span><span>${auIc('Projeção',18)}IASD Studio</span></div><div class="au-landing-scroll-cue" aria-hidden="true"><span>Role para explorar</span><i></i></div>${count?`<span class="au-landing-photo-count">${count} ${count===1?'foto da comunidade':'fotos da comunidade'}</span>`:''}</section></div>`;
 }
 function homeAurora(){
+  if(!S.user())return auLanding();
+  if(window.IASDHomeRef){try{return window.IASDHomeRef.html(api.bridge())}catch(e){console.error('[IASD UI] Home de referência falhou, usando a Home anterior',e)}}
   const proj='';
-  return `<div class="iu-home au-home"><div class="au-grid">${auBanner()}<div class="${(g(()=>homeCarouselMarkup())||g(()=>bannerLayersHTML())||S.manage())?'au-c5':'au-c12'} au-wrap">${passageHTML()}</div>${auDock()}${auArena()}<div class="au-c8 au-wrap${sched.expanded?' exp':''}">${scheduleHTML()}</div>${proj}</div>${extrasHTML()}${sideTabsHTML()}</div>`;
+  const canSeeSchedule=S.viewSchedules();
+  return `<div class="iu-home au-home"><div class="au-grid">${auHomeNavigation()}${auWelcome()}${extrasHTML()}<div class="au-focus-grid au-c12${canSeeSchedule?' has-schedule':' only-passage'}">${canSeeSchedule?`<div class="au-focus-main${sched.expanded?' exp':''}">${scheduleHTML()}</div>`:''}<div class="au-focus-side">${passageHTML()}</div></div>${proj}</div>${sideTabsHTML()}</div>`;
 }
 api.localProjectorPanel=()=>g(()=>canAdminProjector())?`<section class="iu-pan" id="iu-proj">${projInner()}</section>`:'';
 api.projectorAdmin=function(){if(!g(()=>canAdminProjector()))return '';return window.IASDStudioAdmin?.render()||''};
 api.home=function(){
   try{
     if(isAurora())return homeAurora();
-    return `<div class="iu-home">${bannerHTML()}<div class="iu-grid two${sched.expanded?' exp':''}">${scheduleHTML()}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${extrasHTML()}${sideTabsHTML()}</div>`;
+    return `<div class="iu-home">${bannerHTML()}<div class="iu-grid${S.viewSchedules()?' two':''}${sched.expanded?' exp':''}">${S.viewSchedules()?scheduleHTML():''}${passageHTML()}</div><div class="iu-rowwrap"><div class="iu-row" id="iu-cards">${cardsHTML()}</div><button class="iu-ib iu-arrow" data-act="cards-next" aria-label="Ver mais">${ic('chev',16)}</button></div>${extrasHTML()}${sideTabsHTML()}</div>`;
   }catch(e){
     console.error('[IASD UI] falha na Home nova, voltando ao visual antigo',e);
     return api.fail(e);
@@ -584,6 +618,77 @@ function runSearch(q){
 
 /* ---------- montagem e atualização ---------- */
 let mounted=false;
+let landingMotionFrame=0;
+let landingMotionBound=false;
+/* A hero pública segue uma composição estática de referência; o movimento por rolagem fica desligado. */
+const STATIC_HERO=true;
+let heroScrollRequested=false;
+/* Anima celular e monitor na rolagem (React + Framer Motion, carregados sob demanda). */
+function loadHeroScroll(landing){
+  if(window.IASDHeroScroll){window.IASDHeroScroll.mount(landing);return}
+  if(heroScrollRequested)return;
+  heroScrollRequested=true;
+  const sc=document.createElement('script');sc.src='/ui/hero-scroll.js?v=9';
+  sc.onload=()=>{const cur=document.querySelector('.au-landing');if(cur&&window.IASDHeroScroll)window.IASDHeroScroll.mount(cur)};
+  sc.onerror=()=>{heroScrollRequested=false;window.IASDHeroFailed=true;const cur=document.querySelector('.au-landing');if(cur)cur.classList.remove('au-hero-live')};
+  document.head.appendChild(sc);
+}
+function syncLandingMotion(){
+  const landing=document.querySelector('.au-landing');
+  if(!landing||!document.body.classList.contains('iu-is-landing')){if(window.IASDHeroScroll)window.IASDHeroScroll.teardown();return}
+  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const compact=window.innerWidth<=720;
+  const q=selector=>landing.querySelector(selector);
+  const targets=['.au-landing-copy','.au-landing-media','.au-landing-shade','.au-studio-monitor','.au-phone','.au-phone-label','.au-device-caption','.au-landing-features','.au-landing-scroll-cue','.au-landing-photo-count'];
+  if(compact||STATIC_HERO){
+    /* em tela larga a ilha React controla esses estilos; limpar aqui apagaria a animação a cada rolagem */
+    if(compact)targets.forEach(selector=>{const el=q(selector);if(el){el.style.removeProperty('transform');el.style.removeProperty('opacity')}});
+    else loadHeroScroll(landing);
+    const mon=q('.au-studio-monitor'),ph=q('.au-phone');
+    if(mon&&ph)ph.style.setProperty('--pk',(mon.offsetWidth*242/868/300).toFixed(4));
+    return;
+  }
+  const W=window.innerWidth,H=window.innerHeight;
+  const distance=Math.max(1,landing.offsetHeight-H);
+  const progress=Math.min(1,Math.max(0,-landing.getBoundingClientRect().top/distance));
+  const clamp=v=>Math.min(1,Math.max(0,v));
+  const ease=v=>{v=clamp(v);return v<.5?4*v*v*v:1-Math.pow(-2*v+2,3)/2};
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const k=reduced?.45:1,tilt=reduced?.2:1;
+  const nav=q('.au-landing-nav');
+  if(nav){nav.style.setProperty('--hp',progress.toFixed(3));const on=progress>.5?'studio':'app';nav.querySelectorAll('.au-landing-stage span').forEach(el=>el.classList.toggle('on',el.dataset.s===on))}
+  const set=(selector,styles)=>{const el=q(selector);if(el)Object.assign(el.style,styles)};
+  const textP=ease(progress/.42),phoneP=ease(progress/.62),monitorP=ease((progress-.08)/.78),bgP=ease(progress/.85);
+  const monitor=q('.au-studio-monitor'),phone=q('.au-phone');
+  const mw=monitor?monitor.offsetWidth:W*.7,pw=phone?phone.offsetWidth:260,ph=pw/.505;
+  /* Monitor: do canto direito, inclinado e menor, ao centro, plano e grande. */
+  const mS0=.7,mX0=W/2-34-mS0*mw/2,mY0=-H*.07;
+  const mX1=0,mY1=-H*.03,mS1=1;
+  const mS=lerp(mS0,mS1,monitorP),mX=lerp(mX0,mX1,monitorP),mY=lerp(mY0,mY1,monitorP);
+  /* Celular: na frente, ancorado à borda esquerda do monitor; depois sobe e sai para a direita, pequeno. */
+  const pS0=.82,pS1=.6;
+  const productShift=Math.min(130,Math.max(96,W*.09));
+  const pX0=mX0-mS0*mw/2+.2*mS0*mw-pS0*pw/2+productShift,pY0=Math.min(H*.12,H/2-26-pS0*ph/2);
+  const pX1=Math.min(W*.41,W/2-16-pS1*pw/2),pY1=-H*.14;
+  const pS=lerp(pS0,pS1,phoneP),pX=lerp(pX0,pX1,phoneP),pY=lerp(pY0,pY1,phoneP);
+  const sp=lerp(0,1,monitorP);
+  set('.au-studio-monitor',{transform:`translate3d(${mX}px, ${mY}px, 0) rotateY(${7*tilt*(1-monitorP)}deg) rotateX(${2*tilt*(1-monitorP)}deg) scale(${mS})`});
+  set('.au-phone',{transform:`translate3d(${pX}px, ${pY}px, 0) rotateY(${-6*tilt*(1-phoneP)}deg) rotateZ(${3*tilt*phoneP}deg) scale(${pS})`});
+  set('.au-landing-copy',{opacity:String(Math.max(0,1-textP)),transform:`translate3d(${-64*textP*k}px, ${-14*textP*k}px, 0)`,pointerEvents:textP>.85?'none':''});
+  set('.au-landing-media',{transform:`scale(${1+bgP*.04*k})`});
+  set('.au-landing-shade',{opacity:String(1-bgP*.55)});
+  set('.au-phone-label',{opacity:String(clamp(1-progress*5)),transform:`translate3d(0, ${-10*phoneP}px, 0)`});
+  const reveal=clamp((progress-.62)/.26);
+  set('.au-device-caption',{opacity:String(reveal),transform:`translate3d(-50%, ${16*(1-reveal)}px, 0)`});
+  const fade=clamp(1-progress*3.4);
+  set('.au-landing-features',{opacity:String(fade),transform:`translate3d(0, ${14*sp}px, 0)`});
+  set('.au-landing-photo-count',{opacity:String(fade)});
+  set('.au-landing-scroll-cue',{opacity:String(clamp(1-progress*5)),transform:`translate3d(-50%, ${12*sp}px, 0)`});
+}
+function scheduleLandingMotion(){
+  if(landingMotionFrame)return;
+  landingMotionFrame=requestAnimationFrame(()=>{landingMotionFrame=0;syncLandingMotion()});
+}
 function mount(){
   if(mounted)return true;
   const side=document.createElement('aside');side.className='iu-side';side.id='iu-side';side.setAttribute('aria-label','Menu principal');
@@ -600,6 +705,11 @@ function mount(){
   return true;
 }
 function bind(){
+  if(!landingMotionBound){
+    window.addEventListener('scroll',scheduleLandingMotion,{passive:true});
+    window.addEventListener('resize',scheduleLandingMotion,{passive:true});
+    landingMotionBound=true;
+  }
   document.addEventListener('click',e=>{
     if(!api.enabled||!mounted)return;
     const goEl=e.target.closest('[data-go]');
@@ -621,6 +731,7 @@ function bind(){
       else if(a==='pres-toggle'){g(()=>IASDPresence.setVisible(!!act.checked));visIcon()}
       else if(a==='account')g(()=>toggleAccountMenu());
       else if(a==='newtab'){document.body.classList.remove('iu-open');g(()=>newTab())}
+      else if(a==='landing-editor'){document.body.classList.remove('iu-open');g(()=>openLandingEditor())}
       else if(a==='projector-menu-toggle')toggleProjectorMenu();
       else if(a==='banner')g(()=>editHomeCarousel());
       else if(a==='cover')g(()=>editCover(act.dataset.slot));
@@ -632,6 +743,7 @@ function bind(){
       else if(a==='tab-close')closeSideTab();
       else if(a==='team-toggle'){const body=$('iu-team-b');if(body){const open=body.hidden;body.hidden=!open;try{localStorage.setItem('iasd-ui-team-open',open?'1':'0')}catch(e){}const ch=$('iu-team-ch');if(ch)ch.innerHTML=ic(open?'up':'down',18);act.setAttribute('aria-expanded',open)}}
       else if(a==='sched-toggle'){sched.expanded=!sched.expanded;updateSchedule()}
+      else if(a==='login')g(()=>openAuthModal(false));
       else if(a==='signup')g(()=>openAuthModal(true));
       else if(a==='projpair')Promise.resolve(g(()=>pairCompanion())).then(()=>setTimeout(checkProjector,400));
       else if(a==='vshare'){g(()=>window.IASDVerseShare.open({text:passage.text,ref:passage.ref,link:true}))}
@@ -657,13 +769,19 @@ function refresh(){
   const cur=S.cur();
   if(!S.sound()){proj.state='idle';proj.data=null}
   syncProjectorMenu();
+  const wasLanding=document.body.classList.contains('iu-is-landing');
+  const isLanding=cur==='Painel'&&!S.user();
   document.body.classList.toggle('iu-is-home',cur==='Painel');
+  document.body.classList.toggle('iu-is-landing',isLanding);
+  document.body.classList.toggle('iu-is-home-ref',cur==='Painel'&&!!S.user()&&!!window.IASDHomeRef);
+  if(wasLanding!==isLanding)window.scrollTo({top:0,left:0,behavior:'auto'});
   const side=$('iu-side');if(side)side.innerHTML=sideHTML();
   const bn=$('iu-bn');if(bn)bn.innerHTML=barHTML();
   const me=$('iu-me');if(me)me.innerHTML=accountHTML();
   const t=$('iu-title');if(t)t.textContent=titleOf(cur);
   const bell=$('iu-bell');if(bell)bell.hidden=!S.assigned();
   themeIcon();visIcon();
+  syncLandingMotion();
   g(()=>S.sound()?IASDPresence.ensure():IASDPresence.stop());
   if(cur==='Painel Sonoplastia'&&g(()=>canAdminProjector())&&g(()=>companionToken)&&Date.now()-proj.checkedAt>20000&&!proj.busy)checkProjector();
 }
@@ -684,6 +802,7 @@ api.fail=function(e){
   setTimeout(()=>g(()=>render()),0);
   return '';
 };
+api.bridge=()=>({S,g,E,ic,auName,auGreeting,parseItems,passage,loadPassage,imageOf,searchable,sideTabsHTML});
 api.projState=()=>proj.state;
 g(()=>IASDPresence.onChange(()=>{if(S.cur()==='Painel Sonoplastia'&&g(()=>canAdminProjector()))updatePres()}));
 api.passage=()=>passage;

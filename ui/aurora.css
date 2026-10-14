@@ -114,6 +114,15 @@ html[data-skin="aurora"] .iu-pas .iu-btn:last-child,html[data-skin="aurora"] .iu
 .au-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
 .au-c4{grid-column:span 4}.au-c5{grid-column:span 5}.au-c7{grid-column:span 7}.au-c12{grid-column:span 12}
 .au-wrap{display:flex}.au-wrap>.iu-pan{flex:1;min-width:0}
+.au-home-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:8px 2px 4px}
+.au-home-date{display:inline-flex;align-items:center;gap:7px;color:var(--au-mu);font:500 12px "Instrument Sans",Inter,sans-serif}
+.au-home-date svg{color:var(--au-a1)}
+.au-home-head h1{margin:8px 0 0;color:var(--au-tx);font:800 clamp(28px,3.4vw,42px)/1.05 "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.035em}
+.au-home-head h1 span{background:linear-gradient(90deg,var(--au-a1),var(--au-c2) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.au-home-head p{margin:8px 0 0;color:var(--au-mu);font:400 14px/1.5 "Instrument Sans",Inter,sans-serif}
+.au-home-head>.iu-btn{flex:none;min-height:42px;margin-bottom:2px}
+.au-home :is(button,a):focus-visible{outline:2px solid var(--au-a1);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.au-home .au-orbit{animation:none!important}.au-home .au-tile{transition:none!important}}
 .au-card{position:relative;overflow:hidden;border-radius:26px;padding:24px;border:1px solid rgba(var(--au-w),.09);display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:260px;background:var(--au-glass)}
 .au-hello{background:linear-gradient(135deg,rgba(var(--au-a2-rgb),.24),rgba(var(--au-b-rgb),.13) 60%,rgba(var(--au-w),.03));border-color:rgba(var(--au-a1-rgb),.22)}
 .au-hello h1{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(38px,4.6vw,60px);line-height:1;font-weight:800;letter-spacing:-.03em}
@@ -162,6 +171,10 @@ html[data-skin="aurora"] .iu-pas .iu-btn:last-child,html[data-skin="aurora"] .iu
   html[data-skin="aurora"] body.iu main{padding:0 14px 92px!important}
   /* home */
   .au-grid{gap:12px}
+  .au-home-head{align-items:flex-start;flex-direction:column;gap:12px;padding:4px 2px 2px}
+  .au-home-head h1{font-size:30px}
+  .au-home-head p{font-size:13.5px;margin-top:6px}
+  .au-home-head>.iu-btn{width:auto;min-height:40px}
   .au-hello{min-height:0;padding:20px;gap:12px}
   .au-hello h1{font-size:36px}
   .au-hello p{font-size:13.5px;margin-top:8px}
@@ -303,11 +316,15 @@ html[data-skin="aurora"] body.iu .au-ic svg{width:30px!important;height:30px!imp
 .au-banner .hero-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--hero-x,50%) var(--hero-y,50%);transform:scale(var(--hero-z,1));opacity:0;transition:opacity 1s ease}
 .au-banner .hero-slide.active{opacity:1}
 .au-banner .iu-edit{z-index:3}
+.au-banner .hero-media-fallback{display:none;position:absolute;inset:0;place-items:center;padding:20px;text-align:center;color:var(--au-mu);font:500 14px/1.5 "Instrument Sans",Inter,sans-serif}
+.au-banner .dashboard-hero-carousel.is-fallback .hero-media-fallback{display:grid}
+.au-banner.media-unavailable{aspect-ratio:auto;min-height:156px}
 .au-banner.empty{display:grid;place-items:center;border-style:dashed;background:linear-gradient(135deg,rgba(var(--au-a2-rgb),.16),rgba(var(--au-b-rgb),.1))}
 .au-empty{display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;padding:24px;max-width:360px}
 .au-empty b{font:800 24px "Bricolage Grotesque",sans-serif;color:var(--au-tx)}
 .au-empty p{margin:0;color:var(--au-mu);font-size:13.5px}
 @media (max-width:700px){.au-banner{min-height:0;aspect-ratio:16/10}.au-banner.empty{aspect-ratio:auto;padding:6px}.au-grid>.au-banner{order:1}}
+@media (max-width:700px){.au-banner.media-unavailable{min-height:120px;aspect-ratio:auto}}
 @media (max-width:700px){
   html[data-skin="aurora"] body.iu .au-dock{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 0}
   html[data-skin="aurora"] body.iu .au-tile{flex:0 0 25%}
