@@ -774,6 +774,7 @@ function refresh(){
   document.body.classList.toggle('iu-is-home',cur==='Painel');
   document.body.classList.toggle('iu-is-landing',isLanding);
   document.body.classList.toggle('iu-is-home-ref',cur==='Painel'&&!!S.user()&&!!window.IASDHomeRef);
+  document.body.classList.toggle('iu-is-games-ref',cur==='Jogo'&&!!S.user()&&!!window.IASDHomeRef&&!!window.IASDGamesRef);
   if(wasLanding!==isLanding)window.scrollTo({top:0,left:0,behavior:'auto'});
   const side=$('iu-side');if(side)side.innerHTML=sideHTML();
   const bn=$('iu-bn');if(bn)bn.innerHTML=barHTML();

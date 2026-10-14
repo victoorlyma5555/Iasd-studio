@@ -1,12 +1,12 @@
-/* IASD APP — Home do usuário logado (layout de referência). Tudo escopado em .hm / body.iu-is-home-ref. */
-html[data-skin] body.iu.iu-is-home-ref .iu-side,
-html[data-skin] body.iu.iu-is-home-ref .iu-top,
-html[data-skin] body.iu.iu-is-home-ref > header,
-html[data-skin] body.iu.iu-is-home-ref .desktop-sidebar { display: none !important; }
-html[data-skin] body.iu.iu-is-home-ref main { margin: 0 !important; padding: 0 !important; max-width: none !important; width: 100% !important; min-height: 0 !important; }
-html[data-skin] body.iu.iu-is-home-ref main #content { margin: 0 !important; padding: 0 !important; min-height: 0 !important; max-width: none !important; width: 100% !important; }
-html[data-skin] body.iu.iu-is-home-ref { background: #fcfcff !important; }
-html:has(body.iu-is-home-ref) { background: #fcfcff; }
+/* IASD APP — Home do usuário logado (layout de referência). Tudo escopado em .hm / body:is(.iu-is-home-ref, .iu-is-games-ref). */
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) .iu-side,
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) .iu-top,
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) > header,
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) .desktop-sidebar { display: none !important; }
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) main { margin: 0 !important; padding: 0 !important; max-width: none !important; width: 100% !important; min-height: 0 !important; }
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) main #content { margin: 0 !important; padding: 0 !important; min-height: 0 !important; max-width: none !important; width: 100% !important; }
+html[data-skin] body.iu:is(.iu-is-home-ref, .iu-is-games-ref) { background: #fcfcff !important; }
+html:has(body:is(.iu-is-home-ref, .iu-is-games-ref)) { background: #fcfcff; }
 /* tipografia e quebras: vence regras globais mais específicas do tema anterior */
 html[data-skin="aurora"] body.iu #content .hm :is(h1, h2, h3, p, button, input, small, b, span, time, em) { font-family: "Plus Jakarta Sans", "Instrument Sans", Inter, system-ui, sans-serif; }
 html[data-skin="aurora"] body.iu #content .hm :is(.hm-info, .hm-today) h2 { white-space: nowrap; }
@@ -309,7 +309,7 @@ html[data-skin="aurora"] body.iu #content .hm :is(.hm-info, .hm-today) h2 { whit
 @media (prefers-reduced-motion: reduce) { .hm * { transition: none !important; } }
 
 /* a Home nova já traz a seção do IASD Studio; esconde a antiga acrescentada pelo app */
-body.iu-is-home-ref #content > .studio-download { display: none !important; }
+body:is(.iu-is-home-ref, .iu-is-games-ref) #content > .studio-download { display: none !important; }
 
 html[data-skin="aurora"] body.iu #content .hm :is(.hm-info, .hm-today) h2 { text-wrap: nowrap; white-space: nowrap; }
 

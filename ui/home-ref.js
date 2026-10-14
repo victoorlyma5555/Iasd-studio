@@ -76,14 +76,16 @@ function myNextScale(){
 }
 
 /* ---------- blocos ---------- */
-function headerHTML(){
+function headerHTML(active){
+  active=active||'Painel';
   const user=B.S.user(),prof=g(()=>myProfile)||null;
   const name=B.auName()||'Conta';
   let av=`<span class="hm-av">${svg('user',18)}</span>`;
   if(prof&&prof.avatar_path){const src=g(()=>profileMediaUrl(prof.avatar_path));const st=g(()=>profileImageStyle('avatar'))||'';if(src)av=`<span class="hm-av"><img src="${E(src)}" alt="" style="${E(st)}"></span>`}
   else if(name)av=`<span class="hm-av">${E(name.slice(0,1).toUpperCase())}</span>`;
   const sched=B.S.viewSchedules();
-  const nav=`<button type="button" class="on" data-go="Painel" aria-current="page">Início</button><button type="button" data-go="Bíblia">Bíblia</button>${sched?'<button type="button" data-go="Cronograma">Programação</button>':''}<button type="button" data-hm="community">Comunidade</button>`;
+  const cur=id=>active===id?' class="on" aria-current="page"':'';
+  const nav=`<button type="button"${cur('Painel')} data-go="Painel">Início</button><button type="button"${cur('Bíblia')} data-go="Bíblia">Bíblia</button>${sched?`<button type="button"${cur('Cronograma')} data-go="Cronograma">Programação</button>`:''}${active==='Jogo'?'<button type="button" class="on" aria-current="page" data-go="Jogo">Jogos</button>':''}${active==='Painel'?'<button type="button" data-hm="community">Comunidade</button>':''}`;
   const bell=B.S.assigned()?`<button type="button" class="hm-bell" data-go="Alertas" aria-label="Notificações e alertas">${svg('bell',20)}</button><i class="hm-sep" aria-hidden="true"></i>`:'';
   return `<header class="hm-nav"><button type="button" class="hm-brand" data-go="Painel" aria-label="IASD APP, ir para o início"><img src="/iasd-app-logo.png?v=1" alt=""><b>IASD APP</b></button><nav class="hm-links" aria-label="Navegação principal">${nav}</nav><div class="hm-me">${bell}<button type="button" class="hm-prof" data-hm="menu" aria-haspopup="menu" aria-expanded="false" aria-controls="hm-menu">${av}<span class="hm-pname">${E(name)}</span>${svg('down',15,2)}</button>${menuHTML()}</div></header>`;
 }
@@ -282,5 +284,6 @@ function bind(){
 }
 bind();
 
-window.IASDHomeRef={html,update};
+function chrome(bridge,active){B=bridge;return {header:safe(()=>headerHTML(active),'cabeçalho'),footer:safe(footerHTML,'rodapé')}}
+window.IASDHomeRef={html,update,chrome};
 })();
