@@ -8,7 +8,9 @@ window.openStudioWeb=function(){
  if(typeof openAuthModal==='function'&&!(typeof cloudUser!=='undefined'&&cloudUser)){openAuthModal();return}
  const note=document.getElementById('studio-web-access');if(note){note.hidden=false;note.focus()}
 };
-M.register({id:'sonoplastia',page:'Sonoplastia',route:'/sonoplastia',critical:true,render(){
+/* carrega o script que mantém o link do Studio sempre na versão mais recente (uma vez) */
+function ensureStudioLatest(){try{if(window.IASDStudioLatest||document.querySelector('script[data-studio-latest]'))return;const s=document.createElement('script');s.src='/studio-latest.js';s.defer=true;s.dataset.studioLatest='1';document.head.appendChild(s)}catch(e){}}
+M.register({id:'sonoplastia',page:'Sonoplastia',route:'/sonoplastia',critical:true,render(){ensureStudioLatest();
  return `<section class="studio-entry" aria-labelledby="studio-entry-title">
  <header class="studio-entry-head"><h2 id="studio-entry-title">IASD Studio</h2><p>Sua central de sonoplastia e projeção. Escolha como deseja usar.</p></header>
  <div class="studio-entry-options">
@@ -19,7 +21,7 @@ M.register({id:'sonoplastia',page:'Sonoplastia',route:'/sonoplastia',critical:tr
  <article class="studio-entry-option"><header><span class="studio-entry-icon">${icon('monitor')}</span><div><h3>IASD Studio PC</h3><p>Aplicativo para Windows</p></div></header>
  <div class="studio-entry-visual"><div class="studio-entry-monitor"><img src="/shots/studio-entry/pc.png" alt="Interface do IASD Studio para Windows" width="1600" height="1000"></div><div class="studio-entry-stand" aria-hidden="true"></div></div>
  <p class="studio-entry-description">Instale no computador da igreja para organizar e projetar o culto.</p><ul><li>${icon('folder')}Biblioteca e arquivos disponíveis offline</li><li>${icon('music')}Controles de áudio e projeção no telão</li></ul>
- <a class="studio-entry-action" href="https://github.com/victoorlyma5555/Iasd-studio/releases/download/iasd-studio-channel/IASD-Studio-Setup.exe">${icon('download')}Baixar Studio PC</a></article></div>
+ <a class="studio-entry-action" data-studio-download href="https://github.com/victoorlyma5555/Iasd-studio/releases/download/iasd-studio-channel/IASD-Studio-Setup-0.2.13.exe">${icon('download')}Baixar Studio PC</a></article></div>
  <p class="studio-entry-help">WEB: acesso pelo site. PC: instalação no Windows; conteúdos baixados podem ser usados sem internet.</p><footer class="studio-entry-credit">Idealizado e desenvolvido por Victor Lima</footer></section>`;
 }});
 })();
